@@ -17,6 +17,7 @@ use ceres::{
 use common::errors::ProtocolError;
 use http::{HeaderName, HeaderValue, Method};
 use orion_client::OrionBuildClient;
+use orion_scheduler_client::OrionSchedulerClient;
 use saturn::entitystore::EntityStore;
 use time::Duration;
 use tokio::task::JoinHandle;
@@ -387,6 +388,8 @@ pub async fn app(ctx: AppContext, host: String, port: u16) -> Router {
 
     let orion_client = Arc::new(OrionBuildClient::new(storage.config().build.clone()));
     let build_dispatch = OrionBuildDispatch::new(orion_client.clone()).into_arc();
+    let orion_scheduler_client =
+        Arc::new(OrionSchedulerClient::new(storage.config().build.clone()));
 
     let api_state = MonoApiServiceState::new(
         storage.clone(),
@@ -402,6 +405,7 @@ pub async fn app(ctx: AppContext, host: String, port: u16) -> Router {
         }),
         format!("http://{host}:{port}"),
         EntityStore::new(),
+        Some(orion_scheduler_client),
     );
 
     let origins: Vec<HeaderValue> = oauth_config

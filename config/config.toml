@@ -79,6 +79,14 @@ orion_server = "https://orion.gitmega.com"
 # 0 means disabled.
 orion_preheat_shallow_depth = 3
 
+# Orion scheduler URL for VM provisioning (mono outbound; empty disables /orion/runners*)
+orion_scheduler_url = "https://scheduler.gitmega.com"
+orion_scheduler_token = ""
+
+# Base domain for VM runner connectivity; mono prepends git. / orion. subdomains.
+# Example: gitmega.com
+runner_connect_domain = "https://gitmega.com"
+
 
 [pack]
 # The maximum memory used by decode

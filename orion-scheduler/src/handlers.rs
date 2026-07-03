@@ -14,7 +14,12 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 
-use crate::{orion_deployer, state::AppState, vm_cleanup};
+use crate::{
+    config::{DefaultImageConfig, TargetConfig},
+    orion_deployer,
+    state::AppState,
+    vm_cleanup,
+};
 
 /// Image parameters that can be passed via webhook API to override config-based image selection.
 #[derive(Debug, Clone, Default)]
@@ -39,8 +44,15 @@ pub struct WebhookResponse {
 #[derive(Debug, Deserialize)]
 pub struct GithubWebhookPayload {
     pub action: Option<String>,
-    /// Target environment: "aws-gitmega", "aws-gitmono", "gcp-buck2hub" (required)
-    pub target: String,
+    /// Optional label for logs (legacy GHA field).
+    #[serde(default)]
+    pub target: Option<String>,
+    /// When true, block until VM provisioning completes (legacy GHA behavior).
+    #[serde(default)]
+    pub sync: bool,
+    pub server_ws: String,
+    pub scorpio_base_url: String,
+    pub scorpio_lfs_url: String,
     /// Override image path (local qcow2 file). Overrides default_image from config.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub image_path: Option<String>,
@@ -62,6 +74,92 @@ pub struct GithubWebhookPayload {
     pub image_memory_mb: Option<u32>,
 }
 
+/// Merge webhook image overrides with scheduler `default_image` config.
+pub fn merge_image_params(
+    payload: &GithubWebhookPayload,
+    default: &DefaultImageConfig,
+) -> ImageParams {
+    let url = payload.image_url.clone();
+    let path = if url.is_some() {
+        payload.image_path.clone()
+    } else {
+        payload
+            .image_path
+            .clone()
+            .or_else(|| Some(default.image_path.clone()))
+    };
+    let digest = payload.image_digest.clone().or_else(|| {
+        if path.is_some() || url.is_some() {
+            Some(default.image_digest.clone())
+        } else {
+            None
+        }
+    });
+
+    ImageParams {
+        path,
+        url,
+        digest,
+        disk_gb: payload.image_disk_gb.or(Some(default.image_disk_gb)),
+        cpus: payload.image_cpus.or(Some(default.image_cpus)),
+        memory_mb: payload.image_memory_mb.or(Some(default.image_memory_mb)),
+    }
+}
+
+#[cfg(test)]
+mod merge_tests {
+    use super::*;
+    use crate::config::DefaultImageConfig;
+
+    #[test]
+    fn merge_uses_defaults_when_payload_omits_image_fields() {
+        let default = DefaultImageConfig::default();
+        let payload = GithubWebhookPayload {
+            action: None,
+            target: None,
+            sync: false,
+            server_ws: "ws://orion.test/ws".into(),
+            scorpio_base_url: "http://git.test".into(),
+            scorpio_lfs_url: "http://git.test".into(),
+            image_path: None,
+            image_url: None,
+            image_digest: None,
+            image_disk_gb: None,
+            image_cpus: None,
+            image_memory_mb: None,
+        };
+        let merged = merge_image_params(&payload, &default);
+        assert_eq!(merged.path.as_deref(), Some(default.image_path.as_str()));
+        assert_eq!(
+            merged.digest.as_deref(),
+            Some(default.image_digest.as_str())
+        );
+        assert_eq!(merged.disk_gb, Some(default.image_disk_gb));
+    }
+
+    #[test]
+    fn merge_payload_overrides_default_disk() {
+        let default = DefaultImageConfig::default();
+        let payload = GithubWebhookPayload {
+            action: None,
+            target: None,
+            sync: false,
+            server_ws: "ws://orion.test/ws".into(),
+            scorpio_base_url: "http://git.test".into(),
+            scorpio_lfs_url: "http://git.test".into(),
+            image_path: None,
+            image_url: None,
+            image_digest: None,
+            image_disk_gb: Some(64),
+            image_cpus: None,
+            image_memory_mb: None,
+        };
+        let merged = merge_image_params(&payload, &default);
+        assert_eq!(merged.disk_gb, Some(64));
+        assert_eq!(merged.cpus, Some(default.image_cpus));
+    }
+}
+
 /// GET /webhook
 pub async fn webhook_get_handler() -> Json<WebhookResponse> {
     Json(WebhookResponse {
@@ -78,69 +176,125 @@ pub async fn webhook_post_handler(
     Json(payload): Json<GithubWebhookPayload>,
 ) -> impl IntoResponse {
     tracing::info!(
-        "Received webhook: action={:?}, target={}",
+        "Received webhook: action={:?}, target={:?}, sync={}, server_ws={}, scorpio_base_url={}, scorpio_lfs_url={}",
         payload.action,
-        payload.target
+        payload.target,
+        payload.sync,
+        payload.server_ws,
+        payload.scorpio_base_url,
+        payload.scorpio_lfs_url
     );
 
-    let image_params = ImageParams {
-        path: payload.image_path.clone(),
-        url: payload.image_url.clone(),
-        digest: payload.image_digest.clone(),
-        disk_gb: payload.image_disk_gb,
-        cpus: payload.image_cpus,
-        memory_mb: payload.image_memory_mb,
+    if let Err(e) = orion_deployer::validate_runner_env(
+        &payload.server_ws,
+        &payload.scorpio_base_url,
+        &payload.scorpio_lfs_url,
+    ) {
+        tracing::error!("Invalid runner env: {:?}", e);
+        let response = WebhookResponse {
+            status: "error".to_string(),
+            vm_id: None,
+            error: Some(e.to_string()),
+            orion_log_file: None,
+        };
+        return (StatusCode::BAD_REQUEST, Json(response)).into_response();
+    }
+
+    let default_image = state.config.read().await.default_image().clone();
+    let image_params = merge_image_params(&payload, &default_image);
+
+    let target_config = TargetConfig {
+        server_ws: payload.server_ws.clone(),
+        scorpio_base_url: payload.scorpio_base_url.clone(),
+        scorpio_lfs_url: payload.scorpio_lfs_url.clone(),
     };
 
-    // Spawn the VM operation in a blocking task
-    let target = payload.target.clone();
-    let state_clone = state.clone();
-    let result = tokio::task::spawn_blocking(move || {
-        // Use blocking synchronous call since VM operations are CPU-heavy
-        let rt = tokio::runtime::Handle::current();
-        rt.block_on(orion_deployer::handle_update(
-            &state_clone,
-            &target,
-            Some(image_params),
-        ))
-    })
-    .await;
+    let vm_id = format!("orion-vm-{}", orion_deployer::chrono_lite_timestamp());
+    let label = payload
+        .target
+        .clone()
+        .unwrap_or_else(|| "webhook".to_string());
 
-    match result {
-        Ok(Ok(_vm_id)) => {
-            tracing::info!("Successfully created VM: {}", _vm_id);
-            // Fetch the stored VmInfo from state — it contains the log file path
-            // set by handle_update before it returned.
-            let orion_log_file = state.get_vm().await.and_then(|vm| vm.log_file);
-            let response = WebhookResponse {
-                status: "ok".to_string(),
-                vm_id: Some(_vm_id),
-                error: None,
-                orion_log_file,
-            };
-            (StatusCode::OK, Json(response)).into_response()
-        }
-        Ok(Err(e)) => {
-            tracing::error!("Failed to handle update: {:?}", e);
-            let response = WebhookResponse {
-                status: "error".to_string(),
-                vm_id: None,
-                error: Some(e.to_string()),
-                orion_log_file: None,
-            };
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(response)).into_response()
-        }
-        Err(e) => {
-            tracing::error!("Task join error: {:?}", e);
-            let response = WebhookResponse {
-                status: "error".to_string(),
-                vm_id: None,
-                error: Some(e.to_string()),
-                orion_log_file: None,
-            };
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(response)).into_response()
-        }
+    if payload.sync {
+        let state_clone = state.clone();
+        let vm_id_clone = vm_id.clone();
+        let result = tokio::task::spawn_blocking(move || {
+            let rt = tokio::runtime::Handle::current();
+            rt.block_on(orion_deployer::handle_update(
+                &state_clone,
+                &label,
+                &vm_id_clone,
+                target_config,
+                image_params,
+            ))
+        })
+        .await;
+
+        return match result {
+            Ok(Ok(_vm_id)) => {
+                tracing::info!("Successfully created VM: {}", _vm_id);
+                let orion_log_file = state.get_vm().await.and_then(|vm| vm.log_file);
+                let response = WebhookResponse {
+                    status: "ok".to_string(),
+                    vm_id: Some(_vm_id),
+                    error: None,
+                    orion_log_file,
+                };
+                (StatusCode::OK, Json(response)).into_response()
+            }
+            Ok(Err(e)) => {
+                tracing::error!("Failed to handle update: {:?}", e);
+                let response = WebhookResponse {
+                    status: "error".to_string(),
+                    vm_id: Some(vm_id),
+                    error: Some(e.to_string()),
+                    orion_log_file: None,
+                };
+                (StatusCode::INTERNAL_SERVER_ERROR, Json(response)).into_response()
+            }
+            Err(e) => {
+                tracing::error!("Task join error: {:?}", e);
+                let response = WebhookResponse {
+                    status: "error".to_string(),
+                    vm_id: None,
+                    error: Some(e.to_string()),
+                    orion_log_file: None,
+                };
+                (StatusCode::INTERNAL_SERVER_ERROR, Json(response)).into_response()
+            }
+        };
     }
+
+    // Async path: return 202 immediately, provision in background.
+    let state_clone = state.clone();
+    let vm_id_for_task = vm_id.clone();
+    tokio::spawn(async move {
+        let result = tokio::task::spawn_blocking(move || {
+            let rt = tokio::runtime::Handle::current();
+            rt.block_on(orion_deployer::handle_update(
+                &state_clone,
+                &label,
+                &vm_id_for_task,
+                target_config,
+                image_params,
+            ))
+        })
+        .await;
+
+        match result {
+            Ok(Ok(id)) => tracing::info!("Background VM provisioning completed: {}", id),
+            Ok(Err(e)) => tracing::error!("Background VM provisioning failed: {:?}", e),
+            Err(e) => tracing::error!("Background task join error: {:?}", e),
+        }
+    });
+
+    let response = WebhookResponse {
+        status: "provisioning".to_string(),
+        vm_id: Some(vm_id),
+        error: None,
+        orion_log_file: None,
+    };
+    (StatusCode::ACCEPTED, Json(response)).into_response()
 }
 
 /// GET /health
@@ -154,15 +308,26 @@ pub async fn health_handler() -> Json<serde_json::Value> {
 /// GET /status
 pub async fn status_handler(State(state): State<Arc<AppState>>) -> Json<serde_json::Value> {
     match orion_deployer::get_status(&state).await {
-        Some(vm) => Json(serde_json::json!({
-            "status": "running",
-            "vm_id": vm.id,
-            "vm_ip": vm.ip,
-            "uptime_secs": vm.created_at.elapsed().as_secs(),
-            "log_file": vm.log_file
-        })),
+        Some(vm) => {
+            let phase = vm.phase.as_str();
+            let uptime_secs = if vm.phase == crate::state::VmPhase::Running {
+                Some(vm.created_at.elapsed().as_secs())
+            } else {
+                None
+            };
+            Json(serde_json::json!({
+                "status": phase,
+                "phase": phase,
+                "vm_id": vm.id,
+                "vm_ip": vm.ip,
+                "uptime_secs": uptime_secs,
+                "log_file": vm.log_file,
+                "error": vm.error
+            }))
+        }
         None => Json(serde_json::json!({
             "status": "no_vm",
+            "phase": "no_vm",
             "vm_id": null
         })),
     }

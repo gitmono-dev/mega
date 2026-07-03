@@ -18,6 +18,7 @@ use ceres::{
 };
 use common::errors::MegaError;
 use jupiter::storage::{Storage, user_storage::UserStorage};
+use orion_scheduler_client::OrionSchedulerClient;
 use saturn::entitystore::EntityStore;
 use tower_sessions::MemoryStore;
 
@@ -37,6 +38,7 @@ pub struct MonoApiServiceState {
     session_store: Option<OAuthApiStore>,
     listen_addr: String,
     entity_store: EntityStore,
+    orion_scheduler_client: Option<Arc<OrionSchedulerClient>>,
 }
 
 impl MonoApiServiceState {
@@ -47,13 +49,22 @@ impl MonoApiServiceState {
         session_store: Option<OAuthApiStore>,
         listen_addr: String,
         entity_store: EntityStore,
+        orion_scheduler_client: Option<Arc<OrionSchedulerClient>>,
     ) -> Self {
         Self {
             services: MonoAppServices::new(storage, git_object_cache, Some(build_dispatch)),
             session_store,
             listen_addr,
             entity_store,
+            orion_scheduler_client,
         }
+    }
+
+    pub fn orion_scheduler_client(&self) -> Option<&OrionSchedulerClient> {
+        self.orion_scheduler_client
+            .as_ref()
+            .filter(|c| c.is_configured())
+            .map(|c| c.as_ref())
     }
 
     pub fn listen_addr(&self) -> &str {
