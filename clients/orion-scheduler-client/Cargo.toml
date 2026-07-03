@@ -1,0 +1,16 @@
+[package]
+name = "orion-scheduler-client"
+version = "0.1.0"
+edition.workspace = true
+description = "HTTP client for orion-scheduler VM provisioning APIs."
+
+[lib]
+name = "orion_scheduler_client"
+path = "src/lib.rs"
+
+[dependencies]
+common = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
+anyhow = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }

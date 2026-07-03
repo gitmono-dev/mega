@@ -78,11 +78,32 @@ cargo test --workspace --test '*' -- --nocapture
 
 ### Pre-submit checks
 
+After modifying code, run these checks in order before opening a PR:
+
 ```bash
+# 1. Format Rust code (apply fixes)
+cargo +nightly fmt --all
+
+# 2. Lint Rust (warnings are errors)
 cargo clippy --all-targets --all-features -- -D warnings
-cargo +nightly fmt --all --check
+
+# 3. Check frontend formatting (from repo root or moon/)
+pnpm -C moon prettier --check .
+```
+
+To auto-fix frontend formatting:
+
+```bash
+pnpm -C moon prettier --write .
+```
+
+CI also runs Buck2 build checks:
+
+```bash
 cargo buckal build
 ```
+
+**Note:** Use `cargo +nightly fmt --all --check` (with `--check`) in CI or when you only want to verify formatting without writing files.
 
 ## Architecture
 

@@ -35,12 +35,12 @@ flowchart LR
   "orion_source_dir": "/home/user/mega/orion",
   "orion_binary_path": "/home/user/mega/target/debug/orion",
   "ssh_public_key_path": "~/.ssh/orion_vm_access.pub",
-  "targets": {
-    "aws-gitmega": {
-      "server_ws": "wss://orion.gitmega.com/ws",
-      "scorpio_base_url": "https://git.gitmega.com",
-      "scorpio_lfs_url": "https://git.gitmega.com"
-    }
+  "default_image": {
+    "image_path": "~/.local/share/qlean/images/debian-13-buck2/debian-13-buck2.qcow2",
+    "image_digest": "sha256:753c28888c9d30fe4baef55c1d1dfa9a39431595eca940b7ad85d78d84f3d7a5",
+    "image_disk_gb": 30,
+    "image_cpus": 8,
+    "image_memory_mb": 16000
   }
 }
 ```
@@ -60,8 +60,8 @@ sequenceDiagram
     participant Q as qlean
     participant VM as microVM
 
-    CI->>SC: POST /webhook { target }
-    SC->>SC: 读取 target_config 选择镜像
+    CI->>SC: POST /webhook { server_ws, scorpio_* }
+    SC->>SC: merge image params with default_image
     SC->>Q: 已有运行中 VM? 先关闭
     SC->>Q: KeepAliveMachine::new(custom_image)
     Q->>VM: 启动 QEMU + cloud-init
@@ -71,11 +71,21 @@ sequenceDiagram
     SC->>VM: systemctl start orion-runner
     VM-->>SC: journalctl 初始日志
     SC->>SC: 写入 log_dir
-    SC-->>CI: 200 { vm_id, log_file }
+    SC-->>CI: 202 { vm_id, status: provisioning }
     Note over SC,VM: VM 保持运行<br/>支持后续日志查询
+    CI->>SC: GET /status (poll)
+    SC-->>CI: { phase: running, vm_ip, ... }
 ```
 
+默认 **异步** 模式：`POST /webhook` 立即返回 `202 Accepted` 与 `vm_id`，后台执行部署；客户端轮询 `GET /status` 直至 `phase=running`。
+
+GHA 等需同步等待的调用方可传 `"sync": true` 保留旧行为（阻塞至完成，返回 `200`）。
+
 详细实现参见 `[src/orion_deployer.rs](src/orion_deployer.rs)` 中的 `handle_update` 函数。
+
+### Mega UI / mono 代理
+
+Admin 用户通过 Mega UI Orion Client 页调用 mono `POST /api/v1/orion/runners`（空 body）；mono 从 `build.runner_connect_domain` 拼接 `git.` / `orion.` 子域名推导 env URL 后转发至 scheduler。scheduler URL 仅配置在 mono 服务端（`build.orion_scheduler_url`），浏览器不直连 scheduler。
 
 ---
 
@@ -85,8 +95,8 @@ sequenceDiagram
 | ---- | -------------------- | ------------------------------------------------- | ----------------------------------------------- |
 | GET  | `/health`            | 服务健康检查                                            | `{ "status": "healthy", ... }`                  |
 | GET  | `/webhook`           | Webhook 端点连通性检查                                   | `{ "status": "ok", "vm_id": null, ... }`        |
-| POST | `/webhook`           | 触发部署，详见下方参数说明                                     | `{ "status": "ok", "vm_id", "orion_log_file" }` |
-| GET  | `/status`            | 当前虚拟机状态                                           | `{ "status": "running"                          |
+| POST | `/webhook`           | 触发部署，详见下方参数说明                                     | 默认 `202 { "status": "provisioning", "vm_id" }`；`sync: true` 时 `200 { "status": "ok", "vm_id", "orion_log_file" }` |
+| GET  | `/status`            | 当前虚拟机状态                                           | `{ "phase": "provisioning"|"running"|"failed"|"no_vm", "vm_id", "vm_ip", "error", ... }` |
 | GET  | `/logs/orion/stream` | SSE 流式推送，每 2 秒推送新增日志                              | `text/event-stream`                             |
 | GET  | `/scorpio/status`    | Scorpio FUSE 挂载点、目录、进程状态                          | JSON                                            |
 | GET  | `/scorpio/config`    | 直接读取 VM 内 `/home/orion/orion-runner/scorpio.toml` | `{ "path", "content" }`                         |
@@ -98,24 +108,48 @@ sequenceDiagram
 curl -X POST http://localhost:8080/webhook \
   -H 'Content-Type: application/json' \
   -d '{
-    "target": "k3s-buck2hub",
-    "image_path": "/home/orion/.local/share/qlean/images/debian-13-buck2.qcow2",
-    "image_digest": "sha256:a4e664895071017b4ce97e71c533355f9a774acb947fac13147c6d9376b3bc18"
+    "server_ws": "wss://orion.gitmega.com/ws",
+    "scorpio_base_url": "https://git.gitmega.com",
+    "scorpio_lfs_url": "https://git.gitmega.com"
   }'
 ```
 
 | 字段                | 类型     | 必填   | 说明                                                       |
 | ----------------- | ------ | ---- | -------------------------------------------------------- |
-| `target`          | string | 是    | 必须在 `target_config.json` 的 `targets` 中存在                 |
+| `server_ws`       | string | 是    | Orion WebSocket URL，写入 VM 内 `.env` 的 `SERVER_WS`          |
+| `scorpio_base_url`| string | 是    | 写入 `scorpio.toml` 的 `base_url`                           |
+| `scorpio_lfs_url` | string | 是    | 写入 `scorpio.toml` 的 `lfs_url`                            |
+| `target`          | string | 否    | 仅作日志标签（已废弃查表，GHA 可逐步移除）                              |
 | `action`          | string | 否    | GitHub Actions 事件类型，仅作日志记录                               |
-| `image_path`      | string | 否    | 本地 qcow2 镜像路径                                            |
+| `sync`            | bool   | 否    | 为 `true` 时同步阻塞至部署完成（默认 `false`，立即 202 返回）              |
+| `image_path`      | string | 否    | 本地 qcow2 镜像路径；未指定时使用 `default_image.image_path`           |
 | `image_url`       | string | 否    | 远程 HTTPS URL                                             |
 | `image_digest`    | string | 条件必填 | 镜像 SHA256/SHA512 校验和，提供 `image_path` 或 `image_url` 时必须指定 |
-| `image_disk_gb`   | u32    | 否    | 虚拟机磁盘大小（GB）                                              |
-| `image_cpus`      | u32    | 否    | 虚拟 CPU 数量                                                |
-| `image_memory_mb` | u32    | 否    | 内存大小（MB）                                                 |
+| `image_disk_gb`   | u32    | 否    | 虚拟机磁盘大小（GB）；未指定时使用 `default_image.image_disk_gb`         |
+| `image_cpus`      | u32    | 否    | 虚拟 CPU 数量；未指定时使用 `default_image.image_cpus`               |
+| `image_memory_mb` | u32    | 否    | 内存大小（MB）；未指定时使用 `default_image.image_memory_mb`           |
 
-> `image_path` 与 `image_url` 互斥，不可同时指定。提供镜像参数时 `image_digest` 必须提供（格式：`sha256:...` 或 `sha512:...`）。资源参数未指定时使用默认值（磁盘：镜像内建大小，CPU：4，内存：8192MB）。
+> `image_path` 与 `image_url` 互斥，不可同时指定。提供镜像参数时 `image_digest` 必须提供（格式：`sha256:...` 或 `sha512:...`）。未传任何 `image_*` 字段时，scheduler 使用 `target_config.json` 中的 `default_image` 块。
+
+### GHA / 外部 webhook 迁移
+
+旧版 webhook 通过 `target` 名称在 `target_config.json` 的 `targets` 中查表获取环境 URL。该机制已移除；调用方必须在请求体中内联传入 `server_ws`、`scorpio_base_url`、`scorpio_lfs_url`。`target` 字段仍可选，仅用于日志标签。
+
+示例（GitHub Actions）：
+
+```yaml
+- name: Start Orion runner VM
+  run: |
+    curl -X POST "$SCHEDULER_URL/webhook" \
+      -H 'Content-Type: application/json' \
+      -d '{
+        "server_ws": "wss://orion.example.com/ws",
+        "scorpio_base_url": "https://git.example.com",
+        "scorpio_lfs_url": "https://git.example.com"
+      }'
+```
+
+Mega UI 通过 mono 代理启动 runner 时不传 env URL；mono 从基础域名 `runner_connect_domain` 拼接 `git.` / `orion.` 子域名，无需传 `image_*`（由 scheduler `default_image` 填充）。
 
 ---
 
@@ -187,23 +221,19 @@ sudo bash scripts/build-custom-image.sh
 | `orion_source_dir`    | string | 无默认值（必填）                   | Orion 源码目录（含 runner-config、systemd） |
 | `orion_binary_path`   | string | 无默认值（必填）                   | Orion 二进制文件路径                       |
 | `ssh_public_key_path` | string | 无默认值（必填）                   | SSH 公钥路径                            |
-| `targets`             | map    | `{}`                       | 部署目标定义，至少一项                         |
+| `default_image`       | object | 见模板                          | 默认 VM 镜像参数；webhook 未传 `image_*` 时使用 |
 
-### `targets[name]`
+### `default_image`
 
 | 字段                 | 类型     | 说明                                               |
 | ------------------ | ------ | ------------------------------------------------ |
-| `server_ws`        | string | Orion WebSocket URL，写入 VM 内 `.env` 的 `SERVER_WS` |
-| `scorpio_base_url` | string | 写入 `scorpio.toml` 的 `base_url`                   |
-| `scorpio_lfs_url`  | string | 写入 `scorpio.toml` 的 `lfs_url`                    |
+| `image_path`       | string | 本地 qcow2 镜像路径                                    |
+| `image_digest`     | string | 镜像 SHA256 校验和                                    |
+| `image_disk_gb`    | u32    | 磁盘大小（GB）                                         |
+| `image_cpus`       | u32    | vCPU 数量                                          |
+| `image_memory_mb`  | u32    | 内存（MB）                                           |
 
-### 内置 target（`[target_config.json](target_config.json)` 默认）
-
-| target         | SERVER_WS                     | scorpio base_url           |
-| -------------- | ----------------------------- | -------------------------- |
-| `aws-gitmega`  | `wss://orion.gitmega.com/ws`  | `https://git.gitmega.com`  |
-| `aws-gitmono`  | `wss://orion.gitmono.com/ws`  | `https://git.gitmono.com`  |
-| `gcp-buck2hub` | `wss://orion.buck2hub.com/ws` | `https://git.buck2hub.com` |
+环境 URL（`server_ws`、`scorpio_base_url`、`scorpio_lfs_url`）由 webhook 请求体传入，不再通过 `targets` 查表。
 
 ---
 

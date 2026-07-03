@@ -732,6 +732,16 @@ pub struct BuildConfig {
     pub orion_server: String,
     #[serde(default)]
     pub orion_preheat_shallow_depth: usize,
+    /// Orion scheduler base URL for VM provisioning (mono outbound only).
+    #[serde(default)]
+    pub orion_scheduler_url: String,
+    /// Optional bearer token forwarded to orion-scheduler.
+    #[serde(default)]
+    pub orion_scheduler_token: String,
+    /// Base domain VM runners use to reach mono/orion (subdomains `git.` and `orion.` are prepended).
+    /// Example: `gitmega.com` → `https://git.gitmega.com`, `wss://orion.gitmega.com/ws`.
+    #[serde(default)]
+    pub runner_connect_domain: String,
 }
 
 /// Orion Server configuration (flat structure)

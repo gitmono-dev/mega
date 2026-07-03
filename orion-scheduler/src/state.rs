@@ -4,14 +4,35 @@ use tokio::sync::{Mutex, MutexGuard, RwLock};
 
 use crate::{config::SharedConfig, keep_alive::KeepAliveMachine};
 
+/// Lifecycle phase of a VM managed by the scheduler.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VmPhase {
+    Provisioning,
+    Running,
+    Failed,
+}
+
+impl VmPhase {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            VmPhase::Provisioning => "provisioning",
+            VmPhase::Running => "running",
+            VmPhase::Failed => "failed",
+        }
+    }
+}
+
 /// Represents the current state of the VM
 #[derive(Debug, Clone)]
 pub struct VmInfo {
     pub id: String,
+    pub phase: VmPhase,
     pub ip: Option<String>,
     pub created_at: std::time::Instant,
     /// Path to the Orion log file
     pub log_file: Option<String>,
+    /// Error message when phase is Failed
+    pub error: Option<String>,
 }
 
 /// Global state for tracking VM lifecycle
@@ -60,6 +81,14 @@ impl AppState {
             .ok()
     }
 
+    /// Register a VM in provisioning state (no machine handle yet).
+    pub async fn set_vm_provisioning(&self, info: VmInfo) {
+        let mut vm = self.vm.write().await;
+        let mut m = self.machine.write().await;
+        *vm = Some(info);
+        *m = None;
+    }
+
     /// Set VM info and machine reference together atomically.
     /// Both write locks are held simultaneously so concurrent readers
     /// never observe a half-published state (e.g. `vm = Some` with
@@ -70,6 +99,19 @@ impl AppState {
         let mut m = self.machine.write().await;
         *vm = Some(info);
         *m = Some(machine);
+    }
+
+    /// Mark the current VM as failed, clearing any machine handle.
+    pub async fn set_vm_failed(&self, id: &str, error: String) {
+        let mut vm = self.vm.write().await;
+        let mut m = self.machine.write().await;
+        if let Some(info) = vm.as_mut()
+            && info.id == id
+        {
+            info.phase = VmPhase::Failed;
+            info.error = Some(error);
+        }
+        *m = None;
     }
 
     /// Clear both VM info and machine reference atomically.
@@ -109,5 +151,36 @@ mod tests {
         let state = AppState::new(config);
         assert!(state.get_vm().await.is_none());
         assert!(state.get_machine().await.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_provisioning_to_failed() {
+        let config = Arc::new(tokio::sync::RwLock::new(crate::config::Config::new(
+            "/tmp".to_string(),
+            "/tmp/orion".to_string(),
+            "/tmp/orion".to_string(),
+            "/tmp/ssh_key.pub".to_string(),
+            Default::default(),
+        )));
+        let state = AppState::new(config);
+        let info = VmInfo {
+            id: "orion-vm-1".to_string(),
+            phase: VmPhase::Provisioning,
+            ip: None,
+            created_at: std::time::Instant::now(),
+            log_file: None,
+            error: None,
+        };
+        state.set_vm_provisioning(info).await;
+        let vm = state.get_vm().await.unwrap();
+        assert_eq!(vm.phase, VmPhase::Provisioning);
+        assert!(state.get_machine().await.is_none());
+
+        state
+            .set_vm_failed("orion-vm-1", "deploy failed".to_string())
+            .await;
+        let vm = state.get_vm().await.unwrap();
+        assert_eq!(vm.phase, VmPhase::Failed);
+        assert_eq!(vm.error.as_deref(), Some("deploy failed"));
     }
 }

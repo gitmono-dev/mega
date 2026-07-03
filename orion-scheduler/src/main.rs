@@ -118,8 +118,8 @@ async fn main() -> anyhow::Result<()> {
     let config = config::Config::load(&config_path).await?;
     let config = Arc::new(tokio::sync::RwLock::new(config));
     tracing::info!(
-        "[startup] Config loaded, available targets: {:?}",
-        config.read().await.target_names()
+        "[startup] Config loaded, default_image path: {}",
+        config.read().await.default_image().image_path
     );
 
     // Create shared state

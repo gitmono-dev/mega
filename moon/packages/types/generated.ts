@@ -4191,6 +4191,23 @@ export type CommonResultReviewersResponse = {
   req_result: boolean
 }
 
+export type CommonResultRunnerStatusResponse = {
+  data?: {
+    error?: string | null
+    log_file?: string | null
+    phase: string
+    /**
+     * @format int64
+     * @min 0
+     */
+    uptime_secs?: number | null
+    vm_id: string
+    vm_ip?: string | null
+  }
+  err_message: string
+  req_result: boolean
+}
+
 export type CommonResultSessionResponse = {
   /** Response for session creation */
   data?: {
@@ -4231,6 +4248,15 @@ export type CommonResultSidebarRes = {
     order_index: number
     public_id: string
     visible: boolean
+  }
+  err_message: string
+  req_result: boolean
+}
+
+export type CommonResultStartRunnerResponse = {
+  data?: {
+    phase: string
+    vm_id: string
   }
   err_message: string
   req_result: boolean
@@ -5284,6 +5310,21 @@ export type NewLabel = {
   name: string
 }
 
+export type NoteShowResponse = {
+  description_html: string
+  /** @format int32 */
+  description_schema_version: number
+  description_state?: string | null
+  id: string
+}
+
+export type NoteUpdateRequest = {
+  description_html: string
+  /** @format int32 */
+  description_schema_version: number
+  description_state: string
+}
+
 export type NotificationEventTypeInfo = {
   category: string
   code: string
@@ -5565,6 +5606,19 @@ export type ReviewersResponse = {
   result: ReviewerInfo[]
 }
 
+export type RunnerStatusResponse = {
+  error?: string | null
+  log_file?: string | null
+  phase: string
+  /**
+   * @format int64
+   * @min 0
+   */
+  uptime_secs?: number | null
+  vm_id: string
+  vm_ip?: string | null
+}
+
 /** Response for session creation */
 export type SessionResponse = {
   /** CL link (8-character alphanumeric identifier, same as session_id) */
@@ -5595,14 +5649,6 @@ export type SetPermissionsRequest = {
   permissions: PermissionBindingRequest[]
 }
 
-export type ShowResponse = {
-  description_html: string
-  /** @format int32 */
-  description_schema_version: number
-  description_state?: string | null
-  id: string
-}
-
 export type SidebarRes = {
   href: string
   /** @format int32 */
@@ -5623,6 +5669,33 @@ export type SidebarSyncPayload = {
   order_index: number
   public_id: string
   visible: boolean
+}
+
+export type StartRunnerRequest = {
+  /**
+   * @format int32
+   * @min 0
+   */
+  image_cpus?: number | null
+  image_digest?: string | null
+  /**
+   * @format int32
+   * @min 0
+   */
+  image_disk_gb?: number | null
+  /**
+   * @format int32
+   * @min 0
+   */
+  image_memory_mb?: number | null
+  image_path?: string | null
+  image_url?: string | null
+  target?: string | null
+}
+
+export type StartRunnerResponse = {
+  phase: string
+  vm_id: string
 }
 
 /** Tag information response */
@@ -5759,13 +5832,6 @@ export type UpdateCommitBindingRequest = {
 export type UpdateGroupRequest = {
   description?: string | null
   name: string
-}
-
-export type UpdateRequest = {
-  description_html: string
-  /** @format int32 */
-  description_schema_version: number
-  description_state: string
 }
 
 export type UpdateSidebarPayload = {
@@ -7473,9 +7539,13 @@ export type GetApiMergeQueueStatsData = CommonResultQueueStatsResponse
 
 export type GetApiMergeQueueStatusByClLinkData = CommonResultQueueStatusResponse
 
-export type GetApiOrganizationsNotesSyncStateData = ShowResponse
+export type GetApiOrganizationsNotesSyncStateData = NoteShowResponse
 
 export type PatchApiOrganizationsNotesSyncStateData = any
+
+export type PostApiOrionRunnersData = CommonResultStartRunnerResponse
+
+export type GetApiOrionRunnersByIdData = CommonResultRunnerStatusResponse
 
 export type GetApiPermissionsMeByResourceIdData = CommonResultUserEffectivePermissionResponse
 
@@ -18375,7 +18445,6 @@ It's for local testing purposes.
      *
      * @tags Merge Queue Management
      * @name PostApiMergeQueueAdd
-     * @summary Adds a CL to the merge queue
      * @request POST:/api/v1/merge-queue/add
      */
     postApiMergeQueueAdd: () => {
@@ -18400,7 +18469,6 @@ It's for local testing purposes.
      *
      * @tags Merge Queue Management
      * @name PostApiMergeQueueCancelAll
-     * @summary Cancels all pending queue items
      * @request POST:/api/v1/merge-queue/cancel-all
      */
     postApiMergeQueueCancelAll: () => {
@@ -18423,7 +18491,6 @@ It's for local testing purposes.
      *
      * @tags Merge Queue Management
      * @name GetApiMergeQueueList
-     * @summary Gets the current merge queue list
      * @request GET:/api/v1/merge-queue/list
      */
     getApiMergeQueueList: () => {
@@ -18446,7 +18513,6 @@ It's for local testing purposes.
      *
      * @tags Merge Queue Management
      * @name DeleteApiMergeQueueRemoveByClLink
-     * @summary Removes a CL from the merge queue
      * @request DELETE:/api/v1/merge-queue/remove/{cl_link}
      */
     deleteApiMergeQueueRemoveByClLink: () => {
@@ -18469,7 +18535,6 @@ It's for local testing purposes.
      *
      * @tags Merge Queue Management
      * @name PostApiMergeQueueRetryByClLink
-     * @summary Retries a failed queue item
      * @request POST:/api/v1/merge-queue/retry/{cl_link}
      */
     postApiMergeQueueRetryByClLink: () => {
@@ -18492,7 +18557,6 @@ It's for local testing purposes.
      *
      * @tags Merge Queue Management
      * @name GetApiMergeQueueStats
-     * @summary Gets queue statistics
      * @request GET:/api/v1/merge-queue/stats
      */
     getApiMergeQueueStats: () => {
@@ -18515,7 +18579,6 @@ It's for local testing purposes.
      *
      * @tags Merge Queue Management
      * @name GetApiMergeQueueStatusByClLink
-     * @summary Gets the status of a specific CL in the queue
      * @request GET:/api/v1/merge-queue/status/{cl_link}
      */
     getApiMergeQueueStatusByClLink: () => {
@@ -18570,12 +18633,60 @@ It's for local testing purposes.
         baseKey: dataTaggedQueryKey<PatchApiOrganizationsNotesSyncStateData>([base]),
         requestKey: (orgSlug: number, id: string) =>
           dataTaggedQueryKey<PatchApiOrganizationsNotesSyncStateData>([base, orgSlug, id]),
-        request: (orgSlug: number, id: string, data: UpdateRequest, params: RequestParams = {}) =>
+        request: (orgSlug: number, id: string, data: NoteUpdateRequest, params: RequestParams = {}) =>
           this.request<PatchApiOrganizationsNotesSyncStateData>({
             path: `/api/v1/organizations/${orgSlug}/notes/${id}/sync_state`,
             method: 'PATCH',
             body: data,
             type: ContentType.Json,
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name PostApiOrionRunners
+     * @summary Start a new Orion runner VM via orion-scheduler.
+     * @request POST:/api/v1/orion/runners
+     */
+    postApiOrionRunners: () => {
+      const base = 'POST:/api/v1/orion/runners' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiOrionRunnersData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiOrionRunnersData>([base]),
+        request: (data: StartRunnerRequest, params: RequestParams = {}) =>
+          this.request<PostApiOrionRunnersData>({
+            path: `/api/v1/orion/runners`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name GetApiOrionRunnersById
+     * @summary Get provisioning/running status for a runner VM.
+     * @request GET:/api/v1/orion/runners/{id}
+     */
+    getApiOrionRunnersById: () => {
+      const base = 'GET:/api/v1/orion/runners/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiOrionRunnersByIdData>([base]),
+        requestKey: (id: string) => dataTaggedQueryKey<GetApiOrionRunnersByIdData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
+          this.request<GetApiOrionRunnersByIdData>({
+            path: `/api/v1/orion/runners/${id}`,
+            method: 'GET',
             ...params
           })
       }

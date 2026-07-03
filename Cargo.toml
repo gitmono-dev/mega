@@ -6,6 +6,7 @@ members = [
   "api-model",
   "ceres",
   "clients/orion-client",
+  "clients/orion-scheduler-client",
   "common",
   "io-orbit",
   "jupiter",
@@ -35,6 +36,7 @@ vault = { path = "vault" }
 saturn = { path = "saturn" }
 orion = { path = "orion" }
 orion-client = { path = "clients/orion-client" }
+orion-scheduler-client = { path = "clients/orion-scheduler-client" }
 
 git-internal = "0.7.6"
 libvault-core = "0.1.0"

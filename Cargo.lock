@@ -4983,6 +4983,7 @@ dependencies = [
  "mimalloc",
  "once_cell",
  "orion-client",
+ "orion-scheduler-client",
  "percent-encoding",
  "qlean",
  "rand 0.10.1",
@@ -5004,6 +5005,7 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
+ "url",
  "utoipa",
  "utoipa-axum",
  "utoipa-swagger-ui",
@@ -5530,6 +5532,17 @@ dependencies = [
  "tower-http 0.7.0",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "orion-scheduler-client"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "common",
+ "reqwest 0.13.4",
+ "serde",
+ "tracing",
 ]
 
 [[package]]

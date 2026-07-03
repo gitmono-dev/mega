@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -8,30 +7,46 @@ use anyhow::{Context, Result};
 use serde::Deserialize;
 use tokio::sync::RwLock;
 
-/// Target environment configuration
+/// Runner environment URLs passed inline via webhook (no targets map lookup).
 #[derive(Debug, Clone, Deserialize)]
 pub struct TargetConfig {
-    /// Orion WebSocket server URL
     pub server_ws: String,
-    /// Scorpio base URL (replaces base_url in scorpio.toml)
     pub scorpio_base_url: String,
-    /// Scorpio LFS URL (replaces lfs_url in scorpio.toml)
     pub scorpio_lfs_url: String,
 }
 
-/// Target configuration store loaded from JSON file
+/// Default VM image parameters used when webhook omits image_* fields.
+#[derive(Debug, Clone, Deserialize)]
+pub struct DefaultImageConfig {
+    pub image_path: String,
+    pub image_digest: String,
+    pub image_disk_gb: u32,
+    pub image_cpus: u32,
+    pub image_memory_mb: u32,
+}
+
+impl Default for DefaultImageConfig {
+    fn default() -> Self {
+        Self {
+            image_path: "~/.local/share/qlean/images/debian-13-buck2/debian-13-buck2.qcow2"
+                .to_string(),
+            image_digest: "sha256:753c28888c9d30fe4baef55c1d1dfa9a39431595eca940b7ad85d78d84f3d7a5"
+                .to_string(),
+            image_disk_gb: 30,
+            image_cpus: 8,
+            image_memory_mb: 16000,
+        }
+    }
+}
+
+/// Scheduler configuration loaded from JSON file.
 #[derive(Debug, Clone)]
 pub struct Config {
-    /// Map from target name (e.g., "aws-gitmega") to its configuration
-    targets: HashMap<String, TargetConfig>,
-    /// Directory to save Orion logs
     log_dir: String,
-    /// Path to the Orion source directory (runner-config, systemd, etc.)
     orion_source_dir: String,
-    /// Path to the Orion binary to deploy
     orion_binary_path: String,
-    /// Path to the SSH public key for VM access
     ssh_public_key_path: String,
+    default_image: DefaultImageConfig,
 }
 
 /// Expand a leading `~` or `~/` to `$HOME`. Other paths are returned unchanged.
@@ -51,29 +66,23 @@ pub fn expand_tilde(path: impl AsRef<str>) -> PathBuf {
 }
 
 impl Config {
-    /// Create a new Config with the given log directory and empty targets
     #[cfg(test)]
     pub fn new(
         log_dir: String,
         orion_source_dir: String,
         orion_binary_path: String,
         ssh_public_key_path: String,
-        targets: HashMap<String, TargetConfig>,
+        default_image: DefaultImageConfig,
     ) -> Self {
         Self {
-            targets,
             log_dir,
             orion_source_dir,
             orion_binary_path,
             ssh_public_key_path,
+            default_image,
         }
     }
 
-    /// Load configuration from a JSON file.
-    ///
-    /// Errors are annotated with the absolute path that was attempted, so
-    /// callers (and users staring at the log) can tell exactly which file
-    /// the loader was looking for.
     pub async fn load(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
         let abs = absolutize(path);
@@ -106,76 +115,44 @@ impl Config {
             )
         })?;
 
-        let mut targets = HashMap::new();
-        for (name, config) in parsed.targets {
-            targets.insert(name, config);
-        }
-
         Ok(Config {
-            targets,
             log_dir: parsed
                 .log_dir
                 .unwrap_or_else(|| "/var/log/orion-scheduler".to_string()),
             orion_source_dir,
             orion_binary_path,
             ssh_public_key_path,
+            default_image: parsed.default_image.unwrap_or_default(),
         })
     }
 
-    /// Get configuration for a specific target
-    pub fn get(&self, target: &str) -> Option<&TargetConfig> {
-        self.targets.get(target)
-    }
-
-    /// Get all available target names
-    pub fn target_names(&self) -> Vec<&String> {
-        self.targets.keys().collect()
-    }
-
-    /// Get the log directory path
     pub fn log_dir(&self) -> &str {
         &self.log_dir
     }
 
-    /// Get the Orion source directory path
     pub fn orion_source_dir(&self) -> &str {
         &self.orion_source_dir
     }
 
-    /// Get the Orion binary path
     pub fn orion_binary_path(&self) -> &str {
         &self.orion_binary_path
     }
 
-    /// Get the SSH public key path for VM access
     pub fn ssh_public_key_path(&self) -> &str {
         &self.ssh_public_key_path
     }
+
+    pub fn default_image(&self) -> &DefaultImageConfig {
+        &self.default_image
+    }
 }
 
-/// Locate `target_config.json` automatically when the operator has not set
-/// `CONFIG_PATH`.
-///
-/// Candidates are tried in order and the first existing path wins:
-/// 1. `./target_config.json` — preserves the historical behaviour of
-///    `cargo run` inside `orion-scheduler/`.
-/// 2. `<exe_dir>/target_config.json` — convenient for shipped binaries that
-///    co-locate the config next to the executable.
-/// 3. `<crate root>/target_config.json` — `CARGO_MANIFEST_DIR` is baked in
-///    at compile time, so `cargo run --bin orion-scheduler` from the mega
-///    workspace root still picks up the crate-local config.
-///
-/// Returns `None` when none of the candidates exist; callers should report
-/// the full search list so users know where to drop the file or which env
-/// var to set.
 pub fn default_config_path() -> Option<PathBuf> {
     default_config_candidates()
         .into_iter()
         .find(|p| p.is_file())
 }
 
-/// Return the ordered list of paths inspected by [`default_config_path`].
-/// Exposed so the caller can log them on failure.
 pub fn default_config_candidates() -> Vec<PathBuf> {
     const FILE_NAME: &str = "target_config.json";
     let mut out: Vec<PathBuf> = Vec::new();
@@ -193,9 +170,6 @@ pub fn default_config_candidates() -> Vec<PathBuf> {
     out
 }
 
-/// Canonicalize when possible so error messages always print an absolute
-/// path. Falls back to a best-effort cwd join when the file does not yet
-/// exist (`canonicalize` requires the path to exist).
 fn absolutize(path: &Path) -> PathBuf {
     if let Ok(canonical) = std::fs::canonicalize(path) {
         return canonical;
@@ -209,11 +183,8 @@ fn absolutize(path: &Path) -> PathBuf {
     }
 }
 
-/// Internal structure for parsing the JSON config file
 #[derive(Debug, Deserialize)]
 struct ConfigFile {
-    #[serde(default)]
-    targets: HashMap<String, TargetConfig>,
     #[serde(default)]
     log_dir: Option<String>,
     #[serde(default)]
@@ -222,14 +193,15 @@ struct ConfigFile {
     orion_binary_path: Option<String>,
     #[serde(default)]
     ssh_public_key_path: Option<String>,
+    #[serde(default)]
+    default_image: Option<DefaultImageConfig>,
 }
 
-/// Global configuration state
 pub type SharedConfig = Arc<RwLock<Config>>;
 
 #[cfg(test)]
 mod tests {
-    use super::expand_tilde;
+    use super::*;
 
     #[test]
     fn expand_tilde_home_prefix() {
@@ -245,5 +217,14 @@ mod tests {
     fn expand_tilde_absolute_unchanged() {
         let abs = "/home/orion/image.qcow2";
         assert_eq!(expand_tilde(abs), std::path::PathBuf::from(abs));
+    }
+
+    #[test]
+    fn default_image_has_expected_defaults() {
+        let d = DefaultImageConfig::default();
+        assert_eq!(d.image_disk_gb, 30);
+        assert_eq!(d.image_cpus, 8);
+        assert_eq!(d.image_memory_mb, 16000);
+        assert!(d.image_digest.starts_with("sha256:"));
     }
 }

@@ -18,6 +18,7 @@ path = "src/main.rs"
 [dependencies]
 api-model = { workspace = true }
 orion-client = { workspace = true }
+orion-scheduler-client = { workspace = true }
 common = { workspace = true }
 jupiter = { workspace = true, features = ["migrate"] }
 lettre = { workspace = true }
@@ -65,6 +66,7 @@ ctrlc = { workspace = true }
 tower-sessions = { workspace = true, features = ["memory-store"] }
 time = { workspace = true, features = ["serde"] }
 http = { workspace = true }
+url = { workspace = true }
 cedar-policy = { workspace = true }
 utoipa = { workspace = true, features = ["axum_extras"] }
 utoipa-axum = { workspace = true }

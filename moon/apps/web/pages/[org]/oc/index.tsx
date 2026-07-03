@@ -16,7 +16,10 @@ import { RefreshIcon } from '@gitmono/ui/Icons'
 import { AppLayout } from '@/components/Layout/AppLayout'
 import { ClientsTable, OrionClientStatus } from '@/components/OrionClient'
 import AuthAppProviders from '@/components/Providers/AuthAppProviders'
+import { useAdminCheck } from '@/hooks/admin/useAdminCheck'
 import { usePostOrionClientsInfo } from '@/hooks/OrionClient/OrionClientsInfo'
+import { useGetRunnerStatus } from '@/hooks/OrionClient/useGetRunnerStatus'
+import { usePostStartRunner } from '@/hooks/OrionClient/usePostStartRunner'
 import { PageWithLayout } from '@/utils/types'
 
 const OrionClientPage: PageWithLayout<any> = () => {
@@ -24,8 +27,16 @@ const OrionClientPage: PageWithLayout<any> = () => {
   const [debouncedHostname, setDebouncedHostname] = React.useState<string>('')
   const [statusFilter, setStatusFilter] = React.useState<OrionClientStatus | 'all'>('all')
   const [currentPage, setCurrentPage] = React.useState<number>(1)
+  const [activeVmId, setActiveVmId] = React.useState<string | null>(null)
+  const [activePhase, setActivePhase] = React.useState<string | null>(null)
 
   const perPage = 8
+
+  const { data: adminCheck } = useAdminCheck()
+  const isAdmin = adminCheck?.data?.is_admin || false
+
+  const { mutate: startRunner, isPending: isStartingRunner } = usePostStartRunner()
+  const { data: runnerStatus } = useGetRunnerStatus(activeVmId, activePhase)
 
   const { mutate, isPending, error } = usePostOrionClientsInfo()
   const [clientsPage, setClientsPage] = React.useState<PostOrionClientsInfoData | null>(null)
@@ -77,6 +88,26 @@ const OrionClientPage: PageWithLayout<any> = () => {
   }, [mutate, requestPayload])
 
   React.useEffect(() => {
+    if (!runnerStatus) return
+    setActivePhase(runnerStatus.phase)
+  }, [runnerStatus])
+
+  React.useEffect(() => {
+    if (runnerStatus?.phase === 'running') {
+      handleRefresh()
+    }
+  }, [runnerStatus?.phase, handleRefresh])
+
+  const handleStartRunner = React.useCallback(() => {
+    startRunner(undefined, {
+      onSuccess: (data) => {
+        setActiveVmId(data.vm_id)
+        setActivePhase(data.phase)
+      }
+    })
+  }, [startRunner])
+
+  React.useEffect(() => {
     mutate(requestPayload, {
       onSuccess: (data) => {
         setClientsPage(data)
@@ -124,15 +155,55 @@ const OrionClientPage: PageWithLayout<any> = () => {
                 Total clients {total}
               </UIText>
             </div>
-            <Button
-              variant='plain'
-              iconOnly={<RefreshIcon />}
-              accessibilityLabel='Refresh'
-              onClick={handleRefresh}
-              disabled={isPending}
-              tooltip='Refresh'
-            />
+            <div className='flex flex-wrap items-center gap-2'>
+              {isAdmin ? (
+                <Button
+                  variant='primary'
+                  onClick={handleStartRunner}
+                  disabled={isStartingRunner || activePhase === 'provisioning'}
+                >
+                  {isStartingRunner ? 'Starting…' : 'Start Runner'}
+                </Button>
+              ) : null}
+              <Button
+                variant='plain'
+                iconOnly={<RefreshIcon />}
+                accessibilityLabel='Refresh'
+                onClick={handleRefresh}
+                disabled={isPending}
+                tooltip='Refresh'
+              />
+            </div>
           </div>
+
+          {activeVmId ? (
+            <div className='rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900'>
+              <UIText weight='font-semibold' size='text-sm'>
+                Runner {activeVmId}
+              </UIText>
+              <div className='mt-1 flex flex-col gap-1'>
+                <UIText size='text-sm'>
+                  Phase:{' '}
+                  <span className='font-medium capitalize'>{runnerStatus?.phase ?? activePhase ?? 'unknown'}</span>
+                </UIText>
+                {runnerStatus?.vm_ip ? (
+                  <UIText size='text-sm' color='text-muted'>
+                    VM IP: {runnerStatus.vm_ip}
+                  </UIText>
+                ) : null}
+                {runnerStatus?.error ? (
+                  <UIText size='text-sm' className='text-red-600'>
+                    {runnerStatus.error}
+                  </UIText>
+                ) : null}
+                {runnerStatus?.phase === 'failed' ? (
+                  <Button variant='primary' size='sm' className='mt-1 w-fit' onClick={handleStartRunner}>
+                    Retry
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
 
           <div className='border-b' />
         </div>

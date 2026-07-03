@@ -68,23 +68,31 @@ Discord Channel - https://discord.gg/HMFuu6pJmQ
 The mega project relies on community contributions and aims to simplify getting started. To develop Mega, clone the repository, then install all dependencies and initialize the database schema, run the test suite and try it out locally. Pick an issue, make changes, and submit a pull request for community review.
 
 ### Pre-submission Checks
-Before submitting a Pull Request, please ensure your code passes the following checks:
+Before submitting a Pull Request, please ensure your code passes the following checks (run in order after modifying code):
 
 ```bash
-# Run clippy with all warnings treated as errors (warnings will be treated as errors)
+# 1. Format Rust code (apply fixes)
+cargo +nightly fmt --all
+
+# 2. Lint Rust (warnings are errors)
 cargo clippy --all-targets --all-features -- -D warnings
 
-# Check code formatting (requires nightly toolchain)
+# 3. Check frontend formatting
+pnpm -C moon prettier --check .
+```
+
+All commands must complete without errors. Clippy treats warnings as errors; Prettier must report no formatting drift.
+
+To verify Rust formatting without writing files (CI-style):
+
+```bash
 cargo +nightly fmt --all --check
 ```
 
-Both commands must complete without any warnings. The clippy check treats all warnings as errors, and the formatter check ensures code follows the project style guide. Only PRs that pass these checks will be accepted for merge.
-
-
-If the formatting check fails, you can automatically fix formatting issues by running:
+To auto-fix frontend formatting:
 
 ```bash
-cargo +nightly fmt --all
+pnpm -C moon prettier --write .
 ```
 
 ### Buck2 Build Requirements
