@@ -16,7 +16,7 @@ pub enum OAuthApiStore {
 }
 
 impl OAuthApiStore {
-    pub fn session_cookie_name(&self) -> &'static str {
+    pub fn session_cookie_name(&self) -> &str {
         match self {
             OAuthApiStore::Campsite(store) => store.session_cookie_name(),
             OAuthApiStore::Tinyship(store) => store.session_cookie_name(),

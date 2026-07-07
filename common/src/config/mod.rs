@@ -660,6 +660,14 @@ pub struct OauthConfig {
     #[serde(default)]
     pub api_store_backend: OauthApiStoreBackend,
     pub allowed_cors_origins: Vec<String>,
+    #[serde(default = "default_campsite_api_session_cookie")]
+    pub campsite_api_session_cookie: String,
+}
+
+pub const DEFAULT_CAMPSITE_API_SESSION_COOKIE: &str = "_campsite_api_session";
+
+fn default_campsite_api_session_cookie() -> String {
+    DEFAULT_CAMPSITE_API_SESSION_COOKIE.to_string()
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
@@ -685,6 +693,7 @@ impl Default for OauthConfig {
             .into_iter()
             .map(|s| s.to_string())
             .collect(),
+            campsite_api_session_cookie: default_campsite_api_session_cookie(),
         }
     }
 }
