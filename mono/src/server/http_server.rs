@@ -397,7 +397,10 @@ pub async fn app(ctx: AppContext, host: String, port: u16) -> Router {
         build_dispatch,
         Some(match oauth_config.api_store_backend {
             common::config::OauthApiStoreBackend::Campsite => {
-                OAuthApiStore::Campsite(CampsiteApiStore::new(oauth_config.campsite_api_domain))
+                OAuthApiStore::Campsite(CampsiteApiStore::new(
+                    oauth_config.campsite_api_domain.clone(),
+                    oauth_config.campsite_api_session_cookie.clone(),
+                ))
             }
             common::config::OauthApiStoreBackend::Tinyship => {
                 OAuthApiStore::Tinyship(TinyshipApiStore::new(oauth_config.tinyship_api_domain))

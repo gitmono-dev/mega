@@ -150,6 +150,7 @@ services:
 
       # Campsite integration (OAuth / SSO etc.)
       MEGA_OAUTH__CAMPSITE_API_DOMAIN: ${MEGA_OAUTH__CAMPSITE_API_DOMAIN:-http://campsite_api:8080}
+      MEGA_OAUTH__CAMPSITE_API_SESSION_COOKIE: ${MEGA_OAUTH__CAMPSITE_API_SESSION_COOKIE:-_campsite_api_session}
       MEGA_OAUTH__UI_DOMAIN: ${MEGA_OAUTH__UI_DOMAIN:-http://app.gitmono.local}
       MEGA_OAUTH__COOKIE_DOMAIN: ${MEGA_OAUTH__COOKIE_DOMAIN:-localhost}
       # Note: allowed_cors_origins expects an array format in TOML

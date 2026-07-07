@@ -34,6 +34,7 @@ mod common;
 
 use std::time::Duration;
 
+use ::common::config::DEFAULT_CAMPSITE_API_SESSION_COOKIE;
 use anyhow::{Context, Result};
 use common::*;
 use qlean::{Distro, GuestArch, Image, ImageConfig, MachineConfig, with_machine};
@@ -47,11 +48,11 @@ const CAMPSITE_API_PORT: u16 = 8080;
 
 /// Call Campsite API /v1/users/me endpoint
 async fn call_users_me(vm: &mut qlean::Machine, cookie: &str) -> Result<(u16, Option<Value>)> {
-    // Format cookie with prefix: _campsite_api_session=<value>
+    // Format cookie with prefix: {session_cookie}=<value>
     let cookie_header = if cookie.is_empty() {
         "".to_string()
     } else {
-        format!("_campsite_api_session={}", cookie)
+        format!("{}={}", DEFAULT_CAMPSITE_API_SESSION_COOKIE, cookie)
     };
 
     let cmd = if cookie.is_empty() {

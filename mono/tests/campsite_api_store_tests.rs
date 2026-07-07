@@ -36,13 +36,13 @@
 
 mod common;
 
+use ::common::config::DEFAULT_CAMPSITE_API_SESSION_COOKIE;
 use anyhow::{Context, Result};
 use common::*;
 use qlean::{Distro, GuestArch, Image, ImageConfig, MachineConfig, with_machine};
 use serde_json::Value;
 
 const TEST_COOKIE: &str = "test_session_cookie";
-const CAMPSITE_API_COOKIE_NAME: &str = "_campsite_api_session";
 
 // ============================================================================
 // Test phases - directly calling Campsite API
@@ -54,7 +54,7 @@ async fn call_campsite_api(
     cookie: Option<&str>,
 ) -> Result<(u16, Value)> {
     let cookie_arg = cookie
-        .map(|c| format!("Cookie: {}={}", CAMPSITE_API_COOKIE_NAME, c))
+        .map(|c| format!("Cookie: {}={}", DEFAULT_CAMPSITE_API_SESSION_COOKIE, c))
         .unwrap_or_default();
 
     let cmd = if cookie.is_some() {

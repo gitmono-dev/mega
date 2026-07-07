@@ -12,13 +12,11 @@ use tower_sessions::{
 
 use crate::api::oauth::model::{CampsiteUserJson, LoginUser};
 
-static CAMPSITE_API_COOKIE: &str = "_campsite_api_session";
-
 #[derive(Debug, Clone)]
 pub struct CampsiteApiStore {
     client: Arc<Client>,
-    // cookie_store: Arc<Jar>,
     api_base_url: String,
+    session_cookie: String,
 }
 
 #[async_trait]
@@ -41,11 +39,11 @@ impl SessionStore for CampsiteApiStore {
 }
 
 impl CampsiteApiStore {
-    pub fn session_cookie_name(&self) -> &'static str {
-        CAMPSITE_API_COOKIE
+    pub fn session_cookie_name(&self) -> &str {
+        &self.session_cookie
     }
 
-    pub fn new(api_base_url: String) -> Self {
+    pub fn new(api_base_url: String, session_cookie: String) -> Self {
         let client = Client::builder()
             .no_proxy()
             .build()
@@ -53,6 +51,7 @@ impl CampsiteApiStore {
         Self {
             client: Arc::new(client),
             api_base_url,
+            session_cookie,
         }
     }
 
@@ -68,7 +67,10 @@ impl CampsiteApiStore {
         let resp = self
             .client
             .get(url)
-            .header(COOKIE, format!("{}={}", CAMPSITE_API_COOKIE, cookie_value))
+            .header(
+                COOKIE,
+                format!("{}={}", self.session_cookie_name(), cookie_value),
+            )
             .send()
             .await
             .context("failed to send request to campsite API")?;
