@@ -83,9 +83,12 @@ export async function fetcher<T>(url: string, { method, body, cookies }: Fetcher
   let credentials: RequestCredentials | undefined
 
   if (cookies) {
-    const apiCookie = encodeURIComponent(cookies[CAMPSITE_API_SESSION_COOKIE])
+    const sessionCookie = cookies[CAMPSITE_API_SESSION_COOKIE]
+    if (sessionCookie) {
+      const apiCookie = encodeURIComponent(sessionCookie)
 
-    headers.append('Cookie', `${CAMPSITE_API_SESSION_COOKIE}=${apiCookie}`)
+      headers.append('Cookie', `${CAMPSITE_API_SESSION_COOKIE}=${apiCookie}`)
+    }
   } else {
     credentials = 'include'
   }

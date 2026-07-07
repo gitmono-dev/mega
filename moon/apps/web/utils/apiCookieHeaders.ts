@@ -7,8 +7,9 @@ export const SsrSecretHeader: Record<string, string> = { 'x-campsite-ssr-secret'
 export function apiCookieHeaders(cookies: NextApiRequestCookies) {
   let headers: Record<string, string> = {}
 
-  if (cookies[CAMPSITE_API_SESSION_COOKIE]) {
-    const apiCookie = encodeURIComponent(cookies[CAMPSITE_API_SESSION_COOKIE])
+  const sessionCookie = cookies[CAMPSITE_API_SESSION_COOKIE]
+  if (sessionCookie) {
+    const apiCookie = encodeURIComponent(sessionCookie)
 
     headers['Cookie'] = `${CAMPSITE_API_SESSION_COOKIE}=${apiCookie}`
   }

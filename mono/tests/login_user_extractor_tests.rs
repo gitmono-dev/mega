@@ -34,9 +34,9 @@ mod common;
 
 use std::time::Duration;
 
+use ::common::config::DEFAULT_CAMPSITE_API_SESSION_COOKIE;
 use anyhow::{Context, Result};
 use common::*;
-use common::config::DEFAULT_CAMPSITE_API_SESSION_COOKIE;
 use qlean::{Distro, GuestArch, Image, ImageConfig, MachineConfig, with_machine};
 use serde_json::Value;
 

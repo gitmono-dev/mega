@@ -36,12 +36,11 @@
 
 mod common;
 
+use ::common::config::DEFAULT_CAMPSITE_API_SESSION_COOKIE;
 use anyhow::{Context, Result};
 use common::*;
 use qlean::{Distro, GuestArch, Image, ImageConfig, MachineConfig, with_machine};
 use serde_json::Value;
-
-use common::config::DEFAULT_CAMPSITE_API_SESSION_COOKIE;
 
 const TEST_COOKIE: &str = "test_session_cookie";
 
