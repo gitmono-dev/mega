@@ -25,6 +25,7 @@
         "SENTRY_ORG",
         "SENTRY_PROJECT",
         "SSR_SECRET",
+        "CAMPSITE_API_SESSION_COOKIE",
         "TIPTAP_PRIVATE_REGISTRY_KEY",
         "VERCEL_GIT_COMMIT_SHA"
       ]
