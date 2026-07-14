@@ -5639,6 +5639,7 @@ export type ReviewersResponse = {
 }
 
 export type RunnerStatusResponse = {
+  domain?: string | null
   error?: string | null
   log_file?: string | null
   phase: string
@@ -5722,10 +5723,13 @@ export type StartRunnerRequest = {
   image_memory_mb?: number | null
   image_path?: string | null
   image_url?: string | null
+  /** Force recreate when a Running VM already exists for this domain */
+  replace?: boolean
   target?: string | null
 }
 
 export type StartRunnerResponse = {
+  domain?: string | null
   phase: string
   vm_id: string
 }

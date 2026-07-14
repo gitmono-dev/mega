@@ -14,15 +14,16 @@ use tokio::signal::{ctrl_c, unix::SignalKind};
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-/// Gracefully shutdown VM and clear state on service termination signals.
+/// Gracefully shutdown all tracked VMs on service termination signals.
 ///
 /// Acquires the update lock with a short timeout so a slow in-flight
 /// `/webhook` can't keep us racing forever (systemd would eventually
-/// SIGKILL us and leave an orphan qemu). When the lock can't be taken
-/// in time, we still proceed and rely on the pkill safety net below
-/// to reap any qemu processes the racing create may have spawned.
-async fn shutdown_vm(state: &AppState) {
-    tracing::info!("[shutdown] Initiating VM shutdown");
+/// SIGKILL us and leave orphan qemu). When the lock can't be taken
+/// in time, we still proceed and rely on the run-dir qemu reap below
+/// for processes that escaped tracking (no host-wide `pkill`, so other
+/// domains / other schedulers on the same host are not touched).
+async fn shutdown_all_vms(state: &AppState) {
+    tracing::info!("[shutdown] Initiating shutdown of all VMs");
 
     let _guard = state
         .try_lock_update(std::time::Duration::from_secs(10))
@@ -30,36 +31,32 @@ async fn shutdown_vm(state: &AppState) {
     if _guard.is_none() {
         tracing::warn!(
             "[shutdown] timed out waiting for update lock; \
-             proceeding and relying on pkill safety net"
+             proceeding with tracked machines and run-dir reap"
         );
     }
 
-    if let Some(machine) = state.get_machine().await {
-        tracing::info!("[shutdown] VM found, calling shutdown...");
-        match machine.shutdown().await {
-            Ok(_) => tracing::info!("[shutdown] VM shutdown completed successfully"),
-            Err(e) => tracing::error!("[shutdown] VM shutdown failed: {}", e),
-        }
+    let machines = state.take_all_machines().await;
+    if machines.is_empty() {
+        tracing::info!("[shutdown] No tracked VMs");
     } else {
-        tracing::info!("[shutdown] No VM running");
-    }
-    state.clear_vm().await;
-
-    // Reap any qemu process that escaped tracking — racing creates whose
-    // KeepAliveMachine never made it into `state`, or processes left over
-    // from a previous crashed run. Matches the same pattern we run at
-    // startup so the next run begins clean even if SIGKILL hits us next.
-    let pkill = tokio::process::Command::new("pkill")
-        .args(["-9", "-f", "qemu-system-x86"])
-        .output()
-        .await;
-    match pkill {
-        Ok(out) if out.status.success() => {
-            tracing::warn!("[shutdown] pkill reaped leftover qemu process(es)");
+        for (info, machine) in machines {
+            tracing::info!(
+                "[shutdown] Shutting down {} (domain={})",
+                info.id,
+                info.domain
+            );
+            match machine.shutdown().await {
+                Ok(_) => tracing::info!("[shutdown] {} shut down OK", info.id),
+                Err(e) => tracing::error!("[shutdown] {} failed: {}", info.id, e),
+            }
         }
-        Ok(_) => tracing::info!("[shutdown] pkill found no leftover qemu"),
-        Err(e) => tracing::error!("[shutdown] pkill failed: {e}"),
     }
+
+    // Reap any qemu that escaped tracking — racing creates whose
+    // KeepAliveMachine never made it into `state`, or processes left over
+    // from a previous crashed run. Scoped to this process's qlean runs/
+    // (via qemu.pid), not a host-wide pkill.
+    vm_cleanup::reap_qemu_from_runs().await;
 
     // Disk-side cleanup: even if Machine::drop ran, racing/aborted creates
     // can have left ~0.5–3 GB of overlay/seed on disk. Sweep here so we
@@ -81,16 +78,14 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("Starting orion-scheduler service");
 
-    // Cleanup any residual processes from previous runs, then sweep their
-    // on-disk run directories. The pkill alone can leave 0.5–3 GB per VM
-    // behind under ~/.local/share/qlean/runs/ because qlean only deletes
-    // those dirs from `Machine::drop`, which never runs on SIGKILL/abort.
-    tracing::info!("[startup] Checking for residual QEMU processes");
-    tokio::process::Command::new("pkill")
-        .args(["-9", "-f", "qemu-system-x86"])
-        .output()
-        .await
-        .ok();
+    // Cleanup residual qemu from previous runs (scoped to this XDG data tree),
+    // then sweep on-disk run dirs. Unlike the old host-wide `pkill -f qemu`,
+    // this only touches pids recorded under ~/.local/share/qlean/runs/ so
+    // concurrent VMs owned by other domains/processes are not killed. qlean
+    // only deletes those dirs from `Machine::drop`, which never runs on
+    // SIGKILL/abort — leftover overlays are ~0.5–3 GB each.
+    tracing::info!("[startup] Reaping stale qemu from qlean runs/");
+    vm_cleanup::reap_qemu_from_runs().await;
     vm_cleanup::sweep_stale_runs().await;
 
     // Load target configuration.
@@ -118,8 +113,9 @@ async fn main() -> anyhow::Result<()> {
     let config = config::Config::load(&config_path).await?;
     let config = Arc::new(tokio::sync::RwLock::new(config));
     tracing::info!(
-        "[startup] Config loaded, default_image path: {}",
-        config.read().await.default_image().image_path
+        "[startup] Config loaded, default_image path: {}, max_vms: {:?}",
+        config.read().await.default_image().image_path,
+        config.read().await.max_vms()
     );
 
     // Create shared state
@@ -137,6 +133,7 @@ async fn main() -> anyhow::Result<()> {
         )
         .route("/health", axum::routing::get(handlers::health_handler))
         .route("/status", axum::routing::get(handlers::status_handler))
+        .route("/vms/{id}", axum::routing::get(handlers::vm_by_id_handler))
         .route(
             "/logs/orion/stream",
             axum::routing::get(handlers::logs_stream_handler),
@@ -150,6 +147,10 @@ async fn main() -> anyhow::Result<()> {
             axum::routing::get(handlers::scorpio_config_handler),
         )
         .route("/shutdown", axum::routing::post(handlers::shutdown_handler))
+        .route(
+            "/shutdown/all",
+            axum::routing::post(handlers::shutdown_all_handler),
+        )
         .layer(
             CorsLayer::new()
                 .allow_origin(Any)
@@ -158,13 +159,13 @@ async fn main() -> anyhow::Result<()> {
         )
         .with_state(state.clone());
 
-    // Start server
-    let addr = "0.0.0.0:8080";
+    // Start server (`LISTEN_ADDR` overrides the default for multi-process setups)
+    let addr = std::env::var("LISTEN_ADDR").unwrap_or_else(|_| "0.0.0.0:8080".to_string());
     tracing::info!("[startup] Listening on {}", addr);
 
-    let listener = tokio::net::TcpListener::bind(addr).await?;
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
 
-    // Handle termination signals: stop VM and server
+    // Handle termination signals: stop all tracked VMs and the server
     let term_shutdown_state = state.clone();
     let term_shutdown_signal = async move {
         if let Some(()) = tokio::signal::unix::signal(SignalKind::terminate())
@@ -173,7 +174,7 @@ async fn main() -> anyhow::Result<()> {
             .await
         {
             tracing::info!("[shutdown] Received SIGTERM");
-            shutdown_vm(&term_shutdown_state).await;
+            shutdown_all_vms(&term_shutdown_state).await;
         }
     };
 
@@ -185,23 +186,23 @@ async fn main() -> anyhow::Result<()> {
             .await
         {
             tracing::info!("[shutdown] Received SIGQUIT");
-            shutdown_vm(&quit_shutdown_state).await;
+            shutdown_all_vms(&quit_shutdown_state).await;
         }
     };
 
-    // Handle Ctrl+C: stop VM and server
+    // Handle Ctrl+C: stop all tracked VMs and the server
     let ctrl_c_shutdown_state = state.clone();
     let ctrl_c_signal = async move {
         match ctrl_c().await {
             Ok(()) => {
                 tracing::info!("[shutdown] Received SIGINT (Ctrl+C)");
-                shutdown_vm(&ctrl_c_shutdown_state).await;
+                shutdown_all_vms(&ctrl_c_shutdown_state).await;
             }
             Err(e) => tracing::error!("[shutdown] Ctrl+C handler error: {}", e),
         }
     };
 
-    tracing::info!("[startup] Server running. Use /shutdown to stop VM only");
+    tracing::info!("[startup] Server running. Use /shutdown?domain=… to stop one VM");
     axum::serve(listener, app)
         .with_graceful_shutdown(async {
             tokio::select! {

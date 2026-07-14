@@ -5,6 +5,9 @@ use utoipa::ToSchema;
 pub struct StartRunnerRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target: Option<String>,
+    /// Force recreate when a Running VM already exists for this mono's domain.
+    #[serde(default)]
+    pub replace: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub image_path: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -23,12 +26,16 @@ pub struct StartRunnerRequest {
 pub struct StartRunnerResponse {
     pub vm_id: String,
     pub phase: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub domain: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct RunnerStatusResponse {
     pub vm_id: String,
     pub phase: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub domain: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub vm_ip: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

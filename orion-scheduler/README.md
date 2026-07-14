@@ -4,12 +4,13 @@ Orion Scheduler 是一个常驻运行的服务，负责接收来自 GitHub Actio
 
 ```mermaid
 flowchart LR
-    GHA["GitHub Actions"] -->|"POST /webhook"| Sched["orion-scheduler<br/>(axum HTTP server)"]
-    Sched -->|"qlean"| VM["microVM<br/>(KVM, custom image)"]
-    Sched -->|"SFTP"| VM
-    Sched -->|"SSH exec"| VM
-    User["开发者 / 监控"] -->|"GET /status<br/>/logs/orion/*<br/>/scorpio/*"| Sched
+    Mono["mono / GHA"] -->|"POST /webhook"| Sched["orion-scheduler"]
+    Sched -->|"qlean"| VMa["microVM domain A"]
+    Sched -->|"qlean"| VMb["microVM domain B"]
+    User["开发者 / 监控"] -->|"GET /status<br/>GET /vms/{id}"| Sched
 ```
+
+单进程可同时托管**多台 VM**，唯一性由 `server_ws` 的**主机名（domain）**决定：同一 domain 最多一台；不同 domain 互不踢掉。
 
 ---
 
@@ -35,6 +36,7 @@ flowchart LR
   "orion_source_dir": "/home/user/mega/orion",
   "orion_binary_path": "/home/user/mega/target/debug/orion",
   "ssh_public_key_path": "~/.ssh/orion_vm_access.pub",
+  "max_vms": 8,
   "default_image": {
     "image_path": "~/.local/share/qlean/images/debian-13-buck2/debian-13-buck2.qcow2",
     "image_digest": "sha256:753c28888c9d30fe4baef55c1d1dfa9a39431595eca940b7ad85d78d84f3d7a5",
@@ -44,6 +46,8 @@ flowchart LR
   }
 }
 ```
+
+可选 `max_vms`：并发 VM 上限（按 domain 计数）；省略则不限制。
 
 配置文件路径可通过 `CONFIG_PATH` 环境变量指定（默认：`target_config.json`）。
 
@@ -61,8 +65,8 @@ sequenceDiagram
     participant VM as microVM
 
     CI->>SC: POST /webhook { server_ws, scorpio_* }
-    SC->>SC: merge image params with default_image
-    SC->>Q: 已有运行中 VM? 先关闭
+    SC->>SC: domain = host(server_ws); 冲突/幂等检查
+    SC->>Q: 仅关闭同 domain 旧 VM（若 replace/Failed）
     SC->>Q: KeepAliveMachine::new(custom_image)
     Q->>VM: 启动 QEMU + cloud-init
     SC->>VM: 注入 SSH 公钥 (orion_vm_access.pub)
@@ -71,13 +75,21 @@ sequenceDiagram
     SC->>VM: systemctl start orion-runner
     VM-->>SC: journalctl 初始日志
     SC->>SC: 写入 log_dir
-    SC-->>CI: 202 { vm_id, status: provisioning }
-    Note over SC,VM: VM 保持运行<br/>支持后续日志查询
-    CI->>SC: GET /status (poll)
-    SC-->>CI: { phase: running, vm_ip, ... }
+    SC-->>CI: 202 { vm_id, domain, status: provisioning }
+    Note over SC,VM: 该 domain 的 VM 保持运行；其他 domain 不受影响
+    CI->>SC: GET /vms/{vm_id} 或 GET /status?domain=
+    SC-->>CI: { phase: running, domain, vm_ip, ... }
 ```
 
-默认 **异步** 模式：`POST /webhook` 立即返回 `202 Accepted` 与 `vm_id`，后台执行部署；客户端轮询 `GET /status` 直至 `phase=running`。
+默认 **异步** 模式：`POST /webhook` 立即返回 `202 Accepted` 与 `vm_id` + `domain`，后台执行部署；客户端轮询 `GET /vms/{id}` 或 `GET /status?domain=` 直至 `phase=running`。
+
+**同 domain 再次启动**：
+
+| 当前状态 | 行为 |
+|----------|------|
+| 无 / Failed | 允许新建（Failed 覆盖） |
+| Provisioning | `409 Conflict`，返回现有 `vm_id` |
+| Running | 幂等 `200`，返回现有 `vm_id`；`replace: true` 时强制重建 |
 
 GHA 等需同步等待的调用方可传 `"sync": true` 保留旧行为（阻塞至完成，返回 `200`）。
 
@@ -95,12 +107,14 @@ Admin 用户通过 Mega UI Orion Client 页调用 mono `POST /api/v1/orion/runne
 | ---- | -------------------- | ------------------------------------------------- | ----------------------------------------------- |
 | GET  | `/health`            | 服务健康检查                                            | `{ "status": "healthy", ... }`                  |
 | GET  | `/webhook`           | Webhook 端点连通性检查                                   | `{ "status": "ok", "vm_id": null, ... }`        |
-| POST | `/webhook`           | 触发部署，详见下方参数说明                                     | 默认 `202 { "status": "provisioning", "vm_id" }`；`sync: true` 时 `200 { "status": "ok", "vm_id", "orion_log_file" }` |
-| GET  | `/status`            | 当前虚拟机状态                                           | `{ "phase": "provisioning"|"running"|"failed"|"no_vm", "vm_id", "vm_ip", "error", ... }` |
-| GET  | `/logs/orion/stream` | SSE 流式推送，每 2 秒推送新增日志                              | `text/event-stream`                             |
-| GET  | `/scorpio/status`    | Scorpio FUSE 挂载点、目录、进程状态                          | JSON                                            |
-| GET  | `/scorpio/config`    | 直接读取 VM 内 `/home/orion/orion-runner/scorpio.toml` | `{ "path", "content" }`                         |
-| POST | `/shutdown`          | 仅关闭虚拟机，服务进程保持运行                                   | `{ "status": "ok", "message" }`                 |
+| POST | `/webhook`           | 触发部署（按 `server_ws` 域名唯一）                         | 默认 `202 { provisioning, vm_id, domain }`；Running 幂等 `200`；Provisioning `409` |
+| GET  | `/status`            | 所有 VM 列表；可选 `?domain=` / `?vm_id=`               | `{ "count", "vms": [...] }` 或单机摘要              |
+| GET  | `/vms/{id}`          | 按 vm_id 查询单台                                       | `{ phase, domain, vm_ip, ... }` / 404           |
+| GET  | `/logs/orion/stream` | SSE 日志；需 `?domain=` 或 `?vm_id=`（多 VM 时）          | `text/event-stream`                             |
+| GET  | `/scorpio/status`    | Scorpio 状态；可选 `?domain=` / `?vm_id=`              | JSON                                            |
+| GET  | `/scorpio/config`    | 读取 scorpio.toml；可选选择器                             | `{ "path", "content" }`                         |
+| POST | `/shutdown`          | **必须** `?domain=` 或 `?vm_id=`                     | `{ "status": "ok", "domain" }`                  |
+| POST | `/shutdown/all`      | 关闭全部跟踪中的 VM                                      | `{ "status": "ok" }`                            |
 
 ### POST /webhook 请求体
 
@@ -122,6 +136,7 @@ curl -X POST http://localhost:8080/webhook \
 | `target`          | string | 否    | 仅作日志标签（已废弃查表，GHA 可逐步移除）                              |
 | `action`          | string | 否    | GitHub Actions 事件类型，仅作日志记录                               |
 | `sync`            | bool   | 否    | 为 `true` 时同步阻塞至部署完成（默认 `false`，立即 202 返回）              |
+| `replace`         | bool   | 否    | Running 状态下为 `true` 时强制重建（默认幂等返回已有实例）                 |
 | `image_path`      | string | 否    | 本地 qcow2 镜像路径；未指定时使用 `default_image.image_path`           |
 | `image_url`       | string | 否    | 远程 HTTPS URL                                             |
 | `image_digest`    | string | 条件必填 | 镜像 SHA256/SHA512 校验和，提供 `image_path` 或 `image_url` 时必须指定 |
@@ -221,6 +236,7 @@ sudo bash scripts/build-custom-image.sh
 | `orion_source_dir`    | string | 无默认值（必填）                   | Orion 源码目录（含 runner-config、systemd） |
 | `orion_binary_path`   | string | 无默认值（必填）                   | Orion 二进制文件路径                       |
 | `ssh_public_key_path` | string | 无默认值（必填）                   | SSH 公钥路径                            |
+| `max_vms`             | u32    | 无（不限制）                     | 同时跟踪的 domain/VM 上限；超出新 domain 返回 503 |
 | `default_image`       | object | 见模板                          | 默认 VM 镜像参数；webhook 未传 `image_*` 时使用 |
 
 ### `default_image`
@@ -244,12 +260,12 @@ orion-scheduler/
 ├── src/
 │   ├── main.rs                # axum 入口 + 信号处理
 │   ├── handlers.rs            # HTTP 端点 + 日志格式化
-│   ├── state.rs               # AppState：VM info + KeepAliveMachine
-│   ├── config.rs              # 读取/解析 target_config.json
+│   ├── state.rs               # AppState：按 domain 的 HashMap + KeepAliveMachine
+│   ├── config.rs              # 读取/解析 target_config.json（含 max_vms）
 │   ├── keep_alive.rs          # qlean::Machine 持久化包装
-│   ├── orion_deployer.rs      # handle_update 编排（webhook 主流程）
+│   ├── orion_deployer.rs      # handle_update 编排（按 domain 隔离）
 │   ├── vm_manager.rs          # SFTP 上传、sed 环境变量替换、systemctl 启停
-│   └── vm_cleanup.rs          # qlean runs 目录泄漏清理
+│   └── vm_cleanup.rs          # 按 runs/qemu.pid 回收（无全局 pkill）
 ├── scripts/
 │   └── build-custom-image.sh  # chroot 离线预装 + qcow2 压缩 + 发布
 ├── .github/workflows/
@@ -267,25 +283,29 @@ orion-scheduler/
 
 | 信号 / 动作                    | VM  | 服务进程     | 说明                     |
 | -------------------------- | --- | -------- | ---------------------- |
-| `Ctrl+C` / SIGINT          | 关闭  | 退出       | 优雅关闭                   |
-| SIGTERM                    | 关闭  | 退出       | 同上                     |
-| SIGQUIT                    | 关闭  | 退出       | 同上                     |
-| `POST /shutdown`           | 关闭  | **保持运行** | 仅回收虚拟机                 |
-| `pkill -9 orion-scheduler` | 残留  | 强制终止     | 不优雅关闭，虚拟机将变为孤儿进程，需手动清理 |
+| `Ctrl+C` / SIGINT          | **全部**关闭  | 退出       | 关停所有跟踪中的 domain VM，再退出 |
+| SIGTERM / SIGQUIT          | **全部**关闭  | 退出       | 同上                     |
+| `POST /shutdown?domain=`   | **一台**关闭  | **保持运行** | 必须带 `domain` 或 `vm_id` |
+| `POST /shutdown/all`       | **全部**关闭  | **保持运行** | 运维用                      |
+| `pkill -9 orion-scheduler` | 可能残留  | 强制终止     | 不优雅关闭；孤儿 qemu 需手动清理或下次启动 `reap_qemu_from_runs` |
 
 | 环境变量          | 默认                   | 说明                      |
 | ------------- | -------------------- | ----------------------- |
-| `CONFIG_PATH` | `target_config.json` | 配置文件路径                  |
+| `CONFIG_PATH` | 自动探测 / `target_config.json` | 配置文件路径；见 `config::default_config_path` |
+| `LISTEN_ADDR` | `0.0.0.0:8080`       | HTTP 监听地址（同机多进程时可覆盖）     |
 | `RUST_LOG`    | `info`               | tracing 日志级别，常用 `debug` |
+| `XDG_DATA_HOME` | `~/.local/share`   | qlean `runs/` / `images/` 根目录；多进程隔离时可分目录 |
 
 ---
 
 ## 调试与 SSH 进入 VM
 
-部署完成后从 `/status` 获取 `vm_ip`，使用构建脚本预装的 SSH 密钥登录：
+部署完成后从 `GET /status` 或 `GET /vms/{id}` 获取 `vm_ip`，使用构建脚本预装的 SSH 密钥登录：
 
 ```bash
-ssh -i ~/.ssh/orion_vm_access root@<vm_ip>
+VM_IP=$(curl -s 'http://localhost:8080/status?domain=orion.gitmega.com' | jq -r .vm_ip)
+# 或：curl -s http://localhost:8080/status | jq -r '.vms[0].vm_ip'
+ssh -i ~/.ssh/orion_vm_access root@$VM_IP
 ```
 
 完整调试流程参见 `[TESTING.md](TESTING.md)`。
@@ -368,7 +388,7 @@ sudo journalctl -u orion-scheduler -f
 | 回滚       | 下载旧版本 tarball → 同上                                                                                    |
 | 检查当前版本   | `cat /opt/orion-scheduler/bin/orion-scheduler --version`（若启用了 clap version）或 `cat ~/.../VERSION`（解压后） |
 | 停服并保留 VM | `sudo systemctl stop orion-scheduler`；VM 不会被关闭                                                        |
-| 完全停服     | 先 `POST /shutdown` 关闭 VM，再 `systemctl stop`                                                           |
+| 完全停服     | 先 `POST /shutdown/all`（或逐台 `?domain=`）关闭 VM，再 `systemctl stop`                                                           |
 
 > **注意**：必须从 Linux x86_64 host 上跑。orion-scheduler 通过 `qlean` 依赖 `kvm-ioctls`，不可在 macOS / ARM64 上运行。
 

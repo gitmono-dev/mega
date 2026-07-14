@@ -13,4 +13,5 @@ common = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }
 anyhow = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 tracing = { workspace = true }
