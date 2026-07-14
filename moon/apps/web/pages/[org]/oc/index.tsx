@@ -213,12 +213,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
                   </UIText>
                 ) : null}
                 {runnerStatus?.phase === 'failed' ? (
-                  <Button
-                    variant='primary'
-                    size='sm'
-                    className='mt-1 w-fit'
-                    onClick={() => handleStartRunner(true)}
-                  >
+                  <Button variant='primary' size='sm' className='mt-1 w-fit' onClick={() => handleStartRunner(true)}>
                     Retry
                   </Button>
                 ) : null}

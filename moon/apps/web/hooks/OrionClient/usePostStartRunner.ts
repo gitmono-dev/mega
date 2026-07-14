@@ -18,13 +18,9 @@ export function usePostStartRunner() {
     },
     onSuccess: (data) => {
       if (data.phase === 'running') {
-        toast.success(
-          data.domain ? `Runner already running (${data.domain})` : 'Runner already running'
-        )
+        toast.success(data.domain ? `Runner already running (${data.domain})` : 'Runner already running')
       } else {
-        toast.success(
-          data.domain ? `Runner provisioning started (${data.domain})` : 'Runner provisioning started'
-        )
+        toast.success(data.domain ? `Runner provisioning started (${data.domain})` : 'Runner provisioning started')
       }
     },
     onError: (error) => {
