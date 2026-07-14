@@ -59,7 +59,8 @@ impl OrionSchedulerHttpClient {
         let res = self.auth_headers(req).send().await?;
         let status = res.status();
         let body: StartRunnerSchedulerResponse = res.json().await?;
-        if status.is_success() || status.as_u16() == 202 {
+        // 200 OK (idempotent), 202 Accepted (provisioning), 409 Conflict
+        if status.is_success() || status.as_u16() == 202 || status.as_u16() == 409 {
             Ok(body)
         } else {
             Err(anyhow::anyhow!(
@@ -70,12 +71,56 @@ impl OrionSchedulerHttpClient {
         }
     }
 
+    pub async fn get_vm_status(&self, vm_id: &str) -> anyhow::Result<SchedulerStatusResponse> {
+        let url = format!("{}/vms/{}", self.base_url, vm_id);
+        let req = self.client.get(&url).timeout(Duration::from_secs(30));
+        let res = self.auth_headers(req).send().await?;
+        let status = res.status();
+        if status.as_u16() == 404 {
+            return Ok(SchedulerStatusResponse {
+                status: "no_vm".to_string(),
+                phase: Some("no_vm".to_string()),
+                vm_id: Some(vm_id.to_string()),
+                domain: None,
+                vm_ip: None,
+                uptime_secs: None,
+                log_file: None,
+                error: Some("VM not found".to_string()),
+            });
+        }
+        if status.is_success() {
+            Ok(res.json().await?)
+        } else {
+            Err(anyhow::anyhow!(
+                "Scheduler get_vm_status failed: {}",
+                status
+            ))
+        }
+    }
+
     pub async fn get_status(&self) -> anyhow::Result<SchedulerStatusResponse> {
         let url = format!("{}/status", self.base_url);
         let req = self.client.get(&url).timeout(Duration::from_secs(30));
         let res = self.auth_headers(req).send().await?;
         if res.status().is_success() {
-            Ok(res.json().await?)
+            // List form — not used by mono GET by id path anymore.
+            let v: serde_json::Value = res.json().await?;
+            if let Some(vms) = v.get("vms").and_then(|x| x.as_array()) {
+                if let Some(first) = vms.first() {
+                    return Ok(serde_json::from_value(first.clone())?);
+                }
+                return Ok(SchedulerStatusResponse {
+                    status: "no_vm".to_string(),
+                    phase: Some("no_vm".to_string()),
+                    vm_id: None,
+                    domain: None,
+                    vm_ip: None,
+                    uptime_secs: None,
+                    log_file: None,
+                    error: None,
+                });
+            }
+            Ok(serde_json::from_value(v)?)
         } else {
             Err(anyhow::anyhow!(
                 "Scheduler get_status failed: {}",

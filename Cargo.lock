@@ -5529,6 +5529,7 @@ dependencies = [
  "tower-http 0.7.0",
  "tracing",
  "tracing-subscriber",
+ "url",
 ]
 
 [[package]]
@@ -5539,6 +5540,7 @@ dependencies = [
  "common",
  "reqwest 0.13.4",
  "serde",
+ "serde_json",
  "tracing",
 ]
 

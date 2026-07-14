@@ -47,6 +47,8 @@ pub struct Config {
     orion_binary_path: String,
     ssh_public_key_path: String,
     default_image: DefaultImageConfig,
+    /// Max concurrent VMs (by domain). `None` = unlimited.
+    max_vms: Option<usize>,
 }
 
 /// Expand a leading `~` or `~/` to `$HOME`. Other paths are returned unchanged.
@@ -80,6 +82,7 @@ impl Config {
             orion_binary_path,
             ssh_public_key_path,
             default_image,
+            max_vms: None,
         }
     }
 
@@ -123,6 +126,7 @@ impl Config {
             orion_binary_path,
             ssh_public_key_path,
             default_image: parsed.default_image.unwrap_or_default(),
+            max_vms: parsed.max_vms,
         })
     }
 
@@ -144,6 +148,10 @@ impl Config {
 
     pub fn default_image(&self) -> &DefaultImageConfig {
         &self.default_image
+    }
+
+    pub fn max_vms(&self) -> Option<usize> {
+        self.max_vms
     }
 }
 
@@ -195,6 +203,8 @@ struct ConfigFile {
     ssh_public_key_path: Option<String>,
     #[serde(default)]
     default_image: Option<DefaultImageConfig>,
+    #[serde(default)]
+    max_vms: Option<usize>,
 }
 
 pub type SharedConfig = Arc<RwLock<Config>>;

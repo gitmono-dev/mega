@@ -4,7 +4,7 @@ use std::{
 };
 
 use axum::{
-    extract::State,
+    extract::{Path, Query, State},
     http::StatusCode,
     response::{
         IntoResponse, Json,
@@ -17,7 +17,7 @@ use tokio::time::interval;
 use crate::{
     config::{DefaultImageConfig, TargetConfig},
     orion_deployer,
-    state::AppState,
+    state::{AppState, VmPhase},
     vm_cleanup,
 };
 
@@ -36,6 +36,10 @@ pub struct ImageParams {
 pub struct WebhookResponse {
     pub status: String,
     pub vm_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub domain: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub phase: Option<String>,
     pub error: Option<String>,
     /// Path to the log file (not the contents)
     pub orion_log_file: Option<String>,
@@ -50,6 +54,9 @@ pub struct GithubWebhookPayload {
     /// When true, block until VM provisioning completes (legacy GHA behavior).
     #[serde(default)]
     pub sync: bool,
+    /// Force recreate when a Running VM exists for the same domain.
+    #[serde(default)]
+    pub replace: bool,
     pub server_ws: String,
     pub scorpio_base_url: String,
     pub scorpio_lfs_url: String,
@@ -118,6 +125,7 @@ mod merge_tests {
             action: None,
             target: None,
             sync: false,
+            replace: false,
             server_ws: "ws://orion.test/ws".into(),
             scorpio_base_url: "http://git.test".into(),
             scorpio_lfs_url: "http://git.test".into(),
@@ -144,6 +152,7 @@ mod merge_tests {
             action: None,
             target: None,
             sync: false,
+            replace: false,
             server_ws: "ws://orion.test/ws".into(),
             scorpio_base_url: "http://git.test".into(),
             scorpio_lfs_url: "http://git.test".into(),
@@ -165,24 +174,45 @@ pub async fn webhook_get_handler() -> Json<WebhookResponse> {
     Json(WebhookResponse {
         status: "ok".to_string(),
         vm_id: None,
+        domain: None,
+        phase: None,
         error: None,
         orion_log_file: None,
     })
 }
 
-/// POST /webhook - receives update requests from GitHub Actions
+fn vm_json(vm: &crate::state::VmInfo) -> serde_json::Value {
+    let phase = vm.phase.as_str();
+    let uptime_secs = if vm.phase == VmPhase::Running {
+        Some(vm.created_at.elapsed().as_secs())
+    } else {
+        None
+    };
+    serde_json::json!({
+        "status": phase,
+        "phase": phase,
+        "vm_id": vm.id,
+        "domain": vm.domain,
+        "target": vm.target,
+        "vm_ip": vm.ip,
+        "uptime_secs": uptime_secs,
+        "log_file": vm.log_file,
+        "error": vm.error
+    })
+}
+
+/// POST /webhook - receives update requests (async by default; one VM per server_ws domain).
 pub async fn webhook_post_handler(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<GithubWebhookPayload>,
 ) -> impl IntoResponse {
     tracing::info!(
-        "Received webhook: action={:?}, target={:?}, sync={}, server_ws={}, scorpio_base_url={}, scorpio_lfs_url={}",
+        "Received webhook: action={:?}, target={:?}, sync={}, replace={}, server_ws={}",
         payload.action,
         payload.target,
         payload.sync,
+        payload.replace,
         payload.server_ws,
-        payload.scorpio_base_url,
-        payload.scorpio_lfs_url
     );
 
     if let Err(e) = orion_deployer::validate_runner_env(
@@ -191,13 +221,92 @@ pub async fn webhook_post_handler(
         &payload.scorpio_lfs_url,
     ) {
         tracing::error!("Invalid runner env: {:?}", e);
-        let response = WebhookResponse {
-            status: "error".to_string(),
-            vm_id: None,
-            error: Some(e.to_string()),
-            orion_log_file: None,
-        };
-        return (StatusCode::BAD_REQUEST, Json(response)).into_response();
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(WebhookResponse {
+                status: "error".to_string(),
+                vm_id: None,
+                domain: None,
+                phase: None,
+                error: Some(e.to_string()),
+                orion_log_file: None,
+            }),
+        )
+            .into_response();
+    }
+
+    let domain = match orion_deployer::domain_from_server_ws(&payload.server_ws) {
+        Ok(d) => d,
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(WebhookResponse {
+                    status: "error".to_string(),
+                    vm_id: None,
+                    domain: None,
+                    phase: None,
+                    error: Some(e.to_string()),
+                    orion_log_file: None,
+                }),
+            )
+                .into_response();
+        }
+    };
+
+    // Conflict / idempotency checks (hold update lock briefly).
+    {
+        let _guard = state.lock_update().await;
+        if let Some(existing) = state.get_vm_by_domain(&domain).await {
+            match existing.phase {
+                VmPhase::Provisioning => {
+                    return (
+                        StatusCode::CONFLICT,
+                        Json(WebhookResponse {
+                            status: "conflict".to_string(),
+                            vm_id: Some(existing.id.clone()),
+                            domain: Some(domain),
+                            phase: Some(existing.phase.as_str().to_string()),
+                            error: Some("VM already provisioning for this domain".to_string()),
+                            orion_log_file: existing.log_file.clone(),
+                        }),
+                    )
+                        .into_response();
+                }
+                VmPhase::Running if !payload.replace => {
+                    return (
+                        StatusCode::OK,
+                        Json(WebhookResponse {
+                            status: "ok".to_string(),
+                            vm_id: Some(existing.id.clone()),
+                            domain: Some(domain),
+                            phase: Some(existing.phase.as_str().to_string()),
+                            error: None,
+                            orion_log_file: existing.log_file.clone(),
+                        }),
+                    )
+                        .into_response();
+                }
+                VmPhase::Running | VmPhase::Failed => {
+                    // replace=true or Failed: allow recreate (handle_update will shut down).
+                }
+            }
+        } else if let Some(max) = state.config.read().await.max_vms() {
+            let count = state.vm_count().await;
+            if count >= max {
+                return (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    Json(WebhookResponse {
+                        status: "error".to_string(),
+                        vm_id: None,
+                        domain: Some(domain),
+                        phase: None,
+                        error: Some(format!("max_vms limit reached ({max})")),
+                        orion_log_file: None,
+                    }),
+                )
+                    .into_response();
+            }
+        }
     }
 
     let default_image = state.config.read().await.default_image().clone();
@@ -214,6 +323,7 @@ pub async fn webhook_post_handler(
         .target
         .clone()
         .unwrap_or_else(|| "webhook".to_string());
+    let domain_for_task = domain.clone();
 
     if payload.sync {
         let state_clone = state.clone();
@@ -222,6 +332,7 @@ pub async fn webhook_post_handler(
             let rt = tokio::runtime::Handle::current();
             rt.block_on(orion_deployer::handle_update(
                 &state_clone,
+                &domain_for_task,
                 &label,
                 &vm_id_clone,
                 target_config,
@@ -233,46 +344,62 @@ pub async fn webhook_post_handler(
         return match result {
             Ok(Ok(_vm_id)) => {
                 tracing::info!("Successfully created VM: {}", _vm_id);
-                let orion_log_file = state.get_vm().await.and_then(|vm| vm.log_file);
-                let response = WebhookResponse {
-                    status: "ok".to_string(),
-                    vm_id: Some(_vm_id),
-                    error: None,
-                    orion_log_file,
-                };
-                (StatusCode::OK, Json(response)).into_response()
+                let orion_log_file = state.get_vm_by_id(&_vm_id).await.and_then(|vm| vm.log_file);
+                (
+                    StatusCode::OK,
+                    Json(WebhookResponse {
+                        status: "ok".to_string(),
+                        vm_id: Some(_vm_id),
+                        domain: Some(domain),
+                        phase: Some("running".to_string()),
+                        error: None,
+                        orion_log_file,
+                    }),
+                )
+                    .into_response()
             }
             Ok(Err(e)) => {
                 tracing::error!("Failed to handle update: {:?}", e);
-                let response = WebhookResponse {
-                    status: "error".to_string(),
-                    vm_id: Some(vm_id),
-                    error: Some(e.to_string()),
-                    orion_log_file: None,
-                };
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(response)).into_response()
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(WebhookResponse {
+                        status: "error".to_string(),
+                        vm_id: Some(vm_id),
+                        domain: Some(domain),
+                        phase: Some("failed".to_string()),
+                        error: Some(e.to_string()),
+                        orion_log_file: None,
+                    }),
+                )
+                    .into_response()
             }
             Err(e) => {
                 tracing::error!("Task join error: {:?}", e);
-                let response = WebhookResponse {
-                    status: "error".to_string(),
-                    vm_id: None,
-                    error: Some(e.to_string()),
-                    orion_log_file: None,
-                };
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(response)).into_response()
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(WebhookResponse {
+                        status: "error".to_string(),
+                        vm_id: None,
+                        domain: Some(domain),
+                        phase: None,
+                        error: Some(e.to_string()),
+                        orion_log_file: None,
+                    }),
+                )
+                    .into_response()
             }
         };
     }
 
-    // Async path: return 202 immediately, provision in background.
     let state_clone = state.clone();
     let vm_id_for_task = vm_id.clone();
+    // Async path: return 202 immediately, provision in background.
     tokio::spawn(async move {
         let result = tokio::task::spawn_blocking(move || {
             let rt = tokio::runtime::Handle::current();
             rt.block_on(orion_deployer::handle_update(
                 &state_clone,
+                &domain_for_task,
                 &label,
                 &vm_id_for_task,
                 target_config,
@@ -288,13 +415,18 @@ pub async fn webhook_post_handler(
         }
     });
 
-    let response = WebhookResponse {
-        status: "provisioning".to_string(),
-        vm_id: Some(vm_id),
-        error: None,
-        orion_log_file: None,
-    };
-    (StatusCode::ACCEPTED, Json(response)).into_response()
+    (
+        StatusCode::ACCEPTED,
+        Json(WebhookResponse {
+            status: "provisioning".to_string(),
+            vm_id: Some(vm_id),
+            domain: Some(domain),
+            phase: Some("provisioning".to_string()),
+            error: None,
+            orion_log_file: None,
+        }),
+    )
+        .into_response()
 }
 
 /// GET /health
@@ -305,31 +437,65 @@ pub async fn health_handler() -> Json<serde_json::Value> {
     }))
 }
 
-/// GET /status
-pub async fn status_handler(State(state): State<Arc<AppState>>) -> Json<serde_json::Value> {
-    match orion_deployer::get_status(&state).await {
-        Some(vm) => {
-            let phase = vm.phase.as_str();
-            let uptime_secs = if vm.phase == crate::state::VmPhase::Running {
-                Some(vm.created_at.elapsed().as_secs())
-            } else {
-                None
-            };
+/// GET /status — list all VMs (optional ?domain= filter).
+#[derive(Debug, Deserialize, Default)]
+pub struct StatusQuery {
+    pub domain: Option<String>,
+    pub vm_id: Option<String>,
+}
+
+pub async fn status_handler(
+    State(state): State<Arc<AppState>>,
+    Query(q): Query<StatusQuery>,
+) -> Json<serde_json::Value> {
+    if let Some(id) = q.vm_id.as_deref() {
+        return match orion_deployer::get_status_by_id(&state, id).await {
+            Some(vm) => Json(vm_json(&vm)),
+            None => Json(serde_json::json!({
+                "status": "no_vm",
+                "phase": "no_vm",
+                "vm_id": id
+            })),
+        };
+    }
+    if let Some(domain) = q.domain.as_deref() {
+        return match orion_deployer::get_status_by_domain(&state, domain).await {
+            Some(vm) => Json(vm_json(&vm)),
+            None => Json(serde_json::json!({
+                "status": "no_vm",
+                "phase": "no_vm",
+                "domain": domain,
+                "vm_id": null
+            })),
+        };
+    }
+
+    let list = orion_deployer::get_status(&state).await;
+    let vms: Vec<_> = list.iter().map(vm_json).collect();
+    Json(serde_json::json!({
+        "status": "ok",
+        "count": vms.len(),
+        "vms": vms
+    }))
+}
+
+/// GET /vms/{id}
+pub async fn vm_by_id_handler(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    match orion_deployer::get_status_by_id(&state, &id).await {
+        Some(vm) => (StatusCode::OK, Json(vm_json(&vm))).into_response(),
+        None => (
+            StatusCode::NOT_FOUND,
             Json(serde_json::json!({
-                "status": phase,
-                "phase": phase,
-                "vm_id": vm.id,
-                "vm_ip": vm.ip,
-                "uptime_secs": uptime_secs,
-                "log_file": vm.log_file,
-                "error": vm.error
-            }))
-        }
-        None => Json(serde_json::json!({
-            "status": "no_vm",
-            "phase": "no_vm",
-            "vm_id": null
-        })),
+                "status": "no_vm",
+                "phase": "no_vm",
+                "vm_id": id,
+                "error": "VM not found"
+            })),
+        )
+            .into_response(),
     }
 }
 
@@ -409,8 +575,18 @@ fn strip_ansi(text: &str) -> String {
 }
 
 /// GET /scorpio/status - Check Scorpio mount status and directories
-pub async fn scorpio_status_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    match orion_deployer::get_scorpio_status(&state).await {
+#[derive(Debug, Deserialize, Default)]
+pub struct VmSelectQuery {
+    pub domain: Option<String>,
+    pub vm_id: Option<String>,
+}
+
+pub async fn scorpio_status_handler(
+    State(state): State<Arc<AppState>>,
+    Query(q): Query<VmSelectQuery>,
+) -> impl IntoResponse {
+    let key = q.domain.or(q.vm_id);
+    match orion_deployer::get_scorpio_status(&state, key.as_deref()).await {
         Ok(status) => (StatusCode::OK, Json(status)).into_response(),
         Err(e) => {
             let response = serde_json::json!({
@@ -423,15 +599,19 @@ pub async fn scorpio_status_handler(State(state): State<Arc<AppState>>) -> impl 
 }
 
 /// GET /scorpio/config - Read scorpio.toml content from VM
-pub async fn scorpio_config_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let machine = match state.get_machine().await {
-        Some(m) => m,
-        None => {
+pub async fn scorpio_config_handler(
+    State(state): State<Arc<AppState>>,
+    Query(q): Query<VmSelectQuery>,
+) -> impl IntoResponse {
+    let key = q.domain.or(q.vm_id);
+    let machine = match orion_deployer::resolve_machine_for_handlers(&state, key.as_deref()).await {
+        Ok(m) => m,
+        Err(e) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(serde_json::json!({
                     "status": "error",
-                    "error": "No VM is currently running"
+                    "error": e.to_string()
                 })),
             )
                 .into_response();
@@ -465,46 +645,104 @@ pub async fn scorpio_config_handler(State(state): State<Arc<AppState>>) -> impl 
     }
 }
 
-/// POST /shutdown - Shutdown VM only, server keeps running
-pub async fn shutdown_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    tracing::info!("[http-shutdown] Received shutdown request via HTTP");
+/// POST /shutdown — stop one VM; require `?domain=` or `?vm_id=`
+/// (use `POST /shutdown/all` to stop every tracked VM). Server keeps running.
+#[derive(Debug, Deserialize, Default)]
+pub struct ShutdownQuery {
+    pub domain: Option<String>,
+    pub vm_id: Option<String>,
+}
+
+pub async fn shutdown_handler(
+    State(state): State<Arc<AppState>>,
+    Query(q): Query<ShutdownQuery>,
+) -> impl IntoResponse {
+    tracing::info!(
+        "[http-shutdown] Received shutdown request domain={:?} vm_id={:?}",
+        q.domain,
+        q.vm_id
+    );
 
     // Serialize with `handle_update`. Without this guard, /shutdown can
     // run between an in-flight create's `KeepAliveMachine::new` and its
-    // `state.set_vm`, see an empty state, return success, and leave the
-    // freshly-spawned qemu untracked once /webhook publishes it.
+    // `state.set_vm`, see an empty domain slot, return success, and leave
+    // the freshly-spawned qemu untracked once /webhook publishes it.
     let _update_guard = state.lock_update().await;
 
-    if let Some(machine) = state.get_machine().await {
-        tracing::info!("[http-shutdown] VM found, calling shutdown...");
-        match machine.shutdown().await {
-            Ok(_) => tracing::info!("[http-shutdown] VM shutdown completed successfully"),
-            Err(e) => tracing::error!("[http-shutdown] VM shutdown failed: {}", e),
+    let domain = if let Some(d) = q.domain {
+        d
+    } else if let Some(id) = q.vm_id {
+        match state.domain_for_vm_id(&id).await {
+            Some(d) => d,
+            None => {
+                return (
+                    StatusCode::NOT_FOUND,
+                    Json(serde_json::json!({
+                        "status": "error",
+                        "error": format!("VM '{}' not found", id)
+                    })),
+                )
+                    .into_response();
+            }
         }
     } else {
-        tracing::info!("[http-shutdown] No VM running");
-    }
-    state.clear_vm().await;
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "status": "error",
+                "error": "Specify ?domain= or ?vm_id= (or POST /shutdown/all)"
+            })),
+        )
+            .into_response();
+    };
 
-    // Belt-and-suspenders: reap any orphan qemu processes that may have
-    // escaped tracking (e.g. spawned by a previous crashed run, or
-    // mid-init when a prior shutdown raced). Cheap and idempotent.
-    let _ = tokio::process::Command::new("pkill")
-        .args(["-9", "-f", "qemu-system-x86"])
-        .output()
-        .await;
+    if let Err(e) = orion_deployer::shutdown_domain(&state, &domain).await {
+        tracing::error!("[http-shutdown] failed: {e}");
+    }
 
     // Disk-side cleanup: qlean only removes the run dir from `Machine::drop`,
     // which doesn't run on SIGKILL/abort. Sweep any orphaned overlay/seed
     // files so /shutdown actually frees the VM's disk footprint, not just
-    // its processes.
+    // its processes. (No host-wide pkill — other domains must stay up.)
     vm_cleanup::sweep_stale_runs().await;
 
-    let response = serde_json::json!({
-        "status": "ok",
-        "message": "VM stopped, server is still running"
-    });
-    (StatusCode::OK, Json(response)).into_response()
+    (
+        StatusCode::OK,
+        Json(serde_json::json!({
+            "status": "ok",
+            "message": format!("VM for domain '{domain}' stopped"),
+            "domain": domain
+        })),
+    )
+        .into_response()
+}
+
+/// POST /shutdown/all — stop every tracked VM (ops only). Server keeps running.
+pub async fn shutdown_all_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    tracing::info!("[http-shutdown] Received shutdown/all request");
+    let _update_guard = state.lock_update().await;
+    let machines = state.take_all_machines().await;
+    for (info, machine) in machines {
+        tracing::info!(
+            "[http-shutdown] Shutting down {} ({})",
+            info.id,
+            info.domain
+        );
+        machine.shutdown().await.ok();
+    }
+    // Belt-and-suspenders: reap any orphan qemu listed under runs/ that may
+    // have escaped tracking (racing create, prior crash). Scoped to this
+    // XDG data tree — not a host-wide pkill.
+    vm_cleanup::reap_qemu_from_runs().await;
+    vm_cleanup::sweep_stale_runs().await;
+    (
+        StatusCode::OK,
+        Json(serde_json::json!({
+            "status": "ok",
+            "message": "All VMs stopped"
+        })),
+    )
+        .into_response()
 }
 
 /// Number of trailing lines to send to the client on the first SSE tick.
@@ -587,11 +825,15 @@ fn hash_line(line: &str) -> u64 {
 }
 
 /// GET /logs/orion/stream - SSE stream for real-time log viewing.
+///
 /// First tick sends the last `INITIAL_TAIL_LINES` lines, then only newly
 /// appended lines on each subsequent tick.
+/// Multi-VM: pass `?domain=` or `?vm_id=` to select which runner's logs to stream.
 pub async fn logs_stream_handler(
     State(state): State<Arc<AppState>>,
+    Query(q): Query<VmSelectQuery>,
 ) -> Sse<impl futures_util::Stream<Item = Result<Event, std::convert::Infallible>>> {
+    let key = q.domain.or(q.vm_id);
     let stream = async_stream::stream! {
         let mut ticker = interval(std::time::Duration::from_secs(1));
         let mut journal_cursor = LogCursor::default();
@@ -600,7 +842,13 @@ pub async fn logs_stream_handler(
         loop {
             ticker.tick().await;
 
-            let snapshot = match orion_deployer::get_live_logs_since(&state, orion_log_offset).await {
+            let snapshot = match orion_deployer::get_live_logs_since(
+                &state,
+                key.as_deref(),
+                orion_log_offset,
+            )
+            .await
+            {
                 Ok(snapshot) => snapshot,
                 Err(e) => {
                     yield Ok(Event::default().data(format!("Error: {}", e)));

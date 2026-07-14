@@ -140,6 +140,7 @@ async fn start_runner(
 
     let payload = StartRunnerPayload {
         target: req.target,
+        replace: req.replace,
         server_ws: env.server_ws,
         scorpio_base_url: env.scorpio_base_url,
         scorpio_lfs_url: env.scorpio_lfs_url,
@@ -158,6 +159,17 @@ async fn start_runner(
         )
     })?;
 
+    if sched_resp.status == "conflict" {
+        return Err(ApiError::with_status(
+            StatusCode::CONFLICT,
+            anyhow!(
+                "Runner already provisioning for domain {:?}: {}",
+                sched_resp.domain,
+                sched_resp.error.unwrap_or_else(|| "conflict".to_string())
+            ),
+        ));
+    }
+
     let vm_id = sched_resp.vm_id.ok_or_else(|| {
         ApiError::with_status(
             StatusCode::BAD_GATEWAY,
@@ -170,17 +182,20 @@ async fn start_runner(
         )
     })?;
 
-    let phase = if sched_resp.status == "provisioning" {
-        "provisioning".to_string()
-    } else if sched_resp.status == "ok" {
-        "running".to_string()
-    } else {
-        sched_resp.status
-    };
+    let phase = sched_resp.phase.unwrap_or_else(|| {
+        if sched_resp.status == "provisioning" {
+            "provisioning".to_string()
+        } else if sched_resp.status == "ok" {
+            "running".to_string()
+        } else {
+            sched_resp.status
+        }
+    });
 
     Ok(Json(CommonResult::success(Some(StartRunnerResponse {
         vm_id,
         phase,
+        domain: sched_resp.domain,
     }))))
 }
 
@@ -209,25 +224,27 @@ async fn get_runner_status(
     ensure_admin(&state, &user).await?;
     let client = scheduler_client(&state)?;
 
-    let sched = client.get_status().await.map_err(|e| {
+    let sched = client.get_vm_status(&id).await.map_err(|e| {
         ApiError::with_status(
             StatusCode::BAD_GATEWAY,
             anyhow!("Scheduler request failed: {}", e),
         )
     })?;
 
-    if sched.vm_id.as_deref() != Some(id.as_str()) {
-        return Err(ApiError::not_found(anyhow!("Runner VM '{}' not found", id)));
-    }
-
     let phase = sched
         .phase
+        .clone()
         .or_else(|| Some(sched.status.clone()))
         .unwrap_or_else(|| "unknown".to_string());
+
+    if phase == "no_vm" || sched.vm_id.as_deref() != Some(id.as_str()) {
+        return Err(ApiError::not_found(anyhow!("Runner VM '{}' not found", id)));
+    }
 
     Ok(Json(CommonResult::success(Some(RunnerStatusResponse {
         vm_id: id,
         phase,
+        domain: sched.domain,
         vm_ip: sched.vm_ip,
         log_file: sched.log_file,
         error: sched.error,

@@ -29,6 +29,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
   const [currentPage, setCurrentPage] = React.useState<number>(1)
   const [activeVmId, setActiveVmId] = React.useState<string | null>(null)
   const [activePhase, setActivePhase] = React.useState<string | null>(null)
+  const [activeDomain, setActiveDomain] = React.useState<string | null>(null)
 
   const perPage = 8
 
@@ -90,6 +91,9 @@ const OrionClientPage: PageWithLayout<any> = () => {
   React.useEffect(() => {
     if (!runnerStatus) return
     setActivePhase(runnerStatus.phase)
+    if (runnerStatus.domain) {
+      setActiveDomain(runnerStatus.domain)
+    }
   }, [runnerStatus])
 
   React.useEffect(() => {
@@ -98,14 +102,21 @@ const OrionClientPage: PageWithLayout<any> = () => {
     }
   }, [runnerStatus?.phase, handleRefresh])
 
-  const handleStartRunner = React.useCallback(() => {
-    startRunner(undefined, {
-      onSuccess: (data) => {
-        setActiveVmId(data.vm_id)
-        setActivePhase(data.phase)
-      }
-    })
-  }, [startRunner])
+  const handleStartRunner = React.useCallback(
+    (replace = false) => {
+      startRunner(
+        { replace },
+        {
+          onSuccess: (data) => {
+            setActiveVmId(data.vm_id)
+            setActivePhase(data.phase)
+            setActiveDomain(data.domain ?? null)
+          }
+        }
+      )
+    },
+    [startRunner]
+  )
 
   React.useEffect(() => {
     mutate(requestPayload, {
@@ -159,7 +170,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
               {isAdmin ? (
                 <Button
                   variant='primary'
-                  onClick={handleStartRunner}
+                  onClick={() => handleStartRunner(false)}
                   disabled={isStartingRunner || activePhase === 'provisioning'}
                 >
                   {isStartingRunner ? 'Starting…' : 'Start Runner'}
@@ -182,6 +193,11 @@ const OrionClientPage: PageWithLayout<any> = () => {
                 Runner {activeVmId}
               </UIText>
               <div className='mt-1 flex flex-col gap-1'>
+                {(runnerStatus?.domain ?? activeDomain) ? (
+                  <UIText size='text-sm' color='text-muted'>
+                    Domain: {runnerStatus?.domain ?? activeDomain}
+                  </UIText>
+                ) : null}
                 <UIText size='text-sm'>
                   Phase:{' '}
                   <span className='font-medium capitalize'>{runnerStatus?.phase ?? activePhase ?? 'unknown'}</span>
@@ -197,7 +213,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
                   </UIText>
                 ) : null}
                 {runnerStatus?.phase === 'failed' ? (
-                  <Button variant='primary' size='sm' className='mt-1 w-fit' onClick={handleStartRunner}>
+                  <Button variant='primary' size='sm' className='mt-1 w-fit' onClick={() => handleStartRunner(true)}>
                     Retry
                   </Button>
                 ) : null}

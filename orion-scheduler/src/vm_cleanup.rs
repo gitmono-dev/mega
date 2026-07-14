@@ -9,8 +9,9 @@
 //! gigabytes in practice.
 //!
 //! This module sweeps directories whose `qemu.pid` no longer maps to a live
-//! process. It is safe to run at startup (after we pkill any stale qemu) and
-//! at shutdown (after the same pkill), and it is idempotent.
+//! process, and can kill still-live qemu listed in those pid files
+//! (`reap_qemu_from_runs`) without a host-wide `pkill`. Safe at startup and
+//! shutdown; idempotent.
 
 use std::path::{Path, PathBuf};
 
@@ -95,4 +96,66 @@ async fn is_run_alive(run_dir: &Path) -> bool {
         return false;
     };
     Path::new(&format!("/proc/{pid}")).exists()
+}
+
+/// Kill qemu processes listed in each run dir's `qemu.pid` (scoped to this
+/// scheduler's XDG data tree). Prefer this over host-wide `pkill`.
+pub async fn reap_qemu_from_runs() -> usize {
+    let Some(runs_dir) = qlean_runs_dir() else {
+        tracing::warn!("[reap] cannot resolve qlean runs dir; HOME unset");
+        return 0;
+    };
+
+    let mut entries = match tokio::fs::read_dir(&runs_dir).await {
+        Ok(e) => e,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return 0,
+        Err(e) => {
+            tracing::warn!("[reap] read_dir {} failed: {e}", runs_dir.display());
+            return 0;
+        }
+    };
+
+    let mut killed = 0usize;
+    loop {
+        let entry = match entries.next_entry().await {
+            Ok(Some(e)) => e,
+            Ok(None) => break,
+            Err(e) => {
+                tracing::warn!("[reap] read_dir iteration failed: {e}");
+                break;
+            }
+        };
+        let path = entry.path();
+        let is_dir = entry.file_type().await.map(|t| t.is_dir()).unwrap_or(false);
+        if !is_dir {
+            continue;
+        }
+        let pid_file = path.join("qemu.pid");
+        let Ok(contents) = tokio::fs::read_to_string(&pid_file).await else {
+            continue;
+        };
+        let Ok(pid) = contents.trim().parse::<i32>() else {
+            continue;
+        };
+        if !Path::new(&format!("/proc/{pid}")).exists() {
+            continue;
+        }
+        match tokio::process::Command::new("kill")
+            .args(["-9", &pid.to_string()])
+            .output()
+            .await
+        {
+            Ok(out) if out.status.success() => {
+                tracing::warn!("[reap] killed qemu pid={pid} from {}", path.display());
+                killed += 1;
+            }
+            Ok(_) => tracing::debug!("[reap] kill -9 {pid} returned non-zero"),
+            Err(e) => tracing::warn!("[reap] kill {pid} failed: {e}"),
+        }
+    }
+
+    if killed > 0 {
+        tracing::warn!("[reap] killed {killed} qemu process(es) from runs/");
+    }
+    killed
 }

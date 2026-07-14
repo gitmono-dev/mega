@@ -1,4 +1,4 @@
-//! HTTP client for orion-scheduler VM provisioning (`/webhook`, `/status`).
+//! HTTP client for orion-scheduler VM provisioning (`/webhook`, `/status`, `/vms/{id}`).
 
 mod http_client;
 
@@ -11,6 +11,8 @@ use serde::{Deserialize, Serialize};
 pub struct StartRunnerPayload {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub target: Option<String>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub replace: bool,
     pub server_ws: String,
     pub scorpio_base_url: String,
     pub scorpio_lfs_url: String,
@@ -28,23 +30,29 @@ pub struct StartRunnerPayload {
     pub image_memory_mb: Option<u32>,
 }
 
-/// Response from scheduler `POST /webhook` (async 202 or sync 200).
+/// Response from scheduler `POST /webhook` (async 202, sync 200, conflict 409).
 #[derive(Debug, Clone, Deserialize)]
 pub struct StartRunnerSchedulerResponse {
     pub status: String,
     pub vm_id: Option<String>,
+    #[serde(default)]
+    pub domain: Option<String>,
+    #[serde(default)]
+    pub phase: Option<String>,
     pub error: Option<String>,
     #[serde(default)]
     pub orion_log_file: Option<String>,
 }
 
-/// Response from scheduler `GET /status`.
+/// Response from scheduler `GET /vms/{id}` or filtered `/status`.
 #[derive(Debug, Clone, Deserialize)]
 pub struct SchedulerStatusResponse {
     pub status: String,
     #[serde(default)]
     pub phase: Option<String>,
     pub vm_id: Option<String>,
+    #[serde(default)]
+    pub domain: Option<String>,
     #[serde(default)]
     pub vm_ip: Option<String>,
     #[serde(default)]
@@ -79,6 +87,11 @@ impl OrionSchedulerClient {
         self.http.start_runner(payload).await
     }
 
+    pub async fn get_vm_status(&self, vm_id: &str) -> anyhow::Result<SchedulerStatusResponse> {
+        self.http.get_vm_status(vm_id).await
+    }
+
+    /// Backward-compatible list/status endpoint.
     pub async fn get_status(&self) -> anyhow::Result<SchedulerStatusResponse> {
         self.http.get_status().await
     }

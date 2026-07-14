@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use tokio::sync::{Mutex, MutexGuard, RwLock};
 
@@ -22,10 +22,14 @@ impl VmPhase {
     }
 }
 
-/// Represents the current state of the VM
+/// Represents the current state of one VM (keyed by domain in AppState).
 #[derive(Debug, Clone)]
 pub struct VmInfo {
     pub id: String,
+    /// Host parsed from `server_ws` (uniqueness key).
+    pub domain: String,
+    /// Optional label from webhook `target` field.
+    pub target: String,
     pub phase: VmPhase,
     pub ip: Option<String>,
     pub created_at: std::time::Instant,
@@ -35,25 +39,30 @@ pub struct VmInfo {
     pub error: Option<String>,
 }
 
-/// Global state for tracking VM lifecycle
+pub struct VmEntry {
+    pub info: VmInfo,
+    pub machine: Option<KeepAliveMachine>,
+}
+
+/// Global state for tracking multiple VMs (one per domain).
 pub struct AppState {
-    pub vm: Arc<RwLock<Option<VmInfo>>>,
-    pub machine: Arc<RwLock<Option<KeepAliveMachine>>>,
+    /// key = domain (`server_ws` host)
+    pub vms: Arc<RwLock<HashMap<String, VmEntry>>>,
     pub config: SharedConfig,
     /// Single-flight mutex guarding the full VM update sequence
-    /// (shutdown existing VM → create new VM → publish to state).
-    /// Without this, two concurrent /webhook calls can both pass the
-    /// existing-VM check before either stores its new machine, leaking
+    /// (shutdown existing slot for a domain → create new VM → publish to state).
+    /// Without this, two concurrent /webhook calls for the same domain can both
+    /// pass the conflict check before either stores its new machine, leaking
     /// the earlier qemu process out of `state` and out of `/shutdown`'s reach.
+    /// Coarse (global) for MVP; can later become a per-domain Mutex.
     update_lock: Arc<Mutex<()>>,
 }
 
 impl AppState {
-    /// Create a new AppState with empty VM and machine slots
+    /// Create a new AppState with an empty VM map.
     pub fn new(config: SharedConfig) -> Self {
         Self {
-            vm: Arc::new(RwLock::new(None)),
-            machine: Arc::new(RwLock::new(None)),
+            vms: Arc::new(RwLock::new(HashMap::new())),
             config,
             update_lock: Arc::new(Mutex::new(())),
         }
@@ -65,8 +74,8 @@ impl AppState {
     ///
     /// `/shutdown` and signal-triggered teardown must also hold this guard
     /// to avoid running between an in-flight create's
-    /// `KeepAliveMachine::new` and `set_vm`, which would otherwise see an
-    /// empty state and leave the freshly-spawned qemu untracked.
+    /// `KeepAliveMachine::new` and `set_vm`, which would otherwise miss the
+    /// freshly-spawned qemu and leave it untracked.
     pub async fn lock_update(&self) -> MutexGuard<'_, ()> {
         self.update_lock.lock().await
     }
@@ -74,64 +83,125 @@ impl AppState {
     /// Like `lock_update`, but bounded so signal handlers don't hang the
     /// process behind a multi-minute create. Returns `None` if the lock
     /// could not be acquired within `timeout`; callers must then fall back
-    /// to a force-kill safety net.
+    /// to the run-dir qemu reap safety net.
     pub async fn try_lock_update(&self, timeout: Duration) -> Option<MutexGuard<'_, ()>> {
         tokio::time::timeout(timeout, self.update_lock.lock())
             .await
             .ok()
     }
 
+    pub async fn list_vms(&self) -> Vec<VmInfo> {
+        let vms = self.vms.read().await;
+        vms.values().map(|e| e.info.clone()).collect()
+    }
+
+    pub async fn vm_count(&self) -> usize {
+        self.vms.read().await.len()
+    }
+
+    pub async fn get_vm_by_domain(&self, domain: &str) -> Option<VmInfo> {
+        let vms = self.vms.read().await;
+        vms.get(domain).map(|e| e.info.clone())
+    }
+
+    pub async fn get_vm_by_id(&self, id: &str) -> Option<VmInfo> {
+        let vms = self.vms.read().await;
+        vms.values()
+            .find(|e| e.info.id == id)
+            .map(|e| e.info.clone())
+    }
+
+    pub async fn get_machine_by_domain(&self, domain: &str) -> Option<KeepAliveMachine> {
+        let vms = self.vms.read().await;
+        vms.get(domain).and_then(|e| e.machine.clone())
+    }
+
+    pub async fn get_machine_by_id(&self, id: &str) -> Option<KeepAliveMachine> {
+        let vms = self.vms.read().await;
+        vms.values()
+            .find(|e| e.info.id == id)
+            .and_then(|e| e.machine.clone())
+    }
+
+    /// Domain for a vm_id, if tracked.
+    pub async fn domain_for_vm_id(&self, id: &str) -> Option<String> {
+        let vms = self.vms.read().await;
+        vms.values()
+            .find(|e| e.info.id == id)
+            .map(|e| e.info.domain.clone())
+    }
+
     /// Register a VM in provisioning state (no machine handle yet).
     pub async fn set_vm_provisioning(&self, info: VmInfo) {
-        let mut vm = self.vm.write().await;
-        let mut m = self.machine.write().await;
-        *vm = Some(info);
-        *m = None;
+        let domain = info.domain.clone();
+        let mut vms = self.vms.write().await;
+        vms.insert(
+            domain,
+            VmEntry {
+                info,
+                machine: None,
+            },
+        );
     }
 
-    /// Set VM info and machine reference together atomically.
-    /// Both write locks are held simultaneously so concurrent readers
-    /// never observe a half-published state (e.g. `vm = Some` with
-    /// `machine = None`), which previously allowed a shutdown racing
-    /// `set_vm` to clear the entry while the qemu kept running.
+    /// Set VM info and machine reference together for one domain.
+    /// A single map write makes readers never observe a half-published entry
+    /// (e.g. Running with `machine = None`), which previously allowed a
+    /// shutdown racing `set_vm` to clear the slot while qemu kept running.
     pub async fn set_vm(&self, info: VmInfo, machine: KeepAliveMachine) {
-        let mut vm = self.vm.write().await;
-        let mut m = self.machine.write().await;
-        *vm = Some(info);
-        *m = Some(machine);
+        let domain = info.domain.clone();
+        let mut vms = self.vms.write().await;
+        vms.insert(
+            domain,
+            VmEntry {
+                info,
+                machine: Some(machine),
+            },
+        );
     }
 
-    /// Mark the current VM as failed, clearing any machine handle.
-    pub async fn set_vm_failed(&self, id: &str, error: String) {
-        let mut vm = self.vm.write().await;
-        let mut m = self.machine.write().await;
-        if let Some(info) = vm.as_mut()
-            && info.id == id
+    /// Mark the VM for `domain` as failed (if `id` still matches), clearing
+    /// any machine handle so later cleanup does not double-shutdown.
+    pub async fn set_vm_failed(&self, domain: &str, id: &str, error: String) {
+        let mut vms = self.vms.write().await;
+        if let Some(entry) = vms.get_mut(domain)
+            && entry.info.id == id
         {
-            info.phase = VmPhase::Failed;
-            info.error = Some(error);
+            entry.info.phase = VmPhase::Failed;
+            entry.info.error = Some(error);
+            entry.machine = None;
         }
-        *m = None;
     }
 
-    /// Clear both VM info and machine reference atomically.
-    pub async fn clear_vm(&self) {
-        let mut vm = self.vm.write().await;
-        let mut m = self.machine.write().await;
-        *vm = None;
-        *m = None;
+    /// Remove a domain slot and return its machine for shutdown.
+    /// If the slot had no machine (Provisioning/Failed tombstone), the map
+    /// entry is still removed and `None` is returned.
+    pub async fn take_machine_by_domain(&self, domain: &str) -> Option<(VmInfo, KeepAliveMachine)> {
+        let mut vms = self.vms.write().await;
+        let entry = vms.remove(domain)?;
+        match entry.machine {
+            Some(m) => Some((entry.info, m)),
+            None => None,
+        }
     }
 
-    /// Get a clone of the current VM info if any
-    pub async fn get_vm(&self) -> Option<VmInfo> {
-        let vm = self.vm.read().await;
-        vm.clone()
+    /// Clear a domain slot without shutting down a machine (caller already did,
+    /// or there was only a tombstone).
+    pub async fn clear_domain(&self, domain: &str) {
+        let mut vms = self.vms.write().await;
+        vms.remove(domain);
     }
 
-    /// Get a clone of the current machine reference if any
-    pub async fn get_machine(&self) -> Option<KeepAliveMachine> {
-        let m = self.machine.read().await;
-        m.clone()
+    /// Drain every tracked machine for process-exit / `/shutdown/all` teardown.
+    pub async fn take_all_machines(&self) -> Vec<(VmInfo, KeepAliveMachine)> {
+        let mut vms = self.vms.write().await;
+        let mut out = Vec::new();
+        for (_, entry) in vms.drain() {
+            if let Some(m) = entry.machine {
+                out.push((entry.info, m));
+            }
+        }
+        out
     }
 }
 
@@ -139,8 +209,7 @@ impl AppState {
 mod tests {
     use super::*;
 
-    #[tokio::test]
-    async fn test_state_set_clear() {
+    fn test_state() -> AppState {
         let config = Arc::new(tokio::sync::RwLock::new(crate::config::Config::new(
             "/tmp".to_string(),
             "/tmp/orion".to_string(),
@@ -148,38 +217,56 @@ mod tests {
             "/tmp/ssh_key.pub".to_string(),
             Default::default(),
         )));
-        let state = AppState::new(config);
-        assert!(state.get_vm().await.is_none());
-        assert!(state.get_machine().await.is_none());
+        AppState::new(config)
     }
 
-    #[tokio::test]
-    async fn test_provisioning_to_failed() {
-        let config = Arc::new(tokio::sync::RwLock::new(crate::config::Config::new(
-            "/tmp".to_string(),
-            "/tmp/orion".to_string(),
-            "/tmp/orion".to_string(),
-            "/tmp/ssh_key.pub".to_string(),
-            Default::default(),
-        )));
-        let state = AppState::new(config);
-        let info = VmInfo {
-            id: "orion-vm-1".to_string(),
-            phase: VmPhase::Provisioning,
+    fn sample_info(domain: &str, id: &str, phase: VmPhase) -> VmInfo {
+        VmInfo {
+            id: id.to_string(),
+            domain: domain.to_string(),
+            target: "t".to_string(),
+            phase,
             ip: None,
             created_at: std::time::Instant::now(),
             log_file: None,
             error: None,
-        };
-        state.set_vm_provisioning(info).await;
-        let vm = state.get_vm().await.unwrap();
-        assert_eq!(vm.phase, VmPhase::Provisioning);
-        assert!(state.get_machine().await.is_none());
+        }
+    }
 
+    #[tokio::test]
+    async fn two_domains_coexist() {
+        let state = test_state();
         state
-            .set_vm_failed("orion-vm-1", "deploy failed".to_string())
+            .set_vm_provisioning(sample_info("orion.a.com", "vm-a", VmPhase::Provisioning))
             .await;
-        let vm = state.get_vm().await.unwrap();
+        state
+            .set_vm_provisioning(sample_info("orion.b.com", "vm-b", VmPhase::Provisioning))
+            .await;
+        assert_eq!(state.vm_count().await, 2);
+        assert_eq!(
+            state.get_vm_by_domain("orion.a.com").await.unwrap().id,
+            "vm-a"
+        );
+        assert_eq!(
+            state.get_vm_by_id("vm-b").await.unwrap().domain,
+            "orion.b.com"
+        );
+    }
+
+    #[tokio::test]
+    async fn provisioning_to_failed() {
+        let state = test_state();
+        state
+            .set_vm_provisioning(sample_info(
+                "orion.a.com",
+                "orion-vm-1",
+                VmPhase::Provisioning,
+            ))
+            .await;
+        state
+            .set_vm_failed("orion.a.com", "orion-vm-1", "deploy failed".to_string())
+            .await;
+        let vm = state.get_vm_by_domain("orion.a.com").await.unwrap();
         assert_eq!(vm.phase, VmPhase::Failed);
         assert_eq!(vm.error.as_deref(), Some("deploy failed"));
     }
