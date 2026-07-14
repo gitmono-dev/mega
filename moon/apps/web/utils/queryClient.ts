@@ -1,15 +1,9 @@
 import { InfiniteData, QueryClient, QueryKey } from '@tanstack/react-query'
 
-import {
-  CAMPSITE_API_SESSION_COOKIE,
-  MONO_API_URL,
-  ORION_API_URL,
-  RAILS_API_URL,
-  RAILS_AUTH_URL,
-  RAILS_INTERNAL_API_URL
-} from '@gitmono/config'
+import { MONO_API_URL, ORION_API_URL, RAILS_API_URL, RAILS_AUTH_URL, RAILS_INTERNAL_API_URL } from '@gitmono/config'
 import { Api, ApiError, DataTag } from '@gitmono/types'
 
+import { getCampsiteApiSessionCookieName } from './apiCookieHeaders'
 import { ApiErrorResponse } from './types'
 
 interface UrlProps {
@@ -83,11 +77,12 @@ export async function fetcher<T>(url: string, { method, body, cookies }: Fetcher
   let credentials: RequestCredentials | undefined
 
   if (cookies) {
-    const sessionCookie = cookies[CAMPSITE_API_SESSION_COOKIE]
+    const cookieName = getCampsiteApiSessionCookieName()
+    const sessionCookie = cookies[cookieName]
     if (sessionCookie) {
       const apiCookie = encodeURIComponent(sessionCookie)
 
-      headers.append('Cookie', `${CAMPSITE_API_SESSION_COOKIE}=${apiCookie}`)
+      headers.append('Cookie', `${cookieName}=${apiCookie}`)
     }
   } else {
     credentials = 'include'

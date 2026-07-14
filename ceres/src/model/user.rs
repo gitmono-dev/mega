@@ -1,6 +1,6 @@
 use callisto::{access_token, ssh_keys};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct AddSSHKey {
@@ -70,4 +70,32 @@ pub struct UpdateClaContentPayload {
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ClaContentRes {
     pub content: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct UserApprovalStatusRes {
+    pub username: String,
+    pub campsite_user_id: String,
+    pub display_name: String,
+    pub email: String,
+    /// One of: pending, approved, rejected
+    pub status: String,
+    pub reviewed_by: Option<String>,
+    /// Unix timestamp
+    pub reviewed_at: Option<i64>,
+    /// Unix timestamp
+    pub registered_at: i64,
+}
+
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+pub struct ListUserApprovalsQuery {
+    /// Filter by status: pending, approved, rejected, or all (default: pending)
+    pub status: Option<String>,
+    /// Max rows to return (default 100, max 500)
+    pub limit: Option<u64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct UserApprovalListRes {
+    pub items: Vec<UserApprovalStatusRes>,
 }

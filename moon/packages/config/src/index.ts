@@ -32,9 +32,8 @@ export const ORION_API_URL = process.env.NEXT_PUBLIC_ORION_API_URL || 'https://o
 // eslint-disable-next-line turbo/no-undeclared-env-vars
 export const RAILS_AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL || 'https://auth.gitmega.com'
 
-// eslint-disable-next-line turbo/no-undeclared-env-vars
-export const CAMPSITE_API_SESSION_COOKIE =
-  process.env.NEXT_PUBLIC_CAMPSITE_API_SESSION_COOKIE || '_campsite_api_session'
+// Default Campsite API session cookie name (SSR overrides via CAMPSITE_API_SESSION_COOKIE).
+export const CAMPSITE_API_SESSION_COOKIE = '_campsite_api_session'
 
 /*
   Not using an env variable because we use this variable in the browser, which

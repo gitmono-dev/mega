@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { HMSRoomProvider } from '@100mslive/react-sdk'
 import { ShortcutProvider } from '@shopify/react-shortcuts'
 import { QueryClientProvider } from '@tanstack/react-query'
+import AccountApprovalGuard from 'components/AccountApprovalGuard'
 import ConfirmEmailGuard from 'components/ConfirmEmailGuard'
 import { domMax, LazyMotion } from 'framer-motion'
 import { HotkeysProvider } from 'react-hotkeys-hook'
@@ -75,9 +76,11 @@ export const AuthAppProviders: PageWithProviders<any> = ({ children, allowLogged
                               <ActiveModalityProvider />
 
                               <ConfirmEmailGuard allowLoggedOut={allowLoggedOut}>
-                                {children}
+                                <AccountApprovalGuard allowLoggedOut={allowLoggedOut}>
+                                  {children}
 
-                                <OrganizationUserPresenceSubscription />
+                                  <OrganizationUserPresenceSubscription />
+                                </AccountApprovalGuard>
                               </ConfirmEmailGuard>
                             </ShortcutProvider>
                           </DesktopRedirectProvider>

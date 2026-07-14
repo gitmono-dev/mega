@@ -25,8 +25,7 @@ https://rt-orion-api.placeholder.local${TAB}NEXT_PUBLIC_ORION_API_URL
 https://rt-auth.placeholder.local${TAB}NEXT_PUBLIC_AUTH_URL
 https://rt-web.placeholder.local${TAB}NEXT_PUBLIC_WEB_URL
 wss://rt-sync.placeholder.local${TAB}NEXT_PUBLIC_SYNC_URL
-https://rt-crates-pro.placeholder.local${TAB}NEXT_PUBLIC_CRATES_PRO_URL
-__rt_campsite_api_session_cookie__${TAB}NEXT_PUBLIC_CAMPSITE_API_SESSION_COOKIE"
+https://rt-crates-pro.placeholder.local${TAB}NEXT_PUBLIC_CRATES_PRO_URL"
 
 # Escape a string for safe use on the left (regex) side of a sed s||| command.
 escape_regex() { printf '%s' "$1" | sed -e 's/[.[\*^$()+?{|/\\]/\\&/g'; }
