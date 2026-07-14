@@ -67,7 +67,7 @@ export function UserSettingsPageWrapper(props: Props) {
               >
                 Account review
                 {pendingCount > 0 && (
-                  <span className='ml-1 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-amber-500 px-1.5 font-mono text-[10px] font-semibold leading-none text-white'>
+                  <span className='h-4.5 min-w-4.5 ml-1 inline-flex items-center justify-center rounded-full bg-amber-500 px-1.5 font-mono text-[10px] font-semibold leading-none text-white'>
                     {pendingCount}
                   </span>
                 )}

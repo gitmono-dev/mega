@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import type { UserApprovalStatusRes } from '@gitmono/types'
 import { Avatar, Button, Table, TableRow, UIText } from '@gitmono/ui'
@@ -60,10 +60,7 @@ export function AccountReviewSection() {
   const reject = useRejectUser()
 
   const users = data?.data?.items ?? []
-  const pendingCount = useMemo(() => {
-    if (filter === 'pending') return users.length
-    return users.filter((user) => user.status === 'pending').length
-  }, [filter, users])
+  const pendingCount = filter === 'pending' ? users.length : users.filter((user) => user.status === 'pending').length
 
   return (
     <SettingsSection.Section className='shadow-sm'>
