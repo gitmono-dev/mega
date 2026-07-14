@@ -7,12 +7,14 @@ import * as R from 'remeda'
 // import { useIsDesktopApp } from '@gitmono/ui/src/hooks'
 
 import {
+  Badge,
   Button,
   DotsHorizontal,
   GearIcon,
   Link,
   LogOutIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  UserCirclePlusIcon
   // HelpIcon,
   // LinearIcon,
   // MonitorIcon,
@@ -32,6 +34,7 @@ import { useScope } from '@/contexts/scope'
 import { useCurrentUserIsStaff } from '@/hooks/useCurrentUserIsStaff'
 import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
 import { usePauseNotificationMenuItem } from '@/hooks/usePauseNotificationMenuItem'
+import { usePendingAccountReviewCount } from '@/hooks/usePendingAccountReviewCount'
 
 interface LinkProps {
   children: React.ReactNode
@@ -65,6 +68,7 @@ export function ProfileDropdown({
   const signout = useSignoutUser()
   // const isDesktop = useIsDesktopApp()
   const isStaff = useCurrentUserIsStaff()
+  const { isAdmin, pendingCount, hasPending } = usePendingAccountReviewCount()
   const [open, setOpen] = useState(false)
   const [notificationPauseCalendarDialogOpen, setNotificationPauseCalendarDialogOpen] = useState(false)
   const [notificationScheduleDialogOpen, setNotificationScheduleDialogOpen] = useState(false)
@@ -88,6 +92,19 @@ export function ProfileDropdown({
       leftSlot: <GearIcon />,
       external: false,
       url: '/me/settings'
+    },
+    isAdmin && {
+      type: 'item',
+      label: 'Account review',
+      leftSlot: <UserCirclePlusIcon />,
+      external: false,
+      url: '/me/settings/account-review',
+      onSelect: () => setOpen(false),
+      rightSlot: hasPending ? (
+        <Badge color='amber' className='h-4.5 ml-1 flex font-mono'>
+          {pendingCount}
+        </Badge>
+      ) : undefined
     },
     pauseNotificationsMenuItem,
     { type: 'separator' },

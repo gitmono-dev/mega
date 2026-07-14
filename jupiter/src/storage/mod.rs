@@ -21,6 +21,7 @@ pub mod lfs_db_storage;
 pub mod merge_queue_storage;
 pub mod mono_storage;
 pub mod notification_storage;
+pub mod user_approval_storage;
 pub use notification_storage::NotificationStorage;
 pub mod note_storage;
 pub mod stg_common;
@@ -65,6 +66,7 @@ use crate::{
         merge_queue_storage::MergeQueueStorage,
         mono_storage::MonoStorage,
         note_storage::NoteStorage,
+        user_approval_storage::UserApprovalStorage,
         user_storage::UserStorage,
         vault_storage::VaultStorage,
         webhook_storage::WebhookStorage,
@@ -78,6 +80,7 @@ pub struct AppService {
     pub gpg_storage: GpgStorage,
     pub lfs_db_storage: LfsDbStorage,
     pub cla_storage: ClaStorage,
+    pub user_approval_storage: UserApprovalStorage,
     pub user_storage: UserStorage,
     pub group_storage: GroupStorage,
     pub vault_storage: VaultStorage,
@@ -112,6 +115,7 @@ impl AppService {
             gpg_storage: GpgStorage { base: mock.clone() },
             lfs_db_storage: LfsDbStorage { base: mock.clone() },
             cla_storage: ClaStorage { base: mock.clone() },
+            user_approval_storage: UserApprovalStorage { base: mock.clone() },
             user_storage: UserStorage { base: mock.clone() },
             group_storage: GroupStorage { base: mock.clone() },
             vault_storage: VaultStorage { base: mock.clone() },
@@ -164,6 +168,7 @@ impl Storage {
         let gpg_storage = GpgStorage { base: base.clone() };
         let lfs_db_storage = LfsDbStorage { base: base.clone() };
         let cla_storage = ClaStorage { base: base.clone() };
+        let user_approval_storage = UserApprovalStorage { base: base.clone() };
         let user_storage = UserStorage { base: base.clone() };
         let group_storage = GroupStorage { base: base.clone() };
         let cl_storage = ClStorage { base: base.clone() };
@@ -232,6 +237,7 @@ impl Storage {
             gpg_storage,
             lfs_db_storage,
             cla_storage,
+            user_approval_storage,
             user_storage,
             group_storage,
             vault_storage,
@@ -389,6 +395,10 @@ impl Storage {
 
     pub fn cla_storage(&self) -> ClaStorage {
         self.app_service.cla_storage.clone()
+    }
+
+    pub fn user_approval_storage(&self) -> UserApprovalStorage {
+        self.app_service.user_approval_storage.clone()
     }
 
     pub fn group_storage(&self) -> GroupStorage {

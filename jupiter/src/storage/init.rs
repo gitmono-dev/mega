@@ -41,7 +41,7 @@ pub async fn database_connection(db_config: &DbConfig) -> DatabaseConnection {
                 Err(reason) => {
                     log::warn!(
                         "Falling back to SQLite for {}. Reason: {}",
-                        &db_config.db_url,
+                        db_config.db_url,
                         reason
                     );
                     sqlite_connection(db_config)

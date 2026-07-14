@@ -17,7 +17,7 @@ use crate::{
 fn normalize_optional_description(description: Option<String>) -> Option<String> {
     description
         .map(|item| item.trim().to_string())
-        .and_then(|item| if item.is_empty() { None } else { Some(item) })
+        .filter(|item| !item.is_empty())
 }
 
 fn validate_group_name(name: &str) -> Result<String, MegaError> {

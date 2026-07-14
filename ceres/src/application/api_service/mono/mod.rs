@@ -27,6 +27,7 @@ pub mod stack;
 pub mod sync;
 pub mod tag;
 pub mod user;
+pub mod user_approval;
 
 pub use admin::{ADMIN_FILE, EffectiveResourcePermission};
 pub use app_services::MonoAppServices;

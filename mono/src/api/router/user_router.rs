@@ -10,6 +10,7 @@ use ceres::model::{
     },
     user::{
         AddSSHKey, ClaContentRes, ClaSignStatusRes, ListSSHKey, ListToken, UpdateClaContentPayload,
+        UserApprovalStatusRes,
     },
 };
 use common::errors::MegaError;
@@ -37,7 +38,8 @@ pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
             .routes(routes!(get_cla_sign_status))
             .routes(routes!(change_sign_status))
             .routes(routes!(get_cla_content))
-            .routes(routes!(update_cla_content)),
+            .routes(routes!(update_cla_content))
+            .routes(routes!(get_user_approval_status)),
     )
 }
 
@@ -368,4 +370,34 @@ async fn update_cla_content(
     Ok(Json(CommonResult::success(Some(ClaContentRes {
         content: payload.content,
     }))))
+}
+
+/// Get or initialize current user's account approval status
+#[utoipa::path(
+    get,
+    path = "/approval-status",
+    responses(
+        (status = 200, body = CommonResult<UserApprovalStatusRes>, content_type = "application/json"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    tag = USER_TAG
+)]
+async fn get_user_approval_status(
+    user: LoginUser,
+    state: State<MonoApiServiceState>,
+) -> Result<Json<CommonResult<UserApprovalStatusRes>>, ApiError> {
+    let model = state
+        .services()
+        .user()
+        .get_or_init_user_approval_status(
+            &user.username,
+            &user.campsite_user_id,
+            &user.username,
+            &user.email,
+        )
+        .await?;
+
+    Ok(Json(CommonResult::success(Some(
+        UserApprovalStatusRes::from(model),
+    ))))
 }

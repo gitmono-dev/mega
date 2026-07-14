@@ -8,6 +8,7 @@ import { LayeredHotkeys } from '@gitmono/ui'
 import { useIsDesktopApp } from '@gitmono/ui/src/hooks'
 import { cn } from '@gitmono/ui/src/utils'
 
+import { PendingAccountReviewButton } from '@/components/AccountReview/PendingAccountReviewButton'
 import { DesktopAppNavigationButtons } from '@/components/DesktopAppNavigationButtons'
 import { sidebarCollapsedAtom } from '@/components/Layout/AppLayout'
 import { OrganizationSwitcher } from '@/components/NavigationSidebar/OrganizationSwitcher'
@@ -133,6 +134,7 @@ function SidebarContent() {
             <DesktopAppNavigationButtons />
             <div className='flex items-center gap-0.5'>
               <RecentlyViewedPopover />
+              <PendingAccountReviewButton />
               <SidebarActivity />
             </div>
           </div>
@@ -140,7 +142,12 @@ function SidebarContent() {
 
         <div className='flex items-center justify-between'>
           <OrganizationSwitcher />
-          {!isDesktopApp && <SidebarActivity />}
+          {!isDesktopApp && (
+            <div className='flex items-center gap-0.5'>
+              <PendingAccountReviewButton />
+              <SidebarActivity />
+            </div>
+          )}
         </div>
 
         <div className='flex flex-1 items-center gap-1'>

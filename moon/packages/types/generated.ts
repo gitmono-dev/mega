@@ -4361,6 +4361,38 @@ export type CommonResultUpdateBranchStatusRes = {
   req_result: boolean
 }
 
+export type CommonResultUserApprovalListRes = {
+  data?: {
+    items: UserApprovalStatusRes[]
+  }
+  err_message: string
+  req_result: boolean
+}
+
+export type CommonResultUserApprovalStatusRes = {
+  data?: {
+    campsite_user_id: string
+    display_name: string
+    email: string
+    /**
+     * Unix timestamp
+     * @format int64
+     */
+    registered_at: number
+    /**
+     * Unix timestamp
+     * @format int64
+     */
+    reviewed_at?: number | null
+    reviewed_by?: string | null
+    /** One of: pending, approved, rejected */
+    status: string
+    username: string
+  }
+  err_message: string
+  req_result: boolean
+}
+
 export type CommonResultUserEffectivePermissionResponse = {
   data?: {
     has_admin: boolean
@@ -5849,6 +5881,30 @@ export type UpdateUserNotificationConfig = {
   preferences?: any[] | null
 }
 
+export type UserApprovalListRes = {
+  items: UserApprovalStatusRes[]
+}
+
+export type UserApprovalStatusRes = {
+  campsite_user_id: string
+  display_name: string
+  email: string
+  /**
+   * Unix timestamp
+   * @format int64
+   */
+  registered_at: number
+  /**
+   * Unix timestamp
+   * @format int64
+   */
+  reviewed_at?: number | null
+  reviewed_by?: string | null
+  /** One of: pending, approved, rejected */
+  status: string
+  username: string
+}
+
 export type UserEffectivePermissionResponse = {
   has_admin: boolean
   has_read: boolean
@@ -7307,6 +7363,23 @@ export type PostApiAdminResourcesPermissionsData = CommonResultVecResourcePermis
 
 export type DeleteApiAdminResourcesPermissionsData = CommonResultDeletePermissionsResponse
 
+export type GetApiAdminUserApprovalsParams = {
+  /** Filter by status: pending, approved, rejected, or all (default: pending) */
+  status?: string | null
+  /**
+   * Max rows to return (default 100, max 500)
+   * @format int64
+   * @min 0
+   */
+  limit?: number | null
+}
+
+export type GetApiAdminUserApprovalsData = CommonResultUserApprovalListRes
+
+export type PostApiAdminUserApprovalsApproveData = CommonResultUserApprovalStatusRes
+
+export type PostApiAdminUserApprovalsRejectData = CommonResultUserApprovalStatusRes
+
 export type GetApiAdminUsersGroupsData = CommonResultUserGroupsResponse
 
 export type GetApiAdminUsersPermissionsByResourceIdData = CommonResultUserEffectivePermissionResponse
@@ -7695,6 +7768,8 @@ export type PostApiTriggersListData = CommonResultCommonPageTriggerResponse
 export type GetApiTriggersByIdData = CommonResultTriggerResponse
 
 export type PostApiTriggersRetryData = CommonResultTriggerResponse
+
+export type GetApiUserApprovalStatusData = CommonResultUserApprovalStatusRes
 
 export type PostApiUserClaChangeSignStatusData = CommonResultClaSignStatusRes
 
@@ -16488,6 +16563,77 @@ supporting either retrieving the entire log at once or segmenting it by line cou
     },
 
     /**
+     * @description List user account approval records. Defaults to pending.
+     *
+     * @tags User Management
+     * @name GetApiAdminUserApprovals
+     * @summary GET /api/v1/admin/user-approvals
+     * @request GET:/api/v1/admin/user-approvals
+     */
+    getApiAdminUserApprovals: () => {
+      const base = 'GET:/api/v1/admin/user-approvals' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiAdminUserApprovalsData>([base]),
+        requestKey: (params: GetApiAdminUserApprovalsParams) =>
+          dataTaggedQueryKey<GetApiAdminUserApprovalsData>([base, params]),
+        request: (query: GetApiAdminUserApprovalsParams, params: RequestParams = {}) =>
+          this.request<GetApiAdminUserApprovalsData>({
+            path: `/api/v1/admin/user-approvals`,
+            method: 'GET',
+            query: query,
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name PostApiAdminUserApprovalsApprove
+     * @summary POST /api/v1/admin/user-approvals/{username}/approve
+     * @request POST:/api/v1/admin/user-approvals/{username}/approve
+     */
+    postApiAdminUserApprovalsApprove: () => {
+      const base = 'POST:/api/v1/admin/user-approvals/{username}/approve' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminUserApprovalsApproveData>([base]),
+        requestKey: (username: string) => dataTaggedQueryKey<PostApiAdminUserApprovalsApproveData>([base, username]),
+        request: (username: string, params: RequestParams = {}) =>
+          this.request<PostApiAdminUserApprovalsApproveData>({
+            path: `/api/v1/admin/user-approvals/${username}/approve`,
+            method: 'POST',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name PostApiAdminUserApprovalsReject
+     * @summary POST /api/v1/admin/user-approvals/{username}/reject
+     * @request POST:/api/v1/admin/user-approvals/{username}/reject
+     */
+    postApiAdminUserApprovalsReject: () => {
+      const base = 'POST:/api/v1/admin/user-approvals/{username}/reject' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminUserApprovalsRejectData>([base]),
+        requestKey: (username: string) => dataTaggedQueryKey<PostApiAdminUserApprovalsRejectData>([base, username]),
+        request: (username: string, params: RequestParams = {}) =>
+          this.request<PostApiAdminUserApprovalsRejectData>({
+            path: `/api/v1/admin/user-approvals/${username}/reject`,
+            method: 'POST',
+            ...params
+          })
+      }
+    },
+
+    /**
      * No description
      *
      * @tags Group Permission Management
@@ -19423,6 +19569,29 @@ It's for local testing purposes.
           this.request<PostApiTriggersRetryData>({
             path: `/api/v1/triggers/${id}/retry`,
             method: 'POST',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name GetApiUserApprovalStatus
+     * @summary Get or initialize current user's account approval status
+     * @request GET:/api/v1/user/approval-status
+     */
+    getApiUserApprovalStatus: () => {
+      const base = 'GET:/api/v1/user/approval-status' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiUserApprovalStatusData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiUserApprovalStatusData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiUserApprovalStatusData>({
+            path: `/api/v1/user/approval-status`,
+            method: 'GET',
             ...params
           })
       }

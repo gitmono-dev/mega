@@ -27,6 +27,7 @@ import {
 import { useHasMounted, useIsDesktopApp } from '@gitmono/ui/src/hooks'
 import { cn } from '@gitmono/ui/src/utils'
 
+import { PendingAccountReviewButton } from '@/components/AccountReview/PendingAccountReviewButton'
 import { BackButton } from '@/components/BackButton'
 import { CallOverflowMenu } from '@/components/Calls/CallOverflowMenu'
 import { CallSharePopover } from '@/components/CallSharePopover'
@@ -238,6 +239,7 @@ function TrailingAccessory() {
 
   return (
     <div className='flex items-center gap-2'>
+      <PendingAccountReviewButton />
       <StatusPicker />
       <ProfileDropdown
         align='end'

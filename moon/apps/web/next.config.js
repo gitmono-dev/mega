@@ -54,6 +54,7 @@ const cspResourcesByDirective = {
     'http://*.gitmono.test:3001',
     'http://*.gitmono.test:8000',
     'http://*.gitmono.test:8004',
+    'http://*.gitmono.local:3001',
     'http://*.gitmega.nju:8080',
     'http://*.gitmega.nju',
     process.env.NODE_ENV !== 'production' && 'localhost:8000',
