@@ -13,6 +13,8 @@ import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
 import { useUpdateBlob } from '@/hooks/useUpdateBlob'
 import { getLanguageForFile } from '@/utils/shikiLanguageFallback'
 
+import { MegaCedarAdminPicker } from './MegaCedarAdminPicker'
+
 interface BlobEditorProps {
   fileContent: string
   filePath: string
@@ -21,6 +23,10 @@ interface BlobEditorProps {
 }
 
 type ViewMode = 'edit' | 'preview'
+
+function isMegaCedarJsonFile(name: string, path: string) {
+  return name === '.mega_cedar.json' || path.endsWith('/.mega_cedar.json') || path === '.mega_cedar.json'
+}
 
 export default function BlobEditor({ fileContent, filePath, fileName, onCancel }: BlobEditorProps) {
   const { data: currentUser } = useGetCurrentUser()
@@ -63,7 +69,15 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
     return dir ? `${dir}/${editedFileName}` : editedFileName
   }, [pathSegments, editedFileName])
 
+  const showCedarAdminPicker = isMegaCedarJsonFile(editedFileName, fullEditedPath)
+
   const detectedLanguage = useMemo(() => getLanguageForFile(editedFileName), [editedFileName])
+
+  const handleCedarContentGenerated = useCallback((generated: string) => {
+    setContent(generated)
+    setDiffResult(null)
+    setFileDiffMetadata(null)
+  }, [])
 
   const handlePreviewClick = useCallback(async () => {
     setViewMode('preview')
@@ -288,6 +302,14 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
             </button>
           </div>
         </div>
+
+        {showCedarAdminPicker && viewMode === 'edit' && (
+          <MegaCedarAdminPicker
+            fileContent={fileContent}
+            onContentGenerated={handleCedarContentGenerated}
+            disabled={updateBlobMutation.isPending}
+          />
+        )}
 
         <div className='min-h-0 flex-1 overflow-hidden'>
           {viewMode === 'edit' && renderEditView()}

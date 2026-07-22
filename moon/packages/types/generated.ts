@@ -4047,6 +4047,15 @@ export type CommonResultFilesChangedPage = {
   req_result: boolean
 }
 
+export type CommonResultGenerateCedarResponse = {
+  /** Response containing generated `.mega_cedar.json` content. */
+  data?: {
+    content: string
+  }
+  err_message: string
+  req_result: boolean
+}
+
 export type CommonResultGroupResponse = {
   data?: {
     /** @format int64 */
@@ -5011,6 +5020,16 @@ export type FileUploadResponse = {
 
 export type FilesChangedPage = {
   page: CommonPageClFilesChangedItemSchema
+}
+
+/** Request body for generating `.mega_cedar.json` content from admin usernames. */
+export type GenerateCedarRequest = {
+  admins: string[]
+}
+
+/** Response containing generated `.mega_cedar.json` content. */
+export type GenerateCedarResponse = {
+  content: string
 }
 
 export type GpgKey = {
@@ -7340,6 +7359,8 @@ export type PostThreadsMessagesV2Data = V2Message
 export type PostThreadsV2Data = V2MessageThread
 
 export type PostSignInFigmaData = FigmaKeyPair
+
+export type PostApiAdminCedarGenerateData = CommonResultGenerateCedarResponse
 
 export type PostApiAdminGroupsData = CommonResultGroupResponse
 
@@ -16239,6 +16260,31 @@ supporting either retrieving the entire log at once or segmenting it by line cou
     }
   }
   v1 = {
+    /**
+     * @description Generate `.mega_cedar.json` content from a list of admin usernames. Only admins can access this endpoint. Does not write to the repository.
+     *
+     * @tags User Management
+     * @name PostApiAdminCedarGenerate
+     * @summary POST /api/v1/admin/cedar/generate
+     * @request POST:/api/v1/admin/cedar/generate
+     */
+    postApiAdminCedarGenerate: () => {
+      const base = 'POST:/api/v1/admin/cedar/generate' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminCedarGenerateData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiAdminCedarGenerateData>([base]),
+        request: (data: GenerateCedarRequest, params: RequestParams = {}) =>
+          this.request<PostApiAdminCedarGenerateData>({
+            path: `/api/v1/admin/cedar/generate`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            ...params
+          })
+      }
+    },
+
     /**
      * No description
      *
