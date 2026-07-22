@@ -33,6 +33,7 @@ impl MigrationTrait for Migration {
                 // Already handled by m20250812_022434_alter_mega_mr
                 // No action needed
             }
+            _ => {}
         }
 
         Ok(())

@@ -1,26 +1,8 @@
-use sea_orm::entity::prelude::*;
-
 use crate::{
     entity_ext::generate_id,
-    mega_code_review_position::{self, Column, Entity},
+    mega_code_review_position,
     sea_orm_active_enums::{DiffSideEnum, PositionStatusEnum},
 };
-
-#[derive(Copy, Clone, Debug, EnumIter)]
-pub enum Relation {
-    Anchor,
-}
-
-impl RelationTrait for Relation {
-    fn def(&self) -> sea_orm::RelationDef {
-        match self {
-            Self::Anchor => Entity::belongs_to(crate::mega_code_review_anchor::Entity)
-                .from(Column::AnchorId)
-                .to(crate::mega_code_review_anchor::Column::Id)
-                .into(),
-        }
-    }
-}
 
 impl mega_code_review_position::Model {
     pub fn new(

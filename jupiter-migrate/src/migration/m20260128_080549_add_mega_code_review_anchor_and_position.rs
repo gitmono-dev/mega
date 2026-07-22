@@ -23,6 +23,7 @@ impl MigrationTrait for Migration {
                     .await?;
             }
             DatabaseBackend::MySql | DatabaseBackend::Sqlite => {}
+            _ => {}
         }
 
         // Remove code review thread table `DiffSide`, `LineNumber` and `FilePath`

@@ -24,6 +24,7 @@ impl MigrationTrait for Migration {
                     .await?;
             }
             DatabaseBackend::Sqlite => {}
+            _ => {}
         }
 
         Ok(())

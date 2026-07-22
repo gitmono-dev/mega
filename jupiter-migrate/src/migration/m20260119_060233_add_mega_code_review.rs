@@ -32,6 +32,7 @@ impl MigrationTrait for Migration {
                     .await?;
             }
             DatabaseBackend::MySql | DatabaseBackend::Sqlite => {}
+            _ => {}
         }
 
         // Create code review thread table

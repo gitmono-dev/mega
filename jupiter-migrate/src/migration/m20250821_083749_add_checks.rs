@@ -27,6 +27,7 @@ impl MigrationTrait for Migration {
                     .await?;
             }
             DatabaseBackend::MySql | DatabaseBackend::Sqlite => {}
+            _ => {}
         }
 
         manager

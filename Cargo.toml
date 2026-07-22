@@ -44,18 +44,18 @@ libvault-core = "0.1.0"
 #====
 anyhow = "1.0.103"
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.150"
+serde_json = "1.0.151"
 serde_urlencoded = "0.7"
 tracing = "0.1.44"
 tracing-subscriber = "0.3.23"
 tracing-appender = "0.2.5"
-thiserror = "2.0.18"
-clap = "4.6.1"
+thiserror = "2.0.19"
+clap = "4.6.4"
 
 #====
-tokio = "1.52.3"
+tokio = "1.53.1"
 tokio-stream = "0.1.18"
-tokio-util = "0.7.18"
+tokio-util = "0.7.19"
 async-trait = "0.1.89"
 async-stream = "0.3.6"
 async-recursion = "1.1.1"
@@ -63,11 +63,11 @@ futures = "0.3.32"
 futures-util = "0.3.32"
 axum = { version = "0.8.9", features = ["macros", "json"] }
 axum-extra = "0.12.6"
-russh = "0.61.2"
+russh = "0.62.3"
 tower-http = "0.7.0"
 tower = "0.5.3"
 tower-sessions = { version = "0.15", features = ["memory-store"] }
-time = { version = "0.3.51", features = ["serde"] }
+time = { version = "0.3.54", features = ["serde"] }
 lettre = { version = "0.11", default-features = false, features = [
   "builder",
   "smtp-transport",
@@ -77,8 +77,8 @@ lettre = { version = "0.11", default-features = false, features = [
   "rustls-platform-verifier",
 ] }
 #====
-sea-orm = "1.1.20"
-sea-orm-migration = "1.1.20"
+sea-orm = "2.0.0"
+sea-orm-migration = "2.0.0"
 
 #====
 rand = "0.10.2"
@@ -94,10 +94,8 @@ hmac = "0.13"
 idgenerator = "2.0.0"
 config = "0.15.25"
 reqwest = "0.13.4"
-lazy_static = "1.5.0"
 uuid = "1.23.5"
 regex = "1.13.0"
-ed25519-dalek = "2.2.0"
 ctrlc = "3.5.2"
 cedar-policy = "4.11.2"
 secp256k1 = "0.31.1"

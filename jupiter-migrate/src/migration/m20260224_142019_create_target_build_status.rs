@@ -21,6 +21,7 @@ impl MigrationTrait for Migration {
                     .await?;
             }
             DatabaseBackend::MySql | DatabaseBackend::Sqlite => {}
+            _ => {}
         }
 
         // Create target build status table

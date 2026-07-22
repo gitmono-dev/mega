@@ -61,7 +61,6 @@ uuid = { workspace = true }
 async-stream = { workspace = true }
 reqwest = { workspace = true, features = ["json", "stream", "blocking"] }
 regex = { workspace = true }
-ed25519-dalek = { workspace = true, features = ["pkcs8"] }
 ctrlc = { workspace = true }
 tower-sessions = { workspace = true, features = ["memory-store"] }
 time = { workspace = true, features = ["serde"] }

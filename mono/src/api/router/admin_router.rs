@@ -3,6 +3,7 @@
 //! Provides endpoints for admin permission checks and user account approval:
 //! - `GET /api/v1/admin/me` - Check if current user is admin
 //! - `GET /api/v1/admin/list` - List all admins (admin-only)
+//! - `POST /api/v1/admin/cedar/generate` - Generate `.mega_cedar.json` from admin list
 //! - `GET /api/v1/admin/user-approvals` - List user approval records (admin-only)
 //! - `POST /api/v1/admin/user-approvals/{username}/approve` - Approve a user (admin-only)
 //! - `POST /api/v1/admin/user-approvals/{username}/reject` - Reject a user (admin-only)
@@ -11,13 +12,15 @@
 //! - 401 Unauthorized: No valid session (handled by `LoginUser` extractor)
 //! - 403 Forbidden: Logged in but not admin (for admin-only endpoints)
 
+use std::collections::BTreeSet;
+
 use api_model::common::CommonResult;
 use axum::{
     Json,
     extract::{Path, Query, State},
 };
 use ceres::model::{
-    admin::{AdminListResponse, IsAdminResponse},
+    admin::{AdminListResponse, GenerateCedarRequest, GenerateCedarResponse, IsAdminResponse},
     user::{ListUserApprovalsQuery, UserApprovalListRes, UserApprovalStatusRes},
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -34,6 +37,7 @@ pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
         OpenApiRouter::new()
             .routes(routes!(is_admin_me))
             .routes(routes!(admin_list))
+            .routes(routes!(generate_cedar))
             .routes(routes!(list_user_approvals))
             .routes(routes!(approve_user))
             .routes(routes!(reject_user)),
@@ -91,6 +95,56 @@ async fn admin_list(
 
     Ok(Json(CommonResult::success(Some(AdminListResponse {
         admins,
+    }))))
+}
+
+/// POST /api/v1/admin/cedar/generate
+///
+/// Generate `.mega_cedar.json` content from a list of admin usernames.
+/// Only admins can access this endpoint. Does not write to the repository.
+#[utoipa::path(
+    post,
+    path = "/cedar/generate",
+    request_body = GenerateCedarRequest,
+    responses(
+        (status = 200, body = CommonResult<GenerateCedarResponse>),
+        (status = 400, description = "Empty admin list"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - not admin"),
+    ),
+    tag = USER_TAG
+)]
+async fn generate_cedar(
+    user: LoginUser,
+    State(state): State<MonoApiServiceState>,
+    Json(payload): Json<GenerateCedarRequest>,
+) -> Result<Json<CommonResult<GenerateCedarResponse>>, ApiError> {
+    ensure_admin(&state, &user).await?;
+
+    let admins: Vec<String> = payload
+        .admins
+        .into_iter()
+        .map(|name| name.trim().to_string())
+        .filter(|name| !name.is_empty())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect();
+
+    if admins.is_empty() {
+        return Err(ApiError::bad_request(anyhow::anyhow!(
+            "admins must not be empty"
+        )));
+    }
+
+    let content = saturn::entitystore::generate_entity(&admins, "/").map_err(|e| {
+        ApiError::internal(anyhow::anyhow!(
+            "Failed to generate .mega_cedar.json: {}",
+            e
+        ))
+    })?;
+
+    Ok(Json(CommonResult::success(Some(GenerateCedarResponse {
+        content,
     }))))
 }
 

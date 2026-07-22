@@ -8,7 +8,8 @@ use pgp::{
     types::KeyDetails,
 };
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, EntityTrait, IntoActiveModel, QueryFilter, prelude::Expr,
+    ActiveModelTrait, ColumnTrait, EntityTrait, ExprTrait, IntoActiveModel, QueryFilter,
+    prelude::Expr,
 };
 
 use crate::storage::base_storage::{BaseStorage, StorageConnector};

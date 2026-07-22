@@ -3,7 +3,7 @@ use std::ops::Deref;
 use callisto::{artifact_objects, artifact_set_files, artifact_sets};
 use common::errors::MegaError;
 use sea_orm::{
-    ColumnTrait, Condition, EntityTrait, JoinType, QueryFilter, QueryOrder, QuerySelect,
+    ColumnTrait, Condition, EntityTrait, ExprTrait, JoinType, QueryFilter, QueryOrder, QuerySelect,
     QueryTrait, RelationTrait, Value as SeaValue, sea_query::Expr,
 };
 
@@ -45,21 +45,21 @@ impl ArtifactStorage {
                 q = q.filter(Expr::cust_with_values(
                     r#"(metadata ->> 'run_id') = $1 AND (metadata ->> 'commit_sha') = $2"#,
                     [
-                        SeaValue::String(Some(Box::new(run_id.to_owned()))),
-                        SeaValue::String(Some(Box::new(commit_sha.to_owned()))),
+                        SeaValue::String(Some(run_id.to_owned())),
+                        SeaValue::String(Some(commit_sha.to_owned())),
                     ],
                 ));
             }
             (Some(run_id), None) => {
                 q = q.filter(Expr::cust_with_values(
                     r#"(metadata ->> 'run_id') = $1"#,
-                    [SeaValue::String(Some(Box::new(run_id.to_owned())))],
+                    [SeaValue::String(Some(run_id.to_owned()))],
                 ));
             }
             (None, Some(commit_sha)) => {
                 q = q.filter(Expr::cust_with_values(
                     r#"(metadata ->> 'commit_sha') = $1"#,
-                    [SeaValue::String(Some(Box::new(commit_sha.to_owned())))],
+                    [SeaValue::String(Some(commit_sha.to_owned()))],
                 ));
             }
             (None, None) => {}
@@ -79,21 +79,21 @@ impl ArtifactStorage {
                 q = q.filter(Expr::cust_with_values(
                     r#"(metadata ->> 'run_id') = $1 AND (metadata ->> 'commit_sha') = $2"#,
                     [
-                        SeaValue::String(Some(Box::new(run_id.to_owned()))),
-                        SeaValue::String(Some(Box::new(commit_sha.to_owned()))),
+                        SeaValue::String(Some(run_id.to_owned())),
+                        SeaValue::String(Some(commit_sha.to_owned())),
                     ],
                 ));
             }
             (Some(run_id), None) => {
                 q = q.filter(Expr::cust_with_values(
                     r#"(metadata ->> 'run_id') = $1"#,
-                    [SeaValue::String(Some(Box::new(run_id.to_owned())))],
+                    [SeaValue::String(Some(run_id.to_owned()))],
                 ));
             }
             (None, Some(commit_sha)) => {
                 q = q.filter(Expr::cust_with_values(
                     r#"(metadata ->> 'commit_sha') = $1"#,
-                    [SeaValue::String(Some(Box::new(commit_sha.to_owned())))],
+                    [SeaValue::String(Some(commit_sha.to_owned()))],
                 ));
             }
             (None, None) => {}
@@ -296,7 +296,7 @@ impl ArtifactStorage {
             .filter(artifact_objects::Column::LastSeenAt.lt(last_seen_before))
             .filter(no_manifest_row)
             .order_by_asc(artifact_objects::Column::LastSeenAt)
-            .limit(limit.max(1))
+            .limit(std::cmp::max(limit, 1))
             .all(conn)
             .await
             .map_err(MegaError::Db)

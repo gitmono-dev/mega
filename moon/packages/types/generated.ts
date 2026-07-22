@@ -4047,6 +4047,15 @@ export type CommonResultFilesChangedPage = {
   req_result: boolean
 }
 
+export type CommonResultGenerateCedarResponse = {
+  /** Response containing generated `.mega_cedar.json` content. */
+  data?: {
+    content: string
+  }
+  err_message: string
+  req_result: boolean
+}
+
 export type CommonResultGroupResponse = {
   data?: {
     /** @format int64 */
@@ -4193,6 +4202,7 @@ export type CommonResultReviewersResponse = {
 
 export type CommonResultRunnerStatusResponse = {
   data?: {
+    domain?: string | null
     error?: string | null
     log_file?: string | null
     phase: string
@@ -4255,6 +4265,7 @@ export type CommonResultSidebarRes = {
 
 export type CommonResultStartRunnerResponse = {
   data?: {
+    domain?: string | null
     phase: string
     vm_id: string
   }
@@ -4860,7 +4871,7 @@ export type CreateTriggerRequest = {
 
 export type CreateWebhookRequest = {
   active?: boolean | null
-  /** Event types: "cl.created", "cl.updated", "cl.merged", "cl.closed", "cl.reopened", "cl.comment.created", "*" */
+  /** Event types: "cl_created", "cl_updated", "cl_merged", "cl_closed", "cl_reopened", "cl_comment_created", "all" */
   event_types: string[]
   path_filter?: string | null
   secret: string
@@ -5009,6 +5020,16 @@ export type FileUploadResponse = {
 
 export type FilesChangedPage = {
   page: CommonPageClFilesChangedItemSchema
+}
+
+/** Request body for generating `.mega_cedar.json` content from admin usernames. */
+export type GenerateCedarRequest = {
+  admins: string[]
+}
+
+/** Response containing generated `.mega_cedar.json` content. */
+export type GenerateCedarResponse = {
+  content: string
 }
 
 export type GpgKey = {
@@ -5723,7 +5744,7 @@ export type StartRunnerRequest = {
   image_memory_mb?: number | null
   image_path?: string | null
   image_url?: string | null
-  /** Force recreate when a Running VM already exists for this domain */
+  /** Force recreate when a Running VM already exists for this mono's domain. */
   replace?: boolean
   target?: string | null
 }
@@ -7338,6 +7359,8 @@ export type PostThreadsMessagesV2Data = V2Message
 export type PostThreadsV2Data = V2MessageThread
 
 export type PostSignInFigmaData = FigmaKeyPair
+
+export type PostApiAdminCedarGenerateData = CommonResultGenerateCedarResponse
 
 export type PostApiAdminGroupsData = CommonResultGroupResponse
 
@@ -16237,6 +16260,31 @@ supporting either retrieving the entire log at once or segmenting it by line cou
     }
   }
   v1 = {
+    /**
+     * @description Generate `.mega_cedar.json` content from a list of admin usernames. Only admins can access this endpoint. Does not write to the repository.
+     *
+     * @tags User Management
+     * @name PostApiAdminCedarGenerate
+     * @summary POST /api/v1/admin/cedar/generate
+     * @request POST:/api/v1/admin/cedar/generate
+     */
+    postApiAdminCedarGenerate: () => {
+      const base = 'POST:/api/v1/admin/cedar/generate' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminCedarGenerateData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiAdminCedarGenerateData>([base]),
+        request: (data: GenerateCedarRequest, params: RequestParams = {}) =>
+          this.request<PostApiAdminCedarGenerateData>({
+            path: `/api/v1/admin/cedar/generate`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            ...params
+          })
+      }
+    },
+
     /**
      * No description
      *

@@ -1,25 +1,4 @@
-use sea_orm::entity::prelude::*;
-
-use crate::{
-    entity_ext::generate_id,
-    mega_code_review_comment::{self, Column, Entity},
-};
-
-#[derive(Copy, Clone, Debug, EnumIter)]
-pub enum Relation {
-    Thread,
-}
-
-impl RelationTrait for Relation {
-    fn def(&self) -> sea_orm::RelationDef {
-        match self {
-            Self::Thread => Entity::belongs_to(crate::mega_code_review_thread::Entity)
-                .from(Column::ThreadId)
-                .to(crate::mega_code_review_thread::Column::Id)
-                .into(),
-        }
-    }
-}
+use crate::{entity_ext::generate_id, mega_code_review_comment};
 
 impl mega_code_review_comment::Model {
     pub fn new(

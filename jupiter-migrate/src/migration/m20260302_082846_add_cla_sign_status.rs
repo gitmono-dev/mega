@@ -41,7 +41,7 @@ impl MigrationTrait for Migration {
             );
             manager
                 .get_connection()
-                .execute(add_check_type_stmt)
+                .execute_raw(add_check_type_stmt)
                 .await?;
             // Ensure the new enum value 'cla_sign' is added before inserting the config
             manager

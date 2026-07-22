@@ -99,6 +99,7 @@ mod m20260327_034553_drop_legacy_tasks;
 mod m20260413_033315_create_artifact_tables;
 mod m20260612_011232_drop_build_events_log;
 mod m20260714_021900_create_user_approval_status;
+mod m20260720_060000_rename_webhook_event_type_underscores;
 mod runner;
 pub use runner::apply_migrations;
 
@@ -185,6 +186,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260413_033315_create_artifact_tables::Migration),
             Box::new(m20260612_011232_drop_build_events_log::Migration),
             Box::new(m20260714_021900_create_user_approval_status::Migration),
+            Box::new(m20260720_060000_rename_webhook_event_type_underscores::Migration),
         ]
     }
 }
