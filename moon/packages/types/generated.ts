@@ -7927,7 +7927,7 @@ export type GetTargetsByTaskIdV2Error = MessageResponse
 
 export type PostTaskV2Data = any
 
-export type GetTaskByClV2Data = OrionTaskDTO
+export type GetTaskByClV2Data = OrionTaskDTO[]
 
 export type GetTaskByClV2Error = MessageResponse
 

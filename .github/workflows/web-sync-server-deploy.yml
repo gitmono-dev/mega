@@ -68,7 +68,7 @@ jobs:
 
   deploy-aws:
     needs: build-and-push
-    if: ${{ github.repository == 'gitmono-dev/mega' }}
+    if: false # disabled
     runs-on: ubuntu-latest
     strategy:
       matrix:

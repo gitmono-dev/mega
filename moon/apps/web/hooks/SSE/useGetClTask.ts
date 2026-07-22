@@ -54,11 +54,7 @@ export function useGetClTask(cl: string, params?: RequestParams) {
       return hasActive ? 5000 : false
     },
     queryFn: async () => {
-      const resp = await orionApiClient.task.getTaskByClV2().request(cl, params)
-
-      if (!resp) return []
-
-      const tasks = Array.isArray(resp) ? resp : [resp]
+      const tasks = (await orionApiClient.task.getTaskByClV2().request(cl, params)) ?? []
 
       const hydratedTasks = await Promise.all(
         tasks.map(async (task): Promise<TaskInfoDTO> => {

@@ -54,7 +54,7 @@ clap = "4.6.4"
 
 #====
 tokio = "1.53.1"
-tokio-stream = "0.1.18"
+tokio-stream = "0.1.19"
 tokio-util = "0.7.19"
 async-trait = "0.1.89"
 async-stream = "0.3.6"

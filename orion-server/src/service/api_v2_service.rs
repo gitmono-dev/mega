@@ -215,7 +215,7 @@ async fn task_exists_by_id(
 pub async fn task_get(
     state: &AppState,
     cl: &str,
-) -> Result<Json<OrionTaskDTO>, JsonValueErrorResponse> {
+) -> Result<Json<Vec<OrionTaskDTO>>, JsonValueErrorResponse> {
     let tasks = OrionTasksRepo::find_by_cl(&state.conn, cl)
         .await
         .map_err(|e| {
@@ -223,11 +223,7 @@ pub async fn task_get(
             value_error(StatusCode::INTERNAL_SERVER_ERROR, "Database error")
         })?;
 
-    match tasks.len() {
-        0 => Err(value_error(StatusCode::NOT_FOUND, "Not found task")),
-        1 => Ok(Json(OrionTaskDTO::from(&tasks[0]))),
-        _ => Err(value_error(StatusCode::BAD_REQUEST, "Multiple tasks")),
-    }
+    Ok(Json(tasks.iter().map(OrionTaskDTO::from).collect()))
 }
 
 pub async fn build_event_get(

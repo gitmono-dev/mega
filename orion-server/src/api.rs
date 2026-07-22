@@ -292,16 +292,14 @@ pub async fn build_retry_handler(
     tag = "Task",
     params(("cl" = String, Path, description = "Change List")),
     responses(
-        (status = 200, description = "Get task successfully", body = OrionTaskDTO),
-        (status = 400, description = "Multiple tasks", body = MessageResponse),
-        (status = 404, description = "Not found task", body = MessageResponse),
+        (status = 200, description = "Get tasks by CL successfully", body = Vec<OrionTaskDTO>),
         (status = 500, description = "Database error", body = MessageResponse),
     )
 )]
 pub async fn task_get_handler(
     State(state): State<AppState>,
     Path(cl): Path<String>,
-) -> Result<Json<OrionTaskDTO>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<Vec<OrionTaskDTO>>, (StatusCode, Json<serde_json::Value>)> {
     api_v2_service::task_get(&state, &cl).await
 }
 

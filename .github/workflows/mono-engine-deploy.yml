@@ -128,7 +128,7 @@ jobs:
 
   deploy-aws:
     needs: manifest
-    if: ${{ github.repository == 'gitmono-dev/mega' }}
+    if: false # disabled
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -1,7 +1,7 @@
 use api_model::buck2::{status::Status, types::ProjectRelativePath};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, IntoActiveModel,
-    QueryFilter as _, QuerySelect as _,
+    QueryFilter as _, QueryOrder as _, QuerySelect as _,
 };
 use serde_json::to_value;
 use uuid::Uuid;
@@ -39,6 +39,7 @@ impl OrionTasksRepo {
     ) -> Result<Vec<callisto::orion_tasks::Model>, DbErr> {
         callisto::orion_tasks::Entity::find()
             .filter(callisto::orion_tasks::Column::Cl.eq(cl))
+            .order_by_asc(callisto::orion_tasks::Column::CreatedAt)
             .all(conn)
             .await
     }

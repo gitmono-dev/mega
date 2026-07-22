@@ -38,6 +38,10 @@ Database migrations apply automatically on first `Storage::new` when the `migrat
 
 Swagger UI: `http://localhost:8000/swagger-ui` (default HTTP port).
 
+## Frontend OpenAPI client types
+
+Do **not** hand-edit `moon/api/gen/gitmono.json` or `moon/packages/types/generated.ts`. Export OpenAPI from the running services and regenerate with `moon/script/gen-client`. See [moon/api/README.md](../moon/api/README.md).
+
 ## Post-start initialization (optional)
 
 To seed Buckal bundles and third-party imports via API:

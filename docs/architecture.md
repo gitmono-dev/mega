@@ -52,7 +52,7 @@ When the `mono` HTTP server is running (default port `8000`):
 | Swagger UI | `http://localhost:8000/swagger-ui` |
 | OpenAPI JSON | `http://localhost:8000/api/openapi.json` |
 
-REST handlers are defined in `mono/src/api/` with `utoipa` annotations. Do not maintain a separate hand-written API catalog.
+REST handlers are defined in `mono/src/api/` with `utoipa` annotations. Do not maintain a separate hand-written API catalog. Frontend typed clients are generated from those specs — do not hand-edit `moon/api/gen/gitmono.json` or `moon/packages/types/generated.ts`; see [moon/api/README.md](../moon/api/README.md).
 
 ### Git LFS
 
