@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with:
           submodules: recursive
 
@@ -55,7 +55,7 @@ jobs:
       SCCACHE_DIR: ${{ github.workspace }}/.sccache
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with:
           submodules: recursive
 
@@ -73,7 +73,7 @@ jobs:
         run: |
           mkdir -p "$SCCACHE_DIR"
       - name: Cache sccache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
         with:
           path: ${{ env.SCCACHE_DIR }}
           key: sccache-${{ runner.os }}-stable-${{ hashFiles('**/Cargo.lock') }}-clippy
@@ -211,7 +211,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y redis-server
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with:
           submodules: recursive
           lfs: true
@@ -232,7 +232,7 @@ jobs:
         run: |
           mkdir -p "$SCCACHE_DIR"
       - name: Cache sccache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
         with:
           path: ${{ env.SCCACHE_DIR }}
           key: sccache-${{ runner.os }}-stable-${{ hashFiles('**/Cargo.lock') }}-test
