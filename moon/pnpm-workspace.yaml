@@ -135,7 +135,7 @@ catalog:
   '@welldone-software/why-did-you-render': ^7.0.1
   autoprefixer: ^10.4.8
   babel-plugin-jsx-pragmatic: ^1.0.2
-  body-parser: ^1.20.1
+  body-parser: ^1.20.6
   cheerio: ^1.0.0-rc.12
   class-variance-authority: ^0.7.0
   cmark-gfm-js: ^1.1.7
