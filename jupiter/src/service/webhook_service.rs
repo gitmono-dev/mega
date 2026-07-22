@@ -125,7 +125,7 @@ impl WebhookService {
         cl_payload: ClPayload,
         path: &str,
     ) -> Result<(), common::errors::MegaError> {
-        let event_type_str = event_type.to_value();
+        let event_type_str = event_type.to_value().value.into_owned();
         let webhooks = self
             .storage
             .find_matching_webhooks(event_type.clone(), path)

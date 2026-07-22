@@ -56,6 +56,7 @@ impl MigrationTrait for Migration {
             DatabaseBackend::Sqlite | DatabaseBackend::MySql => {
                 // Do not create enum in sqlite
             }
+            _ => {}
         }
 
         manager

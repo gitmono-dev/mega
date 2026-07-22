@@ -161,7 +161,7 @@ impl MigrationTrait for Migration {
                 "#
                 .to_string(),
             );
-            manager.get_connection().execute(backfill_stmt).await?;
+            manager.get_connection().execute_raw(backfill_stmt).await?;
         }
 
         manager

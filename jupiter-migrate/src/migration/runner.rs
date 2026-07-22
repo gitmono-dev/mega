@@ -62,7 +62,7 @@ mod tests {
             .await
             .expect("migrations should apply");
 
-        db.execute(Statement::from_string(
+        db.execute_raw(Statement::from_string(
             DbBackend::Sqlite,
             "PRAGMA foreign_keys = ON;",
         ))
@@ -82,7 +82,7 @@ mod tests {
                     table
                 ),
             );
-            let row = db.query_one(stmt).await.expect("query sqlite_master");
+            let row = db.query_one_raw(stmt).await.expect("query sqlite_master");
             assert!(row.is_some(), "expected table '{table}' to exist");
         }
 

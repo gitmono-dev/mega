@@ -7,17 +7,20 @@
 //!     to ["alice", "bob"];
 //! ```
 
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::LazyLock,
+};
 
-use lazy_static::lazy_static;
 use regex::Regex;
 
-lazy_static! {
-    static ref RULE_PATTERN: Regex = Regex::new(
-        r#"(?s)permit\s*\([^)]*\)\s*when\s*\{\s*resource\.path\.startsWith\s*\(\s*"([^"]*)"\s*\)\s*\}\s*to\s*\[([^\]]+)\]"#
-    ).unwrap();
-    static ref REVIEWER_PATTERN: Regex = Regex::new(r#""([^"]+)""#).unwrap();
-}
+static RULE_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r#"(?s)permit\s*\([^)]*\)\s*when\s*\{\s*resource\.path\.startsWith\s*\(\s*"([^"]*)"\s*\)\s*\}\s*to\s*\[([^\]]+)\]"#,
+    )
+    .unwrap()
+});
+static REVIEWER_PATTERN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#""([^"]+)""#).unwrap());
 
 /// Represents a reviewer rule extracted from policy file
 #[derive(Debug, Clone, PartialEq)]

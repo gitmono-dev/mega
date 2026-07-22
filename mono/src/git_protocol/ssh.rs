@@ -16,7 +16,7 @@ use futures::{StreamExt, stream};
 use russh::{
     Channel, ChannelId,
     keys::{HashAlg, PublicKey},
-    server::{self, Auth, Msg, Session},
+    server::{self, Auth, ChannelOpenHandle, Msg, Session},
 };
 use tokio::{io::AsyncReadExt, sync::Mutex};
 
@@ -51,14 +51,16 @@ impl server::Handler for SshServer {
     async fn channel_open_session(
         &mut self,
         channel: Channel<Msg>,
+        reply: ChannelOpenHandle,
         _: &mut Session,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<(), Self::Error> {
         tracing::info!("SshServer::channel_open_session:{}", channel.id());
         {
             let mut clients = self.clients.lock().await;
             clients.insert((self.id, channel.id()), channel);
         }
-        Ok(true)
+        reply.accept().await;
+        Ok(())
     }
 
     /// # Executes a request on the SSH server.

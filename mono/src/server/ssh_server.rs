@@ -3,10 +3,9 @@ use std::{collections::HashMap, net::SocketAddr, str::FromStr, sync::Arc};
 use bytes::BytesMut;
 use ceres::{TransportRuntime, application::api_service::cache::GitObjectCache};
 use clap::Args;
-use ed25519_dalek::pkcs8::spki::der::pem::LineEnding;
 use russh::{
     Preferred,
-    keys::{Algorithm, PrivateKey},
+    keys::{Algorithm, PrivateKey, ssh_key::LineEnding},
     server::Server,
 };
 use tokio::sync::Mutex;

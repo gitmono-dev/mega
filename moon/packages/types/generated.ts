@@ -4193,6 +4193,7 @@ export type CommonResultReviewersResponse = {
 
 export type CommonResultRunnerStatusResponse = {
   data?: {
+    domain?: string | null
     error?: string | null
     log_file?: string | null
     phase: string
@@ -4255,6 +4256,7 @@ export type CommonResultSidebarRes = {
 
 export type CommonResultStartRunnerResponse = {
   data?: {
+    domain?: string | null
     phase: string
     vm_id: string
   }
@@ -4860,7 +4862,7 @@ export type CreateTriggerRequest = {
 
 export type CreateWebhookRequest = {
   active?: boolean | null
-  /** Event types: "cl.created", "cl.updated", "cl.merged", "cl.closed", "cl.reopened", "cl.comment.created", "*" */
+  /** Event types: "cl_created", "cl_updated", "cl_merged", "cl_closed", "cl_reopened", "cl_comment_created", "all" */
   event_types: string[]
   path_filter?: string | null
   secret: string
@@ -5723,7 +5725,7 @@ export type StartRunnerRequest = {
   image_memory_mb?: number | null
   image_path?: string | null
   image_url?: string | null
-  /** Force recreate when a Running VM already exists for this domain */
+  /** Force recreate when a Running VM already exists for this mono's domain. */
   replace?: boolean
   target?: string | null
 }

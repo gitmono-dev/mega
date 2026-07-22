@@ -1,32 +1,8 @@
-use sea_orm::entity::prelude::*;
-
 use crate::{
     entity_ext::{generate_hash_content, generate_id, normalize},
-    mega_code_review_anchor::{self, Column, Entity},
+    mega_code_review_anchor,
     sea_orm_active_enums::DiffSideEnum,
 };
-
-#[derive(Copy, Clone, Debug, EnumIter)]
-pub enum Relation {
-    Thread,
-    Position,
-}
-
-impl RelationTrait for Relation {
-    fn def(&self) -> sea_orm::RelationDef {
-        match self {
-            Self::Thread => Entity::belongs_to(crate::mega_code_review_thread::Entity)
-                .from(Column::ThreadId)
-                .to(crate::mega_code_review_thread::Column::Id)
-                .into(),
-
-            Self::Position => Entity::has_one(crate::mega_code_review_position::Entity)
-                .from(Column::Id)
-                .to(crate::mega_code_review_position::Column::AnchorId)
-                .into(),
-        }
-    }
-}
 
 impl mega_code_review_anchor::Model {
     #[allow(clippy::too_many_arguments)]

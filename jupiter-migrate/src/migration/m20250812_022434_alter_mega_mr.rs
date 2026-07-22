@@ -27,7 +27,7 @@ impl MigrationTrait for Migration {
 
                 manager
                     .get_connection()
-                    .execute(Statement::from_string(
+                    .execute_raw(Statement::from_string(
                         manager.get_database_backend(),
                         "ALTER TABLE access_token RENAME COLUMN user_id TO username".to_owned(),
                     ))
@@ -35,13 +35,14 @@ impl MigrationTrait for Migration {
 
                 manager
                     .get_connection()
-                    .execute(Statement::from_string(
+                    .execute_raw(Statement::from_string(
                         manager.get_database_backend(),
                         "ALTER TABLE ssh_keys RENAME COLUMN user_id TO username".to_owned(),
                     ))
                     .await?;
             }
             DatabaseBackend::Sqlite => {}
+            _ => {}
         }
 
         Ok(())

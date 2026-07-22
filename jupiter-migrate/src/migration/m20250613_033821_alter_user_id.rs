@@ -54,6 +54,7 @@ impl MigrationTrait for Migration {
             }
 
             DatabaseBackend::Sqlite => {}
+            _ => {}
         }
 
         Ok(())

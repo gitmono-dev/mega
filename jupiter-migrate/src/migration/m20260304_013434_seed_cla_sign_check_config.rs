@@ -9,7 +9,7 @@ impl MigrationTrait for Migration {
         let db_backend = manager.get_database_backend();
         manager
             .get_connection()
-            .execute(Statement::from_string(
+            .execute_raw(Statement::from_string(
                 db_backend,
                 r#"
                     INSERT INTO path_check_configs (created_at, updated_at, id, path, check_type_code, enabled, required)
@@ -29,7 +29,7 @@ impl MigrationTrait for Migration {
         let db_backend = manager.get_database_backend();
         manager
             .get_connection()
-            .execute(Statement::from_string(
+            .execute_raw(Statement::from_string(
                 db_backend,
                 r#"DELETE FROM path_check_configs WHERE path = '/' AND check_type_code = 'cla_sign';"#,
             ))

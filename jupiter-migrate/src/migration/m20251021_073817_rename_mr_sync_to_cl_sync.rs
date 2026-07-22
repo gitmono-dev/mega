@@ -14,7 +14,7 @@ impl MigrationTrait for Migration {
                 manager.get_database_backend(),
                 r#"ALTER TYPE "check_type_enum" RENAME VALUE 'mr_sync' TO 'cl_sync';"#,
             );
-            manager.get_connection().execute(rename_stmt).await?;
+            manager.get_connection().execute_raw(rename_stmt).await?;
         }
         Ok(())
     }
@@ -25,7 +25,7 @@ impl MigrationTrait for Migration {
                 manager.get_database_backend(),
                 r#"ALTER TYPE "check_type_enum" RENAME VALUE 'cl_sync' TO 'mr_sync';"#,
             );
-            manager.get_connection().execute(rollback_stmt).await?;
+            manager.get_connection().execute_raw(rollback_stmt).await?;
         }
         Ok(())
     }

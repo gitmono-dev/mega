@@ -17,4 +17,3 @@ thiserror = { workspace = true }
 cedar-policy = { workspace = true }
 itertools = { workspace = true }
 regex = { workspace = true }
-lazy_static = { workspace = true }

@@ -2,7 +2,7 @@ use sea_orm::entity::prelude::*;
 
 use crate::{
     entity_ext::{generate_id, generate_public_id},
-    reactions::{self, Entity},
+    reactions::{self, Column, Entity},
 };
 
 #[derive(Copy, Clone, Debug, EnumIter)]
@@ -14,7 +14,7 @@ impl RelationTrait for Relation {
     fn def(&self) -> RelationDef {
         match self {
             Self::Conversation => Entity::belongs_to(crate::mega_conversation::Entity)
-                .from(reactions::Column::SubjectId)
+                .from(Column::SubjectId)
                 .to(crate::mega_conversation::Column::Id)
                 .into(),
         }

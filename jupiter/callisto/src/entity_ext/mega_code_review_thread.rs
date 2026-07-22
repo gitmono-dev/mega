@@ -8,27 +8,23 @@ use crate::{
 
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
-    MegaMr,
-    Comment,
-    Anchor,
+    MegaCl,
 }
 
 impl RelationTrait for Relation {
-    fn def(&self) -> sea_orm::RelationDef {
+    fn def(&self) -> RelationDef {
         match self {
-            Self::MegaMr => Entity::belongs_to(crate::mega_cl::Entity)
+            Self::MegaCl => Entity::belongs_to(crate::mega_cl::Entity)
                 .from(Column::Link)
                 .to(crate::mega_cl::Column::Link)
                 .into(),
-            Self::Comment => Entity::has_many(crate::mega_code_review_comment::Entity).into(),
-            Self::Anchor => Entity::has_one(crate::mega_code_review_anchor::Entity).into(),
         }
     }
 }
 
 impl Related<crate::mega_cl::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::MegaMr.def()
+        Relation::MegaCl.def()
     }
 }
 

@@ -77,6 +77,7 @@ impl MigrationTrait for Migration {
                 manager.get_connection().execute_unprepared(sql).await?;
             }
             DatabaseBackend::Sqlite | DatabaseBackend::MySql => {}
+            _ => {}
         }
 
         Ok(())

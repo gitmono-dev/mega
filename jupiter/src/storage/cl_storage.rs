@@ -413,7 +413,7 @@ impl ClStorage {
                 ])
                 .to_owned(),
             )
-            .do_nothing()
+            .try_insert()
             .exec(self.get_connection())
             .await?;
         Ok(())

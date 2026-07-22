@@ -15,13 +15,14 @@ impl MigrationTrait for Migration {
             DatabaseBackend::Postgres => {
                 manager
                     .get_connection()
-                    .execute(Statement::from_string(
+                    .execute_raw(Statement::from_string(
                         DatabaseBackend::Postgres,
                         "DROP TYPE IF EXISTS storage_type_enum;".to_owned(),
                     ))
                     .await?;
             }
             DatabaseBackend::Sqlite | DatabaseBackend::MySql => {}
+            _ => {}
         }
 
         Ok(())
@@ -34,7 +35,7 @@ impl MigrationTrait for Migration {
             DatabaseBackend::Postgres => {
                 manager
                     .get_connection()
-                    .execute(Statement::from_string(
+                    .execute_raw(Statement::from_string(
                         DatabaseBackend::Postgres,
                         r#"
                             CREATE TYPE storage_type_enum AS ENUM (
@@ -48,6 +49,7 @@ impl MigrationTrait for Migration {
                     .await?;
             }
             DatabaseBackend::Sqlite | DatabaseBackend::MySql => {}
+            _ => {}
         }
 
         Ok(())
