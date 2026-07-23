@@ -296,7 +296,7 @@ async fn handle_connection(
             tokio::select! {
                 biased;
                 _ = heartbeat_interval.tick() => {
-                    tracing::info!("Sending heartbeat...");
+                    tracing::debug!("Sending heartbeat...");
                     match serde_json::to_string(&WSMessage::Heartbeat) {
                         Ok(payload) => {
                             if let Err(e) = ws_sender.send(Message::Text(payload.into())).await {

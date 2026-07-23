@@ -331,6 +331,14 @@ pub struct TriggerContext {
     pub ref_type: Option<String>,
 }
 
+/// CL fields needed when constructing a retry [`TriggerContext`].
+#[derive(Debug, Clone)]
+pub struct RetryClContext {
+    pub link: Option<String>,
+    pub id: Option<i64>,
+    pub path: Option<String>,
+}
+
 impl TriggerContext {
     pub fn from_git_push(
         repo_path: String,
@@ -389,9 +397,7 @@ impl TriggerContext {
         repo_path: String,
         from_hash: String,
         commit_hash: String,
-        cl_link: Option<String>,
-        cl_id: Option<i64>,
-        cl_path: Option<String>,
+        cl: RetryClContext,
         triggered_by: Option<String>,
         original_trigger_id: i64,
     ) -> Self {
@@ -400,11 +406,11 @@ impl TriggerContext {
             trigger_source: TriggerSource::User,
             triggered_by,
             repo_path,
-            cl_path,
+            cl_path: cl.path,
             from_hash,
             commit_hash,
-            cl_link,
-            cl_id,
+            cl_link: cl.link,
+            cl_id: cl.id,
             params: None,
             original_trigger_id: Some(original_trigger_id),
             ref_name: None,

@@ -63,7 +63,7 @@ futures = "0.3.32"
 futures-util = "0.3.32"
 axum = { version = "0.8.9", features = ["macros", "json"] }
 axum-extra = "0.12.6"
-russh = "0.62.3"
+russh = "0.62.4"
 tower-http = "0.7.0"
 tower = "0.5.3"
 tower-sessions = { version = "0.15", features = ["memory-store"] }
@@ -100,7 +100,7 @@ ctrlc = "3.5.2"
 cedar-policy = "4.11.2"
 secp256k1 = "0.31.1"
 pgp = "0.20.0"
-base64 = "0.22.1"
+base64 = "0.23.0"
 
 utoipa = { version = "5.5.0", features = ["chrono"] }
 utoipa-axum = "0.2.0"

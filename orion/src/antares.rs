@@ -165,6 +165,8 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
     /// # Arguments
     /// * `job_id` - Unique identifier for this build job
     /// * `cl` - Optional changelist layer name
+    /// * `cl_path` - Optional CL directory under the Buck root (e.g. `project/dagrs-derive`)
+    ///   used to rebase CL-relative `files-list` paths onto the monorepo overlay.
     ///
     /// # Returns
     /// The `AntaresConfig` containing mountpoint and job metadata on success.
@@ -172,16 +174,18 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
         job_id: &str,
         repo: &str,
         cl: Option<&str>,
+        cl_path: Option<&str>,
     ) -> Result<AntaresConfig, DynError> {
         tracing::debug!(
-            "Mounting Antares job: job_id={}, repo={}, cl={:?}",
+            "Mounting Antares job: job_id={}, repo={}, cl={:?}, cl_path={:?}",
             job_id,
             repo,
-            cl
+            cl,
+            cl_path
         );
 
         if let Some(cl_link) = cl {
-            return mount_job_with_prepopulated_cl(job_id, repo, cl_link).await;
+            return mount_job_with_prepopulated_cl(job_id, repo, cl_link, cl_path).await;
         }
 
         let mountpoint = AntaresPaths::from_global_config().mount_root.join(job_id);
@@ -227,6 +231,7 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
         job_id: &str,
         repo: &str,
         cl_link: &str,
+        cl_path: Option<&str>,
     ) -> Result<AntaresConfig, DynError> {
         let manager = get_manager().await?;
         let paths = AntaresPaths::from_global_config();
@@ -241,6 +246,7 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
             job_id = job_id,
             repo = repo,
             cl_link = cl_link,
+            cl_path = ?cl_path,
             upper_id = %upper_id,
             cl_id = %cl_id,
             upper_dir = %upper_dir.display(),
@@ -260,11 +266,12 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
             job_id = job_id,
             repo = repo,
             cl_link = cl_link,
+            cl_path = ?cl_path,
             cl_dir = %cl_dir.display(),
             "DEBUG: About to populate CL overlay directory"
         );
 
-        populate_cl_overlay_dir(job_id, repo, cl_link, &cl_dir).await?;
+        populate_cl_overlay_dir(job_id, repo, cl_link, cl_path, &cl_dir).await?;
 
         // DEBUG: Verify CL overlay directory contents after population
         match tokio::fs::read_dir(&cl_dir).await {
@@ -639,14 +646,114 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
         Ok(body.data.unwrap_or_default())
     }
 
-    fn resolve_overlay_relative_path(repo: &str, entry_path: &str) -> Result<PathBuf, DynError> {
+    /// Rebase a CL-relative file path onto the Buck root when `cl_path` is a
+    /// subdirectory of `repo` (same semantics as Mega `rebase_cl_relative_path`).
+    ///
+    /// Examples (`repo=/`, `cl_path=/project/dagrs-derive`):
+    /// - `src/lib.rs` → `project/dagrs-derive/src/lib.rs`
+    /// - `project/dagrs-derive/BUCK` → unchanged (already prefixed)
+    fn rebase_cl_relative_path(repo: &str, cl_path: &str, file: &str) -> String {
+        let repo = repo.trim_matches('/');
+        let cl = cl_path.trim_matches('/');
+        let file_str = file.trim().trim_start_matches('/').replace('\\', "/");
+
+        let cl_rel = if repo.is_empty() {
+            if cl.is_empty() {
+                return file_str;
+            }
+            cl.to_string()
+        } else if cl == repo {
+            return file_str;
+        } else if let Some(stripped) = cl.strip_prefix(&format!("{repo}/")) {
+            stripped.to_string()
+        } else {
+            return file_str;
+        };
+
+        if cl_rel.is_empty() {
+            return file_str;
+        }
+
+        if file_str == cl_rel || file_str.starts_with(&format!("{cl_rel}/")) {
+            return file_str;
+        }
+
+        format!("{cl_rel}/{file_str}")
+    }
+
+    /// Longest common path-component prefix of `paths`, dropping a trailing
+    /// component when the prefix equals any full path (i.e. captured a filename).
+    fn common_dir_prefix<'a, I>(paths: I) -> Option<String>
+    where
+        I: IntoIterator<Item = &'a str>,
+    {
+        let split: Vec<Vec<&str>> = paths
+            .into_iter()
+            .map(|p| {
+                p.trim_matches('/')
+                    .split('/')
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>()
+            })
+            .filter(|parts| !parts.is_empty())
+            .collect();
+        if split.is_empty() {
+            return None;
+        }
+
+        let mut prefix = split[0].clone();
+        for parts in &split[1..] {
+            let n = prefix
+                .iter()
+                .zip(parts.iter())
+                .take_while(|(a, b)| a == b)
+                .count();
+            prefix.truncate(n);
+            if prefix.is_empty() {
+                return None;
+            }
+        }
+
+        // If the LCP is exactly one of the input paths, it included a filename.
+        while !prefix.is_empty() && split.contains(&prefix) {
+            prefix.pop();
+        }
+        if prefix.is_empty() {
+            return None;
+        }
+        Some(prefix.join("/"))
+    }
+
+    /// Infer CL directory for overlay rebase from task change paths.
+    ///
+    /// Only when `repo` is the monorepo root (`/` / empty): take the longest
+    /// common directory prefix of `change_paths` (e.g. `project/dagrs-derive`).
+    /// For a registered sub-repo, return `None` and let repo-prefix logic apply.
+    pub fn infer_cl_path_from_changes(repo: &str, change_paths: &[&str]) -> Option<String> {
+        if !repo.trim_matches('/').is_empty() {
+            return None;
+        }
+        common_dir_prefix(change_paths.iter().copied())
+    }
+
+    fn resolve_overlay_relative_path(
+        repo: &str,
+        entry_path: &str,
+        cl_path: Option<&str>,
+    ) -> Result<PathBuf, DynError> {
+        let rebased = match cl_path {
+            Some(cl) if !cl.trim().is_empty() => rebase_cl_relative_path(repo, cl, entry_path),
+            _ => entry_path.trim().trim_start_matches('/').replace('\\', "/"),
+        };
+
         let repo_prefix = repo.trim_matches('/');
-        let trimmed_entry = entry_path.trim().trim_start_matches('/');
+        let trimmed_entry = rebased.trim().trim_start_matches('/');
 
         // DEBUG: Log path resolution inputs
         tracing::debug!(
             repo = %repo,
             entry_path = %entry_path,
+            cl_path = ?cl_path,
             repo_prefix = %repo_prefix,
             trimmed_entry = %trimmed_entry,
             "DEBUG: resolve_overlay_relative_path inputs"
@@ -686,7 +793,7 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
         }
 
         Err(Box::new(io_other(format!(
-            "Rejected unsafe CL overlay path: repo={repo}, entry_path={entry_path}, relative={relative}"
+            "Rejected unsafe CL overlay path: repo={repo}, entry_path={entry_path}, cl_path={cl_path:?}, relative={relative}"
         ))))
     }
 
@@ -774,6 +881,7 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
         job_id: &str,
         repo: &str,
         cl_link: &str,
+        cl_path: Option<&str>,
         cl_dir: &Path,
     ) -> Result<(), DynError> {
         if cl_dir.exists() {
@@ -805,7 +913,7 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
         let client = http_client()?;
         let mut applied_paths = Vec::new();
         for file in files {
-            let overlay_path = resolve_overlay_relative_path(repo, &file.path)?;
+            let overlay_path = resolve_overlay_relative_path(repo, &file.path, cl_path)?;
             match file.action.as_str() {
                 "new" | "modified" => {
                     download_blob_to_path(&client, &file.sha, &cl_dir.join(&overlay_path)).await?;
@@ -837,6 +945,7 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
             job_id = job_id,
             repo = repo,
             cl_link = cl_link,
+            cl_path = ?cl_path,
             cl_dir = %cl_dir.display(),
             applied_file_count = applied_paths.len(),
             applied_files = ?applied_paths,
@@ -1090,8 +1199,9 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
         use tempfile::tempdir;
 
         use super::{
-            fusermount_output_indicates_safe_detach, panic_payload_to_string,
-            remove_mountpoint_path, resolve_overlay_relative_path, run_with_panic_guard,
+            fusermount_output_indicates_safe_detach, infer_cl_path_from_changes,
+            panic_payload_to_string, rebase_cl_relative_path, remove_mountpoint_path,
+            resolve_overlay_relative_path, run_with_panic_guard,
         };
 
         #[tokio::test]
@@ -1117,7 +1227,7 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
 
         #[test]
         fn test_resolve_overlay_relative_path_prefixes_repo_relative_path() {
-            let path = resolve_overlay_relative_path("/project/buck2_test", "src/main.rs")
+            let path = resolve_overlay_relative_path("/project/buck2_test", "src/main.rs", None)
                 .expect("path should resolve");
             assert_eq!(path.to_string_lossy(), "project/buck2_test/src/main.rs");
         }
@@ -1127,6 +1237,7 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
             let path = resolve_overlay_relative_path(
                 "/project/buck2_test",
                 "project/buck2_test/toolchains/BUCK",
+                None,
             )
             .expect("path should resolve");
             assert_eq!(path.to_string_lossy(), "project/buck2_test/toolchains/BUCK");
@@ -1134,7 +1245,62 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
 
         #[test]
         fn test_resolve_overlay_relative_path_rejects_escape_sequences() {
-            assert!(resolve_overlay_relative_path("/project/buck2_test", "../etc/passwd").is_err());
+            assert!(
+                resolve_overlay_relative_path("/project/buck2_test", "../etc/passwd", None)
+                    .is_err()
+            );
+        }
+
+        #[test]
+        fn test_rebase_cl_relative_path_prefixes_monorepo_subdir_cl() {
+            assert_eq!(
+                rebase_cl_relative_path("/", "/project/dagrs-derive", "src/lib.rs"),
+                "project/dagrs-derive/src/lib.rs"
+            );
+            assert_eq!(
+                rebase_cl_relative_path("/", "/project/dagrs-derive", "project/dagrs-derive/BUCK"),
+                "project/dagrs-derive/BUCK"
+            );
+        }
+
+        #[test]
+        fn test_resolve_overlay_rebases_cl_path_under_monorepo_root() {
+            let path =
+                resolve_overlay_relative_path("/", "src/lib.rs", Some("project/dagrs-derive"))
+                    .expect("path should resolve");
+            assert_eq!(path.to_string_lossy(), "project/dagrs-derive/src/lib.rs");
+        }
+
+        #[test]
+        fn test_resolve_overlay_no_double_prefix_when_already_rebased() {
+            let path = resolve_overlay_relative_path(
+                "/",
+                "project/dagrs-derive/BUCK",
+                Some("/project/dagrs-derive"),
+            )
+            .expect("path should resolve");
+            assert_eq!(path.to_string_lossy(), "project/dagrs-derive/BUCK");
+        }
+
+        #[test]
+        fn test_infer_cl_path_from_changes_monorepo_root_only() {
+            let changes = [
+                "project/dagrs-derive/BUCK",
+                "project/dagrs-derive/src/lib.rs",
+                "project/dagrs-derive/Cargo.toml",
+            ];
+            assert_eq!(
+                infer_cl_path_from_changes("/", &changes).as_deref(),
+                Some("project/dagrs-derive")
+            );
+            assert_eq!(
+                infer_cl_path_from_changes("", &changes).as_deref(),
+                Some("project/dagrs-derive")
+            );
+            assert_eq!(
+                infer_cl_path_from_changes("/project/buck2_test", &["src/main.rs"]).as_deref(),
+                None
+            );
         }
 
         #[tokio::test]
@@ -1198,10 +1364,16 @@ mod imp {
         _job_id: &str,
         _repo: &str,
         _cl: Option<&str>,
+        _cl_path: Option<&str>,
     ) -> Result<AntaresConfig, DynError> {
         Err(Box::new(std::io::Error::other(
             "Antares/scorpiofs is only supported on Linux",
         )))
+    }
+
+    /// Infer CL directory for overlay rebase (stub: always `None` off Linux).
+    pub fn infer_cl_path_from_changes(_repo: &str, _change_paths: &[&str]) -> Option<String> {
+        None
     }
 
     /// Unmounting Antares requires `scorpiofs` (Linux-only in this repository).

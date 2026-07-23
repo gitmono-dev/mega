@@ -32,7 +32,8 @@ use common::errors::MegaError;
 use jupiter::storage::Storage;
 
 use super::model::{
-    BuildParams, GitPushEvent, ListTriggersParams, TriggerContext, TriggerRecord, TriggerResponse,
+    BuildParams, GitPushEvent, ListTriggersParams, RetryClContext, TriggerContext, TriggerRecord,
+    TriggerResponse,
 };
 use crate::application::{
     api_service::cache::GitObjectCache,
@@ -224,9 +225,11 @@ impl BuildTriggerService {
             payload.repo_path().to_string(),
             payload.from_hash().to_string(),
             payload.commit_hash().to_string(),
-            Some(payload.cl_link().to_string()),
-            payload.cl_id(),
-            cl_path,
+            RetryClContext {
+                link: Some(payload.cl_link().to_string()),
+                id: payload.cl_id(),
+                path: cl_path,
+            },
             Some(triggered_by),
             original_trigger_id,
         );

@@ -78,7 +78,10 @@ const RepoTree = ({ onCommitInfoChange }: { onCommitInfoChange?: Function }) => 
       setLoadingDirectories((prev) => new Set(prev).add(basePath))
     }
 
-    setExpandedNodes(Array.from(new Set([...pathsToExpand])))
+    // Merge ancestors of the current path into the existing expanded set so that
+    // navigating into a nested folder does not collapse previously opened parents
+    // or sibling branches.
+    setExpandedNodes(Array.from(new Set([...expandedNodes, ...pathsToExpand])))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [basePath])
 
@@ -165,6 +168,9 @@ const RepoTree = ({ onCommitInfoChange }: { onCommitInfoChange?: Function }) => 
   const handleLabelClick = useCallback(
     (path: string, isDirectory: boolean) => {
       if (isDirectory) {
+        // Keep ancestors (and this folder) expanded across navigation.
+        setExpandedNodes(Array.from(new Set([...expandedNodes, ...generateExpandedPaths(path)])))
+
         const fullPath = `/${scope}/code/tree/${version}${path}`
         const cleanPath = fullPath.replace(/\/+/g, '/')
 
@@ -177,7 +183,7 @@ const RepoTree = ({ onCommitInfoChange }: { onCommitInfoChange?: Function }) => 
         router.push(blobPath)
       }
     },
-    [router, scope, version]
+    [router, scope, version, expandedNodes, setExpandedNodes]
   )
 
   const handleFocusItem = (_e: React.SyntheticEvent | null, itemId: string) => {
@@ -238,6 +244,7 @@ const RepoTree = ({ onCommitInfoChange }: { onCommitInfoChange?: Function }) => 
           onItemFocus={handleFocusItem}
           expandedItems={expandedNodes}
           onExpandedItemsChange={handleNodeToggle}
+          expansionTrigger='iconContainer'
           sx={{ height: 'fit-content', flexGrow: 1, width: '100%', overflow: 'auto' }}
           slots={{
             item: (itemProps) => <CustomTreeItem {...itemProps} loadingDirectories={loadingDirectories} />

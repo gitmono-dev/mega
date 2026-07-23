@@ -200,6 +200,7 @@ async fn unmount_discovery_old_mount(task_id: &str, mounts: &mut AntaresMountPai
 /// # Arguments
 /// * `job_id` - Unique identifier for this build job
 /// * `cl` - Optional changelist layer name
+/// * `cl_path` - Optional CL directory under the Buck root for overlay path rebase
 ///
 /// # Returns
 /// Returns a tuple `(mountpoint, mount_id)` on success.
@@ -207,15 +208,17 @@ pub async fn mount_antares_fs(
     job_id: &str,
     repo: &str,
     cl: Option<&str>,
+    cl_path: Option<&str>,
 ) -> Result<(String, String), Box<dyn std::error::Error + Send + Sync>> {
     tracing::debug!(
-        "Preparing to mount Antares FS: job_id={}, repo={}, cl={:?}",
+        "Preparing to mount Antares FS: job_id={}, repo={}, cl={:?}, cl_path={:?}",
         job_id,
         repo,
-        cl
+        cl,
+        cl_path
     );
 
-    let config = crate::antares::mount_job(job_id, repo, cl).await?;
+    let config = crate::antares::mount_job(job_id, repo, cl, cl_path).await?;
 
     let mountpoint = config.mountpoint.to_string_lossy().to_string();
     let mount_id = config.job_id.clone();
@@ -1705,7 +1708,7 @@ pub async fn build(
         // naturally get separate daemons without needing `--isolation-dir`.
         let id_for_old_repo = format!("{id}-old-{attempt}");
         let (old_repo_mount_point, _mount_id_old_repo) =
-            match mount_antares_fs(&id_for_old_repo, &repo, None).await {
+            match mount_antares_fs(&id_for_old_repo, &repo, None, None).await {
                 Ok(mount) => mount,
                 Err(err) => {
                     cleanup_antares_mount(
@@ -1719,28 +1722,43 @@ pub async fn build(
                 }
             };
 
+        let change_paths: Vec<&str> = changes.iter().map(|c| c.get().as_str()).collect();
+        let inferred_cl_path = crate::antares::infer_cl_path_from_changes(&repo, &change_paths);
+        if let Some(ref cl_path) = inferred_cl_path {
+            tracing::info!(
+                cl_path = %cl_path,
+                "Inferred CL overlay path prefix from task changes (monorepo root)."
+            );
+        }
+
         let id_for_repo = format!("{id}-{attempt}");
-        let (repo_mount_point, _mount_id) =
-            match mount_antares_fs(&id_for_repo, &repo, cl_arg).await {
-                Ok(mount) => mount,
-                Err(err) => {
-                    cleanup_antares_mount(
-                        &id,
-                        &id_for_old_repo,
-                        Some(&old_repo_mount_point),
-                        "cleanup old-repo mount after failed new-repo mount",
-                    )
-                    .await;
-                    cleanup_antares_mount(
-                        &id,
-                        &id_for_repo,
-                        None,
-                        "cleanup after failed new-repo mount",
-                    )
-                    .await;
-                    return Err(err);
-                }
-            };
+        let (repo_mount_point, _mount_id) = match mount_antares_fs(
+            &id_for_repo,
+            &repo,
+            cl_arg,
+            inferred_cl_path.as_deref(),
+        )
+        .await
+        {
+            Ok(mount) => mount,
+            Err(err) => {
+                cleanup_antares_mount(
+                    &id,
+                    &id_for_old_repo,
+                    Some(&old_repo_mount_point),
+                    "cleanup old-repo mount after failed new-repo mount",
+                )
+                .await;
+                cleanup_antares_mount(
+                    &id,
+                    &id_for_repo,
+                    None,
+                    "cleanup after failed new-repo mount",
+                )
+                .await;
+                return Err(err);
+            }
+        };
 
         let attempt_mounts = AntaresMountPair {
             old_mount_id: id_for_old_repo,

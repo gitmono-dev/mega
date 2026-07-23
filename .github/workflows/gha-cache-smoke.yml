@@ -1,0 +1,133 @@
+# Temporary smoke test for docker buildx type=gha + actions: write.
+# Delete after: this file + tmp/gha-cache-smoke/
+#
+# Requires both:
+#   1) permissions.actions: write
+#   2) crazy-max/ghaction-github-runtime (exposes ACTIONS_RUNTIME_TOKEN /
+#      ACTIONS_RESULTS_URL to raw `docker buildx` in run: steps)
+name: GHA cache smoke
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/gha-cache-smoke.yml"
+      - "tmp/gha-cache-smoke/**"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: gha-cache-smoke
+  cancel-in-progress: true
+
+env:
+  CACHE_SCOPE: gha-cache-smoke
+
+jobs:
+  export-cache:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Raw `docker buildx --cache-to type=gha` needs these env vars; they are
+      # NOT visible to run: steps unless exposed (build-push-action does this
+      # internally). Without them, cache-to silently no-ops.
+      - name: Expose GitHub Actions runtime env
+        uses: crazy-max/ghaction-github-runtime@v3
+
+      - name: Build and export GHA cache
+        run: |
+          set -euo pipefail
+          echo "ACTIONS_RUNTIME_TOKEN set: ${ACTIONS_RUNTIME_TOKEN:+yes}"
+          echo "ACTIONS_CACHE_URL set: ${ACTIONS_CACHE_URL:+yes}"
+          echo "ACTIONS_RESULTS_URL set: ${ACTIONS_RESULTS_URL:+yes}"
+          if [ -z "${ACTIONS_RUNTIME_TOKEN:-}" ]; then
+            echo "::error::ACTIONS_RUNTIME_TOKEN still empty after ghaction-github-runtime"
+            exit 1
+          fi
+
+          docker buildx build \
+            --progress=plain \
+            --provenance=false \
+            --sbom=false \
+            --cache-from type=gha,scope=$CACHE_SCOPE \
+            --cache-to type=gha,mode=max,scope=$CACHE_SCOPE \
+            --output type=docker,dest=/tmp/gha-cache-smoke.tar \
+            -f tmp/gha-cache-smoke/Dockerfile \
+            tmp/gha-cache-smoke \
+            2>&1 | tee /tmp/export.log
+
+          if ! grep -Eiq 'exporting (to GitHub Actions Cache|cache)|writing cache' /tmp/export.log; then
+            echo "::error::Expected GHA cache export markers missing from build log"
+            echo "---- log ----"
+            cat /tmp/export.log
+            exit 1
+          fi
+          echo "OK: saw GHA cache export activity"
+          grep -Ein 'exporting (to GitHub Actions Cache|cache)|writing cache' /tmp/export.log || true
+
+      - name: Assert cache entries exist via API
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          keys=$(gh api "repos/${{ github.repository }}/actions/caches?per_page=100" \
+            --jq '[.actions_caches[].key] | map(select(test("gha-cache-smoke|buildx";"i")))')
+          echo "matching cache keys: $keys"
+          count=$(echo "$keys" | jq 'length')
+          if [ "$count" -lt 1 ]; then
+            echo "::error::No Actions cache entries after export"
+            gh api "repos/${{ github.repository }}/actions/caches?per_page=20" \
+              --jq '.actions_caches[] | {key, size_in_bytes, created_at}'
+            exit 1
+          fi
+          echo "OK: $count cache key(s) present"
+
+  import-cache:
+    needs: export-cache
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Expose GitHub Actions runtime env
+        uses: crazy-max/ghaction-github-runtime@v3
+
+      - name: Build and require GHA cache import / layer CACHED
+        run: |
+          set -euo pipefail
+          docker buildx build \
+            --progress=plain \
+            --provenance=false \
+            --sbom=false \
+            --cache-from type=gha,scope=$CACHE_SCOPE \
+            --cache-to type=gha,mode=max,scope=$CACHE_SCOPE \
+            --output type=docker,dest=/tmp/gha-cache-smoke.tar \
+            -f tmp/gha-cache-smoke/Dockerfile \
+            tmp/gha-cache-smoke \
+            2>&1 | tee /tmp/import.log
+
+          if ! grep -Eiq 'importing cache|CACHED' /tmp/import.log; then
+            echo "::error::No importing cache / CACHED markers — type=gha import failed"
+            echo "---- log ----"
+            cat /tmp/import.log
+            exit 1
+          fi
+          echo "OK: GHA cache import/CACHED confirmed"
+          grep -Ein 'importing cache|CACHED' /tmp/import.log || true

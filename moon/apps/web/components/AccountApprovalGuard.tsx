@@ -29,11 +29,15 @@ const AccountApprovalGuard: React.FC<Props> = ({ children, allowLoggedOut }) => 
   // Account settings must stay reachable (admin review tab, back navigation). Only gate org/home.
   const isAccountRoute = router.pathname.startsWith('/me/')
 
-  const needsApprovalCheck = !allowLoggedOut && loggedIn && !isAccountRoute && !isAdmin && !adminPending
+  // Admin-check failure (e.g. missing `.mega_cedar.json`) is treated as non-admin:
+  // still require / fall through to user_approval_status.
+  const adminCheckDone = !adminPending || adminError
+  const needsApprovalCheck = !allowLoggedOut && loggedIn && !isAccountRoute && !isAdmin && adminCheckDone
   const {
     data: approvalRes,
     isPending: approvalPending,
-    isError: approvalError
+    isError: approvalError,
+    isFetched: approvalFetched
   } = useMyApprovalStatus(needsApprovalCheck)
 
   if (allowLoggedOut) {
@@ -58,8 +62,8 @@ const AccountApprovalGuard: React.FC<Props> = ({ children, allowLoggedOut }) => 
     return <>{children}</>
   }
 
-  // Wait for admin check unless it already failed (e.g. CORS) — treat failure as non-admin
-  if (adminPending && !adminError) {
+  // Wait for admin check unless it already failed — failure ⇒ non-admin + approval check
+  if (!adminCheckDone) {
     return <FullPageLoading />
   }
 
@@ -68,7 +72,8 @@ const AccountApprovalGuard: React.FC<Props> = ({ children, allowLoggedOut }) => 
     return <>{children}</>
   }
 
-  if (approvalPending) {
+  // Do not default to "pending" before approval status has actually loaded.
+  if (needsApprovalCheck && (approvalPending || (!approvalFetched && !approvalError))) {
     return <FullPageLoading />
   }
 

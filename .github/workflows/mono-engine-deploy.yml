@@ -22,10 +22,12 @@ env:
   IMAGE_TAG_BASE: latest
   HARBOR_REGISTRY: registry.xuanwu.openatom.cn
 
-# Using AWS access key for authentication
+# Using AWS access key for authentication.
+# actions: write is required for docker buildx --cache-{from,to} type=gha.
 permissions:
   id-token: write
   contents: read
+  actions: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -41,6 +43,11 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      # Expose ACTIONS_RUNTIME_TOKEN / ACTIONS_RESULTS_URL for raw
+      # `docker buildx --cache-{from,to} type=gha` in the build step.
+      - name: Expose GitHub Actions runtime env
+        uses: crazy-max/ghaction-github-runtime@v3
 
       # -----------------------------
       # AWS / ECR Public
@@ -80,12 +87,10 @@ jobs:
 
           ECR_IMAGE="$ECR_REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:$IMAGE_TAG"
           HARBOR_IMAGE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}:$IMAGE_TAG"
-          ECR_CACHE_IMAGE="$ECR_REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:buildcache-${ARCH_SUFFIX}"
           CACHE_SCOPE="mono-engine-${ARCH_SUFFIX}"
 
           echo "ECR_IMAGE=$ECR_IMAGE"
           echo "HARBOR_IMAGE=$HARBOR_IMAGE"
-          echo "ECR_CACHE_IMAGE=$ECR_CACHE_IMAGE"
           echo "CACHE_SCOPE=$CACHE_SCOPE"
 
           docker buildx build \

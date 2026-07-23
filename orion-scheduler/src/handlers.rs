@@ -829,6 +829,10 @@ fn hash_line(line: &str) -> u64 {
 /// First tick sends the last `INITIAL_TAIL_LINES` lines, then only newly
 /// appended lines on each subsequent tick.
 /// Multi-VM: pass `?domain=` or `?vm_id=` to select which runner's logs to stream.
+///
+/// While the selected VM is still provisioning (no machine handle yet), the
+/// stream emits a single waiting line instead of repeating "No running VM"
+/// errors every tick.
 pub async fn logs_stream_handler(
     State(state): State<Arc<AppState>>,
     Query(q): Query<VmSelectQuery>,
@@ -838,6 +842,8 @@ pub async fn logs_stream_handler(
         let mut ticker = interval(std::time::Duration::from_secs(1));
         let mut journal_cursor = LogCursor::default();
         let mut orion_log_offset: u64 = 0;
+        let mut waiting_announced = false;
+        let mut failure_announced = false;
 
         loop {
             ticker.tick().await;
@@ -849,8 +855,48 @@ pub async fn logs_stream_handler(
             )
             .await
             {
-                Ok(snapshot) => snapshot,
+                Ok(snapshot) => {
+                    waiting_announced = false;
+                    failure_announced = false;
+                    snapshot
+                }
                 Err(e) => {
+                    let msg = e.to_string();
+                    if is_vm_not_ready_error(&msg) {
+                        match orion_deployer::get_status_by_key(&state, key.as_deref()).await {
+                            Some(vm) if vm.phase == VmPhase::Provisioning => {
+                                if !waiting_announced {
+                                    waiting_announced = true;
+                                    yield Ok(Event::default().data(format!(
+                                        "Waiting for VM {} to finish provisioning…",
+                                        vm.id
+                                    )));
+                                }
+                            }
+                            Some(vm) if vm.phase == VmPhase::Failed => {
+                                if !failure_announced {
+                                    failure_announced = true;
+                                    let detail = vm
+                                        .error
+                                        .unwrap_or_else(|| "unknown error".to_string());
+                                    yield Ok(Event::default().data(format!(
+                                        "VM {} failed: {}",
+                                        vm.id, detail
+                                    )));
+                                }
+                            }
+                            Some(_) | None => {
+                                if !waiting_announced {
+                                    waiting_announced = true;
+                                    yield Ok(Event::default().data(
+                                        "Waiting for VM to become available…",
+                                    ));
+                                }
+                            }
+                        }
+                        continue;
+                    }
+
                     yield Ok(Event::default().data(format!("Error: {}", e)));
                     continue;
                 }
@@ -880,16 +926,32 @@ pub async fn logs_stream_handler(
     Sse::new(stream).keep_alive(axum::response::sse::KeepAlive::default())
 }
 
+fn is_vm_not_ready_error(msg: &str) -> bool {
+    msg.contains("No running VM for key")
+        || msg.contains("No VM is currently running")
+        || msg.contains("No VM machine handle available")
+}
+
 /// Append a log section with a title header and colored log lines to `output`.
 fn append_logs_section(output: &mut String, title: &str, lines: &[&str]) {
     use std::fmt::Write;
-    let _ = writeln!(output, "\n─── {} ───", title);
+    let mut wrote_any = false;
     for line in lines {
         let trimmed = line.trim();
-        if trimmed.is_empty() {
+        if trimmed.is_empty() || is_noisy_orion_log_line(trimmed) {
             continue;
+        }
+        if !wrote_any {
+            let _ = writeln!(output, "\n─── {} ───", title);
+            wrote_any = true;
         }
         output.push_str(&format_log_line(trimmed));
         output.push('\n');
     }
+}
+
+/// Drop high-frequency routine lines that drown out useful startup/build output.
+fn is_noisy_orion_log_line(line: &str) -> bool {
+    let lower = line.to_ascii_lowercase();
+    lower.contains("sending heartbeat") || lower.contains("orion::ws: sending heartbeat")
 }

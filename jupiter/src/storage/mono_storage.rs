@@ -295,6 +295,54 @@ impl MonoStorage {
         Ok(())
     }
 
+    /// Ensure `refs/cl/{cl_link}` exists at `path`.
+    ///
+    /// If the canonical ref is missing but an orphaned `refs/cl/*` under the same path
+    /// already points at `commit_id`, adopt that tip onto the canonical name and drop the
+    /// orphan. Otherwise create/update the canonical ref from `commit_id` / `tree_hash`.
+    pub async fn ensure_cl_ref(
+        &self,
+        path: &str,
+        cl_link: &str,
+        commit_id: &str,
+        tree_hash: &str,
+    ) -> Result<mega_refs::Model, MegaError> {
+        let cl_ref_name = common::utils::cl_ref_name(cl_link);
+
+        if let Some(existing) = self.get_ref_by_name(&cl_ref_name).await? {
+            return Ok(existing);
+        }
+
+        let path_refs = self.get_all_refs(path, false).await?;
+        if let Some(orphan) = path_refs.iter().find(|r| {
+            r.is_cl
+                && r.ref_name != cl_ref_name
+                && r.ref_name.starts_with("refs/cl/")
+                && r.ref_commit_hash == commit_id
+        }) {
+            tracing::warn!(
+                cl_link,
+                orphan_ref = %orphan.ref_name,
+                "Adopting orphaned CL ref onto canonical refs/cl link"
+            );
+            self.save_or_update_cl_ref(
+                path,
+                &cl_ref_name,
+                &orphan.ref_commit_hash,
+                &orphan.ref_tree_hash,
+            )
+            .await?;
+            let _ = self.remove_ref(orphan.clone()).await;
+        } else {
+            self.save_or_update_cl_ref(path, &cl_ref_name, commit_id, tree_hash)
+                .await?;
+        }
+
+        self.get_ref_by_name(&cl_ref_name)
+            .await?
+            .ok_or_else(|| MegaError::Other(format!("CL ref missing after ensure: {cl_ref_name}")))
+    }
+
     pub async fn batch_update_by_path_concurrent(
         &self,
         updates: Vec<RefUpdateData>,
@@ -839,4 +887,144 @@ impl MonoStorage {
 }
 
 #[cfg(test)]
-mod test {}
+mod tests {
+    use common::utils;
+    use tempfile::TempDir;
+
+    use crate::tests::test_storage;
+
+    #[tokio::test]
+    async fn ensure_cl_ref_creates_missing_canonical_ref() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let mono = storage.mono_storage();
+
+        let commit = "a".repeat(40);
+        let tree = "b".repeat(40);
+        let link = "LADRHWDL";
+        let path = "/project/dagrs-derive";
+
+        let created = mono
+            .ensure_cl_ref(path, link, &commit, &tree)
+            .await
+            .expect("create cl ref");
+
+        assert_eq!(created.ref_name, utils::cl_ref_name(link));
+        assert_eq!(created.path, path);
+        assert_eq!(created.ref_commit_hash, commit);
+        assert_eq!(created.ref_tree_hash, tree);
+        assert!(created.is_cl);
+    }
+
+    #[tokio::test]
+    async fn ensure_cl_ref_returns_existing_without_changing_tip() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let mono = storage.mono_storage();
+
+        let commit = "c".repeat(40);
+        let tree = "d".repeat(40);
+        let link = "T34FWD3A";
+        let path = "/toolchains";
+
+        let first = mono
+            .ensure_cl_ref(path, link, &commit, &tree)
+            .await
+            .unwrap();
+        let second = mono
+            .ensure_cl_ref(path, link, &"e".repeat(40), &"f".repeat(40))
+            .await
+            .unwrap();
+
+        assert_eq!(first.id, second.id);
+        assert_eq!(second.ref_commit_hash, commit);
+        assert_eq!(second.ref_tree_hash, tree);
+    }
+
+    #[tokio::test]
+    async fn ensure_cl_ref_adopts_orphaned_ref_with_matching_tip() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let mono = storage.mono_storage();
+
+        let tip = "35f26cd32f9a0d5df4f9b2f6acd5de27dcc604c1";
+        let tree = "7da0b4869e7a3036483517f3dedcdb378ca3a8a8";
+        let path = "/project/dagrs-derive";
+        let orphan_link = "HH8PKWSS";
+        let canonical_link = "LADRHWDL";
+
+        mono.save_or_update_cl_ref(path, &utils::cl_ref_name(orphan_link), tip, tree)
+            .await
+            .unwrap();
+
+        let adopted = mono
+            .ensure_cl_ref(path, canonical_link, tip, tree)
+            .await
+            .expect("adopt orphan");
+
+        assert_eq!(adopted.ref_name, utils::cl_ref_name(canonical_link));
+        assert_eq!(adopted.ref_commit_hash, tip);
+        assert!(
+            mono.get_ref_by_name(&utils::cl_ref_name(orphan_link))
+                .await
+                .unwrap()
+                .is_none(),
+            "orphan ref should be removed after adopt"
+        );
+    }
+
+    #[tokio::test]
+    async fn ensure_cl_ref_does_not_adopt_orphan_with_different_tip() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let mono = storage.mono_storage();
+
+        let path = "/project/demo";
+        mono.save_or_update_cl_ref(
+            path,
+            &utils::cl_ref_name("ORPHAN01"),
+            &"1".repeat(40),
+            &"2".repeat(40),
+        )
+        .await
+        .unwrap();
+
+        let created = mono
+            .ensure_cl_ref(path, "CANON001", &"3".repeat(40), &"4".repeat(40))
+            .await
+            .unwrap();
+
+        assert_eq!(created.ref_name, utils::cl_ref_name("CANON001"));
+        assert_eq!(created.ref_commit_hash, "3".repeat(40));
+        assert!(
+            mono.get_ref_by_name(&utils::cl_ref_name("ORPHAN01"))
+                .await
+                .unwrap()
+                .is_some(),
+            "unrelated orphan tip must be left alone"
+        );
+    }
+
+    #[tokio::test]
+    async fn save_or_update_cl_ref_updates_existing_tip() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let mono = storage.mono_storage();
+
+        let link = "ABCDEF12";
+        let path = "/project/demo";
+        let ref_name = utils::cl_ref_name(link);
+
+        mono.save_or_update_cl_ref(path, &ref_name, &"1".repeat(40), &"2".repeat(40))
+            .await
+            .unwrap();
+        mono.save_or_update_cl_ref(path, &ref_name, &"3".repeat(40), &"4".repeat(40))
+            .await
+            .unwrap();
+
+        let updated = mono.get_ref_by_name(&ref_name).await.unwrap().unwrap();
+        assert_eq!(updated.ref_commit_hash, "3".repeat(40));
+        assert_eq!(updated.ref_tree_hash, "4".repeat(40));
+        assert!(updated.is_cl);
+    }
+}

@@ -8,10 +8,7 @@ use callisto::{mega_cl, mega_refs};
 use common::{self, errors::MegaError, utils::ZERO_ID};
 use git_internal::{
     hash::ObjectHash,
-    internal::object::{
-        commit::Commit,
-        tree::{Tree, TreeItemMode},
-    },
+    internal::object::{commit::Commit, tree::Tree},
 };
 use jupiter::{storage::Storage, utils::converter::FromMegaModel};
 
@@ -77,12 +74,10 @@ fn has_buck_root_markers(tree: &Tree) -> bool {
         .iter()
         .map(|item| item.name.as_str())
         .collect();
-    let has_toolchains_dir = tree
-        .tree_items
-        .iter()
-        .any(|item| item.mode == TreeItemMode::Tree && item.name == "toolchains");
-    let has_buck_markers = names.contains(".buckroot") && names.contains(".buckconfig");
-    has_toolchains_dir || has_buck_markers
+    // Only explicit Buck markers identify a build root. A `toolchains/` directory
+    // alone must not qualify — otherwise edits under `/toolchains` resolve the CL
+    // path to `/` and a bad tip can wipe the monorepo root on merge.
+    names.contains(".buckroot") && names.contains(".buckconfig")
 }
 
 #[cfg(test)]
@@ -138,6 +133,25 @@ pub async fn resolve_build_repo_root(storage: &Storage, path: &str) -> Result<St
     Err(MegaError::Other(format!(
         "No repository root found for path {normalized_path}"
     )))
+}
+
+/// Resolve the monorepo path that should own a web-edit CL.
+///
+/// Prefers the deepest ancestor that already has `refs/heads/main`, so edits under
+/// `/toolchains` bind to `/toolchains` rather than the Buck monorepo root `/`.
+/// Falling back to [`resolve_build_repo_root`] keeps Buck project crates working.
+pub async fn resolve_cl_path_for_edit(storage: &Storage, path: &str) -> Result<String, MegaError> {
+    let normalized_path = MonoServiceLogic::normalize_repo_path(path)?;
+    let mono_storage = storage.mono_storage();
+    let candidates = MonoServiceLogic::repo_root_candidates(Path::new(&normalized_path));
+
+    for candidate in &candidates {
+        if mono_storage.get_main_ref(candidate).await?.is_some() {
+            return Ok(candidate.clone());
+        }
+    }
+
+    resolve_build_repo_root(storage, &normalized_path).await
 }
 
 /// Get list of files changed between from_hash and to_hash commits.
@@ -490,7 +504,7 @@ mod tests {
     }
 
     #[test]
-    fn test_has_buck_root_markers_accepts_toolchains_or_buck_markers() {
+    fn test_has_buck_root_markers_requires_buck_files_not_toolchains_dir() {
         let buckroot = TreeItem {
             mode: TreeItemMode::Blob,
             id: ObjectHash::from_str("1111111111111111111111111111111111111111").unwrap(),
@@ -517,9 +531,12 @@ mod tests {
                 .unwrap();
         assert!(has_buck_root_markers(&root_tree));
 
-        let root_with_toolchains =
+        let root_with_toolchains_only =
             Tree::from_tree_items(vec![src_dir.clone(), toolchains_dir]).unwrap();
-        assert!(has_buck_root_markers(&root_with_toolchains));
+        assert!(
+            !has_buck_root_markers(&root_with_toolchains_only),
+            "toolchains/ alone must not mark a Buck root"
+        );
 
         let subtree = Tree::from_tree_items(vec![src_dir]).unwrap();
         assert!(!has_buck_root_markers(&subtree));

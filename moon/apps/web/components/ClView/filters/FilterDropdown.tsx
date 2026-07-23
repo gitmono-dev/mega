@@ -67,6 +67,15 @@ export function FilterDropdown({
     </div>
   )
 
+  // Prevent Radix from closing the menu when focusing/clicking the search input
+  const searchItem: MenuItem | null = hasSearch
+    ? {
+        type: 'item' as const,
+        label: <DropdownSearch />,
+        onSelect: (e: Event) => e.preventDefault()
+      }
+    : null
+
   const defaultTrigger = (
     <Button size='sm' variant={'plain'} tooltipShortcut={name}>
       <div className='flex items-center justify-center'>
@@ -89,14 +98,7 @@ export function FilterDropdown({
             disabled: true,
             label: <p>Filter by {name}</p>
           },
-          ...(hasSearch
-            ? [
-                {
-                  type: 'item' as const,
-                  label: <DropdownSearch />
-                }
-              ]
-            : []),
+          ...(searchItem ? [searchItem] : []),
           { type: 'separator' as const },
           ...items
         ]}
@@ -122,15 +124,7 @@ export function FilterDropdown({
             label: <p>Filter by {name}</p>,
             disabled: true
           },
-          ...(hasSearch
-            ? [
-                {
-                  type: 'item' as const,
-                  label: <DropdownSearch />,
-                  onSelect: (e: Event) => e.preventDefault()
-                }
-              ]
-            : []),
+          ...(searchItem ? [searchItem] : []),
           { type: 'separator' as const },
           { type: 'heading' as const, label: 'Group assignees' },
           ...selectedItems,

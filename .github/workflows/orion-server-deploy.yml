@@ -13,9 +13,11 @@ env:
   IMAGE_TAG_BASE: latest
   HARBOR_REGISTRY: registry.xuanwu.openatom.cn
 
+# actions: write is required for docker buildx --cache-{from,to} type=gha.
 permissions:
   id-token: write
   contents: read
+  actions: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -28,12 +30,18 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      actions: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      # Expose ACTIONS_RUNTIME_TOKEN / ACTIONS_RESULTS_URL for raw
+      # `docker buildx --cache-{from,to} type=gha` in the build step.
+      - name: Expose GitHub Actions runtime env
+        uses: crazy-max/ghaction-github-runtime@v3
 
       # -----------------------------
       # AWS auth

@@ -71,9 +71,8 @@ const FileTree = ({ treeData, treeDataLoading, onFileClick }: FileTreeProps) => 
         keepExistingSelection: false
       })
 
-      const newExpandedIds = [...expandedNodes, itemId]
-
-      setExpandedNodes(newExpandedIds)
+      // Merge the focused item into the existing expanded set (do not replace).
+      setExpandedNodes(expandedNodes.includes(itemId) ? expandedNodes : [...expandedNodes, itemId])
 
       if (item.content_type === 'file' && onFileClick) {
         onFileClick(item.path || itemId)
@@ -95,6 +94,7 @@ const FileTree = ({ treeData, treeDataLoading, onFileClick }: FileTreeProps) => 
           onItemClick={handleItemClick}
           expandedItems={expandedNodes}
           onExpandedItemsChange={handleNodeToggle}
+          expansionTrigger='iconContainer'
           sx={{ flexGrow: 1, width: '100%', overflow: 'auto' }}
           slots={{
             item: (itemProps) => <CustomTreeItem {...itemProps} />

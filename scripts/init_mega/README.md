@@ -73,12 +73,13 @@ In a temporary directory, it performs:
 2. Configure the commit identity (repo-local):
   - `git config user.email mega-bot@example.com`
   - `git config user.name Mega Bot`
+  - `git config commit.gpgsign false` (and `git commit --no-gpg-sign`) so a global `commit.gpgsign=true` does not fail without a Mega Bot GPG key
 3. Clone `buckal-bundles` inside the `toolchains` repo:
   - `git clone --depth 1 https://github.com/buck2hub/buckal-bundles.git`
 4. Remove `buckal-bundles/.git` so it becomes a regular directory tracked by `toolchains` (vendoring).
 5. Commit and push:
   - `git add .`
-  - `git commit -m "import buckal-bundles"`
+  - `git commit --no-gpg-sign -m "import buckal-bundles"` (skipped if already imported / no changes)
   - `git push`
 6. Use Mega APIs to find and merge the corresponding CL:
   - `POST {base_url}/api/v1/cl/list` (paginate open CLs and match `title == "import buckal-bundles"`)

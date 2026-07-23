@@ -6,12 +6,13 @@ set -euo pipefail
 # ============================================================================
 # This script builds Docker images for the demo environment on your local machine.
 # The script automatically detects the platform (arm64/amd64) based on your machine.
-# By default, images are only built locally. Use --push to push to AWS ECR.
+# By default, images are only built locally. Use --push to push to AWS ECR and Harbor.
 #
 # Prerequisites:
 #   - Docker Desktop with Buildx enabled
 #   - (Optional) AWS CLI configured with credentials (only needed for --push)
 #   - (Optional) Access to Amazon ECR Public (only needed for --push)
+#   - (Optional) docker login registry.xuanwu.openatom.cn (only needed for --push)
 #   - QEMU (usually auto-installed by Docker Desktop)
 #
 # Usage:
@@ -25,8 +26,8 @@ set -euo pipefail
 #     ./scripts/demo/build-demo-images-local.sh --prune-buildkit     # Build and prune buildkit cache after build
 #
 #   If IMAGE_NAME is provided, only that image will be built.
-#   Otherwise, all 4 images will be built.
-#   Use --push flag to push images to AWS ECR (requires AWS credentials).
+#   Otherwise, all images will be built.
+#   Use --push to push to ECR Public and Harbor (registry.xuanwu.openatom.cn).
 # ============================================================================
 
 # Colors for output
@@ -39,6 +40,7 @@ NC='\033[0m' # No Color
 REGISTRY_ALIAS="m8q5m4u3"
 REPOSITORY="mega"
 REGISTRY="public.ecr.aws"
+HARBOR_REGISTRY="${HARBOR_REGISTRY:-registry.xuanwu.openatom.cn}"
 SHOULD_PUSH=false  # Default: only build, don't push
 SHOULD_PRUNE_BUILDKIT=false  # Optional: prune buildkit cache after build
 BUILDX_BUILDER_ARGS=()
@@ -315,6 +317,7 @@ build_and_push() {
     fi
     local image_tag_with_arch="${image_tag}-${arch_suffix}"
     local image_repo="${REGISTRY}/${REGISTRY_ALIAS}/${REPOSITORY}/${image_name}"
+    local harbor_repo="${HARBOR_REGISTRY}/${REPOSITORY}/${image_name}"
     
     # Verify paths exist (use absolute paths)
     local full_dockerfile="${REPO_ROOT}/${dockerfile_path}"
@@ -395,6 +398,7 @@ build_and_push() {
         --platform "${TARGET_PLATFORMS}"
         --file "${dockerfile_path}"
         --tag "${image_repo}:${image_tag_with_arch}"
+        --tag "${harbor_repo}:${image_tag_with_arch}"
         --progress=auto
         --build-arg BUILDKIT_INLINE_CACHE=1
     )
@@ -428,14 +432,21 @@ build_and_push() {
     # Push if requested (ensures single-arch manifest is uploaded)
     if [ "$SHOULD_PUSH" = "true" ]; then
         if ! docker push "${image_repo}:${image_tag_with_arch}"; then
-            log_error "Failed to push ${image_name}"
+            log_error "Failed to push ${image_name} to ECR"
+            return 1
+        fi
+        if ! docker push "${harbor_repo}:${image_tag_with_arch}"; then
+            log_error "Failed to push ${image_name} to Harbor (${harbor_repo})"
+            log_error "Login first: docker login ${HARBOR_REGISTRY}"
             return 1
         fi
         log_info "${image_name} built and pushed successfully ✓"
-        log_info "  Image: ${image_repo}:${image_tag_with_arch}"
+        log_info "  ECR:    ${image_repo}:${image_tag_with_arch}"
+        log_info "  Harbor: ${harbor_repo}:${image_tag_with_arch}"
     else
         log_info "${image_name} built successfully ✓"
         log_info "  Image: ${image_repo}:${image_tag_with_arch} (local only)"
+        log_info "  Harbor tag also applied: ${harbor_repo}:${image_tag_with_arch}"
     fi
     return 0
 }

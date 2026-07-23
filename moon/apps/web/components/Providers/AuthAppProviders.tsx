@@ -14,6 +14,7 @@ import { AutoTimezoneSwitcher } from '@/components/AutoTimezoneSwitcher'
 import { IncomingCallRoomInvitationToast } from '@/components/Call/IncomingCallRoomInvitationToast'
 import { LocalCommandMenu } from '@/components/CommandMenu'
 import { FeedbackDialog } from '@/components/Feedback/FeedbackDialog'
+import { GithubLoginRequiredDialog } from '@/components/GithubLoginRequiredDialog'
 import { GlobalKeyboardShortcuts } from '@/components/GlobalKeyboardShortcuts'
 import { PostComposer } from '@/components/PostComposer'
 import { AuthProvider } from '@/components/Providers/AuthProvider'
@@ -79,6 +80,7 @@ export const AuthAppProviders: PageWithProviders<any> = ({ children, allowLogged
                                 <AccountApprovalGuard allowLoggedOut={allowLoggedOut}>
                                   {children}
 
+                                  <GithubLoginRequiredDialog />
                                   <OrganizationUserPresenceSubscription />
                                 </AccountApprovalGuard>
                               </ConfirmEmailGuard>

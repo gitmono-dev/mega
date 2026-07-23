@@ -172,9 +172,7 @@ const AdditionalCheckItemComponent = ({ check }: AdditionalCheckItemProps) => {
               isClaAdvisory ? 'text-amber-700 dark:text-amber-300' : 'text-red-600 dark:text-red-400'
             }`}
           >
-            <li className='list-inside'>
-              {isClaAdvisory ? `${check.message} (does not block merge)` : check.message}
-            </li>
+            <li className='list-inside'>{isClaAdvisory ? `${check.message} (does not block merge)` : check.message}</li>
           </ul>
         )}
       </div>

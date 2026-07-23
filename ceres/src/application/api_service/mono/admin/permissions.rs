@@ -40,12 +40,26 @@ impl AdminApplicationService {
     /// This method first attempts to read from Redis cache. On cache miss,
     /// it loads the admin list from the `.mega_cedar.json` file and caches
     /// the result.
+    ///
+    /// If `.mega_cedar.json` (or root refs) are missing, returns an empty list
+    /// so callers can fall through to other authz paths (e.g. user approval)
+    /// instead of hard-failing the request.
     async fn get_effective_admins(&self) -> Result<Vec<String>, MegaError> {
         if let Ok(admins) = self.get_admins_from_cache().await {
             return Ok(admins);
         }
 
-        let store = self.load_admin_entity_store().await?;
+        let store = match self.load_admin_entity_store().await {
+            Ok(store) => store,
+            Err(e) if is_admin_config_unavailable(&e) => {
+                tracing::warn!(
+                    error = %e,
+                    "Admin config unavailable; treating as empty admin list"
+                );
+                return Ok(Vec::new());
+            }
+            Err(e) => return Err(e),
+        };
         let resolver = saturn::admin_resolver::AdminResolver::from_entity_store(&store);
         let admins = resolver.admin_list();
 
@@ -150,4 +164,11 @@ impl AdminApplicationService {
         conn.set_ex::<_, _, ()>(&key, json, ADMIN_CACHE_TTL).await?;
         Ok(())
     }
+}
+
+fn is_admin_config_unavailable(err: &MegaError) -> bool {
+    let msg = err.to_string();
+    msg.contains(".mega_cedar.json not found")
+        || msg.contains("Root ref not found")
+        || msg.contains("Root tree not found")
 }
