@@ -17,9 +17,7 @@ impl From<CampsiteUserJson> for LoginUser {
             email: value.email.unwrap_or_default(),
             avatar_url: value.avatar_url,
             campsite_user_id: value.id,
-            github_login: value
-                .github_login
-                .filter(|s| !s.trim().is_empty()),
+            github_login: value.github_login.filter(|s| !s.trim().is_empty()),
         }
     }
 }

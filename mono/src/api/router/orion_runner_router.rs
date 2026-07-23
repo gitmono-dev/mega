@@ -290,9 +290,7 @@ async fn stream_runner_logs(
             )
         })?;
 
-    let byte_stream = upstream
-        .bytes_stream()
-        .map_err(|e| std::io::Error::other(e));
+    let byte_stream = upstream.bytes_stream().map_err(std::io::Error::other);
 
     Response::builder()
         .status(StatusCode::OK)

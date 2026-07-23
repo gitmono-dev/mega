@@ -690,7 +690,13 @@ impl TaskScheduler {
         build_info: BuildInfo,
         msg: WSMessage,
     ) -> Result<(), String> {
-        claim_worker_for_build(&self.workers, &self.active_builds, chosen_id, build_info, msg)
+        claim_worker_for_build(
+            &self.workers,
+            &self.active_builds,
+            chosen_id,
+            build_info,
+            msg,
+        )
     }
 
     /// Try to dispatch queued task-bound builds (concurrent safe)

@@ -788,11 +788,7 @@ pub async fn build_retry(
             .scheduler
             .claim_worker_for_build(&chosen_id, build_info, msg)
         {
-            return (
-                StatusCode::BAD_GATEWAY,
-                Json(json!({"message": e})),
-            )
-                .into_response();
+            return (StatusCode::BAD_GATEWAY, Json(json!({"message": e}))).into_response();
         }
 
         let now_tz = started_at.with_timezone(&chrono::FixedOffset::east_opt(0).unwrap());
