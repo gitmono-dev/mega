@@ -128,6 +128,60 @@ impl OrionSchedulerHttpClient {
             ))
         }
     }
+
+    /// Open an SSE stream of live Orion runner logs (`GET /logs/orion/stream`).
+    ///
+    /// Prefer `vm_id`; when absent, `domain` is used. At least one must be set.
+    /// The returned response body is a long-lived `text/event-stream` — do not
+    /// apply a short request timeout.
+    pub async fn stream_orion_logs(
+        &self,
+        vm_id: Option<&str>,
+        domain: Option<&str>,
+    ) -> anyhow::Result<reqwest::Response> {
+        if vm_id.is_none() && domain.is_none() {
+            return Err(anyhow::anyhow!(
+                "stream_orion_logs requires vm_id or domain"
+            ));
+        }
+
+        let mut url = format!("{}/logs/orion/stream?", self.base_url);
+        let mut params: Vec<String> = Vec::new();
+        if let Some(id) = vm_id {
+            params.push(format!("vm_id={}", urlencoding_query(id)));
+        }
+        if let Some(d) = domain {
+            params.push(format!("domain={}", urlencoding_query(d)));
+        }
+        url.push_str(&params.join("&"));
+
+        let req = self.client.get(&url);
+        let res = self.auth_headers(req).send().await?;
+        let status = res.status();
+        if status.is_success() {
+            Ok(res)
+        } else {
+            let body = res.text().await.unwrap_or_default();
+            Err(anyhow::anyhow!(
+                "Scheduler stream_orion_logs failed ({}): {}",
+                status,
+                body
+            ))
+        }
+    }
+}
+
+fn urlencoding_query(value: &str) -> String {
+    let mut out = String::with_capacity(value.len());
+    for b in value.bytes() {
+        match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(b as char)
+            }
+            _ => out.push_str(&format!("%{b:02X}")),
+        }
+    }
+    out
 }
 
 #[cfg(test)]
@@ -138,5 +192,11 @@ mod tests {
     fn strips_trailing_slash_from_base_url() {
         let client = OrionSchedulerHttpClient::new("http://127.0.0.1:8080/", "");
         assert_eq!(client.base_url, "http://127.0.0.1:8080");
+    }
+
+    #[test]
+    fn urlencoding_query_encodes_reserved_bytes() {
+        assert_eq!(urlencoding_query("a b"), "a%20b");
+        assert_eq!(urlencoding_query("orion.gitmega.com"), "orion.gitmega.com");
     }
 }

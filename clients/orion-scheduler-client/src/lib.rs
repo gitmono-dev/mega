@@ -1,4 +1,4 @@
-//! HTTP client for orion-scheduler VM provisioning (`/webhook`, `/status`, `/vms/{id}`).
+//! HTTP client for orion-scheduler VM provisioning (`/webhook`, `/status`, `/vms/{id}`, logs SSE).
 
 mod http_client;
 
@@ -94,5 +94,14 @@ impl OrionSchedulerClient {
     /// Backward-compatible list/status endpoint.
     pub async fn get_status(&self) -> anyhow::Result<SchedulerStatusResponse> {
         self.http.get_status().await
+    }
+
+    /// Proxy-friendly SSE stream of runner / orion-client startup logs.
+    pub async fn stream_orion_logs(
+        &self,
+        vm_id: Option<&str>,
+        domain: Option<&str>,
+    ) -> anyhow::Result<reqwest::Response> {
+        self.http.stream_orion_logs(vm_id, domain).await
     }
 }

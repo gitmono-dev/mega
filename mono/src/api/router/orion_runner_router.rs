@@ -2,11 +2,14 @@ use anyhow::anyhow;
 use api_model::common::CommonResult;
 use axum::{
     Json,
+    body::Body,
     extract::{Path, State},
-    http::StatusCode,
+    http::{HeaderValue, StatusCode, header},
+    response::Response,
 };
 use ceres::model::orion_runner::{RunnerStatusResponse, StartRunnerRequest, StartRunnerResponse};
 use common::config::BuildConfig;
+use futures::TryStreamExt;
 use orion_scheduler_client::{OrionSchedulerClient, StartRunnerPayload};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -20,6 +23,7 @@ pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
         "/orion/runners",
         OpenApiRouter::new()
             .routes(routes!(start_runner))
+            .routes(routes!(stream_runner_logs))
             .routes(routes!(get_runner_status)),
     )
 }
@@ -250,6 +254,57 @@ async fn get_runner_status(
         error: sched.error,
         uptime_secs: sched.uptime_secs,
     }))))
+}
+
+/// Proxy live Orion runner / client startup logs from orion-scheduler as SSE.
+#[utoipa::path(
+    get,
+    path = "/{id}/logs/stream",
+    params(
+        ("id" = String, Path, description = "VM ID returned by start_runner")
+    ),
+    responses(
+        (status = 200, description = "SSE log stream (text/event-stream)"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - admin only"),
+        (status = 503, description = "Scheduler not configured"),
+        (status = 502, description = "Scheduler unreachable"),
+    ),
+    tag = ORION_RUNNER_TAG
+)]
+async fn stream_runner_logs(
+    user: LoginUser,
+    State(state): State<MonoApiServiceState>,
+    Path(id): Path<String>,
+) -> Result<Response, ApiError> {
+    ensure_admin(&state, &user).await?;
+    let client = scheduler_client(&state)?;
+
+    let upstream = client
+        .stream_orion_logs(Some(id.as_str()), None)
+        .await
+        .map_err(|e| {
+            ApiError::with_status(
+                StatusCode::BAD_GATEWAY,
+                anyhow!("Scheduler log stream failed: {}", e),
+            )
+        })?;
+
+    let byte_stream = upstream
+        .bytes_stream()
+        .map_err(|e| std::io::Error::other(e));
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "text/event-stream")
+        .header(header::CACHE_CONTROL, "no-cache")
+        .header(header::CONNECTION, "keep-alive")
+        .header(
+            header::HeaderName::from_static("x-accel-buffering"),
+            HeaderValue::from_static("no"),
+        )
+        .body(Body::from_stream(byte_stream))
+        .map_err(|e| ApiError::with_status(StatusCode::INTERNAL_SERVER_ERROR, anyhow!(e)))
 }
 
 #[cfg(test)]

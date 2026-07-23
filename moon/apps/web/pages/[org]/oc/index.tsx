@@ -20,6 +20,7 @@ import { useAdminCheck } from '@/hooks/admin/useAdminCheck'
 import { usePostOrionClientsInfo } from '@/hooks/OrionClient/OrionClientsInfo'
 import { useGetRunnerStatus } from '@/hooks/OrionClient/useGetRunnerStatus'
 import { usePostStartRunner } from '@/hooks/OrionClient/usePostStartRunner'
+import { useRunnerLogsSSE } from '@/hooks/OrionClient/useRunnerLogsSSE'
 import { PageWithLayout } from '@/utils/types'
 
 const OrionClientPage: PageWithLayout<any> = () => {
@@ -38,6 +39,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
 
   const { mutate: startRunner, isPending: isStartingRunner } = usePostStartRunner()
   const { data: runnerStatus } = useGetRunnerStatus(activeVmId, activePhase)
+  const { logs: runnerLogs, status: runnerLogsStatus, error: runnerLogsError } = useRunnerLogsSSE(activeVmId)
 
   const { mutate, isPending, error } = usePostOrionClientsInfo()
   const [clientsPage, setClientsPage] = React.useState<PostOrionClientsInfoData | null>(null)
@@ -207,6 +209,11 @@ const OrionClientPage: PageWithLayout<any> = () => {
                     VM IP: {runnerStatus.vm_ip}
                   </UIText>
                 ) : null}
+                {runnerStatus?.log_file ? (
+                  <UIText size='text-sm' color='text-muted'>
+                    Log file: {runnerStatus.log_file}
+                  </UIText>
+                ) : null}
                 {runnerStatus?.error ? (
                   <UIText size='text-sm' className='text-red-600'>
                     {runnerStatus.error}
@@ -217,6 +224,34 @@ const OrionClientPage: PageWithLayout<any> = () => {
                     Retry
                   </Button>
                 ) : null}
+              </div>
+
+              <div className='mt-3'>
+                <div className='mb-1 flex items-center justify-between gap-2'>
+                  <UIText weight='font-semibold' size='text-sm'>
+                    Startup logs
+                  </UIText>
+                  <UIText size='text-xs' color='text-muted'>
+                    {runnerLogsStatus === 'connecting'
+                      ? 'Connecting…'
+                      : runnerLogsStatus === 'streaming'
+                        ? 'Live'
+                        : runnerLogsStatus === 'error'
+                          ? 'Disconnected'
+                          : 'Idle'}
+                  </UIText>
+                </div>
+                {runnerLogsError ? (
+                  <UIText size='text-sm' className='mb-1 text-red-600'>
+                    {runnerLogsError}
+                  </UIText>
+                ) : null}
+                <pre className='max-h-80 overflow-auto rounded border border-gray-200 bg-black/90 p-3 font-mono text-xs leading-5 text-green-100 dark:border-gray-700'>
+                  {runnerLogs ||
+                    (runnerLogsStatus === 'connecting'
+                      ? 'Waiting for log stream…'
+                      : 'No log lines yet. Logs appear while the runner provisions.')}
+                </pre>
               </div>
             </div>
           ) : null}
