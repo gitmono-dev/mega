@@ -8,6 +8,7 @@ export function useGetChangelog({ enabled }: { enabled: boolean }) {
     queryKey: ['changelog-latest-release'],
     queryFn: () => fetcher('/api/latest-release'),
     staleTime: 1000 * 60 * 60 * 24, // 1 day,
-    enabled
+    // Temporarily disable changelog fetch (external /api/latest-release).
+    enabled: false && enabled
   })
 }

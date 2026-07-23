@@ -8,7 +8,7 @@ entity Repository = {
     "readers": UserGroup,
 };
 
-entity MergeRequest = {
+entity ChangeList = {
     "repo": Repository,
 };
 
@@ -21,7 +21,7 @@ action "deleteRepo", "viewRepo", "forkRepo", "pullRepo", "pushRepo" appliesTo {
     resource: [Repository],
 };
 
-action "createMergeRequest", "editMergeRequest", "deleteMergeRequest", "approveMergeRequest" appliesTo {
+action "createChangeList", "editChangeList", "deleteChangeList", "approveChangeList" appliesTo {
     principal: [User],
     resource: [Repository],
 };

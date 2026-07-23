@@ -6,6 +6,8 @@ pub struct CampsiteUserJson {
     pub id: String,
     pub avatar_url: String,
     pub email: Option<String>,
+    #[serde(default)]
+    pub github_login: Option<String>,
 }
 
 impl From<CampsiteUserJson> for LoginUser {
@@ -15,6 +17,9 @@ impl From<CampsiteUserJson> for LoginUser {
             email: value.email.unwrap_or_default(),
             avatar_url: value.avatar_url,
             campsite_user_id: value.id,
+            github_login: value
+                .github_login
+                .filter(|s| !s.trim().is_empty()),
         }
     }
 }
@@ -49,6 +54,7 @@ impl From<TinyshipAuthUserJson> for LoginUser {
             username: value.name,
             email: value.email.unwrap_or_default(),
             avatar_url: value.image.unwrap_or_default(),
+            github_login: None,
         }
     }
 }
@@ -57,6 +63,20 @@ impl From<TinyshipAuthUserJson> for LoginUser {
 pub struct LoginUser {
     pub campsite_user_id: String,
     pub username: String,
+    /// GitHub login when Campsite authenticated via GitHub; used as Cedar User euid.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub github_login: Option<String>,
     pub avatar_url: String,
     pub email: String,
+}
+
+impl LoginUser {
+    /// Identity for Cedar / `.mega_cedar.json` admin checks: GitHub login when present.
+    pub fn cedar_user_id(&self) -> &str {
+        self.github_login
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .unwrap_or(self.username.as_str())
+    }
 }

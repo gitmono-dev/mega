@@ -678,6 +678,21 @@ impl TaskScheduler {
         }
     }
 
+    /// Register `build_info` on `chosen_id` and send `TaskBuild`.
+    ///
+    /// The `workers` DashMap write guard is dropped before this returns. Callers
+    /// must not hold that guard across `.await` — doing so can stall the entire
+    /// tokio runtime when heartbeats / health checks / clients-info contend on
+    /// the same shard (seen as HTTP hang on `/mega/oc` while the process is up).
+    pub fn claim_worker_for_build(
+        &self,
+        chosen_id: &str,
+        build_info: BuildInfo,
+        msg: WSMessage,
+    ) -> Result<(), String> {
+        claim_worker_for_build(&self.workers, &self.active_builds, chosen_id, build_info, msg)
+    }
+
     /// Try to dispatch queued task-bound builds (concurrent safe)
     pub async fn process_pending_tasks(&self) {
         // Get available workers
@@ -794,30 +809,16 @@ impl TaskScheduler {
 
         // Register the build *before* sending TaskBuild so early TaskBuildOutput lines
         // from the worker are not dropped (ws_handler only publishes logs when
-        // active_builds contains the build_id).
-        let build_key = pending_build_event.event_payload.build_event_id.to_string();
-        if let Some(mut worker) = self.workers.get_mut(&chosen_id) {
-            self.active_builds.insert(build_key.clone(), build_info);
-            worker.status = WorkerStatus::Busy {
-                build_id: build_key.clone(),
-                phase: None,
-            };
-            if worker.sender.send(msg).is_err() {
-                self.active_builds.remove(&build_key);
-                worker.status = WorkerStatus::Idle;
-                return Err(format!("Failed to send task to worker {chosen_id}"));
-            }
-
-            tracing::info!(
-                "Queued task {}/{} dispatched to worker {}",
-                pending_build_event.event_payload.task_id,
-                pending_build_event.event_payload.build_event_id,
-                chosen_id
-            );
-            Ok(())
-        } else {
-            Err(format!("Worker {chosen_id} not found"))
-        }
+        // active_builds contains the build_id). Guard is dropped inside the helper
+        // before any further awaits in the caller.
+        self.claim_worker_for_build(&chosen_id, build_info, msg)?;
+        tracing::info!(
+            "Queued task {}/{} dispatched to worker {}",
+            pending_build_event.event_payload.task_id,
+            pending_build_event.event_payload.build_event_id,
+            chosen_id
+        );
+        Ok(())
     }
 
     /// Notify about new task or available worker
@@ -892,6 +893,35 @@ impl TaskScheduler {
             }
         }
     }
+}
+
+/// Register `build_info` on `chosen_id` and send `msg`.
+///
+/// Must drop the `workers` DashMap write guard before returning (no `.await`
+/// while holding it). See [`TaskScheduler::claim_worker_for_build`].
+pub(crate) fn claim_worker_for_build(
+    workers: &DashMap<String, WorkerInfo>,
+    active_builds: &DashMap<String, BuildInfo>,
+    chosen_id: &str,
+    build_info: BuildInfo,
+    msg: WSMessage,
+) -> Result<(), String> {
+    let key = build_info.event_payload.build_event_id.to_string();
+    let Some(mut worker) = workers.get_mut(chosen_id) else {
+        return Err(format!("Worker {chosen_id} not found"));
+    };
+    active_builds.insert(key.clone(), build_info);
+    worker.status = WorkerStatus::Busy {
+        build_id: key.clone(),
+        phase: None,
+    };
+    if worker.sender.send(msg).is_err() {
+        active_builds.remove(&key);
+        worker.status = WorkerStatus::Idle;
+        return Err(format!("Failed to send task to worker {chosen_id}"));
+    }
+    Ok(())
+    // RefMut dropped here — safe for callers to `.await` afterward.
 }
 
 #[cfg(test)]
@@ -971,5 +1001,80 @@ mod tests {
 
         // Should fail when full
         assert!(queue.enqueue_v2(task).is_err());
+    }
+
+    /// Regression: after claim+send, the workers DashMap shard must be free so
+    /// concurrent heartbeats / health checks / clients-info cannot block the
+    /// runtime (the old retry path held `get_mut` across DB `.await`).
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn claim_worker_for_build_releases_guard_before_return() {
+        let workers = Arc::new(DashMap::new());
+        let active_builds = Arc::new(DashMap::new());
+        let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+        let worker_id = "worker-1".to_string();
+        workers.insert(
+            worker_id.clone(),
+            WorkerInfo {
+                sender: tx,
+                status: WorkerStatus::Idle,
+                last_heartbeat: chrono::Utc::now(),
+                start_time: chrono::Utc::now(),
+                hostname: "test-host".to_string(),
+                orion_version: "0.0.0".to_string(),
+            },
+        );
+
+        let build_event_id = Uuid::now_v7();
+        let task_id = Uuid::now_v7();
+        let build_info = BuildInfo {
+            event_payload: BuildEventPayload::new(
+                build_event_id,
+                task_id,
+                "cl".to_string(),
+                "/repo".to_string(),
+                1,
+            ),
+            target_id: Uuid::now_v7(),
+            target_path: "//".to_string(),
+            changes: vec![],
+            started_at: chrono::Utc::now(),
+            worker_id: worker_id.clone(),
+        };
+        let msg = WSMessage::TaskBuild {
+            build_id: build_event_id.to_string(),
+            repo: "/repo".to_string(),
+            cl_link: "cl".to_string(),
+            changes: vec![],
+        };
+
+        claim_worker_for_build(&workers, &active_builds, &worker_id, build_info, msg)
+            .expect("claim should succeed");
+
+        // Simulate the DB awaits that follow claim on the retry path.
+        let workers_for_contended = workers.clone();
+        let contended = tokio::spawn(async move {
+            // Would hang forever if claim still held the shard lock across an await.
+            let guard = workers_for_contended
+                .get_mut("worker-1")
+                .expect("worker must remain reachable");
+            matches!(
+                guard.status,
+                WorkerStatus::Busy {
+                    build_id: _,
+                    phase: None
+                }
+            )
+        });
+
+        let ok = tokio::time::timeout(Duration::from_millis(500), contended)
+            .await
+            .expect("workers map must stay accessible after claim returns")
+            .expect("join");
+        assert!(ok, "worker should be Busy after claim");
+        assert!(active_builds.contains_key(&build_event_id.to_string()));
+        assert!(matches!(
+            rx.try_recv(),
+            Ok(WSMessage::TaskBuild { build_id, .. }) if build_id == build_event_id.to_string()
+        ));
     }
 }

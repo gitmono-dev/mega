@@ -127,7 +127,7 @@ export function MegaCedarAdminPicker({ fileContent, onContentGenerated, disabled
         <div>
           <div className='text-sm font-semibold text-gray-900'>System admins</div>
           <div className='text-xs text-gray-500'>
-            Select users to regenerate <code className='rounded bg-gray-100 px-1'>.mega_cedar.json</code>
+            Select GitHub logins to regenerate <code className='rounded bg-gray-100 px-1'>.mega_cedar.json</code>
           </div>
         </div>
         {generateCedar.isPending && (
@@ -171,8 +171,8 @@ export function MegaCedarAdminPicker({ fileContent, onContentGenerated, disabled
         ) : (
           <div className='divide-y divide-gray-100'>
             {members.map((member) => {
-              const username = member.user.username
-              const isSelected = selectedAdmins.includes(username)
+              const cedarId = member.user.github_login || member.user.username
+              const isSelected = selectedAdmins.includes(cedarId)
 
               return (
                 <label
@@ -184,7 +184,7 @@ export function MegaCedarAdminPicker({ fileContent, onContentGenerated, disabled
                   <input
                     type='checkbox'
                     checked={isSelected}
-                    onChange={() => handleToggle(username)}
+                    onChange={() => handleToggle(cedarId)}
                     disabled={disabled || generateCedar.isPending}
                     className='mr-3 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
                   />
@@ -195,7 +195,10 @@ export function MegaCedarAdminPicker({ fileContent, onContentGenerated, disabled
                   />
                   <div className='min-w-0 flex-1'>
                     <p className='truncate text-sm font-medium text-gray-900'>{member.user.display_name}</p>
-                    <p className='truncate text-xs text-gray-500'>@{username}</p>
+                    <p className='truncate text-xs text-gray-500'>
+                      @{cedarId}
+                      {member.user.github_login ? ' (GitHub)' : ''}
+                    </p>
                   </div>
                   {isSelected && (
                     <span className='ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700'>

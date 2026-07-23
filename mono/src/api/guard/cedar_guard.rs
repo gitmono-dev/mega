@@ -140,7 +140,7 @@ pub async fn cedar_guard(
         if let Ok(bot) = BotAuth::from_request_parts(&mut parts, &state).await {
             ("Bot".to_string(), bot.bot_id.to_string())
         } else if let Ok(user) = LoginUser::from_request_parts(&mut parts, &state).await {
-            ("User".to_string(), user.username.clone())
+            ("User".to_string(), user.cedar_user_id().to_string())
         } else {
             ("User".to_string(), "reader".to_string())
         };
@@ -219,12 +219,12 @@ mod tests {
         let patterns: HashMap<String, String> = HashMap::from([
             (
                 "/{link}/approve".to_string(),
-                "approveMergeRequest".to_string(),
+                "approveChangeList".to_string(),
             ),
-            ("/{link}/close".to_string(), "editMergeRequest".to_string()),
+            ("/{link}/close".to_string(), "editChangeList".to_string()),
             (
                 "/{link}/review/delete".to_string(),
-                "editMergeRequest".to_string(),
+                "editChangeList".to_string(),
             ),
         ]);
 
@@ -232,14 +232,14 @@ mod tests {
         let result = match_operation(suffix, &patterns);
         assert_eq!(
             result,
-            Some((ActionEnum::ApproveMergeRequest, "my-cl-link".to_string()))
+            Some((ActionEnum::ApproveChangeList, "my-cl-link".to_string()))
         );
 
         let suffix = "/another-cl-link/close";
         let result = match_operation(suffix, &patterns);
         assert_eq!(
             result,
-            Some((ActionEnum::EditMergeRequest, "another-cl-link".to_string()))
+            Some((ActionEnum::EditChangeList, "another-cl-link".to_string()))
         );
 
         let suffix = "/no-match-link/delete";
@@ -250,7 +250,7 @@ mod tests {
         let result = match_operation(suffix, &patterns);
         assert_eq!(
             result,
-            Some((ActionEnum::EditMergeRequest, "path/subpath".to_string()))
+            Some((ActionEnum::EditChangeList, "path/subpath".to_string()))
         );
     }
 }

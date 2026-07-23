@@ -1,25 +1,25 @@
 {
     "/cl": {
         "/list": "unprotectedRequest",
-        "/{link}/reopen": "editMergeRequest",
-        "/{link}/close": "editMergeRequest",
-        "/{link}/merge": "approveMergeRequest",
-        "/{link}/comment": "editMergeRequest",
-        "/{link}/title": "editMergeRequest",
-        "/{link}/labels": "editMergeRequest",
-        "/{link}/assignees": "editMergeRequest",
-        "/{link}/reviewers": "editMergeRequest",
-        "/{link}/approve": "approveMergeRequest",
-        "/{link}/resolve": "editMergeRequest",
+        "/{link}/reopen": "editChangeList",
+        "/{link}/close": "editChangeList",
+        "/{link}/merge": "approveChangeList",
+        "/{link}/comment": "editChangeList",
+        "/{link}/title": "editChangeList",
+        "/{link}/labels": "editChangeList",
+        "/{link}/assignees": "editChangeList",
+        "/{link}/reviewers": "editChangeList",
+        "/{link}/approve": "approveChangeList",
+        "/{link}/resolve": "editChangeList",
         "/{link}/detail": "viewRepo",
         "/{link}/mui-tree": "viewRepo",
         "/{link}/files-changed": "viewRepo",
         "/{link}/files-list": "viewRepo",
         "/{link}/merge-box": "viewRepo",
-        "/{link}/status": "editMergeRequest",
+        "/{link}/status": "editChangeList",
         "/{link}/update-status": "viewRepo",
-        "/{link}/update-branch": "editMergeRequest",
+        "/{link}/update-branch": "editChangeList",
         "/reviewer/{link}": "viewRepo",
-        "/reviewer": "editMergeRequest"
+        "/reviewer": "editChangeList"
     }
 }

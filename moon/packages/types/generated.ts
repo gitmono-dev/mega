@@ -36,6 +36,7 @@ export type User = {
   cover_photo_url: string | null
   email: string
   username: string
+  github_login?: string | null
   display_name: string
   system: boolean
   integration: boolean
@@ -2569,6 +2570,7 @@ export type SyncUser = {
   avatar_urls: AvatarUrls
   display_name: string
   username: string
+  github_login?: string | null
   email: string
   integration: boolean
   notifications_paused: boolean
@@ -2769,6 +2771,7 @@ export type CurrentUser = {
   cover_photo_url: string | null
   email: string
   username: string
+  github_login?: string | null
   display_name: string
   onboarded_at: string | null
   channel_name: string
@@ -5022,8 +5025,9 @@ export type FilesChangedPage = {
   page: CommonPageClFilesChangedItemSchema
 }
 
-/** Request body for generating `.mega_cedar.json` content from admin usernames. */
+/** Request body for generating `.mega_cedar.json` content from admin GitHub logins. */
 export type GenerateCedarRequest = {
+  /** GitHub login names used as Cedar `User` euids (e.g. `octocat`). */
   admins: string[]
 }
 
@@ -7646,6 +7650,8 @@ export type PatchApiOrganizationsNotesSyncStateData = any
 export type PostApiOrionRunnersData = CommonResultStartRunnerResponse
 
 export type GetApiOrionRunnersByIdData = CommonResultRunnerStatusResponse
+
+export type GetApiOrionRunnersLogsStreamData = any
 
 export type GetApiPermissionsMeByResourceIdData = CommonResultUserEffectivePermissionResponse
 
@@ -16261,7 +16267,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
   }
   v1 = {
     /**
-     * @description Generate `.mega_cedar.json` content from a list of admin usernames. Only admins can access this endpoint. Does not write to the repository.
+     * @description Generate `.mega_cedar.json` content from a list of admin GitHub logins. Only admins can access this endpoint. Does not write to the repository.
      *
      * @tags User Management
      * @name PostApiAdminCedarGenerate
@@ -18884,6 +18890,29 @@ It's for local testing purposes.
         request: (id: string, params: RequestParams = {}) =>
           this.request<GetApiOrionRunnersByIdData>({
             path: `/api/v1/orion/runners/${id}`,
+            method: 'GET',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name GetApiOrionRunnersLogsStream
+     * @summary Proxy live Orion runner / client startup logs from orion-scheduler as SSE.
+     * @request GET:/api/v1/orion/runners/{id}/logs/stream
+     */
+    getApiOrionRunnersLogsStream: () => {
+      const base = 'GET:/api/v1/orion/runners/{id}/logs/stream' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiOrionRunnersLogsStreamData>([base]),
+        requestKey: (id: string) => dataTaggedQueryKey<GetApiOrionRunnersLogsStreamData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
+          this.request<GetApiOrionRunnersLogsStreamData>({
+            path: `/api/v1/orion/runners/${id}/logs/stream`,
             method: 'GET',
             ...params
           })

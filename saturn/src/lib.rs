@@ -17,17 +17,17 @@ pub enum ActionEnum {
     // PushRepo,
     // OpenIssue,
     // ** Maintainer
-    CreateMergeRequest,
+    CreateChangeList,
     EditIssue,
-    EditMergeRequest,
+    EditChangeList,
     AssignIssue,
-    ApproveMergeRequest,
+    ApproveChangeList,
     // ** Admin
     AddMaintainer,
     AddAdmin,
     DeleteRepo,
     DeleteIssue,
-    DeleteMergeRequest,
+    DeleteChangeList,
 }
 
 impl Display for ActionEnum {
@@ -35,16 +35,16 @@ impl Display for ActionEnum {
         let s = match self {
             ActionEnum::UnprotectedRequest => "unprotectedRequest",
             ActionEnum::ViewRepo => "viewRepo",
-            ActionEnum::CreateMergeRequest => "createMergeRequest",
+            ActionEnum::CreateChangeList => "createChangeList",
             ActionEnum::EditIssue => "editIssue",
-            ActionEnum::EditMergeRequest => "editMergeRequest",
+            ActionEnum::EditChangeList => "editChangeList",
             ActionEnum::AssignIssue => "assignIssue",
-            ActionEnum::ApproveMergeRequest => "approveMergeRequest",
+            ActionEnum::ApproveChangeList => "approveChangeList",
             ActionEnum::AddMaintainer => "addMaintainer",
             ActionEnum::AddAdmin => "addAdmin",
             ActionEnum::DeleteRepo => "deleteRepo",
             ActionEnum::DeleteIssue => "deleteIssue",
-            ActionEnum::DeleteMergeRequest => "deleteMergeRequest",
+            ActionEnum::DeleteChangeList => "deleteChangeList",
         };
         write!(f, "{s}")
     }
@@ -54,16 +54,16 @@ impl From<&str> for ActionEnum {
     fn from(s: &str) -> Self {
         match s {
             "viewRepo" => ActionEnum::ViewRepo,
-            "createMergeRequest" => ActionEnum::CreateMergeRequest,
+            "createChangeList" | "createMergeRequest" => ActionEnum::CreateChangeList,
             "editIssue" => ActionEnum::EditIssue,
-            "editMergeRequest" => ActionEnum::EditMergeRequest,
+            "editChangeList" | "editMergeRequest" => ActionEnum::EditChangeList,
             "assignIssue" => ActionEnum::AssignIssue,
-            "approveMergeRequest" => ActionEnum::ApproveMergeRequest,
+            "approveChangeList" | "approveMergeRequest" => ActionEnum::ApproveChangeList,
             "addMaintainer" => ActionEnum::AddMaintainer,
             "addAdmin" => ActionEnum::AddAdmin,
             "deleteRepo" => ActionEnum::DeleteRepo,
             "deleteIssue" => ActionEnum::DeleteIssue,
-            "deleteMergeRequest" => ActionEnum::DeleteMergeRequest,
+            "deleteChangeList" | "deleteMergeRequest" => ActionEnum::DeleteChangeList,
             _ => ActionEnum::UnprotectedRequest,
         }
     }
@@ -197,7 +197,7 @@ mod test {
             app_context
                 .is_authorized(
                     &anyone,
-                    r#"Action::"approveMergeRequest""#.parse::<SaturnEUid>().unwrap(),
+                    r#"Action::"approveChangeList""#.parse::<SaturnEUid>().unwrap(),
                     &resource,
                     Context::empty()
                 )
@@ -208,7 +208,7 @@ mod test {
             app_context
                 .is_authorized(
                     &maintainer,
-                    r#"Action::"approveMergeRequest""#.parse::<SaturnEUid>().unwrap(),
+                    r#"Action::"approveChangeList""#.parse::<SaturnEUid>().unwrap(),
                     &resource,
                     Context::empty()
                 )

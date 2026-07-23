@@ -781,28 +781,16 @@ pub async fn build_retry(
             cl_link,
         };
 
-        let Some(mut worker) = state.scheduler.workers.get_mut(&chosen_id) else {
-            return (
-                StatusCode::BAD_GATEWAY,
-                Json(json!({"message": "Worker not found"})),
-            )
-                .into_response();
-        };
-        let key = new_build_id.to_string();
-        state
+        // Claim + send under DashMap write guard, then drop it BEFORE DB awaits.
+        // Holding `workers.get_mut` across `.await` can stall the tokio runtime
+        // (heartbeats / health checks / `/orion-clients-info` block on the shard).
+        if let Err(e) = state
             .scheduler
-            .active_builds
-            .insert(key.clone(), build_info);
-        worker.status = WorkerStatus::Busy {
-            build_id: key.clone(),
-            phase: None,
-        };
-        if worker.sender.send(msg).is_err() {
-            state.scheduler.active_builds.remove(&key);
-            worker.status = WorkerStatus::Idle;
+            .claim_worker_for_build(&chosen_id, build_info, msg)
+        {
             return (
                 StatusCode::BAD_GATEWAY,
-                Json(json!({"message": "Failed to dispatch build retry to worker"})),
+                Json(json!({"message": e})),
             )
                 .into_response();
         }
@@ -842,24 +830,15 @@ async fn activate_worker(
         cl_link: build_info.event_payload.cl_link.clone(),
     };
     let key = build_info.event_payload.build_event_id.to_string();
-    if let Some(mut worker) = scheduler.workers.get_mut(&build_info.worker_id) {
-        scheduler
-            .active_builds
-            .insert(key.clone(), build_info.clone());
-        worker.status = WorkerStatus::Busy {
-            build_id: key.clone(),
-            phase: None,
+    if scheduler
+        .claim_worker_for_build(&build_info.worker_id, build_info.clone(), msg)
+        .is_ok()
+    {
+        return OrionBuildResult {
+            build_id: key,
+            status: "dispatched".to_string(),
+            message: format!("Build dispatched to worker {}", build_info.worker_id),
         };
-        if worker.sender.send(msg).is_err() {
-            scheduler.active_builds.remove(&key);
-            worker.status = WorkerStatus::Idle;
-        } else {
-            return OrionBuildResult {
-                build_id: key,
-                status: "dispatched".to_string(),
-                message: format!("Build dispatched to worker {}", build_info.worker_id),
-            };
-        }
     }
     scheduler.release_worker(&build_info.worker_id).await;
     OrionBuildResult {

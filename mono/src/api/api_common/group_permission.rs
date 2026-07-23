@@ -8,17 +8,21 @@ use http::StatusCode;
 use crate::api::{MonoApiServiceState, error::ApiError, oauth::model::LoginUser};
 
 pub async fn ensure_admin(state: &MonoApiServiceState, user: &LoginUser) -> Result<(), ApiError> {
-    if state
-        .services()
-        .admin()
-        .check_is_admin(&user.username)
-        .await?
+    let admin = state.services().admin();
+    let cedar_id = user.cedar_user_id();
+
+    // Prefer GitHub login (cedar_user_id). Also accept Campsite username while
+    // `.mega_cedar.json` is still migrating from username → github_login.
+    if admin.check_is_admin(cedar_id).await?
+        || (cedar_id != user.username.as_str() && admin.check_is_admin(&user.username).await?)
     {
         return Ok(());
     }
 
     tracing::warn!(
         actor = %user.username,
+        cedar_user_id = %cedar_id,
+        github_login = ?user.github_login,
         "admin check failed: access forbidden"
     );
 

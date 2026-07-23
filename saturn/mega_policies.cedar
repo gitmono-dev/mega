@@ -7,7 +7,7 @@ permit (
          Action::"forkRepo",
          Action::"pushRepo",
          Action::"openIssue",
-         Action::"createMergeRequest"],
+         Action::"createChangeList"],
     resource
 )
 unless { resource.is_private };
@@ -21,7 +21,7 @@ permit (
          Action::"forkRepo",
          Action::"pushRepo",
          Action::"openIssue",
-         Action::"createMergeRequest"],
+         Action::"createChangeList"],
     resource
 )
 when { principal in resource.readers };
@@ -31,9 +31,9 @@ permit (
     principal,
     action in
         [Action::"editIssue",
-         Action::"editMergeRequest",
+         Action::"editChangeList",
          Action::"assignIssue",
-         Action::"approveMergeRequest"],
+         Action::"approveChangeList"],
     resource
 )
 when { principal in resource.maintainers };
@@ -46,7 +46,7 @@ permit (
          Action::"addAdmin",
          Action::"deleteRepo",
          Action::"deleteIssue",
-         Action::"deleteMergeRequest"],
+         Action::"deleteChangeList"],
     resource
 )
 when { principal in resource.admins };

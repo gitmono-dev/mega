@@ -4,12 +4,15 @@ Frontend API types live in `@gitmono/types` (`packages/types/generated.ts`). The
 
 ## Do not edit these by hand
 
-| File | Why |
-|------|-----|
-| [`gen/gitmono.json`](gen/gitmono.json) | Exported from the **mono** OpenAPI (`utoipa`). Refresh from a running mono server. |
+| File                                                               | Why                                                                                   |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| [`gen/gitmono.json`](gen/gitmono.json)                             | Exported from the **mono** OpenAPI (`utoipa`). Refresh from a running mono server.    |
+| [`gen/1schema_swagger.json`](gen/1schema_swagger.json)             | Exported from **Campsite** Apigen (`rake apigen:…`). Owns types like `SyncUser` / `CurrentUser`. |
 | [`../packages/types/generated.ts`](../packages/types/generated.ts) | Produced by [`script/gen-client`](../script/gen-client) via `swagger-typescript-api`. |
 
-Also avoid hand-editing other checked-in OpenAPI dumps that feed the same pipeline (for example [`gen/orion.json`](gen/orion.json) from **orion-server**). Change the Rust `utoipa` annotations instead, then re-export and regenerate.
+Also avoid hand-editing other checked-in OpenAPI dumps that feed the same pipeline (for example [`gen/orion.json`](gen/orion.json) from **orion-server**). Change the Rust `utoipa` annotations (mono/orion) or Campsite serializers + Apigen export, then re-export and regenerate.
+
+**Note:** Refreshing only `gitmono.json` from mono will **not** pick up Campsite fields such as `SyncUser.github_login`. Those live in `1schema_swagger.json`.
 
 ## Regenerate workflow
 
@@ -30,7 +33,7 @@ curl -sS http://localhost:8004/api-doc/openapi.json -o api/gen/orion.json
 
 ## Related endpoints
 
-| Service | Swagger UI | OpenAPI JSON |
-|---------|------------|--------------|
-| mono | `http://localhost:8000/swagger-ui` | `http://localhost:8000/api/openapi.json` |
+| Service      | Swagger UI                         | OpenAPI JSON                                 |
+| ------------ | ---------------------------------- | -------------------------------------------- |
+| mono         | `http://localhost:8000/swagger-ui` | `http://localhost:8000/api/openapi.json`     |
 | orion-server | `http://localhost:8004/swagger-ui` | `http://localhost:8004/api-doc/openapi.json` |

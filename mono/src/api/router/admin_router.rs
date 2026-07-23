@@ -60,11 +60,10 @@ async fn is_admin_me(
     user: LoginUser,
     State(state): State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<IsAdminResponse>>, ApiError> {
-    let is_admin = state
-        .services()
-        .admin()
-        .check_is_admin(&user.username)
-        .await?;
+    let admin = state.services().admin();
+    let cedar_id = user.cedar_user_id();
+    let is_admin = admin.check_is_admin(cedar_id).await?
+        || (cedar_id != user.username.as_str() && admin.check_is_admin(&user.username).await?);
 
     Ok(Json(CommonResult::success(Some(IsAdminResponse {
         is_admin,
@@ -100,7 +99,7 @@ async fn admin_list(
 
 /// POST /api/v1/admin/cedar/generate
 ///
-/// Generate `.mega_cedar.json` content from a list of admin usernames.
+/// Generate `.mega_cedar.json` content from a list of admin GitHub logins.
 /// Only admins can access this endpoint. Does not write to the repository.
 #[utoipa::path(
     post,

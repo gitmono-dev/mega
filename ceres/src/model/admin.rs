@@ -11,9 +11,10 @@ pub struct AdminListResponse {
     pub admins: Vec<String>,
 }
 
-/// Request body for generating `.mega_cedar.json` content from admin usernames.
+/// Request body for generating `.mega_cedar.json` content from admin GitHub logins.
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct GenerateCedarRequest {
+    /// GitHub login names used as Cedar `User` euids (e.g. `octocat`).
     pub admins: Vec<String>,
 }
 
