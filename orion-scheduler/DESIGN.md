@@ -364,7 +364,7 @@ flowchart TD
   "default_image": {
     "image_path": "~/.local/share/qlean/images/debian-13-buck2/debian-13-buck2.qcow2",
     "image_digest": "sha256:753c28888c9d30fe4baef55c1d1dfa9a39431595eca940b7ad85d78d84f3d7a5",
-    "image_disk_gb": 30,
+    "image_disk_gb": 50,
     "image_cpus": 8,
     "image_memory_mb": 16000
   }
@@ -383,7 +383,8 @@ flowchart TD
 | `default_image`                 | object  | 见模板                         | 默认 VM 镜像五参数；webhook 未传 `image_*` 时使用        |
 | `default_image.image_path`      | string  | —                           | 本地 qcow2 路径                                  |
 | `default_image.image_digest`    | string  | —                           | SHA256 校验和                                   |
-| `default_image.image_disk_gb`   | u32     | 30                          | 磁盘 GB                                       |
+| `default_image.image_disk_gb`   | u32     | 50                          | 磁盘 GB（长生命周期 VM 建议 ≥50；已部署的 `/etc/.../target_config.json` 需人工改） |
+
 | `default_image.image_cpus`      | u32     | 8                           | vCPU 数                                      |
 | `default_image.image_memory_mb` | u32     | 16000                       | 内存 MB                                       |
 
@@ -531,9 +532,22 @@ tracing::error!("[orion-deploy] Orion start failed: {}", error);
 | `.env.prod`            | `/home/orion/orion-runner/.env`            | Orion 运行时的环境变量，包括 `SERVER_WS`（WebSocket 服务器地址）、`BUCK_PROJECT_ROOT`（Buck 项目路径）等            |
 | `run.sh`               | `/home/orion/orion-runner/run.sh`          | Orion 启动脚本，加载 `.env` 环境变量，执行 `preflight.sh` 前置检查，然后启动 orion 进程                            |
 | `preflight.sh`         | `/home/orion/orion-runner/preflight.sh`    | 前置检查脚本，验证 FUSE 能力和设备访问权限，确保环境满足 Orion 运行要求                                                |
-| `cleanup.sh`           | `/home/orion/orion-runner/cleanup.sh`      | 清理脚本，在 Orion 启动前杀死旧进程并卸载 FUSE 文件系统                                                        |
+| `cleanup.sh`           | `/home/orion/orion-runner/cleanup.sh`      | 启动前杀旧进程、卸 FUSE、清理孤儿 Antares upper/cl、轮转 orion.log、磁盘水位告警 |
 | `orion-runner.service` | `/etc/systemd/system/orion-runner.service` | systemd 服务单元定义，负责配置 Orion 服务的启动参数、运行环境、权限和能力、停止超时等                                        |
 | `orion`                | `/home/orion/orion-runner/orion`           | Orion 主程序二进制文件，Buck 构建任务的 WebSocket 客户端，接收并执行构建任务                                         |
+
+### 6.1 Guest 磁盘水位（防打满）
+
+长生命周期 VM 上 Antares `upper/`/`cl/` 与 `orion.log` 会占满默认盘，导致 WS 心跳失败、worker 被标 Lost。
+
+| 机制 | 行为 |
+|------|------|
+| 构建结束 umount | 默认删除对应 `upper_dir` / `cl_dir`（`ORION_RETAIN_ANTARES_MOUNTS=1` 时保留） |
+| `cleanup.sh` | 无活跃挂载时 prune 孤儿 overlay；`orion.log` > 200MB 轮转 |
+| Orion 接 `TaskBuild` | `df /` ≥ `ORION_DISK_REJECT_PCT`（默认 92）则拒绝任务并尝试 prune；心跳继续 |
+| 默认盘 | `image_disk_gb` 默认 **50**（已有 `/etc/orion-scheduler/target_config.json` 需手动改） |
+
+排障：`GET /scorpio/status?domain=` 响应中的 `disk.df_root` / `disk.du`。
 
 ## 7. 部署与运行
 

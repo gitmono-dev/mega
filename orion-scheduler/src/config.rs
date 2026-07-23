@@ -32,7 +32,7 @@ impl Default for DefaultImageConfig {
                 .to_string(),
             image_digest: "sha256:753c28888c9d30fe4baef55c1d1dfa9a39431595eca940b7ad85d78d84f3d7a5"
                 .to_string(),
-            image_disk_gb: 30,
+            image_disk_gb: 50,
             image_cpus: 8,
             image_memory_mb: 16000,
         }
@@ -232,7 +232,7 @@ mod tests {
     #[test]
     fn default_image_has_expected_defaults() {
         let d = DefaultImageConfig::default();
-        assert_eq!(d.image_disk_gb, 30);
+        assert_eq!(d.image_disk_gb, 50);
         assert_eq!(d.image_cpus, 8);
         assert_eq!(d.image_memory_mb, 16000);
         assert!(d.image_digest.starts_with("sha256:"));

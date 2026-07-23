@@ -376,6 +376,43 @@ async fn process_server_message(
                             changes,
                         } => {
                             tracing::info!("Received task: id={}", build_id);
+
+                            let pressure = crate::disk::assess_root_disk();
+                            if pressure.should_reject_builds() {
+                                tracing::error!(
+                                    used_pct = pressure.used_pct(),
+                                    "Rejecting task {} due to disk pressure",
+                                    build_id
+                                );
+                                crate::disk::reclaim_under_pressure().await;
+                                // Re-check after prune — may have recovered.
+                                let after = crate::disk::assess_root_disk();
+                                if after.should_reject_builds() {
+                                    if let Err(e) = sender.send(WSMessage::TaskAck {
+                                        build_id,
+                                        success: false,
+                                        message: format!(
+                                            "disk pressure: root filesystem {}% used (threshold {}%). Free space under /data/scorpio or restart orion-runner after cleanup.",
+                                            after.used_pct(),
+                                            std::env::var("ORION_DISK_REJECT_PCT").unwrap_or_else(|_| "92".into())
+                                        ),
+                                    }) {
+                                        tracing::error!("Failed to send TaskAck: {}", e);
+                                    }
+                                    return ControlFlow::Continue(());
+                                }
+                                tracing::warn!(
+                                    used_pct = after.used_pct(),
+                                    "Disk pressure cleared after prune; accepting task"
+                                );
+                            } else if matches!(pressure, crate::disk::DiskPressure::Warn { .. }) {
+                                tracing::warn!(
+                                    used_pct = pressure.used_pct(),
+                                    "Disk usage elevated before accepting task {}",
+                                    build_id
+                                );
+                            }
+
                             tokio::spawn(async move {
                                 let task_id_uuid = match Uuid::parse_str(&build_id) {
                                     Ok(uuid) => uuid,

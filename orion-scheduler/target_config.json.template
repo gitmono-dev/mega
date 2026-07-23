@@ -7,7 +7,7 @@
   "default_image": {
     "image_path": "~/.local/share/qlean/images/debian-13-buck2/debian-13-buck2.qcow2",
     "image_digest": "sha256:753c28888c9d30fe4baef55c1d1dfa9a39431595eca940b7ad85d78d84f3d7a5",
-    "image_disk_gb": 30,
+    "image_disk_gb": 50,
     "image_cpus": 8,
     "image_memory_mb": 16000
   }

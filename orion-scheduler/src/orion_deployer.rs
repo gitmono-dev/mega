@@ -437,9 +437,30 @@ pub async fn get_scorpio_status(
     let network_test = machine.exec("curl -sI --connect-timeout 5 https://git.gitmega.com 2>&1 | head -5 || echo 'Connection failed'").await?;
     let network_info = String::from_utf8_lossy(&network_test.stdout);
 
+    let df_output = machine
+        .exec("df -h / 2>/dev/null || echo 'df failed'")
+        .await?;
+    let df_info = String::from_utf8_lossy(&df_output.stdout)
+        .trim()
+        .to_string();
+
+    let du_output = machine
+        .exec(
+            "du -sh /data/scorpio/store /data/scorpio/antares/upper /data/scorpio/antares/cl \
+             /data/scorpio/antares/mnt /home/orion/orion-runner/log 2>/dev/null || true",
+        )
+        .await?;
+    let du_info = String::from_utf8_lossy(&du_output.stdout)
+        .trim()
+        .to_string();
+
     let status = serde_json::json!({
         "status": "ok",
         "directories": results,
+        "disk": {
+            "df_root": df_info,
+            "du": du_info
+        },
         "mounts": mount_info,
         "orion_process": orion_info,
         "scorpio_process": scorpio_info,

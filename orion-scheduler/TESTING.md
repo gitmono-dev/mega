@@ -33,7 +33,7 @@ curl -i -X POST http://localhost:8080/webhook \
     "scorpio_lfs_url": "https://git.gitmega.com",
     "image_path": "~/.local/share/qlean/images/debian-13-buck2/debian-13-buck2.qcow2",
     "image_digest": "sha256:753c28888c9d30fe4baef55c1d1dfa9a39431595eca940b7ad85d78d84f3d7a5",
-    "image_disk_gb": 30,
+    "image_disk_gb": 50,
     "image_cpus": 8,
     "image_memory_mb": 16000
   }'
@@ -248,6 +248,7 @@ aws s3 cp ~/.local/share/qlean/images/debian-13-buck2/debian-13-buck2.qcow2 \
 | QEMU 桥接失败 | `/etc/qemu/bridge.conf` 是否 `allow qlbr0` |
 | VM 启动超时 | cloud-init、SSH 是否可达 |
 | Orion 启动失败 | `curl -N '.../logs/orion/stream?domain=...'` |
-| Scorpio 挂载问题 | `curl '.../scorpio/status?domain=...'` |
+| Scorpio 挂载问题 | `curl '.../scorpio/status?domain=...'`（看 `disk.df_root` / `disk.du`） |
+| Guest 磁盘打满 / worker Lost | VM 内 `df -h /`；清 `/data/scorpio/antares/{upper,cl}` 或 `systemctl restart orion-runner`；新盘建议 `image_disk_gb: 50` |
 | 重启后状态丢了 | 内存 map；磁盘 qemu 靠启动 reap；重新 POST webhook |
 | 进 VM 调试 | [SSH 进入 VM](#ssh-进入-vm) |

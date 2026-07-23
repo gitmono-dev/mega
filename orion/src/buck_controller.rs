@@ -229,19 +229,35 @@ pub async fn mount_antares_fs(
     Ok((mountpoint, mount_id))
 }
 
-/// Unmount an Antares overlay filesystem.
+/// Unmount an Antares overlay filesystem and reclaim COW dirs unless retain is set.
 ///
 /// # Arguments
 /// * `mount_id` - The job/mount ID to unmount
 ///
 /// # Returns
-/// * `Ok(true)` - Unmount succeeded
+/// * `Ok(true)` - Unmount succeeded (dirs reclaimed when not retaining)
+/// * `Ok(false)` - No mount was found for `mount_id`
 /// * `Err` - Unmount failed
 #[allow(dead_code)]
 pub async fn unmount_antares_fs(mount_id: &str) -> Result<bool, Box<dyn Error + Send + Sync>> {
     tracing::info!("Starting unmount for mount_id: {}", mount_id);
 
-    crate::antares::unmount_job(mount_id).await?;
+    let config = crate::antares::unmount_job(mount_id).await?;
+    let Some(config) = config else {
+        tracing::warn!("Unmount reported no-op for mount_id: {}", mount_id);
+        return Ok(false);
+    };
+
+    if retain_antares_mounts() {
+        tracing::info!(
+            "ORION_RETAIN_ANTARES_MOUNTS set — keeping overlay dirs for mount_id={} upper={} cl={:?}",
+            mount_id,
+            config.upper_dir.display(),
+            config.cl_dir.as_ref().map(|p| p.display().to_string())
+        );
+    } else {
+        crate::antares::reclaim_overlay_dirs(&config).await;
+    }
 
     tracing::info!("Unmount succeeded for mount_id: {}", mount_id);
     Ok(true)

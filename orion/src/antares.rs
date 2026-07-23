@@ -935,6 +935,128 @@ Hint: set SCORPIO_CONFIG=/path/to/scorpio.toml or create /etc/scorpio/scorpio.to
             .map_err(Into::into)
     }
 
+    /// Best-effort delete of Antares COW layers left after FUSE unmount.
+    ///
+    /// Scorpio's `umount_job` only tears down the mount; `upper/` and `cl/` dirs
+    /// otherwise accumulate across builds on long-lived VMs and fill the disk.
+    pub async fn reclaim_overlay_dirs(config: &AntaresConfig) {
+        best_effort_remove_dir("upper", &config.upper_dir).await;
+        if let Some(cl_dir) = config.cl_dir.as_ref() {
+            best_effort_remove_dir("cl", cl_dir).await;
+        }
+    }
+
+    async fn best_effort_remove_dir(kind: &str, path: &Path) {
+        if !path.exists() {
+            return;
+        }
+        match fs::remove_dir_all(path).await {
+            Ok(()) => tracing::info!(
+                kind = kind,
+                path = %path.display(),
+                "Reclaimed Antares overlay directory"
+            ),
+            Err(e) => tracing::warn!(
+                kind = kind,
+                path = %path.display(),
+                error = %e,
+                "Failed to reclaim Antares overlay directory"
+            ),
+        }
+    }
+
+    /// When no Antares FUSE mounts are active, delete all `upper/` and `cl/`
+    /// children (they are orphans after umount). Returns `(upper_removed, cl_removed)`.
+    pub async fn prune_orphan_overlay_dirs() -> Result<(usize, usize), DynError> {
+        // Ensure scorpio config / paths are available.
+        let _ = get_manager().await?;
+        let paths = AntaresPaths::from_global_config();
+
+        // Best-effort: tear down leftover mountpoints under mount_root.
+        if let Ok(mut entries) = fs::read_dir(&paths.mount_root).await {
+            while let Ok(Some(entry)) = entries.next_entry().await {
+                let mp = entry.path();
+                if is_mountpoint(&mp).await {
+                    let _ = Command::new("fusermount")
+                        .args(["-uz", &mp.to_string_lossy()])
+                        .status()
+                        .await;
+                    let _ = Command::new("umount")
+                        .args(["-lf", &mp.to_string_lossy()])
+                        .status()
+                        .await;
+                }
+                let _ = fs::remove_dir_all(&mp).await;
+            }
+        }
+
+        if has_any_mountpoint(&paths.mount_root).await {
+            tracing::warn!(
+                "Skipping Antares overlay prune: active mountpoints still present under {}",
+                paths.mount_root.display()
+            );
+            return Ok((0, 0));
+        }
+
+        let upper_removed = prune_all_child_dirs(&paths.upper_root, "upper").await;
+        let cl_removed = prune_all_child_dirs(&paths.cl_root, "cl").await;
+        Ok((upper_removed, cl_removed))
+    }
+
+    async fn prune_all_child_dirs(root: &Path, kind: &str) -> usize {
+        let Ok(mut entries) = fs::read_dir(root).await else {
+            return 0;
+        };
+        let mut removed = 0usize;
+        while let Ok(Some(entry)) = entries.next_entry().await {
+            let path = entry.path();
+            let is_dir = entry.file_type().await.map(|t| t.is_dir()).unwrap_or(false);
+            if !is_dir {
+                continue;
+            }
+            match fs::remove_dir_all(&path).await {
+                Ok(()) => {
+                    tracing::info!(
+                        kind = kind,
+                        path = %path.display(),
+                        "Pruned orphan Antares overlay directory"
+                    );
+                    removed += 1;
+                }
+                Err(e) => tracing::warn!(
+                    kind = kind,
+                    path = %path.display(),
+                    error = %e,
+                    "Failed to prune orphan Antares overlay directory"
+                ),
+            }
+        }
+        removed
+    }
+
+    async fn has_any_mountpoint(root: &Path) -> bool {
+        let Ok(mut entries) = fs::read_dir(root).await else {
+            return false;
+        };
+        while let Ok(Some(entry)) = entries.next_entry().await {
+            if is_mountpoint(&entry.path()).await {
+                return true;
+            }
+        }
+        false
+    }
+
+    async fn is_mountpoint(path: &Path) -> bool {
+        let Ok(output) = Command::new("mountpoint")
+            .args(["-q", &path.to_string_lossy()])
+            .status()
+            .await
+        else {
+            return false;
+        };
+        output.success()
+    }
+
     /// Convert panics within scorpiofs calls into regular errors.
     async fn run_with_panic_guard<T, E, F>(context: String, future: F) -> Result<T, DynError>
     where
@@ -1067,6 +1189,8 @@ mod imp {
     pub struct AntaresConfig {
         pub mountpoint: PathBuf,
         pub job_id: String,
+        pub upper_dir: PathBuf,
+        pub cl_dir: Option<PathBuf>,
     }
 
     /// Mounting Antares requires `scorpiofs` (Linux-only in this repository).
@@ -1086,6 +1210,14 @@ mod imp {
         Err(Box::new(std::io::Error::other(
             "Antares/scorpiofs is only supported on Linux",
         )))
+    }
+
+    #[allow(dead_code)]
+    pub async fn reclaim_overlay_dirs(_config: &AntaresConfig) {}
+
+    #[allow(dead_code)]
+    pub async fn prune_orphan_overlay_dirs() -> Result<(usize, usize), DynError> {
+        Ok((0, 0))
     }
 
     #[allow(dead_code)]
