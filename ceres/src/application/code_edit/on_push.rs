@@ -53,6 +53,7 @@ impl model::TriggerContextBuilder for OnpushTrigerBuilder {
             cl.to_hash.clone(),
             cl.link.clone(),
             Some(cl.id),
+            Some(cl.path.clone()),
             Some(username.to_string()),
         ))
     }
@@ -89,6 +90,7 @@ impl model::TriggerContextBuilder for OnpushTrigerBuilder {
                 cl_model.to_hash.clone(),
                 cl_model.link.clone(),
                 Some(cl_model.id),
+                Some(cl_model.path.clone()),
                 Some(username),
             );
             BuildTriggerService::build_by_context(storage, git_cache, build_dispatch, context).await

@@ -120,20 +120,63 @@ fn push_change_if_valid(
     }
 }
 
+/// Rebase a CL-relative file path onto the Buck repo root when the CL directory
+/// is a strict subdirectory of `repo_path`.
+///
+/// Example: repo=`/`, cl=`/project/dagrs-derive`, file=`src/lib.rs`
+/// → `project/dagrs-derive/src/lib.rs`
+fn rebase_cl_relative_path(repo_path: &str, cl_path: &str, file: &Path) -> PathBuf {
+    let repo = repo_path.trim_matches('/');
+    let cl = cl_path.trim_matches('/');
+    let file_str = file
+        .to_string_lossy()
+        .replace('\\', "/")
+        .trim_start_matches('/')
+        .to_string();
+
+    let cl_rel = if repo.is_empty() {
+        if cl.is_empty() {
+            return PathBuf::from(&file_str);
+        }
+        cl.to_string()
+    } else if cl == repo {
+        return PathBuf::from(&file_str);
+    } else if let Some(stripped) = cl.strip_prefix(&format!("{repo}/")) {
+        stripped.to_string()
+    } else {
+        return PathBuf::from(&file_str);
+    };
+
+    if cl_rel.is_empty() {
+        return PathBuf::from(&file_str);
+    }
+
+    if file_str == cl_rel || file_str.starts_with(&format!("{cl_rel}/")) {
+        return PathBuf::from(&file_str);
+    }
+
+    PathBuf::from(format!("{cl_rel}/{file_str}"))
+}
+
 fn build_changes_for_repo(
     repo_path: &str,
+    cl_path: Option<&str>,
     cl_diff_files: Vec<ClDiffFile>,
 ) -> Result<Vec<Status<ProjectRelativePath>>, MegaError> {
     let repo_prefix = repo_path.trim_matches('/');
     let repo_prefix_with_slash = (!repo_prefix.is_empty()).then(|| format!("{repo_prefix}/"));
     let to_project_relative = |path: &Path| {
+        let rebased = match cl_path {
+            Some(cl) => rebase_cl_relative_path(repo_path, cl, path),
+            None => path.to_path_buf(),
+        };
         let normalized = normalize_change_path_for_repo_with_prefix(
             repo_prefix,
             repo_prefix_with_slash.as_deref(),
-            path,
+            &rebased,
         );
         if let Some(normalized_path) = &normalized {
-            monitor_possible_repo_prefix_mismatch(repo_path, path, normalized_path.as_str());
+            monitor_possible_repo_prefix_mismatch(repo_path, &rebased, normalized_path.as_str());
         }
         normalized
     };
@@ -201,7 +244,8 @@ impl<P: ChangesPort> ChangesCalculator<P> {
         let new_files = self.get_commit_blobs(&context.commit_hash).await?;
         let diff_files = self.cl_files_list(old_files, new_files).await?;
 
-        let changes = build_changes_for_repo(&context.repo_path, diff_files)?;
+        let changes =
+            build_changes_for_repo(&context.repo_path, context.cl_path.as_deref(), diff_files)?;
 
         Ok(changes)
     }
@@ -280,6 +324,7 @@ mod tests {
     fn test_build_changes_normalizes_repo_local_paths_and_keeps_external_paths() {
         let changes = build_changes_for_repo(
             "/project/buck2_test",
+            Some("/project/buck2_test"),
             vec![
                 ClDiffFile::Modified(
                     PathBuf::from("src/main.rs"),
@@ -318,6 +363,7 @@ mod tests {
     fn test_build_changes_filters_unsafe_paths() {
         let changes = build_changes_for_repo(
             "/project/buck2_test",
+            Some("/project/buck2_test"),
             vec![
                 ClDiffFile::Modified(
                     PathBuf::from("src/main.rs"),
@@ -342,6 +388,7 @@ mod tests {
     fn test_build_changes_keeps_added_paths_for_create_entry_variants() {
         let changes = build_changes_for_repo(
             "/project/buck2_test",
+            Some("/project/buck2_test"),
             vec![
                 ClDiffFile::New(
                     PathBuf::from("/project/buck2_test/src/new_file_abs.rs"),
@@ -373,6 +420,7 @@ mod tests {
     fn test_build_changes_keeps_added_gitkeep_for_new_directory() {
         let changes = build_changes_for_repo(
             "/project/buck2_test",
+            Some("/project/buck2_test"),
             vec![ClDiffFile::New(
                 PathBuf::from("project/buck2_test/src/new_dir/.gitkeep"),
                 ObjectHash::from_str("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").unwrap(),
@@ -385,6 +433,98 @@ mod tests {
             vec![Status::Added(ProjectRelativePath::new(
                 "src/new_dir/.gitkeep"
             ))]
+        );
+    }
+
+    #[test]
+    fn test_rebase_cl_relative_path_prefixes_monorepo_subdir_cl() {
+        assert_eq!(
+            rebase_cl_relative_path("/", "/project/dagrs-derive", Path::new("src/lib.rs")),
+            PathBuf::from("project/dagrs-derive/src/lib.rs")
+        );
+        assert_eq!(
+            rebase_cl_relative_path(
+                "/",
+                "/project/dagrs-derive",
+                Path::new("project/dagrs-derive/BUCK")
+            ),
+            PathBuf::from("project/dagrs-derive/BUCK")
+        );
+    }
+
+    #[test]
+    fn test_rebase_cl_relative_path_noop_when_cl_equals_repo() {
+        assert_eq!(
+            rebase_cl_relative_path(
+                "/project/buck2_test",
+                "/project/buck2_test",
+                Path::new("src/main.rs")
+            ),
+            PathBuf::from("src/main.rs")
+        );
+    }
+
+    #[test]
+    fn test_rebase_cl_relative_path_nested_cl_under_registered_repo() {
+        assert_eq!(
+            rebase_cl_relative_path(
+                "/project/buck2_test",
+                "/project/buck2_test/src",
+                Path::new("main.rs")
+            ),
+            PathBuf::from("src/main.rs")
+        );
+    }
+
+    #[test]
+    fn test_build_changes_rebases_dagrs_derive_style_paths_onto_monorepo_root() {
+        let changes = build_changes_for_repo(
+            "/",
+            Some("/project/dagrs-derive"),
+            vec![
+                ClDiffFile::Modified(
+                    PathBuf::from("src/lib.rs"),
+                    ObjectHash::from_str("1111111111111111111111111111111111111111").unwrap(),
+                    ObjectHash::from_str("2222222222222222222222222222222222222222").unwrap(),
+                ),
+                ClDiffFile::New(
+                    PathBuf::from("BUCK"),
+                    ObjectHash::from_str("3333333333333333333333333333333333333333").unwrap(),
+                ),
+                ClDiffFile::New(
+                    PathBuf::from("project/dagrs-derive/Cargo.toml"),
+                    ObjectHash::from_str("4444444444444444444444444444444444444444").unwrap(),
+                ),
+            ],
+        )
+        .unwrap();
+
+        assert_eq!(
+            changes,
+            vec![
+                Status::Modified(ProjectRelativePath::new("project/dagrs-derive/src/lib.rs")),
+                Status::Added(ProjectRelativePath::new("project/dagrs-derive/BUCK")),
+                Status::Added(ProjectRelativePath::new("project/dagrs-derive/Cargo.toml")),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_build_changes_rebases_nested_cl_under_buck2_test() {
+        let changes = build_changes_for_repo(
+            "/project/buck2_test",
+            Some("/project/buck2_test/src"),
+            vec![ClDiffFile::Modified(
+                PathBuf::from("main.rs"),
+                ObjectHash::from_str("1111111111111111111111111111111111111111").unwrap(),
+                ObjectHash::from_str("2222222222222222222222222222222222222222").unwrap(),
+            )],
+        )
+        .unwrap();
+
+        assert_eq!(
+            changes,
+            vec![Status::Modified(ProjectRelativePath::new("src/main.rs"))]
         );
     }
 

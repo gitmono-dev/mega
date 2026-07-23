@@ -318,6 +318,9 @@ pub struct TriggerContext {
     pub trigger_source: TriggerSource,
     pub triggered_by: Option<String>,
     pub repo_path: String,
+    /// Original CL directory path (may be a subdirectory of [`Self::repo_path`]).
+    /// Used to rebase CL-relative change paths onto the Buck repo root.
+    pub cl_path: Option<String>,
     pub from_hash: String,
     pub commit_hash: String,
     pub cl_link: Option<String>,
@@ -335,6 +338,7 @@ impl TriggerContext {
         commit_hash: String,
         cl_link: String,
         cl_id: Option<i64>,
+        cl_path: Option<String>,
         triggered_by: Option<String>,
     ) -> Self {
         Self {
@@ -346,6 +350,7 @@ impl TriggerContext {
             },
             triggered_by,
             repo_path,
+            cl_path,
             from_hash,
             commit_hash,
             cl_link: Some(cl_link),
@@ -368,6 +373,7 @@ impl TriggerContext {
             trigger_source: TriggerSource::User,
             triggered_by: Some(triggered_by),
             repo_path,
+            cl_path: None,
             from_hash: commit_hash.clone(),
             commit_hash,
             cl_link: None,
@@ -385,6 +391,7 @@ impl TriggerContext {
         commit_hash: String,
         cl_link: Option<String>,
         cl_id: Option<i64>,
+        cl_path: Option<String>,
         triggered_by: Option<String>,
         original_trigger_id: i64,
     ) -> Self {
@@ -393,6 +400,7 @@ impl TriggerContext {
             trigger_source: TriggerSource::User,
             triggered_by,
             repo_path,
+            cl_path,
             from_hash,
             commit_hash,
             cl_link,
@@ -412,6 +420,7 @@ impl TriggerContext {
         commit_hash: String,
         cl_link: String,
         cl_id: Option<i64>,
+        cl_path: Option<String>,
         triggered_by: Option<String>,
     ) -> Self {
         Self {
@@ -423,6 +432,7 @@ impl TriggerContext {
             },
             triggered_by,
             repo_path,
+            cl_path,
             from_hash,
             commit_hash,
             cl_link: Some(cl_link),
@@ -441,7 +451,8 @@ impl From<mega_cl::Model> for TriggerContext {
             trigger_type: BuildTriggerType::WebEdit,
             trigger_source: TriggerSource::User,
             triggered_by: Some(cl.username),
-            repo_path: cl.path,
+            repo_path: cl.path.clone(),
+            cl_path: Some(cl.path),
             from_hash: cl.from_hash,
             commit_hash: cl.to_hash,
             cl_link: Some(cl.link),
