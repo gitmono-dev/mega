@@ -6,6 +6,11 @@ export type RunnerLogsStatus = 'idle' | 'connecting' | 'streaming' | 'error'
 
 const MAX_LOG_CHARS = 400_000
 
+/** Strip CSI / OSC ANSI sequences so terminal-colored scheduler logs render cleanly in HTML. */
+function stripAnsi(text: string): string {
+  return text.replace(/\u001b\[[0-9;?]*[ -/]*[@-~]|\u001b\][^\u0007]*(?:\u0007|\u001b\\)/g, '')
+}
+
 function runnerLogsStreamUrl(vmId: string): string {
   const base = MONO_API_URL.replace(/\/$/, '')
 
@@ -14,16 +19,17 @@ function runnerLogsStreamUrl(vmId: string): string {
 
 /**
  * Subscribe to mono-proxied Orion runner startup logs (SSE).
- * Enabled while `vmId` is set; closes the EventSource when cleared or unmounted.
+ * `streamKey` is a scheduler VM id or domain host (client hostname is the WS URL).
+ * Enabled while set; closes the EventSource when cleared or unmounted.
  */
-export function useRunnerLogsSSE(vmId: string | null) {
+export function useRunnerLogsSSE(streamKey: string | null) {
   const [logs, setLogs] = useState('')
   const [status, setStatus] = useState<RunnerLogsStatus>('idle')
   const [error, setError] = useState<string | null>(null)
   const esRef = useRef<EventSource | null>(null)
 
   useEffect(() => {
-    if (!vmId) {
+    if (!streamKey) {
       esRef.current?.close()
       esRef.current = null
       setLogs('')
@@ -36,7 +42,7 @@ export function useRunnerLogsSSE(vmId: string | null) {
     setError(null)
     setStatus('connecting')
 
-    const es = new EventSource(runnerLogsStreamUrl(vmId), { withCredentials: true })
+    const es = new EventSource(runnerLogsStreamUrl(streamKey), { withCredentials: true })
 
     esRef.current = es
 
@@ -45,12 +51,15 @@ export function useRunnerLogsSSE(vmId: string | null) {
     }
 
     es.onmessage = (event) => {
-      const chunk = event.data
+      const chunk = stripAnsi(event.data ?? '')
 
       if (!chunk) return
 
       setLogs((prev) => {
-        const next = prev ? `${prev}${chunk}` : chunk
+        // EventSource joins multi-line SSE `data:` fields with `\n` but does not
+        // guarantee a trailing newline between successive events.
+        const sep = prev && !prev.endsWith('\n') && !chunk.startsWith('\n') ? '\n' : ''
+        const next = prev ? `${prev}${sep}${chunk}` : chunk
 
         if (next.length <= MAX_LOG_CHARS) return next
         return next.slice(next.length - MAX_LOG_CHARS)
@@ -72,7 +81,7 @@ export function useRunnerLogsSSE(vmId: string | null) {
         esRef.current = null
       }
     }
-  }, [vmId])
+  }, [streamKey])
 
   return { logs, status, error }
 }

@@ -14,7 +14,7 @@ import { Button, UIText } from '@gitmono/ui'
 import { RefreshIcon } from '@gitmono/ui/Icons'
 
 import { AppLayout } from '@/components/Layout/AppLayout'
-import { ClientsTable, OrionClientStatus } from '@/components/OrionClient'
+import { ClientsTable, OrionClient, OrionClientStatus } from '@/components/OrionClient'
 import AuthAppProviders from '@/components/Providers/AuthAppProviders'
 import { useAdminCheck } from '@/hooks/admin/useAdminCheck'
 import { usePostOrionClientsInfo } from '@/hooks/OrionClient/OrionClientsInfo'
@@ -23,14 +23,37 @@ import { usePostStartRunner } from '@/hooks/OrionClient/usePostStartRunner'
 import { useRunnerLogsSSE } from '@/hooks/OrionClient/useRunnerLogsSSE'
 import { PageWithLayout } from '@/utils/types'
 
+/** Client `hostname` is the WS URL (e.g. wss://orion.example/ws); scheduler keys VMs by that host. */
+function domainFromClientHostname(hostname: string): string | null {
+  const raw = hostname.trim()
+
+  if (!raw) return null
+
+  try {
+    const url = new URL(raw.includes('://') ? raw : `ws://${raw}`)
+
+    return url.hostname || null
+  } catch {
+    const host = raw.split('/')[0]?.split(':')[0]
+
+    return host || null
+  }
+}
+
+type LogPanelSource = 'runner' | 'client'
+
 const OrionClientPage: PageWithLayout<any> = () => {
   const [hostnameInput, setHostnameInput] = React.useState<string>('')
   const [debouncedHostname, setDebouncedHostname] = React.useState<string>('')
   const [statusFilter, setStatusFilter] = React.useState<OrionClientStatus | 'all'>('all')
   const [currentPage, setCurrentPage] = React.useState<number>(1)
-  const [activeVmId, setActiveVmId] = React.useState<string | null>(null)
+  /** Stream key for scheduler logs: VM id (after Start Runner) or domain host (from client list). */
+  const [activeLogKey, setActiveLogKey] = React.useState<string | null>(null)
   const [activePhase, setActivePhase] = React.useState<string | null>(null)
   const [activeDomain, setActiveDomain] = React.useState<string | null>(null)
+  const [logSource, setLogSource] = React.useState<LogPanelSource | null>(null)
+  const [logClientId, setLogClientId] = React.useState<string | null>(null)
+  const logPanelRef = React.useRef<HTMLDivElement>(null)
 
   const perPage = 8
 
@@ -38,11 +61,21 @@ const OrionClientPage: PageWithLayout<any> = () => {
   const isAdmin = adminCheck?.data?.is_admin || false
 
   const { mutate: startRunner, isPending: isStartingRunner } = usePostStartRunner()
-  const { data: runnerStatus } = useGetRunnerStatus(activeVmId, activePhase)
-  const { logs: runnerLogs, status: runnerLogsStatus, error: runnerLogsError } = useRunnerLogsSSE(activeVmId)
+  const runnerStatusVmId = logSource === 'runner' ? activeLogKey : null
+  const { data: runnerStatus } = useGetRunnerStatus(runnerStatusVmId, activePhase)
+  const { logs: runnerLogs, status: runnerLogsStatus, error: runnerLogsError } = useRunnerLogsSSE(activeLogKey)
+  const logsPreRef = React.useRef<HTMLPreElement>(null)
+  const logsFollowRef = React.useRef(true)
 
   const { mutate, isPending, error } = usePostOrionClientsInfo()
   const [clientsPage, setClientsPage] = React.useState<PostOrionClientsInfoData | null>(null)
+
+  React.useEffect(() => {
+    const el = logsPreRef.current
+
+    if (!el || !logsFollowRef.current) return
+    el.scrollTop = el.scrollHeight
+  }, [runnerLogs])
 
   React.useEffect(() => {
     const handle = setTimeout(() => {
@@ -104,20 +137,54 @@ const OrionClientPage: PageWithLayout<any> = () => {
     }
   }, [runnerStatus?.phase, handleRefresh])
 
+  const openLogPanel = React.useCallback((key: string, source: LogPanelSource, opts?: { domain?: string | null; clientId?: string | null; phase?: string | null }) => {
+    setActiveLogKey(key)
+    setLogSource(source)
+    setActiveDomain(opts?.domain ?? null)
+    setLogClientId(opts?.clientId ?? null)
+    setActivePhase(opts?.phase ?? null)
+    logsFollowRef.current = true
+    requestAnimationFrame(() => {
+      logPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [])
+
+  const handleCloseLogs = React.useCallback(() => {
+    setActiveLogKey(null)
+    setLogSource(null)
+    setActiveDomain(null)
+    setLogClientId(null)
+    setActivePhase(null)
+  }, [])
+
   const handleStartRunner = React.useCallback(
     (replace = false) => {
       startRunner(
         { replace },
         {
           onSuccess: (data) => {
-            setActiveVmId(data.vm_id)
-            setActivePhase(data.phase)
-            setActiveDomain(data.domain ?? null)
+            openLogPanel(data.vm_id, 'runner', {
+              domain: data.domain ?? null,
+              phase: data.phase
+            })
           }
         }
       )
     },
-    [startRunner]
+    [openLogPanel, startRunner]
+  )
+
+  const handleViewClientLogs = React.useCallback(
+    (client: OrionClient) => {
+      const domain = domainFromClientHostname(client.hostname)
+
+      if (!domain) {
+        return
+      }
+
+      openLogPanel(domain, 'client', { domain, clientId: client.client_id })
+    },
+    [openLogPanel]
   )
 
   React.useEffect(() => {
@@ -159,8 +226,9 @@ const OrionClientPage: PageWithLayout<any> = () => {
       <Head>
         <title>Orion Client</title>
       </Head>
-      <div className='flex flex-col gap-4 p-4'>
-        <div className='flex flex-col gap-2'>
+      {/* AppLayout main is overflow-hidden; this page must own scrolling. */}
+      <div className='flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-4'>
+        <div className='flex min-w-0 flex-col gap-2'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <h1 className='text-xl font-semibold'>Orion Clients</h1>
@@ -189,21 +257,40 @@ const OrionClientPage: PageWithLayout<any> = () => {
             </div>
           </div>
 
-          {activeVmId ? (
-            <div className='rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900'>
-              <UIText weight='font-semibold' size='text-sm'>
-                Runner {activeVmId}
-              </UIText>
+          {activeLogKey ? (
+            <div
+              ref={logPanelRef}
+              className='min-w-0 overflow-hidden rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900'
+            >
+              <div className='flex items-start justify-between gap-2'>
+                <div className='min-w-0'>
+                  <UIText weight='font-semibold' size='text-sm'>
+                    {logSource === 'client' && logClientId
+                      ? `Client ${logClientId}`
+                      : `Runner ${activeLogKey}`}
+                  </UIText>
+                  {logSource === 'client' ? (
+                    <UIText size='text-xs' color='text-muted' className='mt-0.5 block'>
+                      Streaming scheduler logs for domain {activeDomain ?? activeLogKey}
+                    </UIText>
+                  ) : null}
+                </div>
+                <Button variant='plain' size='sm' onClick={handleCloseLogs}>
+                  Close
+                </Button>
+              </div>
               <div className='mt-1 flex flex-col gap-1'>
                 {(runnerStatus?.domain ?? activeDomain) ? (
                   <UIText size='text-sm' color='text-muted'>
                     Domain: {runnerStatus?.domain ?? activeDomain}
                   </UIText>
                 ) : null}
-                <UIText size='text-sm'>
-                  Phase:{' '}
-                  <span className='font-medium capitalize'>{runnerStatus?.phase ?? activePhase ?? 'unknown'}</span>
-                </UIText>
+                {logSource === 'runner' ? (
+                  <UIText size='text-sm'>
+                    Phase:{' '}
+                    <span className='font-medium capitalize'>{runnerStatus?.phase ?? activePhase ?? 'unknown'}</span>
+                  </UIText>
+                ) : null}
                 {runnerStatus?.vm_ip ? (
                   <UIText size='text-sm' color='text-muted'>
                     VM IP: {runnerStatus.vm_ip}
@@ -219,17 +306,17 @@ const OrionClientPage: PageWithLayout<any> = () => {
                     {runnerStatus.error}
                   </UIText>
                 ) : null}
-                {runnerStatus?.phase === 'failed' ? (
+                {logSource === 'runner' && runnerStatus?.phase === 'failed' ? (
                   <Button variant='primary' size='sm' className='mt-1 w-fit' onClick={() => handleStartRunner(true)}>
                     Retry
                   </Button>
                 ) : null}
               </div>
 
-              <div className='mt-3'>
+              <div className='mt-3 min-w-0'>
                 <div className='mb-1 flex items-center justify-between gap-2'>
                   <UIText weight='font-semibold' size='text-sm'>
-                    Startup logs
+                    {logSource === 'client' ? 'Runner logs' : 'Startup logs'}
                   </UIText>
                   <UIText size='text-xs' color='text-muted'>
                     {runnerLogsStatus === 'connecting'
@@ -246,11 +333,20 @@ const OrionClientPage: PageWithLayout<any> = () => {
                     {runnerLogsError}
                   </UIText>
                 ) : null}
-                <pre className='max-h-80 overflow-auto rounded border border-gray-200 bg-black/90 p-3 font-mono text-xs leading-5 text-green-100 dark:border-gray-700'>
+                <pre
+                  ref={logsPreRef}
+                  onScroll={(e) => {
+                    const el = e.currentTarget
+                    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+
+                    logsFollowRef.current = distanceFromBottom < 48
+                  }}
+                  className='h-80 max-h-80 w-full min-w-0 overflow-auto overscroll-contain whitespace-pre-wrap break-words rounded border border-gray-200 bg-black/90 p-3 font-mono text-xs leading-5 text-green-100 dark:border-gray-700'
+                >
                   {runnerLogs ||
                     (runnerLogsStatus === 'connecting'
                       ? 'Waiting for log stream…'
-                      : 'No log lines yet. Logs appear while the runner provisions.')}
+                      : 'No log lines yet. Logs appear while the runner is running.')}
                 </pre>
               </div>
             </div>
@@ -290,6 +386,8 @@ const OrionClientPage: PageWithLayout<any> = () => {
           isLoading={isPending}
           statusFilter={statusFilter}
           onStatusChange={(value: OrionClientStatus | 'all') => setStatusFilter(value)}
+          canViewLogs={isAdmin}
+          onViewLogs={handleViewClientLogs}
           statusOptions={[
             { value: 'all', label: 'All statuses' },
             { value: 'idle', label: 'Idle' },
