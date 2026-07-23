@@ -4,11 +4,11 @@ Frontend API types live in `@gitmono/types` (`packages/types/generated.ts`). The
 
 ## Do not edit these by hand
 
-| File                                                               | Why                                                                                   |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| [`gen/gitmono.json`](gen/gitmono.json)                             | Exported from the **mono** OpenAPI (`utoipa`). Refresh from a running mono server.    |
+| File                                                               | Why                                                                                              |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| [`gen/gitmono.json`](gen/gitmono.json)                             | Exported from the **mono** OpenAPI (`utoipa`). Refresh from a running mono server.               |
 | [`gen/1schema_swagger.json`](gen/1schema_swagger.json)             | Exported from **Campsite** Apigen (`rake apigen:…`). Owns types like `SyncUser` / `CurrentUser`. |
-| [`../packages/types/generated.ts`](../packages/types/generated.ts) | Produced by [`script/gen-client`](../script/gen-client) via `swagger-typescript-api`. |
+| [`../packages/types/generated.ts`](../packages/types/generated.ts) | Produced by [`script/gen-client`](../script/gen-client) via `swagger-typescript-api`.            |
 
 Also avoid hand-editing other checked-in OpenAPI dumps that feed the same pipeline (for example [`gen/orion.json`](gen/orion.json) from **orion-server**). Change the Rust `utoipa` annotations (mono/orion) or Campsite serializers + Apigen export, then re-export and regenerate.
 
