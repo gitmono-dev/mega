@@ -1,0 +1,61 @@
+pipeline {
+  agent any
+
+  environment {
+    HARBOR_REGISTRY = 'registry.xuanwu.openatom.cn'
+    HARBOR_REPO     = 'mega/web-sync-server'
+    DOCKERFILE      = 'moon/apps/sync-server/Dockerfile'
+    BUILD_CONTEXT   = 'moon'
+    GIT_URL         = 'https://github.com/benjamin-747/mega'
+    GIT_BRANCH      = 'main'
+    GIT_CREDENTIALS = 'd4cedbd2-3e68-411b-8367-0960974d7b6d'
+    HARBOR_CREDENTIALS = '3cefd32b-0fae-4749-b125-0a3f0c537f88'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        git branch: "${GIT_BRANCH}",
+          credentialsId: "${GIT_CREDENTIALS}",
+          url: "${GIT_URL}"
+        script {
+          env.SHORT_SHA = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
+          env.IMAGE_SHA = "${HARBOR_REGISTRY}/${HARBOR_REPO}:${env.SHORT_SHA}"
+          env.IMAGE_LATEST = "${HARBOR_REGISTRY}/${HARBOR_REPO}:latest"
+          env.IMAGE_SHA_AMD64 = "${HARBOR_REGISTRY}/${HARBOR_REPO}:${env.SHORT_SHA}-amd64"
+          env.IMAGE_LATEST_AMD64 = "${HARBOR_REGISTRY}/${HARBOR_REPO}:latest-amd64"
+          currentBuild.description = "${HARBOR_REPO}:${env.SHORT_SHA}"
+        }
+        echo "Building image: ${env.IMAGE_SHA}"
+      }
+    }
+
+    stage('Build Docker Image') {
+      steps {
+        sh '/opt/docker-cli/docker build --network=host -f ${DOCKERFILE} -t ${IMAGE_SHA} ${BUILD_CONTEXT}'
+        sh '/opt/docker-cli/docker tag ${IMAGE_SHA} ${IMAGE_LATEST}'
+        sh '/opt/docker-cli/docker tag ${IMAGE_SHA} ${IMAGE_SHA_AMD64}'
+        sh '/opt/docker-cli/docker tag ${IMAGE_SHA} ${IMAGE_LATEST_AMD64}'
+      }
+    }
+
+    stage('Push to Harbor') {
+      steps {
+        withCredentials([
+          usernamePassword(
+            credentialsId: "${HARBOR_CREDENTIALS}",
+            usernameVariable: 'HARBOR_USER',
+            passwordVariable: 'HARBOR_PASS'
+          )
+        ]) {
+          sh '/opt/docker-cli/docker login ${HARBOR_REGISTRY} -u ${HARBOR_USER} -p ${HARBOR_PASS}'
+          sh '/opt/docker-cli/docker push ${IMAGE_SHA}'
+          sh '/opt/docker-cli/docker push ${IMAGE_LATEST}'
+          sh '/opt/docker-cli/docker push ${IMAGE_SHA_AMD64}'
+          sh '/opt/docker-cli/docker push ${IMAGE_LATEST_AMD64}'
+          sh '/opt/docker-cli/docker logout ${HARBOR_REGISTRY}'
+        }
+      }
+    }
+  }
+}

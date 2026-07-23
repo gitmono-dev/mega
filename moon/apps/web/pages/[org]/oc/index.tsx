@@ -240,7 +240,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
               {isAdmin ? (
                 <Button
                   variant='primary'
-                  onClick={() => handleStartRunner(false)}
+                  onClick={() => handleStartRunner(true)}
                   disabled={isStartingRunner || activePhase === 'provisioning'}
                 >
                   {isStartingRunner ? 'Starting…' : 'Start Runner'}
