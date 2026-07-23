@@ -121,17 +121,21 @@ jobs:
           IMAGE_BASE="$REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}"
           HARBOR_BASE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}"
           SHORT_SHA="${GITHUB_SHA:0:7}"
+          TAG_BASE="${{ env.IMAGE_TAG_BASE }}"
 
           push_manifests() {
             local base="$1"
-            docker manifest create "$base:${{ env.IMAGE_TAG_BASE }}" \
-              "$base:${{ env.IMAGE_TAG_BASE }}-amd64" \
-              "$base:${{ env.IMAGE_TAG_BASE }}-arm64"
-            docker manifest push "$base:${{ env.IMAGE_TAG_BASE }}"
+            local refs=("$base:${TAG_BASE}-amd64")
+            if docker manifest inspect "$base:${TAG_BASE}-arm64" >/dev/null 2>&1; then
+              refs+=("$base:${TAG_BASE}-arm64")
+            else
+              echo "WARN: $base:${TAG_BASE}-arm64 not found; publishing amd64-only manifests"
+            fi
 
-            docker manifest create "$base:$SHORT_SHA" \
-              "$base:${{ env.IMAGE_TAG_BASE }}-amd64" \
-              "$base:${{ env.IMAGE_TAG_BASE }}-arm64"
+            docker manifest create "$base:${TAG_BASE}" "${refs[@]}"
+            docker manifest push "$base:${TAG_BASE}"
+
+            docker manifest create "$base:$SHORT_SHA" "${refs[@]}"
             docker manifest push "$base:$SHORT_SHA"
           }
 

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as Collapsible from '@radix-ui/react-collapsible'
 
-import { AlertIcon, ArrowDownIcon, ArrowUpIcon, CheckIcon, LoadingSpinner } from '@gitmono/ui'
+import { CheckType, ConditionResult } from '@gitmono/types'
+import { AlertIcon, ArrowDownIcon, ArrowUpIcon, CheckIcon, LoadingSpinner, WarningTriangleIcon } from '@gitmono/ui'
 
 import { useGetClUpdateStatus } from '@/hooks/CL/useGetClUpdateStatus'
 import { usePostClUpdateBranch } from '@/hooks/CL/usePostClUpdateBranch'
@@ -128,7 +129,10 @@ interface AdditionalCheckItemProps {
   check: AdditionalCheckItem
 }
 
-const getStatusIcon = (status: AdditionalCheckStatus) => {
+const getStatusIcon = (status: AdditionalCheckStatus, advisory = false) => {
+  if (advisory && status === 'FAILED') {
+    return <WarningTriangleIcon className='h-4 w-4 text-amber-600 dark:text-amber-400' />
+  }
   switch (status) {
     case 'PASSED':
       return <CheckIcon className='h-4 w-4 text-green-600' />
@@ -139,32 +143,44 @@ const getStatusIcon = (status: AdditionalCheckStatus) => {
   }
 }
 
-const AdditionalCheckItemComponent = ({ check }: AdditionalCheckItemProps) => (
-  <div className='border-primary flex items-start border-b px-2 py-2 last:border-b-0'>
-    <div className='mr-3 mt-0.5 flex-shrink-0'>{getStatusIcon(check.result)}</div>
-    <div className='min-w-0 flex-1'>
-      <div className='flex items-center justify-between'>
-        <h5 className='text-primary text-sm font-medium'>{ADDITIONAL_CHECK_LABELS[check.type]}</h5>
-        <span
-          className={`rounded-full px-2 py-1 text-xs font-medium ${
-            check.result === 'PASSED'
-              ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200'
-              : check.result === 'FAILED'
-                ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200'
-                : 'bg-secondary text-secondary'
-          }`}
-        >
-          {check.result.toLowerCase()}
-        </span>
+const AdditionalCheckItemComponent = ({ check }: AdditionalCheckItemProps) => {
+  const isClaAdvisory = check.type === CheckType.ClaSign && check.result === ConditionResult.FAILED
+
+  return (
+    <div className='border-primary flex items-start border-b px-2 py-2 last:border-b-0'>
+      <div className='mr-3 mt-0.5 flex-shrink-0'>{getStatusIcon(check.result, isClaAdvisory)}</div>
+      <div className='min-w-0 flex-1'>
+        <div className='flex items-center justify-between'>
+          <h5 className='text-primary text-sm font-medium'>{ADDITIONAL_CHECK_LABELS[check.type]}</h5>
+          <span
+            className={`rounded-full px-2 py-1 text-xs font-medium ${
+              check.result === 'PASSED'
+                ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200'
+                : isClaAdvisory
+                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200'
+                  : check.result === 'FAILED'
+                    ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200'
+                    : 'bg-secondary text-secondary'
+            }`}
+          >
+            {isClaAdvisory ? 'advisory' : check.result.toLowerCase()}
+          </span>
+        </div>
+        {check.result === 'FAILED' && (
+          <ul
+            className={`mt-1 list-inside list-disc text-sm ${
+              isClaAdvisory ? 'text-amber-700 dark:text-amber-300' : 'text-red-600 dark:text-red-400'
+            }`}
+          >
+            <li className='list-inside'>
+              {isClaAdvisory ? `${check.message} (does not block merge)` : check.message}
+            </li>
+          </ul>
+        )}
       </div>
-      {check.result === 'FAILED' && (
-        <ul className='mt-1 list-inside list-disc text-sm text-red-600 dark:text-red-400'>
-          <li className='list-inside'>{check.message}</li>
-        </ul>
-      )}
     </div>
-  </div>
-)
+  )
+}
 
 interface AdditionalChecksSectionProps {
   additionalChecks: AdditionalCheckItem[]
