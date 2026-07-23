@@ -19,6 +19,7 @@ env:
   REGISTRY_ALIAS: m8q5m4u3
   REPOSITORY: mega/web-sync-server
   IMAGE_TAG: latest
+  HARBOR_REGISTRY: registry.xuanwu.openatom.cn
 
 jobs:
   build-and-push:
@@ -45,7 +46,14 @@ jobs:
         with:
           registry-type: public
 
-      - name: Build, tag, and push docker image to Amazon ECR Public
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.HARBOR_REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - name: Build, tag, and push docker image to ECR Public and Harbor
         working-directory: moon
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
@@ -53,6 +61,7 @@ jobs:
           set -euo pipefail
 
           AWS_IMAGE_BASE="$REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}"
+          HARBOR_IMAGE_BASE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}"
           IMAGE_TAG="${{ env.IMAGE_TAG }}"
           SHORT_SHA="${GITHUB_SHA:0:7}"
 
@@ -61,10 +70,16 @@ jobs:
             -t "$AWS_IMAGE_BASE:$IMAGE_TAG" .
 
           docker tag "$AWS_IMAGE_BASE:$IMAGE_TAG" "$AWS_IMAGE_BASE:$SHORT_SHA"
+          docker tag "$AWS_IMAGE_BASE:$IMAGE_TAG" "$HARBOR_IMAGE_BASE:$IMAGE_TAG"
+          docker tag "$AWS_IMAGE_BASE:$IMAGE_TAG" "$HARBOR_IMAGE_BASE:$SHORT_SHA"
 
           # Push to AWS ECR Public (latest + commit hash)
           docker push "$AWS_IMAGE_BASE:$IMAGE_TAG"
           docker push "$AWS_IMAGE_BASE:$SHORT_SHA"
+
+          # Push to Harbor (latest + commit hash)
+          docker push "$HARBOR_IMAGE_BASE:$IMAGE_TAG"
+          docker push "$HARBOR_IMAGE_BASE:$SHORT_SHA"
 
   deploy-aws:
     needs: build-and-push

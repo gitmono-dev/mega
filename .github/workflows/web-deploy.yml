@@ -13,6 +13,7 @@ env:
   REGISTRY_ALIAS: m8q5m4u3
   REPOSITORY: mega/mega-ui
   IMAGE_VERSION: latest
+  HARBOR_REGISTRY: registry.xuanwu.openatom.cn
 
 permissions:
   id-token: write
@@ -61,6 +62,13 @@ jobs:
         with:
           registry-type: public
 
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.HARBOR_REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
       - name: Build & push unified image
         working-directory: moon
         env:
@@ -75,6 +83,8 @@ jobs:
 
           PUBLIC_IMAGE="$ECR_PUBLIC_REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:$IMAGE_TAG"
           PUBLIC_IMAGE_SHA="$ECR_PUBLIC_REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:$SHA_TAG"
+          HARBOR_IMAGE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}:$IMAGE_TAG"
+          HARBOR_IMAGE_SHA="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}:$SHA_TAG"
 
           docker buildx build \
             --platform "$PLATFORM" \
@@ -84,7 +94,9 @@ jobs:
             --sbom=false \
             -f apps/web/Dockerfile \
             -t "$PUBLIC_IMAGE" \
-            -t "$PUBLIC_IMAGE_SHA" . \
+            -t "$PUBLIC_IMAGE_SHA" \
+            -t "$HARBOR_IMAGE" \
+            -t "$HARBOR_IMAGE_SHA" . \
             --push
 
   manifest:
@@ -106,6 +118,13 @@ jobs:
         with:
           registry-type: public
 
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.HARBOR_REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
       - name: Create & push unified manifest
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
@@ -113,18 +132,23 @@ jobs:
           set -euo pipefail
 
           IMAGE_BASE="$REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}"
+          HARBOR_BASE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}"
           TAG="${IMAGE_VERSION}"
           SHORT_SHA="${GITHUB_SHA:0:7}"
 
-          # latest manifest
-          docker manifest create "$IMAGE_BASE:$TAG" \
-            "$IMAGE_BASE:${TAG}-amd64"
-          docker manifest push "$IMAGE_BASE:$TAG"
+          push_manifests() {
+            local base="$1"
+            docker manifest create "$base:$TAG" \
+              "$base:${TAG}-amd64"
+            docker manifest push "$base:$TAG"
 
-          # commit-hash manifest
-          docker manifest create "$IMAGE_BASE:$SHORT_SHA" \
-            "$IMAGE_BASE:${SHORT_SHA}-amd64"
-          docker manifest push "$IMAGE_BASE:$SHORT_SHA"
+            docker manifest create "$base:$SHORT_SHA" \
+              "$base:${SHORT_SHA}-amd64"
+            docker manifest push "$base:$SHORT_SHA"
+          }
+
+          push_manifests "$IMAGE_BASE"
+          push_manifests "$HARBOR_BASE"
 
   deploy-aws:
     needs: manifest

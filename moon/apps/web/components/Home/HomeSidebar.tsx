@@ -359,7 +359,7 @@ function GithubReloginHint() {
     <Tooltip label='Sign out and sign in with GitHub again to sync your GitHub login for permissions'>
       <span className='relative z-10'>
         <UIText className='line-clamp-1 text-[13px] leading-snug text-amber-600 dark:text-amber-400'>
-          需要重新登陆
+          Re-login required
         </UIText>
       </span>
     </Tooltip>
