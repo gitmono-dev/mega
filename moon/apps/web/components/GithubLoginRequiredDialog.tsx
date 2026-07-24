@@ -9,11 +9,7 @@ import { useSignoutUser } from '@/hooks/useSignoutUser'
 
 const DISMISS_PREFIX = 'github-login-required-dismissed:'
 
-function needsGithubRelogin(user: {
-  github_login?: string | null
-  integration?: boolean
-  system?: boolean
-}): boolean {
+function needsGithubRelogin(user: { github_login?: string | null; integration?: boolean; system?: boolean }): boolean {
   if (user.integration || user.system) return false
   return !user.github_login
 }
@@ -92,11 +88,7 @@ export function GithubLoginRequiredDialog() {
           </Button>
         </Dialog.LeadingActions>
         <Dialog.TrailingActions>
-          <Button
-            variant='primary'
-            disabled={signout.isPending}
-            onClick={() => signout.mutate()}
-          >
+          <Button variant='primary' disabled={signout.isPending} onClick={() => signout.mutate()}>
             {signout.isPending ? 'Signing out…' : 'Sign out & re-login'}
           </Button>
         </Dialog.TrailingActions>

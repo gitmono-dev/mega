@@ -132,9 +132,7 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
       return
     }
 
-    const destinationPath = pathSegments.length
-      ? `${pathSegments.join('/')}/${trimmedName}`
-      : trimmedName
+    const destinationPath = pathSegments.length ? `${pathSegments.join('/')}/${trimmedName}` : trimmedName
 
     try {
       await updateBlobMutation.mutateAsync({
@@ -152,10 +150,7 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
       setIsCommitDialogOpen(false)
       onCancel()
     } catch (error: any) {
-      const msg =
-        error?.message ||
-        error?.response?.data?.message ||
-        'Submit failed. Please try again.'
+      const msg = error?.message || error?.response?.data?.message || 'Submit failed. Please try again.'
 
       toast.error(msg)
     }
