@@ -102,7 +102,9 @@ impl CheckType {
             CheckType::CodeReview => {
                 "Ensure the required reviewers have approved the merge request"
             }
-            CheckType::ClaSign => "Ensure the CL author has signed CLA",
+            CheckType::ClaSign => {
+                "Report whether the CL author has signed CLA (advisory; does not block merge)"
+            }
         }
     }
 }

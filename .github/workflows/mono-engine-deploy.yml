@@ -20,11 +20,14 @@ env:
   REGISTRY_ALIAS: m8q5m4u3
   REPOSITORY: mega/mono-engine
   IMAGE_TAG_BASE: latest
+  HARBOR_REGISTRY: registry.xuanwu.openatom.cn
 
-# Using AWS access key for authentication
+# Using AWS access key for authentication.
+# actions: write is required for docker buildx --cache-{from,to} type=gha.
 permissions:
   id-token: write
   contents: read
+  actions: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -40,6 +43,11 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      # Expose ACTIONS_RUNTIME_TOKEN / ACTIONS_RESULTS_URL for raw
+      # `docker buildx --cache-{from,to} type=gha` in the build step.
+      - name: Expose GitHub Actions runtime env
+        uses: crazy-max/ghaction-github-runtime@v3
 
       # -----------------------------
       # AWS / ECR Public
@@ -57,10 +65,17 @@ jobs:
         with:
           registry-type: public
 
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.HARBOR_REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
       # -----------------------------
-      # Build & push to ECR
+      # Build & push to ECR + Harbor
       # -----------------------------
-      - name: Build & push image to ECR (amd64)
+      - name: Build & push image to ECR and Harbor (amd64)
         env:
           ECR_REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
           IMAGE_TAG_BASE: ${{ env.IMAGE_TAG_BASE }}
@@ -71,11 +86,11 @@ jobs:
           IMAGE_TAG="${IMAGE_TAG_BASE}-${ARCH_SUFFIX}"
 
           ECR_IMAGE="$ECR_REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:$IMAGE_TAG"
-          ECR_CACHE_IMAGE="$ECR_REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:buildcache-${ARCH_SUFFIX}"
+          HARBOR_IMAGE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}:$IMAGE_TAG"
           CACHE_SCOPE="mono-engine-${ARCH_SUFFIX}"
 
           echo "ECR_IMAGE=$ECR_IMAGE"
-          echo "ECR_CACHE_IMAGE=$ECR_CACHE_IMAGE"
+          echo "HARBOR_IMAGE=$HARBOR_IMAGE"
           echo "CACHE_SCOPE=$CACHE_SCOPE"
 
           docker buildx build \
@@ -85,6 +100,7 @@ jobs:
             --sbom=false \
             -f ./mono/Dockerfile \
             -t "$ECR_IMAGE" \
+            -t "$HARBOR_IMAGE" \
             --push .
 
   manifest:
@@ -106,25 +122,41 @@ jobs:
         with:
           registry-type: public
 
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.HARBOR_REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
       - name: Create & push manifest
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
         run: |
           set -euo pipefail
           IMAGE_BASE="$REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}"
+          HARBOR_BASE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}"
           SHORT_SHA="${GITHUB_SHA:0:7}"
+          TAG_BASE="${{ env.IMAGE_TAG_BASE }}"
 
-          # latest manifest
-          docker manifest create "$IMAGE_BASE:${{ env.IMAGE_TAG_BASE }}" \
-            "$IMAGE_BASE:${{ env.IMAGE_TAG_BASE }}-amd64" \
-            "$IMAGE_BASE:${{ env.IMAGE_TAG_BASE }}-arm64"
-          docker manifest push "$IMAGE_BASE:${{ env.IMAGE_TAG_BASE }}"
+          push_manifests() {
+            local base="$1"
+            local refs=("$base:${TAG_BASE}-amd64")
+            if docker manifest inspect "$base:${TAG_BASE}-arm64" >/dev/null 2>&1; then
+              refs+=("$base:${TAG_BASE}-arm64")
+            else
+              echo "WARN: $base:${TAG_BASE}-arm64 not found; publishing amd64-only manifests"
+            fi
 
-          # commit-hash manifest (same digests as latest for this commit)
-          docker manifest create "$IMAGE_BASE:$SHORT_SHA" \
-            "$IMAGE_BASE:${{ env.IMAGE_TAG_BASE }}-amd64" \
-            "$IMAGE_BASE:${{ env.IMAGE_TAG_BASE }}-arm64"
-          docker manifest push "$IMAGE_BASE:$SHORT_SHA"
+            docker manifest create "$base:${TAG_BASE}" "${refs[@]}"
+            docker manifest push "$base:${TAG_BASE}"
+
+            docker manifest create "$base:$SHORT_SHA" "${refs[@]}"
+            docker manifest push "$base:$SHORT_SHA"
+          }
+
+          push_manifests "$IMAGE_BASE"
+          push_manifests "$HARBOR_BASE"
 
   deploy-aws:
     needs: manifest

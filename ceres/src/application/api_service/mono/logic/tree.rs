@@ -31,6 +31,36 @@ impl MonoServiceLogic {
         Tree::from_tree_items(items).map_err(|_| GitError::CustomError("Invalid tree".to_string()))
     }
 
+    /// Update a blob's content hash and optionally rename it within the same tree.
+    pub fn update_or_rename_tree_blob(
+        tree: Arc<Tree>,
+        old_name: &str,
+        new_name: &str,
+        target_hash: ObjectHash,
+    ) -> Result<Tree, GitError> {
+        if old_name == new_name {
+            return Self::update_tree_hash(tree, old_name, target_hash);
+        }
+
+        let index = tree
+            .tree_items
+            .iter()
+            .position(|item| item.name == old_name)
+            .ok_or_else(|| GitError::CustomError(format!("Tree item '{old_name}' not found")))?;
+
+        if tree.tree_items.iter().any(|item| item.name == new_name) {
+            return Err(GitError::CustomError(format!(
+                "Duplicate name '{new_name}'"
+            )));
+        }
+
+        let mut items = tree.tree_items.clone();
+        items[index].name = new_name.to_string();
+        items[index].id = target_hash;
+        items.sort_by(|a, b| a.name.cmp(&b.name));
+        Tree::from_tree_items(items).map_err(|_| GitError::CustomError("Invalid tree".to_string()))
+    }
+
     /// Walk an update chain from leaf to root, returning rebuilt trees and the new root tree id.
     pub fn propagate_tree_chain(
         mut path: PathBuf,
@@ -278,6 +308,42 @@ mod tests {
 
         assert_eq!(new_tree.tree_items.len(), 1);
         assert_eq!(new_tree.tree_items[0].id, new_hash);
+    }
+
+    #[test]
+    fn test_update_or_rename_tree_blob() {
+        let old_hash = ObjectHash::from_str("1234567890123456789012345678901234567890").unwrap();
+        let new_hash = ObjectHash::from_str("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").unwrap();
+        let other_hash = ObjectHash::from_str("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb").unwrap();
+
+        let tree = Arc::new(
+            Tree::from_tree_items(vec![
+                TreeItem::new(TreeItemMode::Blob, old_hash, "old.txt".to_string()),
+                TreeItem::new(TreeItemMode::Blob, other_hash, "sibling.txt".to_string()),
+            ])
+            .expect("tree should build"),
+        );
+
+        let renamed = MonoServiceLogic::update_or_rename_tree_blob(
+            Arc::clone(&tree),
+            "old.txt",
+            "new.txt",
+            new_hash,
+        )
+        .expect("rename should succeed");
+
+        assert_eq!(renamed.tree_items.len(), 2);
+        assert!(
+            renamed
+                .tree_items
+                .iter()
+                .any(|item| item.name == "new.txt" && item.id == new_hash)
+        );
+        assert!(!renamed.tree_items.iter().any(|item| item.name == "old.txt"));
+
+        let duplicate =
+            MonoServiceLogic::update_or_rename_tree_blob(tree, "old.txt", "sibling.txt", new_hash);
+        assert!(duplicate.is_err());
     }
 
     #[test]

@@ -36,6 +36,7 @@ pub async fn dispatch_mono_receive_pack_finalized(
     from_hash: String,
     to_hash: String,
     username: Option<String>,
+    preferred_cl_link: Option<String>,
 ) -> Result<(), MegaError> {
     let username = username.unwrap_or_else(|| String::from("Anonymous"));
     let repo_path_str = repo_path
@@ -44,7 +45,13 @@ pub async fn dispatch_mono_receive_pack_finalized(
 
     let editor = OnpushCodeEdit::from(repo_path_str, &base_branch, &from_hash, git);
     let cl_model = editor
-        .update_or_create_cl(&storage, &from_hash, &to_hash, &username)
+        .update_or_create_cl(
+            &storage,
+            &from_hash,
+            &to_hash,
+            &username,
+            preferred_cl_link.as_deref(),
+        )
         .await?;
 
     if from_hash == ZERO_ID && repo_path_str.starts_with("/project/") {
@@ -223,6 +230,7 @@ impl ApplicationEventHandler for RuntimeApplicationHandler {
                 from_hash,
                 to_hash,
                 username,
+                cl_link,
             } => {
                 dispatch_mono_receive_pack_finalized(
                     self.git.storage().clone(),
@@ -235,6 +243,7 @@ impl ApplicationEventHandler for RuntimeApplicationHandler {
                     from_hash,
                     to_hash,
                     username,
+                    cl_link,
                 )
                 .await
             }

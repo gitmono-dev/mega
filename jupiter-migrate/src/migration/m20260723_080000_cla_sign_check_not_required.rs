@@ -7,18 +7,12 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db_backend = manager.get_database_backend();
+        // CLA remains enabled (still reported) but no longer blocks merge.
         manager
             .get_connection()
             .execute_raw(Statement::from_string(
                 db_backend,
-                r#"
-                    INSERT INTO path_check_configs (created_at, updated_at, id, path, check_type_code, enabled, required)
-                    SELECT CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, COALESCE(MAX(id), 0) + 1, '/', 'cla_sign', true, false
-                    FROM path_check_configs
-                    WHERE NOT EXISTS (
-                        SELECT 1 FROM path_check_configs WHERE path = '/' AND check_type_code = 'cla_sign'
-                    );
-                "#,
+                r#"UPDATE path_check_configs SET required = false, updated_at = CURRENT_TIMESTAMP WHERE check_type_code = 'cla_sign';"#,
             ))
             .await?;
 
@@ -31,7 +25,7 @@ impl MigrationTrait for Migration {
             .get_connection()
             .execute_raw(Statement::from_string(
                 db_backend,
-                r#"DELETE FROM path_check_configs WHERE path = '/' AND check_type_code = 'cla_sign';"#,
+                r#"UPDATE path_check_configs SET required = true, updated_at = CURRENT_TIMESTAMP WHERE check_type_code = 'cla_sign';"#,
             ))
             .await?;
 

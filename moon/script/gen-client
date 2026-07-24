@@ -4,6 +4,22 @@ set -eou pipefail
 
 OPENAPI_FILE_PATH=api/gen/openapi_schema.json
 SWAGGER_FILE_PATH=api/gen/merged_swagger.json
+GITMONO_FILE_PATH=api/gen/gitmono.json
+GITMONO_OPENAPI_URL="${GITMONO_OPENAPI_URL:-http://localhost:8000/api/openapi.json}"
+
+# Fetch mono OpenAPI, pretty-print, and replace the checked-in dump
+echo "Fetching OpenAPI from ${GITMONO_OPENAPI_URL} ..."
+tmp_openapi="$(mktemp)"
+trap 'rm -f "${tmp_openapi}"' EXIT
+curl -fsS "${GITMONO_OPENAPI_URL}" -o "${tmp_openapi}"
+node -e "
+const fs = require('fs');
+const src = process.argv[1];
+const dest = process.argv[2];
+const json = JSON.parse(fs.readFileSync(src, 'utf8'));
+fs.writeFileSync(dest, JSON.stringify(json, null, 2) + '\n');
+console.log('Updated ' + dest);
+" "${tmp_openapi}" "${GITMONO_FILE_PATH}"
 
 # swagger-typescript-api does not work with ES Modules which is required for our prettier v3 plugins
 # and swagger-typescript-api automatically detects and runs prettier on generated files

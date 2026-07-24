@@ -124,21 +124,42 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
   }, [hasChanges])
 
   const handleSave = useCallback(async () => {
-    await updateBlobMutation.mutateAsync({
-      path: fullEditedPath,
-      content: content,
-      commit_message: commitMessage,
-      author_email: currentUser?.email,
-      author_username: currentUser?.username,
-      mode: 'force_create',
-      skip_build: skipBuild
-    })
+    const isRename = editedFileName.trim() !== fileName
+    const trimmedName = editedFileName.trim()
 
-    setIsCommitDialogOpen(false)
-    onCancel()
+    if (!trimmedName) {
+      toast.error('File name cannot be empty')
+      return
+    }
+
+    const destinationPath = pathSegments.length ? `${pathSegments.join('/')}/${trimmedName}` : trimmedName
+
+    try {
+      await updateBlobMutation.mutateAsync({
+        path: filePath,
+        new_path: isRename ? destinationPath : undefined,
+        content: content,
+        commit_message: commitMessage,
+        author_email: currentUser?.email,
+        author_username: currentUser?.username,
+        mode: 'force_create',
+        skip_build: skipBuild
+      })
+
+      toast.success(isRename ? 'Rename submitted successfully' : 'Changes submitted successfully')
+      setIsCommitDialogOpen(false)
+      onCancel()
+    } catch (error: any) {
+      const msg = error?.message || error?.response?.data?.message || 'Submit failed. Please try again.'
+
+      toast.error(msg)
+    }
   }, [
     updateBlobMutation,
-    fullEditedPath,
+    editedFileName,
+    fileName,
+    pathSegments,
+    filePath,
     content,
     commitMessage,
     currentUser?.email,

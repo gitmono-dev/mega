@@ -256,7 +256,8 @@ impl MergeBoxRes {
     pub fn from_condition(conditions: Vec<Condition>) -> Self {
         let mut state = RequirementsState::MERGEABLE;
         for cond in &conditions {
-            if cond.result == ConditionResult::FAILED {
+            // CLA is advisory-only: keep reporting the result, but do not mark the CL unmergeable.
+            if cond.result == ConditionResult::FAILED && cond.condition_type != CheckType::ClaSign {
                 state = RequirementsState::UNMERGEABLE
             }
         }

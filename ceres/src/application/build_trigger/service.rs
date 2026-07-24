@@ -32,7 +32,8 @@ use common::errors::MegaError;
 use jupiter::storage::Storage;
 
 use super::model::{
-    BuildParams, GitPushEvent, ListTriggersParams, TriggerContext, TriggerRecord, TriggerResponse,
+    BuildParams, GitPushEvent, ListTriggersParams, RetryClContext, TriggerContext, TriggerRecord,
+    TriggerResponse,
 };
 use crate::application::{
     api_service::cache::GitObjectCache,
@@ -91,12 +92,14 @@ impl BuildTriggerService {
             return Ok(None);
         }
 
+        let cl_path = Some(event.repo_path.clone());
         let context = TriggerContext::from_git_push(
             event.repo_path,
             event.from_hash,
             event.commit_hash,
             event.cl_link,
             event.cl_id,
+            cl_path,
             event.triggered_by,
         );
 
@@ -211,12 +214,22 @@ impl BuildTriggerService {
             .parse_payload()
             .map_err(|e| MegaError::Other(format!("Failed to parse payload: {}", e)))?;
 
+        // Historical payloads only store Buck repo_path; reload CL path so retry
+        // can rebase CL-relative change paths onto the monorepo root.
+        let cl_path = match self.storage.cl_storage().get_cl(payload.cl_link()).await? {
+            Some(cl) => Some(cl.path),
+            None => None,
+        };
+
         let context = TriggerContext::from_retry(
             payload.repo_path().to_string(),
             payload.from_hash().to_string(),
             payload.commit_hash().to_string(),
-            Some(payload.cl_link().to_string()),
-            payload.cl_id(),
+            RetryClContext {
+                link: Some(payload.cl_link().to_string()),
+                id: payload.cl_id(),
+                path: cl_path,
+            },
             Some(triggered_by),
             original_trigger_id,
         );
@@ -322,6 +335,7 @@ mod tests {
             .expect("resolve cl context");
 
         assert_eq!(context.repo_path, "/project/buck2_test");
+        assert_eq!(context.cl_path.as_deref(), Some("/project/buck2_test/src"));
         assert_eq!(context.cl_link.as_deref(), Some("HVKM7CXI"));
         assert_eq!(context.trigger_type, BuildTriggerType::WebEdit);
     }

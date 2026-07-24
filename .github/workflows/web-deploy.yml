@@ -13,10 +13,13 @@ env:
   REGISTRY_ALIAS: m8q5m4u3
   REPOSITORY: mega/mega-ui
   IMAGE_VERSION: latest
+  HARBOR_REGISTRY: registry.xuanwu.openatom.cn
 
+# actions: write is required for docker buildx --cache-{from,to} type=gha.
 permissions:
   id-token: write
   contents: read
+  actions: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -38,15 +41,17 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      actions: write
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      # Expose ACTIONS_RUNTIME_TOKEN / ACTIONS_RESULTS_URL for raw
+      # `docker buildx --cache-{from,to} type=gha` in the build step.
+      - name: Expose GitHub Actions runtime env
+        uses: crazy-max/ghaction-github-runtime@v3
 
       - name: Configure AWS Credentials (ECR Public, us-east-1)
         uses: aws-actions/configure-aws-credentials@v4
@@ -60,6 +65,13 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
         with:
           registry-type: public
+
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.HARBOR_REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
 
       - name: Build & push unified image
         working-directory: moon
@@ -75,16 +87,21 @@ jobs:
 
           PUBLIC_IMAGE="$ECR_PUBLIC_REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:$IMAGE_TAG"
           PUBLIC_IMAGE_SHA="$ECR_PUBLIC_REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:$SHA_TAG"
+          HARBOR_IMAGE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}:$IMAGE_TAG"
+          HARBOR_IMAGE_SHA="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}:$SHA_TAG"
 
           docker buildx build \
             --platform "$PLATFORM" \
+            --build-arg TIPTAP_PRIVATE_REGISTRY_KEY="$TIPTAP_PRIVATE_REGISTRY_KEY" \
             --cache-from type=gha,scope=mega-ui \
             --cache-to type=gha,mode=max,scope=mega-ui \
             --provenance=false \
             --sbom=false \
             -f apps/web/Dockerfile \
             -t "$PUBLIC_IMAGE" \
-            -t "$PUBLIC_IMAGE_SHA" . \
+            -t "$PUBLIC_IMAGE_SHA" \
+            -t "$HARBOR_IMAGE" \
+            -t "$HARBOR_IMAGE_SHA" . \
             --push
 
   manifest:
@@ -106,6 +123,13 @@ jobs:
         with:
           registry-type: public
 
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.HARBOR_REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
       - name: Create & push unified manifest
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
@@ -113,18 +137,23 @@ jobs:
           set -euo pipefail
 
           IMAGE_BASE="$REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}"
+          HARBOR_BASE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}"
           TAG="${IMAGE_VERSION}"
           SHORT_SHA="${GITHUB_SHA:0:7}"
 
-          # latest manifest
-          docker manifest create "$IMAGE_BASE:$TAG" \
-            "$IMAGE_BASE:${TAG}-amd64"
-          docker manifest push "$IMAGE_BASE:$TAG"
+          push_manifests() {
+            local base="$1"
+            docker manifest create "$base:$TAG" \
+              "$base:${TAG}-amd64"
+            docker manifest push "$base:$TAG"
 
-          # commit-hash manifest
-          docker manifest create "$IMAGE_BASE:$SHORT_SHA" \
-            "$IMAGE_BASE:${SHORT_SHA}-amd64"
-          docker manifest push "$IMAGE_BASE:$SHORT_SHA"
+            docker manifest create "$base:$SHORT_SHA" \
+              "$base:${SHORT_SHA}-amd64"
+            docker manifest push "$base:$SHORT_SHA"
+          }
+
+          push_manifests "$IMAGE_BASE"
+          push_manifests "$HARBOR_BASE"
 
   deploy-aws:
     needs: manifest

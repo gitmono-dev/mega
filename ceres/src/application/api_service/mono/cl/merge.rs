@@ -7,11 +7,14 @@ use common::{errors::MegaError, utils::MEGA_BRANCH_NAME};
 use git_internal::{
     errors::GitError,
     hash::ObjectHash,
-    internal::{metadata::EntryMeta, object::commit::Commit},
+    internal::{
+        metadata::EntryMeta,
+        object::{commit::Commit, tree::Tree},
+    },
 };
 use jupiter::{
     storage::{base_storage::StorageConnector, mono_storage::RefUpdateData},
-    utils::converter::IntoMegaModel,
+    utils::converter::{FromMegaModel, IntoMegaModel},
 };
 use tracing::debug;
 
@@ -222,6 +225,7 @@ impl ClApplicationService {
         cl_link: Option<&str>,
     ) -> Result<String, GitError> {
         let storage = self.storage().mono_storage();
+        self.ensure_root_tree_keeps_admin_file(result).await?;
         let mut new_commit_id = String::new();
         let mut commits: Vec<Commit> = Vec::new();
 
@@ -292,6 +296,101 @@ impl ClApplicationService {
         Ok(new_commit_id)
     }
 
+    /// Reject updates that would replace monorepo `/` with a tree missing `.mega_cedar.json`
+    /// when the current root tip still has it.
+    async fn ensure_root_tree_keeps_admin_file(
+        &self,
+        result: &TreeUpdateResult,
+    ) -> Result<(), GitError> {
+        let Some(root_update) = result.ref_updates.iter().find(|u| u.path == "/") else {
+            return Ok(());
+        };
+
+        let storage = self.storage().mono_storage();
+        let Some(current) = storage
+            .get_main_ref("/")
+            .await
+            .map_err(|e| GitError::CustomError(e.to_string()))?
+        else {
+            return Ok(());
+        };
+
+        let current_tree = storage
+            .get_tree_by_hash(&current.ref_tree_hash)
+            .await
+            .map_err(|e| GitError::CustomError(e.to_string()))?
+            .ok_or_else(|| GitError::CustomError("Root tree not found".into()))?;
+        let current_tree = Tree::from_mega_model(current_tree);
+        let current_has_admin = current_tree
+            .tree_items
+            .iter()
+            .any(|item| item.name == crate::application::api_service::mono::ADMIN_FILE);
+        if !current_has_admin {
+            return Ok(());
+        }
+
+        let new_tree = if let Some(t) = result
+            .updated_trees
+            .iter()
+            .find(|t| t.id == root_update.tree_id)
+        {
+            t.clone()
+        } else {
+            let model = storage
+                .get_tree_by_hash(&root_update.tree_id.to_string())
+                .await
+                .map_err(|e| GitError::CustomError(e.to_string()))?
+                .ok_or_else(|| {
+                    GitError::CustomError(format!(
+                        "Proposed root tree not found: {}",
+                        root_update.tree_id
+                    ))
+                })?;
+            Tree::from_mega_model(model)
+        };
+
+        let new_has_admin = new_tree
+            .tree_items
+            .iter()
+            .any(|item| item.name == crate::application::api_service::mono::ADMIN_FILE);
+        if !new_has_admin {
+            return Err(GitError::CustomError(format!(
+                "Refusing to update monorepo root: new tree is missing {}",
+                crate::application::api_service::mono::ADMIN_FILE
+            )));
+        }
+        Ok(())
+    }
+
+    /// Ensure `refs/cl/{cl_link}` exists, creating it from the CL tip when missing.
+    ///
+    /// Push / web-edit paths can leave the mega_cl row and CL ref out of sync (or skip the
+    /// ref entirely on empty packs). Merge and update-branch need the ref to exist.
+    pub(crate) async fn ensure_cl_ref_exists(
+        &self,
+        cl_link: &str,
+    ) -> Result<callisto::mega_refs::Model, GitError> {
+        let storage = self.storage().mono_storage();
+        let cl = self
+            .storage()
+            .cl_storage()
+            .get_cl(cl_link)
+            .await
+            .map_err(|e| GitError::CustomError(e.to_string()))?
+            .ok_or_else(|| GitError::CustomError(format!("CL not found: {cl_link}")))?;
+
+        let commit = storage
+            .get_commit_by_hash(&cl.to_hash)
+            .await
+            .map_err(|e| GitError::CustomError(e.to_string()))?
+            .ok_or_else(|| GitError::CustomError(format!("Commit not found: {}", cl.to_hash)))?;
+
+        storage
+            .ensure_cl_ref(&cl.path, cl_link, &cl.to_hash, &commit.tree)
+            .await
+            .map_err(|e| GitError::CustomError(e.to_string()))
+    }
+
     /// Apply update result but only update the CL ref (never main).
     /// Optionally override the parent commit for the first created commit (used by rebase).
     pub(crate) async fn apply_update_result_cl_only(
@@ -302,15 +401,11 @@ impl ClApplicationService {
         parent_override: Option<ObjectHash>,
     ) -> Result<String, GitError> {
         let storage = self.storage().mono_storage();
+        self.ensure_root_tree_keeps_admin_file(result).await?;
         let mut new_commit_id = String::new();
         let mut commits: Vec<Commit> = Vec::new();
 
-        let cl_ref_name = format!("refs/cl/{}", cl_link);
-        let cl_ref = storage
-            .get_ref_by_name(&cl_ref_name)
-            .await
-            .map_err(|e| GitError::CustomError(e.to_string()))?
-            .ok_or_else(|| GitError::CustomError("CL ref not found".to_string()))?;
+        let cl_ref = self.ensure_cl_ref_exists(cl_link).await?;
 
         let mut updates: Vec<RefUpdateData> = Vec::new();
 

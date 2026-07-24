@@ -53,8 +53,11 @@ def api_request(method, url, data=None, headers=None):
                 return json.loads(resp_body) if resp_body else {}
             else:
                 raise RuntimeError(f"API request failed with status {response.status}: {resp_body}")
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"API request to {url} failed: HTTP Error {e.code}: {e.reason}; body={body}") from e
     except Exception as e:
-        raise RuntimeError(f"API request to {url} failed: {e}")
+        raise RuntimeError(f"API request to {url} failed: {e}") from e
 
 def wait_for_server(base_url, timeout=60):
     """Waits for the Mega server to be ready."""
@@ -121,7 +124,18 @@ def merge_cl(base_url, link, timeout=60):
             else:
                 print(f"Merge pending: {resp.get('err_message')}")
         except Exception as e:
-            print(f"Merge attempt failed: {e}")
+            # urllib HTTPError body often has the real reason (e.g. CL ref not found).
+            detail = ""
+            if hasattr(e, "__cause__") and e.__cause__ is not None:
+                cause = e.__cause__
+                if hasattr(cause, "read"):
+                    try:
+                        detail = cause.read().decode("utf-8", errors="replace")
+                    except Exception:
+                        detail = str(cause)
+                else:
+                    detail = str(cause)
+            print(f"Merge attempt failed: {e}" + (f" body={detail}" if detail else ""))
         
         time.sleep(2)
         
@@ -139,9 +153,11 @@ def run_buckal_bundles_workflow(base_url):
         
         toolchains_dir = temp_path / "toolchains"
         
-        # Config git
+        # Config git (repo-local). Disable GPG so CI/dev machines with
+        # commit.gpgsign=true globally do not fail without a Mega Bot key.
         run_git(toolchains_dir, ["config", "user.email", GIT_USER_EMAIL])
         run_git(toolchains_dir, ["config", "user.name", GIT_USER_NAME])
+        run_git(toolchains_dir, ["config", "commit.gpgsign", "false"])
         
         # Clone buckal-bundles inside
         print("Importing buckal-bundles...")
@@ -157,7 +173,12 @@ def run_buckal_bundles_workflow(base_url):
         
         # Commit and push
         run_git(toolchains_dir, ["add", "."])
-        run_git(toolchains_dir, ["commit", "-m", COMMIT_MSG])
+        status = run_git(toolchains_dir, ["status", "--porcelain"], check=False)
+        if not status.stdout.strip():
+            print("buckal-bundles already present with no changes; skipping commit/push/merge.")
+            return
+
+        run_git(toolchains_dir, ["commit", "--no-gpg-sign", "-m", COMMIT_MSG])
         run_git(toolchains_dir, ["push"])
         
         # Handle merge request

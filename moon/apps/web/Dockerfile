@@ -10,9 +10,6 @@ RUN corepack enable && corepack prepare pnpm@9.7.1 --activate
 
 # Throw-away build stage to reduce size of final image
 FROM base AS builder
-# Install packages needed to build node modules
-RUN apt-get update -qq && \
-  apt-get install -y build-essential pkg-config python-is-python3 ca-certificates
 WORKDIR /app
 RUN pnpm install turbo@2.9.16 --global
 COPY . .
@@ -22,6 +19,7 @@ WORKDIR /app
 
 FROM base AS installer
 ARG TARGETARCH
+ARG TIPTAP_PRIVATE_REGISTRY_KEY
 RUN apt-get update -qq && \
   apt-get install -y build-essential pkg-config python-is-python3 ca-certificates
 WORKDIR /app
@@ -33,7 +31,7 @@ COPY --from=builder /app/pnpm-workspace.yaml ./
 
 
 RUN pnpm config set "@tiptap-pro:registry" https://registry.tiptap.dev/
-RUN pnpm config set "//registry.tiptap.dev/:_authToken" CjqFil0n7z4GGur+RPric21fBBeSB4R4FoNdRYOE1bQEz6AXLCoANCc+o9rLIg6Q
+RUN pnpm config set "//registry.tiptap.dev/:_authToken" "${TIPTAP_PRIVATE_REGISTRY_KEY}"
 RUN --mount=type=cache,id=mega-ui-pnpm-store-${TARGETARCH},target=/pnpm/store,sharing=locked \
     pnpm config set store-dir /pnpm/store && \
     pnpm install --frozen-lockfile
@@ -47,7 +45,9 @@ COPY --from=builder /app/out/full/ .
 RUN rm -f /app/apps/web/.env.local \
   && cp /app/apps/web/.env.runtime /app/apps/web/.env.production
 
-RUN npx turbo run build --filter=@gitmono/web
+RUN --mount=type=cache,id=mega-ui-next-${TARGETARCH},target=/app/apps/web/.next/cache,sharing=locked \
+    --mount=type=cache,id=mega-ui-turbo-${TARGETARCH},target=/app/.turbo,sharing=locked \
+    npx turbo run build --filter=@gitmono/web
 
 
 

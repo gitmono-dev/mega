@@ -349,12 +349,31 @@ function SearchInput({ query, setQuery }: { query: string; setQuery: (query: str
   )
 }
 
+function needsGithubRelogin(user: { github_login?: string | null; integration?: boolean; system?: boolean }) {
+  if (user.integration || user.system) return false
+  return !user.github_login
+}
+
+function GithubReloginHint() {
+  return (
+    <Tooltip label='Sign out and sign in with GitHub again to sync your GitHub login for permissions'>
+      <span className='relative z-10'>
+        <UIText className='line-clamp-1 text-[13px] leading-snug text-amber-600 dark:text-amber-400'>
+          Re-login required
+        </UIText>
+      </span>
+    </Tooltip>
+  )
+}
+
 export function CurrentUserStatus() {
   const [statusDialogOpen, setStatusDialogOpen] = useState(false)
   const { data: currentUser } = useGetCurrentUser()
   const { data: member } = useGetOrganizationMember({ username: currentUser?.username })
 
   if (!currentUser || !member) return null
+
+  const showRelogin = needsGithubRelogin(currentUser)
 
   return (
     <>
@@ -372,14 +391,17 @@ export function CurrentUserStatus() {
             <div className='flex flex-1 flex-col'>
               <UIText className='line-clamp-1'>{currentUser.display_name}</UIText>
               <Status status={member.status} />
-
-              {!member.status && (
-                <UIText
-                  inherit
-                  className='text-quaternary group-hover:text-secondary line-clamp-1 text-[13px] leading-snug'
-                >
-                  Update status
-                </UIText>
+              {showRelogin ? (
+                <GithubReloginHint />
+              ) : (
+                !member.status && (
+                  <UIText
+                    inherit
+                    className='text-quaternary group-hover:text-secondary line-clamp-1 text-[13px] leading-snug'
+                  >
+                    Update status
+                  </UIText>
+                )
               )}
             </div>
           </div>
@@ -429,13 +451,18 @@ function InnerMember({ member }: { member: OrganizationMember }) {
             <div className='flex flex-1 flex-col'>
               <UIText className='line-clamp-1 leading-snug'>{member.user.display_name}</UIText>
               <Status status={member.status} />
-              {!member.status && memberIsViewer && (
-                <UIText
-                  inherit
-                  className='text-quaternary group-hover:text-secondary line-clamp-1 text-[13px] leading-snug'
-                >
-                  Update status
-                </UIText>
+              {needsGithubRelogin(member.user) ? (
+                <GithubReloginHint />
+              ) : (
+                !member.status &&
+                memberIsViewer && (
+                  <UIText
+                    inherit
+                    className='text-quaternary group-hover:text-secondary line-clamp-1 text-[13px] leading-snug'
+                  >
+                    Update status
+                  </UIText>
+                )
               )}
             </div>
           </div>

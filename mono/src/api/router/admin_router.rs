@@ -62,8 +62,33 @@ async fn is_admin_me(
 ) -> Result<Json<CommonResult<IsAdminResponse>>, ApiError> {
     let admin = state.services().admin();
     let cedar_id = user.cedar_user_id();
-    let is_admin = admin.check_is_admin(cedar_id).await?
-        || (cedar_id != user.username.as_str() && admin.check_is_admin(&user.username).await?);
+    // Prefer GitHub login; also accept Campsite username during migration.
+    // On config/load failure (e.g. missing `.mega_cedar.json`), treat as non-admin
+    // so AccountApprovalGuard can still honor an approved user_approval_status.
+    let is_admin = match admin.check_is_admin(cedar_id).await {
+        Ok(true) => true,
+        Ok(false) if cedar_id != user.username.as_str() => admin
+            .check_is_admin(&user.username)
+            .await
+            .unwrap_or_else(|e| {
+                tracing::warn!(
+                    error = %e,
+                    actor = %user.username,
+                    "admin check failed; treating as non-admin"
+                );
+                false
+            }),
+        Ok(false) => false,
+        Err(e) => {
+            tracing::warn!(
+                error = %e,
+                actor = %user.username,
+                cedar_user_id = %cedar_id,
+                "admin check failed; treating as non-admin"
+            );
+            false
+        }
+    };
 
     Ok(Json(CommonResult::success(Some(IsAdminResponse {
         is_admin,

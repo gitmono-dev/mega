@@ -4959,6 +4959,11 @@ export type EditFilePayload = {
   content: string
   /** force create new cl */
   mode?: EditCLMode
+  /**
+   * Optional destination path for same-directory rename (e.g. "/project/dir/renamed.rs").
+   * Must share the same parent directory as `path`.
+   */
+  new_path?: string | null
   /** Full file path like "/project/dir/file.rs" */
   path: string
   /** if true, skip build */

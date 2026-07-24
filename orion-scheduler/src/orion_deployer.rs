@@ -336,6 +336,15 @@ pub async fn get_status_by_domain(state: &AppState, domain: &str) -> Option<VmIn
     state.get_vm_by_domain(domain).await
 }
 
+/// Resolve VM info by domain host or vm id (whichever the caller passed).
+pub async fn get_status_by_key(state: &AppState, domain_or_vm_id: Option<&str>) -> Option<VmInfo> {
+    let key = domain_or_vm_id?;
+    if let Some(vm) = state.get_vm_by_domain(key).await {
+        return Some(vm);
+    }
+    state.get_vm_by_id(key).await
+}
+
 pub async fn get_scorpio_status(
     state: &AppState,
     domain_or_vm_id: Option<&str>,

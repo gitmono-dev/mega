@@ -4,7 +4,7 @@ import React from 'react'
 import { DataTable } from '@primer/react/experimental'
 
 import { CoreWorkerStatus, TaskPhase } from '@gitmono/types/generated'
-import { Select, SelectTrigger, SelectValue, UIText } from '@gitmono/ui'
+import { Button, Select, SelectTrigger, SelectValue, UIText } from '@gitmono/ui'
 
 import { useGetOrionClientStatusById } from '@/hooks/OrionClient/OrionClientStatusById'
 
@@ -17,6 +17,9 @@ interface ClientsTableProps {
   statusFilter: OrionClientStatus | 'all'
   onStatusChange: (v: OrionClientStatus | 'all') => void
   statusOptions: { value: OrionClientStatus | 'all'; label: string }[]
+  /** When set, show a per-row action to open that client's runner logs. */
+  onViewLogs?: (client: OrionClient) => void
+  canViewLogs?: boolean
   capabilityFilter?: string
   capabilityOptions?: string[]
   onCapabilityChange?: (v: string) => void
@@ -25,7 +28,15 @@ interface ClientsTableProps {
 type Row = OrionClient & { statusDerived: OrionClientStatus }
 type UniqueRow = Row & { id: string }
 
-export function ClientsTable({ clients, isLoading, statusFilter, onStatusChange, statusOptions }: ClientsTableProps) {
+export function ClientsTable({
+  clients,
+  isLoading,
+  statusFilter,
+  onStatusChange,
+  statusOptions,
+  onViewLogs,
+  canViewLogs = false
+}: ClientsTableProps) {
   const rows = React.useMemo<UniqueRow[]>(() => {
     return clients.map((c) => ({
       ...c,
@@ -34,13 +45,15 @@ export function ClientsTable({ clients, isLoading, statusFilter, onStatusChange,
     }))
   }, [clients])
 
+  const showLogsAction = Boolean(canViewLogs && onViewLogs)
+
   const columns = React.useMemo(
     () => [
       {
         header: 'Client ID',
         field: 'client_id',
         rowHeader: true,
-        width: '18%',
+        width: showLogsAction ? '16%' : '18%',
         renderCell: (row: Row) => (
           <div className='min-w-0'>
             <UIText weight='font-semibold' className='block truncate text-sm'>
@@ -52,20 +65,20 @@ export function ClientsTable({ clients, isLoading, statusFilter, onStatusChange,
       {
         header: 'Hostname',
         field: 'hostname',
-        width: '18%',
+        width: showLogsAction ? '16%' : '18%',
         renderCell: (row: Row) => <div className='min-w-0 truncate'>{row.hostname || '—'}</div>
       },
       { header: 'Version', field: 'orion_version', width: '10%' },
       {
         header: 'Start Time',
         field: 'start_time',
-        width: '18%',
+        width: showLogsAction ? '16%' : '18%',
         renderCell: (row: Row) => <div className='whitespace-normal break-words'>{formatDateTime(row.start_time)}</div>
       },
       {
         header: 'Last Heartbeat',
         field: 'last_heartbeat',
-        width: '22%',
+        width: showLogsAction ? '18%' : '22%',
         renderCell: (row: Row) => (
           <div className='flex flex-col gap-0.5 leading-tight'>
             <div className='whitespace-normal break-words'>{formatDateTime(row.last_heartbeat)}</div>
@@ -90,9 +103,28 @@ export function ClientsTable({ clients, isLoading, statusFilter, onStatusChange,
         field: 'statusDerived',
         width: '14%',
         renderCell: (row: Row) => <OrionClientStatusCell client={row} />
-      }
+      },
+      ...(showLogsAction
+        ? [
+            {
+              header: 'Logs',
+              field: 'client_id',
+              width: '10%',
+              renderCell: (row: Row) => (
+                <Button
+                  variant='plain'
+                  size='sm'
+                  onClick={() => onViewLogs?.(row)}
+                  accessibilityLabel={`View logs for ${row.client_id}`}
+                >
+                  View logs
+                </Button>
+              )
+            }
+          ]
+        : [])
     ],
-    [onStatusChange, statusFilter, statusOptions]
+    [onStatusChange, onViewLogs, showLogsAction, statusFilter, statusOptions]
   )
 
   if (isLoading) {

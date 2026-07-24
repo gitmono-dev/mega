@@ -11,10 +11,13 @@ env:
   REGISTRY_ALIAS: m8q5m4u3
   REPOSITORY: mega/orion-server
   IMAGE_TAG_BASE: latest
+  HARBOR_REGISTRY: registry.xuanwu.openatom.cn
 
+# actions: write is required for docker buildx --cache-{from,to} type=gha.
 permissions:
   id-token: write
   contents: read
+  actions: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,12 +30,18 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      actions: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      # Expose ACTIONS_RUNTIME_TOKEN / ACTIONS_RESULTS_URL for raw
+      # `docker buildx --cache-{from,to} type=gha` in the build step.
+      - name: Expose GitHub Actions runtime env
+        uses: crazy-max/ghaction-github-runtime@v3
 
       # -----------------------------
       # AWS auth
@@ -50,10 +59,17 @@ jobs:
         with:
           registry-type: public
 
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.HARBOR_REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
       # -----------------------------
-      # Build & push to AWS
+      # Build & push to AWS + Harbor
       # -----------------------------
-      - name: Build & push amd64 image to AWS
+      - name: Build & push amd64 image to AWS and Harbor
         env:
           AWS_REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
         run: |
@@ -63,6 +79,7 @@ jobs:
           ARCH_SUFFIX="amd64"
 
           AWS_IMAGE_BASE="$AWS_REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}"
+          HARBOR_IMAGE_BASE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}"
 
           TAG="${{ env.IMAGE_TAG_BASE }}-$ARCH_SUFFIX"
           CACHE_SCOPE="orion-server-$ARCH_SUFFIX"
@@ -75,6 +92,7 @@ jobs:
             --sbom=false \
             -f orion-server/Dockerfile \
             -t "$AWS_IMAGE_BASE:$TAG" \
+            -t "$HARBOR_IMAGE_BASE:$TAG" \
             --push .
 
   manifest:
@@ -96,25 +114,41 @@ jobs:
         with:
           registry-type: public
 
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.HARBOR_REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
       - name: Create & push manifest
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
         run: |
           set -euo pipefail
           IMAGE_BASE="$REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}"
+          HARBOR_BASE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}"
           SHORT_SHA="${GITHUB_SHA:0:7}"
+          TAG_BASE="${{ env.IMAGE_TAG_BASE }}"
 
-          # latest manifest
-          docker manifest create "$IMAGE_BASE:${{ env.IMAGE_TAG_BASE }}" \
-            "$IMAGE_BASE:${{ env.IMAGE_TAG_BASE }}-amd64" \
-            "$IMAGE_BASE:${{ env.IMAGE_TAG_BASE }}-arm64"
-          docker manifest push "$IMAGE_BASE:${{ env.IMAGE_TAG_BASE }}"
+          push_manifests() {
+            local base="$1"
+            local refs=("$base:${TAG_BASE}-amd64")
+            if docker manifest inspect "$base:${TAG_BASE}-arm64" >/dev/null 2>&1; then
+              refs+=("$base:${TAG_BASE}-arm64")
+            else
+              echo "WARN: $base:${TAG_BASE}-arm64 not found; publishing amd64-only manifests"
+            fi
 
-          # commit-hash manifest (same digests as latest for this commit)
-          docker manifest create "$IMAGE_BASE:$SHORT_SHA" \
-            "$IMAGE_BASE:${{ env.IMAGE_TAG_BASE }}-amd64" \
-            "$IMAGE_BASE:${{ env.IMAGE_TAG_BASE }}-arm64"
-          docker manifest push "$IMAGE_BASE:$SHORT_SHA"
+            docker manifest create "$base:${TAG_BASE}" "${refs[@]}"
+            docker manifest push "$base:${TAG_BASE}"
+
+            docker manifest create "$base:$SHORT_SHA" "${refs[@]}"
+            docker manifest push "$base:$SHORT_SHA"
+          }
+
+          push_manifests "$IMAGE_BASE"
+          push_manifests "$HARBOR_BASE"
 
   deploy-aws:
     needs: manifest

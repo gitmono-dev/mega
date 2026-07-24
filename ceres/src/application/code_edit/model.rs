@@ -285,8 +285,14 @@ impl<
         from_hash: &str,
         to_hash: &str,
         username: &str,
+        preferred_cl_link: Option<&str>,
     ) -> Result<mega_cl::Model, MegaError> {
-        let cl_link = generate_link();
+        // Prefer the link already used for refs/cl/* during pack receive so merge
+        // can resolve the CL ref. Fall back to generating a fresh link for web edits.
+        let cl_link = preferred_cl_link
+            .map(str::to_string)
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(generate_link);
         let dst_commit = Commit::from_mega_model(
             storage
                 .mono_storage()
@@ -335,6 +341,7 @@ impl<
         from_hash: &str,
         to_hash: &str,
         username: &str,
+        preferred_cl_link: Option<&str>,
     ) -> Result<mega_cl::Model, MegaError> {
         let path_str = &self.repo_path;
         match storage
@@ -352,12 +359,45 @@ impl<
                         "CL was updated but fresh model lookup returned None; fallback to in-memory to_hash update."
                     );
                 }
-                Ok(fresh_or_fallback_cl(cl, fresh, to_hash))
+                let cl_model = fresh_or_fallback_cl(cl, fresh, to_hash);
+                self.sync_cl_ref(storage, &cl_model, to_hash).await?;
+                Ok(cl_model)
             }
             None => Ok(self
-                .create_new_cl(storage, path_str, from_hash, to_hash, username)
+                .create_new_cl(
+                    storage,
+                    path_str,
+                    from_hash,
+                    to_hash,
+                    username,
+                    preferred_cl_link,
+                )
                 .await?),
         }
+    }
+
+    /// Ensure `refs/cl/{cl.link}` points at `to_hash`.
+    pub async fn sync_cl_ref(
+        &self,
+        storage: &Storage,
+        cl: &mega_cl::Model,
+        to_hash: &str,
+    ) -> Result<(), MegaError> {
+        let dst_commit = Commit::from_mega_model(
+            storage
+                .mono_storage()
+                .get_commit_by_hash(to_hash)
+                .await?
+                .ok_or_else(|| MegaError::Other(format!("invalid to_hash: {to_hash}")))?,
+        );
+        self.clref_acceptor
+            .accept(
+                &self.clref_visitor,
+                cl,
+                to_hash,
+                &dst_commit.tree_id.to_string(),
+            )
+            .await
     }
 
     pub async fn trigger_build(

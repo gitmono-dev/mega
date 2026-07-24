@@ -195,6 +195,10 @@ pub enum EditCLMode {
 pub struct EditFilePayload {
     /// Full file path like "/project/dir/file.rs"
     pub path: String,
+    /// Optional destination path for same-directory rename (e.g. "/project/dir/renamed.rs").
+    /// Must share the same parent directory as `path`.
+    #[serde(default)]
+    pub new_path: Option<String>,
     /// New file content to save
     pub content: String,
     /// Commit message to use when creating the commit

@@ -15,6 +15,9 @@ pub enum TransportEvent {
         from_hash: String,
         to_hash: String,
         username: Option<String>,
+        /// Link already allocated while writing `refs/cl/*` during pack receive.
+        /// Must be reused when creating the mega_cl row so merge can find the ref.
+        cl_link: Option<String>,
     },
     ImportReceivePackFinalized {
         repo_path: PathBuf,

@@ -164,6 +164,7 @@ impl RepoHandler for MonoRepo {
     async fn finalize_receive_pack(&self) -> Result<(), MegaError> {
         self.persist_mono_branch_cl_mega_refs_transaction().await?;
         self.traverses_tree_and_update_filepath().await?;
+        let cl_link = self.cl_link.read().await.clone();
         self.application
             .handle(TransportEvent::MonoReceivePackFinalized {
                 repo_path: self.path.clone(),
@@ -171,6 +172,7 @@ impl RepoHandler for MonoRepo {
                 from_hash: self.from_hash.clone(),
                 to_hash: self.to_hash.clone(),
                 username: self.username.clone(),
+                cl_link,
             })
             .await
     }
@@ -491,12 +493,23 @@ impl MonoRepo {
         txn: Option<&DatabaseTransaction>,
     ) -> Result<(), MegaError> {
         let storage = self.storage.mono_storage();
-        let current_commit = self.current_commit.read().await;
         let cl_link = self.fetch_or_new_cl_link().await?;
         let ref_name = utils::cl_ref_name(&cl_link);
 
-        let Some(c) = &*current_commit else {
-            return Ok(());
+        let (commit_hash, tree_hash) = if let Some(c) = &*self.current_commit.read().await {
+            (cmd.new_id.clone(), c.tree_id.to_string())
+        } else {
+            // Empty pack / ref-only push: still materialize refs/cl/{link} from the target commit.
+            let commit = storage
+                .get_commit_by_hash(&cmd.new_id)
+                .await?
+                .ok_or_else(|| {
+                    MegaError::Other(format!(
+                        "Commit {} not found while writing CL ref {}",
+                        cmd.new_id, ref_name
+                    ))
+                })?;
+            (cmd.new_id.clone(), commit.tree)
         };
 
         let existing = match txn {
@@ -505,17 +518,11 @@ impl MonoRepo {
         };
 
         if let Some(mut cl_ref) = existing {
-            cl_ref.ref_commit_hash = cmd.new_id.clone();
-            cl_ref.ref_tree_hash = c.tree_id.to_string();
+            cl_ref.ref_commit_hash = commit_hash;
+            cl_ref.ref_tree_hash = tree_hash;
             storage.update_ref(cl_ref, txn).await?;
         } else {
-            let new_ref = mega_refs::Model::new(
-                &self.path,
-                ref_name,
-                cmd.new_id.clone(),
-                c.tree_id.to_string(),
-                true,
-            );
+            let new_ref = mega_refs::Model::new(&self.path, ref_name, commit_hash, tree_hash, true);
             storage.save_refs(new_ref, txn).await?;
         }
         Ok(())

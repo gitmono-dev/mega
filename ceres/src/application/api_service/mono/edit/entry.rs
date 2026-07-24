@@ -326,7 +326,7 @@ impl MonoApiService {
         result: &TreeUpdateResult,
         repo_path: &str,
     ) -> Option<ObjectHash> {
-        let normalized = MonoServiceLogic::clean_path_str(repo_path);
+        let normalized = MonoServiceLogic::normalize_repo_path(repo_path).ok()?;
         result
             .ref_updates
             .iter()
@@ -341,36 +341,46 @@ impl MonoApiService {
         let parent_path = file_path
             .parent()
             .ok_or_else(|| GitError::CustomError("Invalid file path".to_string()))?;
-        let cl_root_path = MonoServiceLogic::subtree_ref_path(parent_path)
+        // Bind the CL to the deepest path that already has main (e.g. /toolchains),
+        // not the Buck build root `/`. Root-bound CLs can wipe /.mega_cedar.json on merge.
+        let parent_repo_path = MonoServiceLogic::subtree_ref_path(parent_path)
             .map_err(|e| GitError::CustomError(e.to_string()))?;
-        let build_repo_path = match edit_utils::resolve_build_repo_root(
-            self.storage(),
-            &cl_root_path,
-        )
-        .await
-        {
-            Ok(path) => path,
-            Err(e) => {
-                tracing::warn!(
-                    repo_path = %cl_root_path,
-                    "Failed to resolve build repo root for edit, fallback to CL subtree root: {}",
-                    e
-                );
-                cl_root_path.clone()
-            }
-        };
+        let cl_path = edit_utils::resolve_cl_path_for_edit(self.storage(), &parent_repo_path)
+            .await
+            .map_err(|e| GitError::CustomError(e.to_string()))?;
 
         let parent_tree = tree_ops::search_tree_by_path(self, parent_path, None)
             .await?
             .ok_or(GitError::CustomError(format!(
                 "invalid repo_path {}, Parent tree not found",
-                cl_root_path
+                cl_path
             )))?;
 
         let file_name = file_path
             .file_name()
             .and_then(|n| n.to_str())
             .ok_or_else(|| GitError::CustomError("Invalid file name".to_string()))?;
+
+        let dest_name =
+            if let Some(new_path) = payload.new_path.as_deref().filter(|p| !p.is_empty()) {
+                let dest_path = PathBuf::from("/").join(PathBuf::from(new_path));
+                let dest_parent = dest_path
+                    .parent()
+                    .ok_or_else(|| GitError::CustomError("Invalid new file path".to_string()))?;
+                if dest_parent != parent_path {
+                    return Err(GitError::CustomError(
+                    "Rename across directories is not supported; keep the file in the same folder"
+                        .to_string(),
+                ));
+                }
+                dest_path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .ok_or_else(|| GitError::CustomError("Invalid new file name".to_string()))?
+                    .to_string()
+            } else {
+                file_name.to_string()
+            };
 
         let _current_item = parent_tree
             .tree_items
@@ -380,12 +390,10 @@ impl MonoApiService {
 
         // Create new blob and build update result up to root
         let new_blob = Blob::from_content(&payload.content);
-        let new_tree = MonoServiceLogic::update_tree_hash(
+        let new_tree = MonoServiceLogic::update_or_rename_tree_blob(
             parent_tree.into(),
-            file_path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .ok_or_else(|| GitError::CustomError("Invalid path".into()))?,
+            file_name,
+            &dest_name,
             new_blob.id,
         )?;
 
@@ -398,15 +406,12 @@ impl MonoApiService {
             update_chain,
             new_tree.id,
         )?;
-        let target_tree_id = Self::ref_update_tree_id_for_path(&update_result, &build_repo_path)
+        let target_tree_id = Self::ref_update_tree_id_for_path(&update_result, &cl_path)
             .ok_or_else(|| {
-                GitError::CustomError(format!(
-                    "Missing updated tree for build repo root {build_repo_path}"
-                ))
+                GitError::CustomError(format!("Missing updated tree for CL path {cl_path}"))
             })?;
 
-        let src_commit =
-            edit_utils::get_repo_main_latest_commit(self.storage(), &build_repo_path).await?;
+        let src_commit = edit_utils::get_repo_main_latest_commit(self.storage(), &cl_path).await?;
         let dst_commit = Commit::from_tree_id(
             target_tree_id,
             vec![
@@ -448,7 +453,7 @@ impl MonoApiService {
             .map_err(|e| GitError::CustomError(e.to_string()))?;
 
         let editor = OneditCodeEdit::from(
-            &build_repo_path,
+            &cl_path,
             MEGA_BRANCH_NAME
                 .strip_prefix("refs/heads/")
                 .unwrap_or(MEGA_BRANCH_NAME),
@@ -478,7 +483,7 @@ impl MonoApiService {
         Ok(EditFileResult {
             commit_id: new_commit_id,
             new_oid: new_blob.id.to_string(),
-            path: build_repo_path,
+            path: cl_path,
             cl_link: Some(cl.link),
         })
     }
@@ -507,33 +512,18 @@ impl MonoApiService {
 
         let repo_path_str = MonoServiceLogic::subtree_ref_path(&repo_path)
             .map_err(|e| GitError::CustomError(e.to_string()))?;
-        let build_repo_path = match edit_utils::resolve_build_repo_root(
-            self.storage(),
-            &repo_path_str,
-        )
-        .await
-        {
-            Ok(path) => path,
-            Err(e) => {
-                tracing::warn!(
-                    repo_path = %repo_path_str,
-                    "Failed to resolve build repo root for create entry, fallback to CL subtree root: {}",
-                    e
-                );
-                repo_path_str.clone()
-            }
-        };
+        // Bind CL to deepest path with main (e.g. /toolchains), not Buck root `/`.
+        let cl_path = edit_utils::resolve_cl_path_for_edit(self.storage(), &repo_path_str)
+            .await
+            .map_err(|e| GitError::CustomError(e.to_string()))?;
 
-        let src_commit =
-            edit_utils::get_repo_main_latest_commit(self.storage(), &build_repo_path).await?;
+        let src_commit = edit_utils::get_repo_main_latest_commit(self.storage(), &cl_path).await?;
         let base_commit = ObjectHash::from_str(&src_commit.id.to_string()).map_err(|e| {
             GitError::CustomError(format!("Invalid commit hash {}: {e}", src_commit.id))
         })?;
-        let target_tree_id = Self::ref_update_tree_id_for_path(&update_result, &build_repo_path)
+        let target_tree_id = Self::ref_update_tree_id_for_path(&update_result, &cl_path)
             .ok_or_else(|| {
-                GitError::CustomError(format!(
-                    "Missing updated tree for build repo root {build_repo_path}"
-                ))
+                GitError::CustomError(format!("Missing updated tree for CL path {cl_path}"))
             })?;
         let dst_commit =
             Commit::from_tree_id(target_tree_id, vec![base_commit], &entry_info.commit_msg());
@@ -573,7 +563,7 @@ impl MonoApiService {
             .await?;
 
         let editor = OneditCodeEdit::from(
-            &build_repo_path,
+            &cl_path,
             MEGA_BRANCH_NAME
                 .strip_prefix("refs/heads/")
                 .unwrap_or(MEGA_BRANCH_NAME),

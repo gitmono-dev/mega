@@ -80,8 +80,10 @@ export const MergeSection = React.memo<MergeSectionProps>(
 
     let statusNode: React.ReactNode
 
-    const isMergeable = isAllReviewerApproved && claCheck !== false
+    // CLA is advisory-only for now: show a hint but do not block merge.
+    const isMergeable = isAllReviewerApproved
     const isDraft = clStatus?.toLowerCase() === 'draft'
+    const showClaHint = claCheck === false
 
     if (isDraft) {
       statusNode = (
@@ -125,6 +127,16 @@ export const MergeSection = React.memo<MergeSectionProps>(
       <div className='p-3'>
         {statusNode}
 
+        {showClaHint && (
+          <div className='mb-3 mt-2 flex items-start gap-2 rounded-md bg-amber-50 p-2 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-200'>
+            <WarningTriangleIcon className='mt-0.5 h-4 w-4 flex-shrink-0' />
+            <span>
+              CLA is not signed yet. This is a reminder only and does not block merging.
+              {isClAuthor && ' Please sign the CLA when you can.'}
+            </span>
+          </div>
+        )}
+
         {/* Queue Status Info */}
         {inQueue && queueItem && (
           <div className='mb-3 mt-2 rounded-md bg-blue-50 p-2 text-sm'>
@@ -151,7 +163,7 @@ export const MergeSection = React.memo<MergeSectionProps>(
               </button>
             )}
 
-            {claCheck === false && isClAuthor && (
+            {showClaHint && isClAuthor && (
               <button
                 onClick={() => router.push(`/me/settings/cla/sign`)}
                 className='w-full rounded-md bg-blue-600 px-4 py-2 font-bold text-white duration-500 hover:bg-blue-800'

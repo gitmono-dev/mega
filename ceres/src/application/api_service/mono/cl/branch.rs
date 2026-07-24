@@ -14,7 +14,10 @@ use common::{errors::MegaError, utils::ZERO_ID};
 use git_internal::{
     errors::GitError,
     hash::ObjectHash,
-    internal::object::tree::{Tree, TreeItem, TreeItemMode},
+    internal::object::{
+        tree::{Tree, TreeItem, TreeItemMode},
+        types::ObjectType,
+    },
 };
 use jupiter::utils::converter::FromMegaModel;
 use tracing::debug;
@@ -199,6 +202,42 @@ impl ClApplicationService {
                     }
                 }
 
+                // Git does not track empty directories: deleting the last entry must remove
+                // this directory from its parent (or yield the empty root tree).
+                if items.is_empty() {
+                    debug!(
+                        cl_link = %cl.link,
+                        parent_dir = %parent_dir_abs.to_string_lossy(),
+                        "apply_changes: directory emptied by delete; removing from parent"
+                    );
+                    if chain_trees.is_empty() {
+                        let empty = Self::empty_tree();
+                        Self::record_tree(parent_dir_abs, &empty, &mut tree_cache, &mut new_trees);
+                        root_tree = empty;
+                    } else {
+                        let dir_name = parent_dir_abs
+                            .file_name()
+                            .and_then(|n| n.to_str())
+                            .ok_or_else(|| {
+                                GitError::CustomError(format!(
+                                    "Invalid emptied directory path: {}",
+                                    parent_dir_abs.to_string_lossy()
+                                ))
+                            })?;
+                        // Drop the emptied dir from the cache so later diffs don't revive it.
+                        tree_cache.remove(&parent_dir_abs);
+                        root_tree = Self::propagate_removal_up(
+                            &cl.link,
+                            dir_name,
+                            &chain_paths,
+                            &chain_trees,
+                            &mut tree_cache,
+                            &mut new_trees,
+                        )?;
+                    }
+                    continue;
+                }
+
                 let updated_tree = Tree::from_tree_items(items)
                     .map_err(|e| GitError::CustomError(e.to_string()))?;
                 // If parent tree id did not change (no-op), skip propagation for this diff.
@@ -330,11 +369,15 @@ impl ClApplicationService {
             Self::record_tree(PathBuf::new(), &updated_tree, ctx.tree_cache, ctx.new_trees);
         }
 
+        // Wrap leaf upward for every missing segment except the shallowest
+        // (attach_name). Must use take(n-1), not skip(1): skip(1) after rev
+        // drops the deepest name and reuses a shallower one → config/config.
+        let wrap_count = missing.len().saturating_sub(1);
         for (child_name, path) in missing
             .iter()
             .rev()
-            .skip(1)
-            .zip(missing_paths.iter().rev().skip(1))
+            .take(wrap_count)
+            .zip(missing_paths.iter().rev().take(wrap_count))
         {
             let wrapper = Tree::from_tree_items(vec![TreeItem::new(
                 TreeItemMode::Tree,
@@ -452,6 +495,108 @@ impl ClApplicationService {
 
         Ok(updated_tree)
     }
+
+    /// Remove `name_to_remove` from the deepest remaining parent and walk upward.
+    ///
+    /// If a parent becomes empty, keep removing that directory from its parent (Git does not
+    /// store empty directories). Only the repository root may become an empty tree.
+    fn propagate_removal_up(
+        cl_link: &str,
+        mut name_to_remove: &str,
+        chain_paths: &[PathBuf],
+        chain_trees: &[Tree],
+        tree_cache: &mut HashMap<PathBuf, Tree>,
+        new_trees: &mut HashMap<ObjectHash, Tree>,
+    ) -> Result<Tree, GitError> {
+        if chain_trees.is_empty() {
+            return Ok(Self::empty_tree());
+        }
+
+        // Own the next directory name when cascading empties upward.
+        let mut owned_name: Option<String> = None;
+
+        for parent_index in (0..chain_trees.len()).rev() {
+            let remove_name = owned_name.as_deref().unwrap_or(name_to_remove);
+            let parent_tree = &chain_trees[parent_index];
+            let parent_path = chain_paths.get(parent_index).cloned().ok_or_else(|| {
+                GitError::CustomError("Tree path chain underflow during removal".to_string())
+            })?;
+
+            let mut items = parent_tree.tree_items.clone();
+            let before = items.len();
+            items.retain(|it| it.name != remove_name);
+            if items.len() == before {
+                debug!(
+                    cl_link,
+                    parent_path = %parent_path.to_string_lossy(),
+                    missing_entry = %remove_name,
+                    "apply_changes: removal target already absent"
+                );
+            }
+
+            if items.is_empty() {
+                tree_cache.remove(&parent_path);
+                if parent_index == 0 {
+                    let empty = Self::empty_tree();
+                    Self::record_tree(parent_path, &empty, tree_cache, new_trees);
+                    return Ok(empty);
+                }
+                owned_name = parent_path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .map(str::to_string);
+                name_to_remove = "";
+                continue;
+            }
+
+            let updated =
+                Tree::from_tree_items(items).map_err(|e| GitError::CustomError(e.to_string()))?;
+            Self::record_tree(parent_path, &updated, tree_cache, new_trees);
+
+            // Remaining ancestors just need hash updates for this renamed child tree.
+            if parent_index == 0 {
+                return Ok(updated);
+            }
+
+            let mut current = updated;
+            for ancestor_index in (0..parent_index).rev() {
+                let child_name = chain_paths
+                    .get(ancestor_index + 1)
+                    .and_then(|p| p.file_name())
+                    .and_then(|n| n.to_str())
+                    .ok_or_else(|| {
+                        GitError::CustomError(
+                            "Missing child directory name while propagating removal".to_string(),
+                        )
+                    })?;
+                let ancestor = Self::update_parent_tree(
+                    cl_link,
+                    &chain_trees[ancestor_index],
+                    child_name,
+                    TreeItemMode::Tree,
+                    current.id,
+                    chain_paths.get(ancestor_index),
+                )?;
+                let ancestor_path = chain_paths.get(ancestor_index).cloned().ok_or_else(|| {
+                    GitError::CustomError("Tree path chain underflow".to_string())
+                })?;
+                Self::record_tree(ancestor_path, &ancestor, tree_cache, new_trees);
+                current = ancestor;
+            }
+            return Ok(current);
+        }
+
+        Ok(Self::empty_tree())
+    }
+
+    /// Canonical Git empty tree (SHA-1 `4b825dc642cb6eb9a060e54bf8d69288fbee4904`).
+    fn empty_tree() -> Tree {
+        Tree {
+            id: ObjectHash::from_type_and_data(ObjectType::Tree, &[]),
+            tree_items: vec![],
+        }
+    }
+
     /// Return Update Branch status for a CL: only checks whether main/trunk moved past the CL base.
     pub async fn update_branch_status(
         &self,
@@ -641,5 +786,333 @@ impl ClApplicationService {
             .collect();
 
         Ok(cl_paths.intersection(&target_paths).cloned().collect())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{collections::HashMap, path::PathBuf};
+
+    use git_internal::{
+        hash::ObjectHash,
+        internal::object::tree::{Tree, TreeItem, TreeItemMode},
+    };
+
+    use super::ClApplicationService;
+
+    fn blob_item(name: &str, seed: u8) -> TreeItem {
+        TreeItem::new(
+            TreeItemMode::Blob,
+            ObjectHash::from_bytes(&[seed; 20]).expect("hash"),
+            name.to_string(),
+        )
+    }
+
+    fn tree_with(items: Vec<TreeItem>) -> Tree {
+        Tree::from_tree_items(items).expect("non-empty tree")
+    }
+
+    #[test]
+    fn empty_tree_has_canonical_git_sha1() {
+        let empty = ClApplicationService::empty_tree();
+        assert!(empty.tree_items.is_empty());
+        assert_eq!(
+            empty.id.to_string(),
+            "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+        );
+    }
+
+    #[test]
+    fn propagate_removal_up_removes_emptied_directory_from_parent() {
+        let file = blob_item("only.txt", 1);
+        let child = tree_with(vec![file]);
+        let other = blob_item("keep.txt", 2);
+        let root = tree_with(vec![
+            TreeItem::new(TreeItemMode::Tree, child.id, "subdir".to_string()),
+            other,
+        ]);
+
+        let chain_paths = vec![PathBuf::from("/")];
+        let chain_trees = vec![root.clone()];
+        let mut tree_cache = HashMap::new();
+        let mut new_trees = HashMap::new();
+
+        let updated_root = ClApplicationService::propagate_removal_up(
+            "TESTLINK1",
+            "subdir",
+            &chain_paths,
+            &chain_trees,
+            &mut tree_cache,
+            &mut new_trees,
+        )
+        .expect("removal");
+
+        assert_eq!(updated_root.tree_items.len(), 1);
+        assert_eq!(updated_root.tree_items[0].name, "keep.txt");
+        assert!(!new_trees.contains_key(&child.id));
+    }
+
+    #[test]
+    fn propagate_removal_up_cascades_when_parent_becomes_empty() {
+        let file = blob_item("only.txt", 3);
+        let leaf = tree_with(vec![file]);
+        let mid = tree_with(vec![TreeItem::new(
+            TreeItemMode::Tree,
+            leaf.id,
+            "leaf".to_string(),
+        )]);
+        let root = tree_with(vec![TreeItem::new(
+            TreeItemMode::Tree,
+            mid.id,
+            "mid".to_string(),
+        )]);
+
+        // Emptied `mid/leaf` → remove `leaf` from `mid` → `mid` empty → remove from root.
+        let chain_paths = vec![PathBuf::from("/"), PathBuf::from("/mid")];
+        let chain_trees = vec![root, mid];
+        let mut tree_cache = HashMap::new();
+        let mut new_trees = HashMap::new();
+
+        let updated_root = ClApplicationService::propagate_removal_up(
+            "TESTLINK2",
+            "leaf",
+            &chain_paths,
+            &chain_trees,
+            &mut tree_cache,
+            &mut new_trees,
+        )
+        .expect("cascade removal");
+
+        assert!(updated_root.tree_items.is_empty());
+        assert_eq!(
+            updated_root.id.to_string(),
+            "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+        );
+    }
+
+    fn blob_hash(seed: u8) -> ObjectHash {
+        ObjectHash::from_bytes(&[seed; 20]).expect("hash")
+    }
+
+    fn child_tree<'a>(
+        parent: &Tree,
+        name: &str,
+        new_trees: &'a HashMap<ObjectHash, Tree>,
+    ) -> &'a Tree {
+        let item = parent
+            .tree_items
+            .iter()
+            .find(|it| it.name == name)
+            .unwrap_or_else(|| panic!("missing tree entry '{name}'"));
+        assert_eq!(item.mode, TreeItemMode::Tree, "'{name}' should be a tree");
+        new_trees
+            .get(&item.id)
+            .unwrap_or_else(|| panic!("tree object for '{name}' not recorded"))
+    }
+
+    fn assert_blob_at(parent: &Tree, name: &str, expected: ObjectHash) {
+        let item = parent
+            .tree_items
+            .iter()
+            .find(|it| it.name == name)
+            .unwrap_or_else(|| panic!("missing blob '{name}'"));
+        assert_eq!(item.mode, TreeItemMode::Blob);
+        assert_eq!(item.id, expected);
+    }
+
+    #[test]
+    fn apply_missing_path_single_segment_creates_tool_buck() {
+        let root = ClApplicationService::empty_tree();
+        let chain_paths = vec![PathBuf::from("/")];
+        let chain_trees = vec![root];
+        let components = vec!["tool".to_string()];
+        let mut tree_cache = HashMap::new();
+        let mut new_trees = HashMap::new();
+        let mut ctx = crate::application::api_service::mono::types::ApplyChangeContext {
+            components: &components,
+            chain_paths: &chain_paths,
+            chain_trees: &chain_trees,
+            tree_cache: &mut tree_cache,
+            new_trees: &mut new_trees,
+        };
+
+        let buck = blob_hash(0x11);
+        let updated_root = ClApplicationService::apply_missing_path_update(
+            "TESTWRAP1",
+            vec!["tool".to_string()],
+            Some(buck),
+            "BUCK",
+            &mut ctx,
+        )
+        .expect("apply")
+        .expect("root");
+
+        let tool = child_tree(&updated_root, "tool", &new_trees);
+        assert_blob_at(tool, "BUCK", buck);
+        assert_eq!(tool.tree_items.len(), 1);
+    }
+
+    #[test]
+    fn apply_missing_path_two_segments_creates_config_mode_not_doubled() {
+        let root = ClApplicationService::empty_tree();
+        let chain_paths = vec![PathBuf::from("/")];
+        let chain_trees = vec![root];
+        let components = vec!["config".to_string(), "mode".to_string()];
+        let mut tree_cache = HashMap::new();
+        let mut new_trees = HashMap::new();
+        let mut ctx = crate::application::api_service::mono::types::ApplyChangeContext {
+            components: &components,
+            chain_paths: &chain_paths,
+            chain_trees: &chain_trees,
+            tree_cache: &mut tree_cache,
+            new_trees: &mut new_trees,
+        };
+
+        let buck = blob_hash(0x22);
+        let updated_root = ClApplicationService::apply_missing_path_update(
+            "TESTWRAP2",
+            vec!["config".to_string(), "mode".to_string()],
+            Some(buck),
+            "BUCK",
+            &mut ctx,
+        )
+        .expect("apply")
+        .expect("root");
+
+        let config = child_tree(&updated_root, "config", &new_trees);
+        assert!(
+            config.tree_items.iter().all(|it| it.name != "config"),
+            "must not create config/config"
+        );
+        let mode = child_tree(config, "mode", &new_trees);
+        assert_blob_at(mode, "BUCK", buck);
+    }
+
+    #[test]
+    fn apply_missing_path_three_segments_nests_under_buckal_bundles() {
+        let root = ClApplicationService::empty_tree();
+        let chain_paths = vec![PathBuf::from("/")];
+        let chain_trees = vec![root];
+        let components = vec![
+            "buckal-bundles".to_string(),
+            "config".to_string(),
+            "mode".to_string(),
+        ];
+        let mut tree_cache = HashMap::new();
+        let mut new_trees = HashMap::new();
+        let mut ctx = crate::application::api_service::mono::types::ApplyChangeContext {
+            components: &components,
+            chain_paths: &chain_paths,
+            chain_trees: &chain_trees,
+            tree_cache: &mut tree_cache,
+            new_trees: &mut new_trees,
+        };
+
+        let buck = blob_hash(0x33);
+        let updated_root = ClApplicationService::apply_missing_path_update(
+            "TESTWRAP3",
+            vec![
+                "buckal-bundles".to_string(),
+                "config".to_string(),
+                "mode".to_string(),
+            ],
+            Some(buck),
+            "BUCK",
+            &mut ctx,
+        )
+        .expect("apply")
+        .expect("root");
+
+        let bundles = child_tree(&updated_root, "buckal-bundles", &new_trees);
+        assert!(
+            bundles
+                .tree_items
+                .iter()
+                .all(|it| it.name != "buckal-bundles"),
+            "must not create buckal-bundles/buckal-bundles"
+        );
+        let config = child_tree(bundles, "config", &new_trees);
+        let mode = child_tree(config, "mode", &new_trees);
+        assert_blob_at(mode, "BUCK", buck);
+    }
+
+    #[test]
+    fn apply_missing_path_sequential_buckal_bundles_keeps_siblings() {
+        let root = ClApplicationService::empty_tree();
+        let mut tree_cache = HashMap::new();
+        tree_cache.insert(PathBuf::from("/"), root.clone());
+        let mut new_trees = HashMap::new();
+
+        // 1) buckal-bundles/LICENSE
+        {
+            let chain_paths = vec![PathBuf::from("/")];
+            let chain_trees = vec![tree_cache.get(&PathBuf::from("/")).unwrap().clone()];
+            let components = vec!["buckal-bundles".to_string()];
+            let mut ctx = crate::application::api_service::mono::types::ApplyChangeContext {
+                components: &components,
+                chain_paths: &chain_paths,
+                chain_trees: &chain_trees,
+                tree_cache: &mut tree_cache,
+                new_trees: &mut new_trees,
+            };
+            let license = blob_hash(0x44);
+            let updated = ClApplicationService::apply_missing_path_update(
+                "TESTWRAP4",
+                vec!["buckal-bundles".to_string()],
+                Some(license),
+                "LICENSE",
+                &mut ctx,
+            )
+            .expect("apply license")
+            .expect("root");
+            tree_cache.insert(PathBuf::from("/"), updated);
+        }
+
+        // 2) buckal-bundles/config/mode/BUCK onto existing buckal-bundles/
+        let root_after_license = tree_cache.get(&PathBuf::from("/")).unwrap().clone();
+        let bundles_after_license = child_tree(&root_after_license, "buckal-bundles", &new_trees);
+        {
+            let chain_paths = vec![PathBuf::from("/"), PathBuf::from("/buckal-bundles")];
+            let chain_trees = vec![root_after_license.clone(), bundles_after_license.clone()];
+            let components = vec![
+                "buckal-bundles".to_string(),
+                "config".to_string(),
+                "mode".to_string(),
+            ];
+            let mut ctx = crate::application::api_service::mono::types::ApplyChangeContext {
+                components: &components,
+                chain_paths: &chain_paths,
+                chain_trees: &chain_trees,
+                tree_cache: &mut tree_cache,
+                new_trees: &mut new_trees,
+            };
+            let buck = blob_hash(0x55);
+            let updated = ClApplicationService::apply_missing_path_update(
+                "TESTWRAP4",
+                vec!["config".to_string(), "mode".to_string()],
+                Some(buck),
+                "BUCK",
+                &mut ctx,
+            )
+            .expect("apply buck")
+            .expect("root");
+
+            let bundles = child_tree(&updated, "buckal-bundles", &new_trees);
+            assert_blob_at(bundles, "LICENSE", blob_hash(0x44));
+            assert!(
+                bundles
+                    .tree_items
+                    .iter()
+                    .all(|it| it.name != "buckal-bundles"),
+                "must not double buckal-bundles"
+            );
+            let config = child_tree(bundles, "config", &new_trees);
+            assert!(
+                config.tree_items.iter().all(|it| it.name != "config"),
+                "must not create config/config"
+            );
+            let mode = child_tree(config, "mode", &new_trees);
+            assert_blob_at(mode, "BUCK", buck);
+        }
     }
 }
