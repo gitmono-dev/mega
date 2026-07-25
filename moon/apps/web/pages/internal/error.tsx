@@ -1,5 +1,3 @@
-import * as Sentry from '@sentry/nextjs'
-
 import { Button, DebugButton as UIDebugButton } from '@gitmono/ui'
 
 import { DebugButton } from '@/components/DebugButton'
@@ -20,7 +18,7 @@ export default function InternalErrorTestPage() {
 
       <Button
         onClick={() => {
-          Sentry.captureException(new Error('Capture Exception Test 💣'))
+          console.error(new Error('Capture Exception Test 💣'))
         }}
       >
         Capture exception 💣

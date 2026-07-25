@@ -17,7 +17,6 @@ function getApproximateAspectRatio(val: number, lim = 10) {
   var lower = [0, 1]
   var upper = [1, 0]
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     var mediant = [lower[0] + upper[0], lower[1] + upper[1]]
 
@@ -151,7 +150,7 @@ export function AttachmentCard({ attachment, autoplay }: Props) {
 
 export function Accessory({ label }: { label: string }) {
   return (
-    <div className='dark:bg-elevated rounded-md bg-black px-2 py-1 text-center font-mono text-[11px] text-xs font-semibold text-white'>
+    <div className='dark:bg-elevated rounded-md bg-black px-2 py-1 text-center font-mono text-xs text-[11px] font-semibold text-white'>
       {label}
     </div>
   )

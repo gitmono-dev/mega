@@ -83,7 +83,7 @@ const NewCodeView = ({ currentPath = '', onClose, defaultType = 'file' }: NewCod
 
   return (
     <div className='flex h-full w-full flex-col gap-2'>
-      <div className='flex min-h-14 w-full items-center justify-between pl-2 pr-4'>
+      <div className='flex min-h-14 w-full items-center justify-between pr-4 pl-2'>
         <PathInput pathState={[path, setPath]} nameState={[name, setName]} />
         <div className='flex gap-2'>
           <Button disabled={name === ''} onClick={handleCommitClick}>

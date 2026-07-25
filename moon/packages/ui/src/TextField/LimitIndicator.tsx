@@ -21,7 +21,7 @@ export function LimitIndicator({ maxLength, currentLength, charThreshold }: Prop
   return (
     <div className='flex items-center gap-0.5'>
       <span
-        className={cn('font-mono text-xs font-medium leading-none text-transparent', {
+        className={cn('font-mono text-xs leading-none font-medium text-transparent', {
           'text-blue-500': showIndicator && !tooManyCharacters,
           'text-red-600': tooManyCharacters
         })}

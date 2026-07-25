@@ -79,7 +79,7 @@ function PeopleIndexInvitationRow({
   return (
     <li
       className={cn(
-        'group relative flex items-center gap-3 rounded-md py-2 pl-3 pr-1.5',
+        'group relative flex items-center gap-3 rounded-md py-2 pr-1.5 pl-3',
         'data-[state="open"]:bg-tertiary',
         {
           'focus-within:bg-tertiary': canHover
@@ -98,7 +98,7 @@ function PeopleIndexInvitationRow({
         <Avatar name={invitation.email} size='sm' />
 
         <div className='line-clamp-1 flex min-w-0 flex-1 items-center gap-1.5'>
-          <UIText weight='font-medium' className='line-clamp-1 flex-shrink'>
+          <UIText weight='font-medium' className='line-clamp-1 shrink'>
             {invitation.email}
           </UIText>
           <Badge>{invitation.role}</Badge>

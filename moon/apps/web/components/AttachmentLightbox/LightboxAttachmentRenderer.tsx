@@ -4,13 +4,11 @@ import QRCode from 'react-qr-code'
 
 import { Attachment, Post } from '@gitmono/types'
 import { Button, DownloadIcon, ExternalLinkIcon, Link, PauseIcon, PlayIcon, UIText } from '@gitmono/ui'
-import { cn } from '@gitmono/ui/src/utils'
 
 import { CanvasComments } from '@/components/CanvasComments/CanvasComments'
 import { Lottie } from '@/components/Lottie'
 import { stableId } from '@/components/Post/PostReorderableAttachments'
 import { LinkAttachment } from '@/components/Thread/Bubble/AttachmentCard/LinkAttachment'
-import { useFigmaEmbedSelected } from '@/hooks/useFigmaEmbedSelected'
 import { isRenderable } from '@/utils/attachments'
 import { getFileMetadata } from '@/utils/getFileMetadata'
 
@@ -23,8 +21,6 @@ interface Props {
 }
 
 export function LightboxAttachmentRenderer({ attachment, preventNewComment, post }: Props) {
-  const figmaEmbedSelected = useFigmaEmbedSelected({ attachment })
-
   if (attachment.video) {
     return <VideoRenderer post={post} attachment={attachment} />
   }
@@ -45,16 +41,6 @@ export function LightboxAttachmentRenderer({ attachment, preventNewComment, post
   }
   if (attachment.link) {
     return <LinkAttachment selfSize={true} attachment={attachment} />
-  }
-  if (attachment.image && attachment.remote_figma_url) {
-    return (
-      <>
-        <div className={cn('absolute inset-0', { 'opacity-0': !figmaEmbedSelected })}>
-          <LinkAttachment selfSize={true} attachment={attachment} />
-        </div>
-        {!figmaEmbedSelected && <CanvasComments attachment={attachment} preventNewComment={preventNewComment} />}
-      </>
-    )
   }
   if (!isRenderable(attachment)) {
     const metadata = getFileMetadata(attachment)
@@ -142,7 +128,7 @@ function VideoRenderer({ attachment, post }: Props) {
       ref={videoRef}
       controls={true}
       preload='auto'
-      className='focus:online-none aspect-video h-full w-full bg-black focus:border-0 focus-visible:outline-none'
+      className='focus:online-none aspect-video h-full w-full bg-black focus:border-0 focus-visible:outline-hidden'
     >
       <source src={src} type={attachment.file_type} />
       <source src={src} />
@@ -163,7 +149,7 @@ function OrigamiRenderer({ attachment }: Props) {
       >
         <QRCode size={256} value={origamiUrl} />
 
-        <div className='flex flex-col items-center justify-center space-x-0 space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0'>
+        <div className='flex flex-col items-center justify-center space-y-3 space-x-0 sm:flex-row sm:space-y-0 sm:space-x-3'>
           <Button href={attachment.download_url} download={attachment.name || 'file'} leftSlot={<DownloadIcon />}>
             Download
           </Button>
@@ -209,7 +195,7 @@ function PrincipleRenderer({ attachment }: Props) {
       >
         <QRCode size={256} value={principleUrl} />
 
-        <div className='flex flex-col items-center justify-center space-x-0 space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0'>
+        <div className='flex flex-col items-center justify-center space-y-3 space-x-0 sm:flex-row sm:space-y-0 sm:space-x-3'>
           <Button href={attachment.download_url} download={attachment.name || 'file'} leftSlot={<DownloadIcon />}>
             Download
           </Button>
@@ -255,7 +241,7 @@ function StitchRenderer({ attachment }: Props) {
       >
         <QRCode size={256} value={stitchUrl} />
 
-        <div className='flex flex-col items-center justify-center space-x-0 space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0'>
+        <div className='flex flex-col items-center justify-center space-y-3 space-x-0 sm:flex-row sm:space-y-0 sm:space-x-3'>
           <Button href={attachment.download_url} download={attachment.name || 'file'} leftSlot={<DownloadIcon />}>
             Download
           </Button>

@@ -97,7 +97,7 @@ export function CoverPhotoUploader({
         )}
 
         {!src && (
-          <div className='bg-elevated absolute -bottom-2 -right-2 flex translate-y-0 cursor-pointer items-center justify-center rounded-full border p-2 shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg'>
+          <div className='bg-elevated absolute -right-2 -bottom-2 flex translate-y-0 cursor-pointer items-center justify-center rounded-full border p-2 shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg'>
             <PencilIcon />
           </div>
         )}

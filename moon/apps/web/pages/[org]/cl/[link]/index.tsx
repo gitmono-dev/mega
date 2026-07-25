@@ -145,7 +145,7 @@ const CLDetailPage: PageWithLayout<any> = () => {
     upload: editorRef.current?.uploadAndAppendAttachments
   })
 
-  const avatars = useAvatars()
+  const avatars = useAvatars({ preferGithubLogin: true })
 
   const memberMap = useMemberMap()
 
@@ -291,7 +291,7 @@ const CLDetailPage: PageWithLayout<any> = () => {
     return (
       <div className='mt-3 flex items-center gap-3'>
         <div
-          className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-medium leading-none text-white ${bgClass}`}
+          className={`inline-flex items-center rounded-full px-4 py-2 text-sm leading-none font-medium text-white ${bgClass}`}
         >
           {Icon && <Icon size={16} className='mr-1 text-white' />}
           <span>{label}</span>

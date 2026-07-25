@@ -38,7 +38,7 @@ export function ProjectPreviewCard({ className, projectId, interactive }: Props)
       {interactive && <Link href={`/${scope}/projects/${project.id}`} className='absolute inset-0 z-0' />}
 
       <div className='flex flex-1 items-center gap-2'>
-        <span className='h-7.5 w-7.5 relative flex items-center justify-center self-start'>
+        <span className='relative flex h-7.5 w-7.5 items-center justify-center self-start'>
           {project.accessory ? (
             <UIText className='font-["emoji"] text-[17px]'>{project.accessory}</UIText>
           ) : (
@@ -53,7 +53,7 @@ export function ProjectPreviewCard({ className, projectId, interactive }: Props)
             </UIText>
 
             {project.private && (
-              <div className='text-quaternary h-5.5 w-5.5 flex items-center justify-center'>
+              <div className='text-quaternary flex h-5.5 w-5.5 items-center justify-center'>
                 <LockIcon size={16} strokeWidth='2' />
               </div>
             )}
@@ -82,7 +82,7 @@ export function ProjectPreviewCard({ className, projectId, interactive }: Props)
       {interactive && (
         <div
           className={cn(
-            'ml-1 mt-2 sm:ml-0 sm:mt-0',
+            'mt-2 ml-1 sm:mt-0 sm:ml-0',
             'flex flex-none flex-row-reverse items-center justify-end gap-1 sm:flex-row'
           )}
         >

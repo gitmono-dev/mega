@@ -60,10 +60,10 @@ export function Tooltip(props: Props) {
               side={side}
               align={align}
               className={cn(
-                'text-primary dark:bg-elevated dark pointer-events-none flex max-w-sm flex-row gap-3 break-words rounded-md bg-gray-900 py-1 text-center text-[13px] font-normal shadow-[inset_0px_0px_0px_0.5px_rgb(255_255_255_/_0.02),inset_0px_0.5px_0px_rgb(255_255_255_/_0.04),_inset_0px_0px_0px_1px_rgb(255_255_255_/_0.02),_0px_0px_0px_0.5px_rgb(0_0_0_/_0.24)]',
+                'text-primary dark:bg-elevated dark pointer-events-none flex max-w-sm flex-row gap-3 rounded-md bg-gray-900 py-1 text-center text-[13px] font-normal break-words shadow-[inset_0px_0px_0px_0.5px_rgb(255_255_255_/_0.02),inset_0px_0.5px_0px_rgb(255_255_255_/_0.04),_inset_0px_0px_0px_1px_rgb(255_255_255_/_0.02),_0px_0px_0px_0.5px_rgb(0_0_0_/_0.24)]',
                 {
                   'px-2': !shortcut,
-                  'pl-2.5 pr-1': !!shortcut && !!label,
+                  'pr-1 pl-2.5': !!shortcut && !!label,
                   'px-1': !!shortcut && !label
                 }
               )}

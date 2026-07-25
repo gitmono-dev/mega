@@ -1,23 +1,17 @@
 import { useAtomValue } from 'jotai'
 import { useRouter } from 'next/router'
 
-import { ChatBubbleIcon, HomeIcon, NoteIcon, VideoCameraIcon } from '@gitmono/ui/Icons'
+import { ChatBubbleIcon, HomeIcon, NoteIcon } from '@gitmono/ui/Icons'
 
-import { CallsHoverCard } from '@/components/Calls/CallsHoverCard'
 import { ChatHoverList } from '@/components/Chat/ChatHoverCard'
 import { sidebarCollapsedAtom } from '@/components/Layout/AppLayout'
-import {
-  useRefetchCallsIndex,
-  useRefetchNotesIndex,
-  useRefetchPostsIndex
-} from '@/components/NavigationBar/useNavigationTabAction'
+import { useRefetchNotesIndex, useRefetchPostsIndex } from '@/components/NavigationBar/useNavigationTabAction'
 import { NotesHoverList } from '@/components/NotesIndex/NotesHoverCard'
 import { SidebarLink, SidebarProps } from '@/components/Sidebar/SidebarLink'
 import { SidebarUnreadBadge } from '@/components/Sidebar/SidebarUnreadBadge'
 import { useScope } from '@/contexts/scope'
 import { useCurrentUserOrOrganizationHasFeature } from '@/hooks/useCurrentUserOrOrganizationHasFeature'
 import { useGetUnreadNotificationsCount } from '@/hooks/useGetUnreadNotificationsCount'
-import { useIsCommunity } from '@/hooks/useIsCommunity'
 import { useMarkIndexPageRead } from '@/hooks/useMarkIndexPageUnread'
 
 export function SidebarMessages({ label, href, active }: SidebarProps) {
@@ -68,35 +62,6 @@ export function SidebarDocs({ label, href, active }: SidebarProps) {
         onClick={onNotesClick}
       />
     </NotesHoverList>
-  )
-}
-
-export function SidebarCalls({ label, href, active }: SidebarProps) {
-  const router = useRouter()
-  const sidebarCollapsed = useAtomValue(sidebarCollapsedAtom)
-  const refetchCalls = useRefetchCallsIndex()
-  const isCommunity = useIsCommunity()
-  const isViewingCalls = router.pathname === '/[org]/calls'
-
-  function onCallsClick() {
-    refetchCalls()
-  }
-
-  if (isCommunity) {
-    return null
-  }
-
-  return (
-    <CallsHoverCard sideOffset={4} alignOffset={-44} disabled={sidebarCollapsed || isViewingCalls}>
-      <SidebarLink
-        id='calls'
-        label={label}
-        href={href}
-        active={active}
-        leadingAccessory={<VideoCameraIcon />}
-        onClick={onCallsClick}
-      />
-    </CallsHoverCard>
   )
 }
 

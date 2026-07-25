@@ -29,7 +29,7 @@ export function SidebarOrgSwitcher() {
   const collapsed = useAtomValue(sidebarCollapsedAtom)
   const { onReorder, mutation: reorder } = useReorderOrganizationMemberships()
   const [draggingId, setDraggingId] = useState<undefined | string>()
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLUListElement>(null)
   const organizationMembershipIds = memberships?.map((membership) => membership.id)
 
   if (collapsed || !organizationMembershipIds) return null
@@ -162,7 +162,7 @@ function OrgSidebarItem({
 
             {showUnread && (
               <div
-                className='absolute right-px top-px h-2 w-2 rounded-full bg-blue-500 ring-2 ring-gray-50 dark:ring-gray-900'
+                className='absolute top-px right-px h-2 w-2 rounded-full bg-blue-500 ring-2 ring-gray-50 dark:ring-gray-900'
                 style={{ transform: 'translate(50%, -50%)' }}
               />
             )}

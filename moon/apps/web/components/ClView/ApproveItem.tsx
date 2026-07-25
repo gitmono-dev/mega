@@ -2,6 +2,7 @@ import { ConversationItem } from '@gitmono/types/generated'
 import { ConditionalWrap } from '@gitmono/ui'
 
 import { useGetOrganizationMember } from '@/hooks/useGetOrganizationMember'
+import { megaUserHandle } from '@/utils/megaUser'
 
 import { MemberHovercard } from '../InlinePost/MemberHovercard'
 import { MemberAvatar } from '../MemberAvatar'
@@ -14,6 +15,8 @@ interface ApproveItemProps {
 
 const ApproveItem = ({ conv }: ApproveItemProps) => {
   const { data: member } = useGetOrganizationMember({ username: conv.username })
+  const profileUsername = member?.user.username || conv.username
+  const displayName = megaUserHandle(member?.user, conv.username)
 
   return (
     <>
@@ -22,8 +25,8 @@ const ApproveItem = ({ conv }: ApproveItemProps) => {
           <ConditionalWrap
             condition={true}
             wrap={(c) => (
-              <MemberHovercard username={conv?.username}>
-                <UserLinkByName username={conv?.username} className='relative'>
+              <MemberHovercard username={profileUsername}>
+                <UserLinkByName username={profileUsername} className='relative'>
                   {c}
                 </UserLinkByName>
               </MemberHovercard>
@@ -33,7 +36,7 @@ const ApproveItem = ({ conv }: ApproveItemProps) => {
           </ConditionalWrap>
         </div>
         <div>
-          <span className='font-semibold'>{conv.username}</span>
+          <span className='font-semibold'>{displayName}</span>
           <span className='text-gray-600'> approved this change list</span>
         </div>
         <div className='text-sm text-gray-500 hover:text-gray-700'>

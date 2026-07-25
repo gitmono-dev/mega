@@ -117,7 +117,9 @@ function Views({ post }: { post: Post }) {
         </div>
       )}
 
-      {views?.map((view) => <ViewLink key={view.id} member={view.member} time={view.updated_at} />)}
+      {views?.map((view) => (
+        <ViewLink key={view.id} member={view.member} time={view.updated_at} />
+      ))}
 
       <InfiniteLoader
         hasNextPage={!!hasNextPage}

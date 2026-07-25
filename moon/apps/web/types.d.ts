@@ -1,6 +1,10 @@
-declare namespace JSX {
-  interface IntrinsicElements {
-    'lottie-player': any
+import 'react'
+
+declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements {
+      'lottie-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>
+    }
   }
 }
 

@@ -31,7 +31,6 @@ enum PostComposerType {
    */
   DraftFromPost = 'draft-from-post',
   DraftFromNote = 'draft-from-note',
-  DraftFromCall = 'draft-from-call',
   DraftFromMessage = 'draft-from-message',
   DraftFromComment = 'draft-from-comment',
   DraftFromText = 'draft-from-text'
@@ -42,7 +41,6 @@ function isDraftType(type?: PostComposerType): boolean {
     type === PostComposerType.Draft ||
     type === PostComposerType.DraftFromComment ||
     type === PostComposerType.DraftFromNote ||
-    type === PostComposerType.DraftFromCall ||
     type === PostComposerType.DraftFromMessage ||
     type === PostComposerType.DraftFromText
   )
@@ -102,7 +100,6 @@ type PostComposerState = {
         | PostComposerType.Draft
         | PostComposerType.DraftFromPost
         | PostComposerType.DraftFromNote
-        | PostComposerType.DraftFromCall
         | PostComposerType.DraftFromMessage
         | PostComposerType.DraftFromComment
         | PostComposerType.DraftFromText

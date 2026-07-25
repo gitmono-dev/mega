@@ -1,6 +1,6 @@
 import { NodeViewWrapper, NodeViewWrapperProps } from '@tiptap/react'
 
-import { NoteFilledIcon, PostFilledIcon, VideoCameraFilledIcon, WarningTriangleIcon } from '@gitmono/ui/Icons'
+import { NoteFilledIcon, PostFilledIcon, WarningTriangleIcon } from '@gitmono/ui/Icons'
 import { Link } from '@gitmono/ui/Link'
 import { LoadingSpinner } from '@gitmono/ui/Spinner'
 import { cn } from '@gitmono/ui/src/utils'
@@ -22,7 +22,7 @@ export function InlineResourceMentionRenderer(props: NodeViewWrapperProps) {
           'rounded-md outline outline-2 outline-blue-500 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-500':
             props.editor.options.editable && props.selected && props.editor.isFocused
         },
-        '[.drag-node_&]:outline-none'
+        '[.drag-node_&]:outline-hidden'
       )}
       draggable={false}
       data-drag-handle={false}
@@ -36,7 +36,7 @@ export function InlineResourceMentionRenderer(props: NodeViewWrapperProps) {
 
 function Container({ children }: React.PropsWithChildren) {
   return (
-    <span className='rounded bg-black/[0.04] decoration-clone py-0.5 pl-px pr-[3px] align-baseline text-[15px] hover:bg-black/[0.08] dark:bg-white/10 dark:hover:bg-white/[0.14]'>
+    <span className='rounded bg-black/[0.04] decoration-clone py-0.5 pr-[3px] pl-px align-baseline text-[15px] hover:bg-black/[0.08] dark:bg-white/10 dark:hover:bg-white/[0.14]'>
       {children}
     </span>
   )
@@ -48,15 +48,23 @@ function IconContainer({ children }: React.PropsWithChildren) {
 
 export function ResourceMentionView({ href }: { href: string }) {
   const { data: item, isPending, isError } = useGetResourceMention({ url: href })
-  const resource = item?.post || item?.call || item?.note
+  const resource = item?.post || item?.note
 
   if (resource) {
     return (
       <Container>
         <IconContainer>
-          <ResourceMentionIcon type={item.call ? 'call' : item.note ? 'note' : 'post'} />
+          <ResourceMentionIcon type={item.note ? 'note' : 'post'} />
         </IconContainer>
         <span className='text-primary'>{resource.title}</span>
+      </Container>
+    )
+  }
+
+  if (item?.call) {
+    return (
+      <Container>
+        <span className='text-primary'>{item.call.title}</span>
       </Container>
     )
   }
@@ -86,10 +94,7 @@ export function ResourceMentionView({ href }: { href: string }) {
   return null
 }
 
-export function ResourceMentionIcon({ type, size }: { type: 'call' | 'note' | 'post'; size?: number }) {
-  if (type === 'call') {
-    return <VideoCameraFilledIcon size={size} className='shrink-0 text-green-500' />
-  }
+export function ResourceMentionIcon({ type, size }: { type: 'note' | 'post'; size?: number }) {
   if (type === 'note') {
     return <NoteFilledIcon size={size} className='shrink-0 text-blue-500' />
   }

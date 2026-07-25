@@ -28,8 +28,8 @@ export function FullPageError({ message, title = 'Something went wrong', emoji =
   return (
     <div className='flex w-full flex-1 flex-col items-center justify-center gap-6'>
       <div className='group relative h-24 w-20'>
-        <div className='bg-primary absolute inset-0 rotate-[5deg] rounded-md border shadow-sm transition-transform group-hover:rotate-[7deg] group-hover:scale-105' />
-        <div className='bg-primary absolute inset-0 flex rotate-[-5deg] items-center justify-center rounded-md border shadow-sm transition-transform group-hover:rotate-[-7deg] group-hover:scale-105'>
+        <div className='bg-primary absolute inset-0 rotate-[5deg] rounded-md border shadow-xs transition-transform group-hover:scale-105 group-hover:rotate-[7deg]' />
+        <div className='bg-primary absolute inset-0 flex rotate-[-5deg] items-center justify-center rounded-md border shadow-xs transition-transform group-hover:scale-105 group-hover:rotate-[-7deg]'>
           <span className='text-2xl'>{emoji}</span>
         </div>
       </div>

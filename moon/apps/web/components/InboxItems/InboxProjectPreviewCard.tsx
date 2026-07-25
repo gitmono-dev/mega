@@ -72,7 +72,7 @@ function ProjectPreviewRecentPosts({ project }: ProjectPreviewRecentPostsProps) 
 
   return (
     <div className='bg-elevated flex w-full max-w-md flex-col rounded-lg border p-2'>
-      <div className='gap-4.5 flex items-center px-3.5 py-2'>
+      <div className='flex items-center gap-4.5 px-3.5 py-2'>
         <ClockIcon />
         <UIText weight='font-semibold'>Recent posts</UIText>
       </div>
@@ -122,7 +122,7 @@ function InboxProjectPreviewCard({ project }: InboxProjectPreviewCardProps) {
     <div className='bg-secondary dark:bg-primary flex flex-1 flex-col items-center justify-center gap-6 p-6'>
       <div
         className={cn('bg-elevated relative flex w-full max-w-md flex-col rounded-lg border p-4', {
-          'border-b-primary border-l-primary border-r-primary rounded-t-none border-t-2 border-t-yellow-400 after:pointer-events-none after:absolute after:left-1/2 after:top-0 after:-translate-x-1/2 after:rounded-b-md after:bg-yellow-400 after:px-2.5 after:py-1 after:font-mono after:text-[10px] after:font-semibold after:uppercase after:tracking-wider after:text-yellow-800 after:content-["Archived"]':
+          'border-b-primary border-l-primary border-r-primary rounded-t-none border-t-2 border-t-yellow-400 after:pointer-events-none after:absolute after:top-0 after:left-1/2 after:-translate-x-1/2 after:rounded-b-md after:bg-yellow-400 after:px-2.5 after:py-1 after:font-mono after:text-[10px] after:font-semibold after:tracking-wider after:text-yellow-800 after:uppercase after:content-["Archived"]':
             project.archived
         })}
       >

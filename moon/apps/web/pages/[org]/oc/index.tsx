@@ -442,11 +442,11 @@ const OrionClientPage: PageWithLayout<any> = () => {
                     logsFollowRef.current = distanceFromBottom < 40
                   }}
                   style={{ height: 320, maxHeight: 320, overflowY: 'auto', overflowX: 'auto' }}
-                  className='w-full cursor-text select-text rounded border border-gray-200 bg-black/90 outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700'
+                  className='w-full cursor-text rounded border border-gray-200 bg-black/90 outline-hidden select-text focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700'
                 >
                   <pre
                     ref={logsPreRef}
-                    className='m-0 block w-full min-w-0 select-text whitespace-pre-wrap break-words p-3 font-mono text-xs leading-5 text-green-100'
+                    className='m-0 block w-full min-w-0 p-3 font-mono text-xs leading-5 break-words whitespace-pre-wrap text-green-100 select-text'
                   >
                     {runnerLogs ||
                       (runnerLogsStatus === 'connecting'
@@ -467,7 +467,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
 
         {!showingLogs ? (
           <>
-            <div className='group flex min-h-[35px] items-center rounded-md border border-gray-300 bg-white px-3 shadow-sm transition-all focus-within:border-blue-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-blue-100 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-500'>
+            <div className='group flex min-h-[35px] items-center rounded-md border border-gray-300 bg-white px-3 shadow-xs transition-all focus-within:border-blue-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-blue-100 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-500'>
               <div className='flex items-center text-gray-400'>
                 <svg
                   xmlns='http://www.w3.org/2000/svg'
@@ -489,7 +489,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
                 value={hostnameInput}
                 onChange={(e) => setHostnameInput(e.target.value)}
                 placeholder='Search by Hostname'
-                className='w-full flex-1 border-none bg-transparent text-sm text-gray-700 outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 dark:text-gray-100 dark:placeholder:text-gray-500'
+                className='w-full flex-1 border-none bg-transparent text-sm text-gray-700 ring-0 outline-hidden placeholder:text-gray-400 focus:ring-0 focus:outline-hidden dark:text-gray-100 dark:placeholder:text-gray-500'
               />
             </div>
 

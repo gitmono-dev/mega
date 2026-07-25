@@ -29,7 +29,7 @@ export function ExistingThreadListItem({ thread, isSelected = false }: Props) {
     <Link
       href={`/${thread.organization_slug}/chat/${thread.id}`}
       className={cn(
-        'dark:focus:bg-tertiary group relative flex w-full flex-none scroll-mt-12 items-center gap-3 rounded-lg py-3 pl-2 pr-4 focus-within:border-none focus-within:outline-none focus-within:ring-0 focus:border-none focus:outline-none focus:ring-0',
+        'dark:focus:bg-tertiary group relative flex w-full flex-none scroll-mt-12 items-center gap-3 rounded-lg py-3 pr-4 pl-2 focus-within:border-none focus-within:ring-0 focus-within:outline-hidden focus:border-none focus:ring-0 focus:outline-hidden',
         {
           'bg-tertiary': isSelected,
           'hover:bg-tertiary': !isSelected

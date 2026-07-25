@@ -26,7 +26,7 @@ export default function MarkdownEditor({ contentState, disabled = false }: Markd
     },
     editorProps: {
       attributes: {
-        class: 'max-w-full focus:outline-none font-mono text-sm leading-6 h-full'
+        class: 'max-w-full focus:outline-hidden font-mono text-sm leading-6 h-full'
       }
     }
   })
@@ -67,13 +67,13 @@ export default function MarkdownEditor({ contentState, disabled = false }: Markd
 
       <div className={`flex flex-1 overflow-x-auto ${disabled ? 'bg-tertiary' : ''}`}>
         {isPreview ? (
-          <div className='prose h-full w-full max-w-none overflow-y-auto px-8 pb-4 pt-6'>
+          <div className='prose h-full w-full max-w-none overflow-y-auto px-8 pt-6 pb-4'>
             <Markdown>{content}</Markdown>
           </div>
         ) : (
           <div className='flex h-full w-full font-mono text-sm leading-6'>
             <div
-              className='border-primary bg-secondary text-quaternary flex select-none flex-col rounded-bl-xl border-r py-2 pr-4 text-right'
+              className='border-primary bg-secondary text-quaternary flex flex-col rounded-bl-xl border-r py-2 pr-4 text-right select-none'
               style={{ paddingLeft: '1rem' }}
             >
               {lineNumbers.map((n) => (
@@ -92,7 +92,7 @@ export default function MarkdownEditor({ contentState, disabled = false }: Markd
             >
               <EditorContent
                 editor={textEditor}
-                className='h-full w-full [&_.ProseMirror]:h-full [&_.ProseMirror]:px-4 [&_.ProseMirror]:py-2 [&_.ProseMirror]:outline-none [&_.ProseMirror_p]:m-0 [&_.ProseMirror_p]:h-6'
+                className='h-full w-full [&_.ProseMirror]:h-full [&_.ProseMirror]:px-4 [&_.ProseMirror]:py-2 [&_.ProseMirror]:outline-hidden [&_.ProseMirror_p]:m-0 [&_.ProseMirror_p]:h-6'
               />
             </div>
           </div>

@@ -184,7 +184,6 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, Props>((props, ref) => {
           highlight: enableSyntaxHighlighting
         },
 
-        enableInlineAttachments,
         blurAtTop: {
           enabled: !!onBlurAtTop,
           onBlur: onBlurAtTop
@@ -228,7 +227,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, Props>((props, ref) => {
         attributes: {
           id: id,
           class: cn(
-            'prose editing focus:outline-none w-full max-w-full overflow-hidden select-auto',
+            'prose editing focus:outline-hidden w-full max-w-full overflow-hidden select-auto',
             {
               'text-sm': textSize === 'sm'
             },
@@ -367,7 +366,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorRef, Props>((props, ref) => {
 
   return (
     <>
-      {!props.disabled && <EditorBubbleMenu editor={editor} tippyAppendTo={appendBubbleMenuTo} />}
+      {!props.disabled && <EditorBubbleMenu editor={editor} appendTo={appendBubbleMenuTo} />}
       {enableSyntaxHighlighting && <CodeBlockLanguagePicker editor={editor} />}
       {!disableSlashCommand && <SlashCommand editor={editor} upload={upload} />}
       {!disableMentions && <MentionList editor={editor} defaultMentions={defaultMentions} />}

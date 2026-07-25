@@ -22,12 +22,12 @@ export function LinkAttachment({ attachment, selfSize }: Props) {
     }
   }, [inView, hasLoaded])
 
-  const url = attachment.file_type === 'link' ? attachment.url : attachment.remote_figma_url
+  const url = attachment.url
 
   if (!url) return null
   const linkType = embedType(url)
   const trusted = embedTypeTrusted(linkType)
-  const { src } = transformUrl(attachment.file_type === 'link' ? linkType : 'figma', url)
+  const { src } = transformUrl(linkType, url)
 
   return (
     <div className={cn('h-full w-full')}>

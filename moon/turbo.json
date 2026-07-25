@@ -26,9 +26,6 @@
     "lint:fix": {
       "outputs": []
     },
-    "sentry:sourcemaps": {
-      "outputs": []
-    },
     "clean": {
       "cache": false
     }

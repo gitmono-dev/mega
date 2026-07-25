@@ -45,8 +45,7 @@ export function commentComposerId(subjectId: string, replyingToCommentId?: strin
 const ADD_ATTACHMENT_SHORTCUT = 'mod+shift+u'
 
 export interface CommentComposerProps
-  extends CommentFormProps,
-    Pick<ComponentProps<typeof MarkdownEditor>, 'defaultMentions'> {
+  extends CommentFormProps, Pick<ComponentProps<typeof MarkdownEditor>, 'defaultMentions'> {
   open?: boolean
   onOptimisticCreate?(): void
   onCreated?: (response: Comment) => void
@@ -234,7 +233,7 @@ export function CommentComposer({
 
       <div
         className={cn('relative flex min-w-0 flex-1 flex-col', {
-          'bg-elevated rounded-lg border shadow-sm': display === 'block'
+          'bg-elevated rounded-lg border shadow-xs': display === 'block'
         })}
       >
         <input {...dropzone.getInputProps()} />

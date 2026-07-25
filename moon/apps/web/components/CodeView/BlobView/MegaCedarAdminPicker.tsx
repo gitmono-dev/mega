@@ -155,7 +155,7 @@ export function MegaCedarAdminPicker({ fileContent, onContentGenerated, disabled
         type='text'
         value={memberSearchQuery}
         onChange={(e) => setMemberSearchQuery(e.target.value)}
-        className='mb-3 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+        className='mb-3 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden'
         placeholder='Search members by name or username...'
         disabled={disabled || !!membersError || generateCedar.isPending}
       />
@@ -191,7 +191,7 @@ export function MegaCedarAdminPicker({ fileContent, onContentGenerated, disabled
                   <img
                     src={member.user.avatar_urls?.sm || ''}
                     alt={member.user.display_name}
-                    className='mr-3 h-7 w-7 flex-shrink-0 rounded-full border border-gray-200'
+                    className='mr-3 h-7 w-7 shrink-0 rounded-full border border-gray-200'
                   />
                   <div className='min-w-0 flex-1'>
                     <p className='truncate text-sm font-medium text-gray-900'>{member.user.display_name}</p>

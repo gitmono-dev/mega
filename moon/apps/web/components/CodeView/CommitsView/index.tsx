@@ -162,9 +162,9 @@ export const CommitsView: React.FC = () => {
                   return (
                     <div key={item.sha} className='relative flex gap-4'>
                       <div className='relative flex w-5 flex-col items-center'>
-                        <div className='bg-border-muted absolute bottom-0 left-1/2 top-0 w-0.5 -translate-x-1/2 transform' />
+                        <div className='bg-border-muted absolute top-0 bottom-0 left-1/2 w-0.5 -translate-x-1/2 transform' />
                         {index === 0 && (
-                          <div className='bg-primary relative z-10 mt-3 flex-shrink-0 rounded-full'>
+                          <div className='bg-primary relative z-10 mt-3 shrink-0 rounded-full'>
                             <GitCommitIcon size={18} className='text-tertiary' />
                           </div>
                         )}
@@ -199,7 +199,9 @@ export const CommitsView: React.FC = () => {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  copy(item.sha) ? toast.success('Copied to clipboard') : toast.error('Copy failed')
+                                  void copy(item.sha).then((ok) =>
+                                    ok ? toast.success('Copied to clipboard') : toast.error('Copy failed')
+                                  )
                                 }}
                                 className='text-tertiary hover:text-secondary transition-colors'
                               >
@@ -212,7 +214,7 @@ export const CommitsView: React.FC = () => {
                             }}
                           >
                             <div className='text-tertiary flex items-center gap-2 text-xs leading-4'>
-                              <div className='h-5 flex-shrink-0'>
+                              <div className='h-5 shrink-0'>
                                 <MemberHoverAvatarList authors={[item.committer]} isLeft={true} />
                               </div>
                               <div className='flex items-center gap-1 whitespace-nowrap'>

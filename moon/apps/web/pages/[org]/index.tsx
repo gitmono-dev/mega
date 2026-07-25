@@ -25,7 +25,10 @@ const OrganizationHomeFeedPage: PageWithLayout<any> = () => {
 
 export const getServerSideProps: GetServerSideProps = async ({ req, query }) => {
   const scope = query.org as string
-  const scopePath = req.cookies[scopePathCookieName(scope)]
+  const scopePath =
+    req.cookies[scopePathCookieName(scope)] ??
+    // legacy name used before cookies-next@4 name validation
+    req.cookies[`last-path:${scope}`]
   const referer = req.headers.referer
   const refererPathname = referer ? new URL(referer).pathname : undefined
   const scopePathname = scopePath ? new URL(scopePath, WEB_URL).pathname : undefined

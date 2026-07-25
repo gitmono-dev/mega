@@ -69,7 +69,7 @@ export function BranchDropdown({ value, onChange, onClose }: BranchDropdownProps
       </span>
       <input
         ref={ref}
-        className='flex-1 border-none bg-transparent p-0 text-sm outline-none ring-0 focus:ring-0'
+        className='flex-1 border-none bg-transparent p-0 text-sm ring-0 outline-hidden focus:ring-0'
         placeholder='Filter branches'
         role='searchbox'
         autoComplete='off'
@@ -176,7 +176,7 @@ export function AuthorDropdown({ members, value, onChange, onClose }: AuthorDrop
       </span>
       <input
         ref={ref}
-        className='flex-1 border-none bg-transparent p-0 text-sm outline-none ring-0 focus:ring-0'
+        className='flex-1 border-none bg-transparent p-0 text-sm ring-0 outline-hidden focus:ring-0'
         placeholder='Filter by author'
         role='searchbox'
         autoComplete='off'

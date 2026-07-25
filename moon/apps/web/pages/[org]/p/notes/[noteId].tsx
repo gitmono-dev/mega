@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { domMax, LazyMotion } from 'framer-motion'
 import { GetStaticPropsContext } from 'next'
-import { DefaultSeo } from 'next-seo'
+import { generateNextSeo } from 'next-seo/pages'
 import dynamic from 'next/dynamic'
 import Head from 'next/head'
 import { isMacOs } from 'react-device-detect'
@@ -70,7 +70,7 @@ const NotePage: PageWithLayout<any> = ({ note }) => {
       />
 
       <nav
-        className={cn('drag bg-primary flex items-center justify-between gap-3 border-b py-2.5 pl-4 pr-2.5', {
+        className={cn('drag bg-primary flex items-center justify-between gap-3 border-b py-2.5 pr-2.5 pl-4', {
           'pl-22': isDesktopApp && isMacOs
         })}
       >
@@ -83,11 +83,11 @@ const NotePage: PageWithLayout<any> = ({ note }) => {
       </nav>
       <ScrollableContainer>
         <div className='mx-auto flex w-full max-w-[44rem] flex-1 flex-col gap-4 px-4 pb-4 md:px-6 lg:px-0'>
-          <div className='flex select-text flex-col gap-3 py-8 md:py-14 lg:py-20'>
+          <div className='flex flex-col gap-3 py-8 select-text md:py-14 lg:py-20'>
             <UIText
               element='h1'
               className={cn(
-                '-mx-px mb-1 w-full border-0 bg-transparent p-0 text-[clamp(2rem,_4vw,_2.5rem)] font-bold leading-[1.2] outline-none focus:border-0 focus:outline-none focus:ring-0'
+                '-mx-px mb-1 w-full border-0 bg-transparent p-0 text-[clamp(2rem,_4vw,_2.5rem)] leading-[1.2] font-bold outline-hidden focus:border-0 focus:ring-0 focus:outline-hidden'
               )}
             >
               {note.title || 'Untitled'}
@@ -128,30 +128,28 @@ function PublicNoteProviders({ children, note }: { children: React.ReactNode; no
               <GlobalMetaTags />
 
               <Head>
-                <title>{note.title ?? 'Untitled'}</title>
-              </Head>
-
-              <DefaultSeo
-                title={note.title}
-                openGraph={{
+                {generateNextSeo({
                   title: note.title,
-                  images: [
-                    {
-                      url: ogImageUrl.toString(),
-                      alt: `Feature image for ${note.title}`
-                    }
-                  ],
-                  url: note.url,
-                  siteName: 'Campsite',
-                  type: 'website',
-                  locale: 'en_US'
-                }}
-                twitter={{
-                  handle: '@trycampsite',
-                  cardType: 'summary_large_image',
-                  site: '@trycampsite'
-                }}
-              />
+                  openGraph: {
+                    title: note.title,
+                    images: [
+                      {
+                        url: ogImageUrl.toString(),
+                        alt: `Feature image for ${note.title}`
+                      }
+                    ],
+                    url: note.url,
+                    siteName: 'Campsite',
+                    type: 'website',
+                    locale: 'en_US'
+                  },
+                  twitter: {
+                    handle: '@trycampsite',
+                    cardType: 'summary_large_image',
+                    site: '@trycampsite'
+                  }
+                })}
+              </Head>
 
               {children}
             </ThemeProvider>

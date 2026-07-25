@@ -1,3 +1,5 @@
+import '../types/tiptap-markdown'
+
 export * from './BlockDocument'
 export * from './Blockquote'
 export * from './BlurAtTop'

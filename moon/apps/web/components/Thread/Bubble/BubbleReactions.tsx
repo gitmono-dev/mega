@@ -52,7 +52,7 @@ export function BubbleReactions({ message, thread }: Props) {
   return (
     <div
       className={cn(
-        'ring-primary h-5.5 bg-primary flex flex-wrap items-center gap-0.5 rounded-full px-px shadow-sm ring-2',
+        'ring-primary bg-primary flex h-5.5 flex-wrap items-center gap-0.5 rounded-full px-px shadow-xs ring-2',
         {
           'flex-row-reverse': message.viewer_is_sender
         }

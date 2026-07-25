@@ -91,7 +91,7 @@ const newOrgSchema = z
   .superRefine((data, ctx) => {
     if (data.source === OTHER_SELECTION && (!data.sourceOther || data.sourceOther.length <= 1)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         message: 'Please specify what brought you to Campsite',
         path: ['sourceOther']
       })
@@ -118,7 +118,7 @@ export function NewOrganizationForm() {
     formState: { errors, isValid },
     setValue: setFormValue,
     trigger
-  } = useForm<NewOrgSchema>({
+  } = useForm({
     resolver: zodResolver(newOrgSchema),
     defaultValues: DEFAULT_NEW_ORG_VALUES
   })
@@ -253,7 +253,7 @@ export function NewOrganizationForm() {
             </div>
           </div>
 
-          <div className='mb-2 mt-3 h-px border-b' />
+          <div className='mt-3 mb-2 h-px border-b' />
 
           <div className='flex flex-col'>
             <RequiredLabel label='What is your role?' forId='select-role' />

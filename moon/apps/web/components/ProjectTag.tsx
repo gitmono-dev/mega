@@ -27,11 +27,11 @@ export const ProjectTag = forwardRef<ProjectTagElement, ProjectTagProps>(({ proj
         {...props}
         ref={ref}
         className={cn(
-          'hover:text-primary text-quaternary @xl:text-tertiary @xl:border @xl:h-6 relative flex items-center gap-1 rounded-full',
+          'hover:text-primary text-quaternary @xl:text-tertiary relative flex items-center gap-1 rounded-full @xl:h-6 @xl:border',
           {
             '@xl:px-2': !project.accessory && !project.private,
-            '@xl:pl-1.5 @xl:pr-2.5': project.accessory && !project.private,
-            '@xl:pl-2.5 @xl:pr-1.5': project.private && !project.accessory,
+            '@xl:pr-2.5 @xl:pl-1.5': project.accessory && !project.private,
+            '@xl:pr-1.5 @xl:pl-2.5': project.private && !project.accessory,
             '@xl:px-1.5': project.private && project.accessory
           },
           className

@@ -32,7 +32,7 @@ export const SelectCommandInput = React.forwardRef<
     </span>
     <CommandPrimitive.Input
       ref={ref}
-      className='h-8 w-full border-0 bg-transparent px-2 py-3 text-[15px] text-sm placeholder-gray-400 outline-none focus:border-black/5 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50'
+      className='h-8 w-full border-0 bg-transparent px-2 py-3 text-sm text-[15px] placeholder-gray-400 outline-hidden focus:border-black/5 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50'
       {...props}
     />
   </div>
@@ -46,7 +46,7 @@ export const SelectCommandList = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <CommandPrimitive.List
     ref={ref}
-    className={cn('scrollbar-hide m-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-1', className)}
+    className={cn('scrollbar-hide m-0 flex-1 space-y-1 overflow-x-hidden overflow-y-auto px-1', className)}
     {...props}
   />
 ))
@@ -59,7 +59,7 @@ export const SelectCommandEmpty = React.forwardRef<
 >((props, ref) => (
   <CommandPrimitive.Empty
     ref={ref}
-    className='text-tertiary inline-flex h-full w-full select-none items-center justify-center p-4 text-center text-[15px] text-sm'
+    className='text-tertiary inline-flex h-full w-full items-center justify-center p-4 text-center text-sm text-[15px] select-none'
     {...props}
   />
 ))
@@ -70,7 +70,7 @@ export const SelectCommandGroup = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Group>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Group>
 >(({ className, ...props }, ref) => (
-  <CommandPrimitive.Group ref={ref} className={cn('m-0 overflow-hidden !outline-none', className)} {...props} />
+  <CommandPrimitive.Group ref={ref} className={cn('m-0 overflow-hidden !outline-hidden', className)} {...props} />
 ))
 
 SelectCommandGroup.displayName = 'SelectCommandGroup'

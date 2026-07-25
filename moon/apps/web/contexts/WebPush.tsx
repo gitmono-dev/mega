@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import * as Sentry from '@sentry/nextjs'
 
 import { RAILS_API_URL, WEB_PUSH_PUBLIC_KEY } from '@gitmono/config'
 
@@ -82,7 +81,7 @@ export const WebPushProvider: React.FC<Props> = ({ children }) => {
           }
         },
         (error) => {
-          Sentry.captureException(`Service Worker registration failed: ${error}`)
+          console.error(`Service Worker registration failed: ${error}`)
         }
       )
     }

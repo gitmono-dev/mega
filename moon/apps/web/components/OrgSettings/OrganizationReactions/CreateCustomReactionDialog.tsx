@@ -124,7 +124,7 @@ export function CreateCustomReactionDialog({ open, onOpenChange }: CreateCustomR
               />
               <div
                 aria-hidden
-                className='text-tertiary pointer-events-none absolute inset-0 left-[7px] top-[6.5px] z-10 text-sm'
+                className='text-tertiary pointer-events-none absolute inset-0 top-[6.5px] left-[7px] z-10 text-sm'
               >
                 :<span className='invisible font-normal'>{!isNameFocused && !name ? PLACEHOLDER : name}</span>
                 <span className='inline-block w-[1.5px]' />:

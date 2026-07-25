@@ -283,7 +283,7 @@ export function DesktopReactionPicker({ showCustomReactions, onReactionSelect }:
               return (
                 <h2
                   key={virtualRow.index}
-                  className='bg-elevated text-secondary z-10 w-full whitespace-nowrap px-1.5 pb-1 pt-4 text-xs font-medium'
+                  className='bg-elevated text-secondary z-10 w-full px-1.5 pt-4 pb-1 text-xs font-medium whitespace-nowrap'
                   style={{
                     position: 'absolute',
                     top: 0,

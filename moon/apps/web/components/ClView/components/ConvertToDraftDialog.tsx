@@ -55,7 +55,7 @@ export const ConvertToDraftDialog: React.FC<ConvertToDraftDialogProps> = ({ trig
         </Dialog.Content>
         <Dialog.Footer
           variant='secondary'
-          className='flex justify-center rounded-t-none border-t bg-[#f6f8fa] px-4 pb-3 pt-3'
+          className='flex justify-center rounded-t-none border-t bg-[#f6f8fa] px-4 pt-3 pb-3'
         >
           <button
             type='button'

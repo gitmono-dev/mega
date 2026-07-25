@@ -12,6 +12,7 @@ export function useGetRunnerStatus(vmId: string | null, phase: string | null) {
     queryKey: vmId ? query.requestKey(vmId) : query.baseKey,
     queryFn: async () => {
       const result = await query.request(vmId!)
+
       if (!result.req_result || !result.data) {
         throw new Error(result.err_message || 'Failed to fetch runner status')
       }

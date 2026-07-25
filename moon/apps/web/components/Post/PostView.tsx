@@ -216,7 +216,7 @@ function InnerPostViewContent({ post, getComments, timelineEvents }: Omit<Props,
             <div
               className={cn(
                 'relative mx-auto flex w-full max-w-[--post-width] flex-col',
-                'px-4 pb-4 pt-6 md:pt-8 lg:pt-10 xl:pt-12 2xl:pt-14'
+                'px-4 pt-6 pb-4 md:pt-8 lg:pt-10 xl:pt-12 2xl:pt-14'
               )}
             >
               <InlinePost
@@ -381,7 +381,7 @@ function Comments({
 
 interface ReplyComposerProps {
   post: Post
-  endOfCommentsRef: RefObject<HTMLDivElement>
+  endOfCommentsRef: RefObject<HTMLDivElement | null>
   endOfCommentsInView: boolean
   setReplyingToCommentId: (id: string | null) => void
   replyingToComment: Comment | undefined

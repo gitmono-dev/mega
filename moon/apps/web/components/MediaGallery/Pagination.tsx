@@ -152,7 +152,7 @@ function useLocalSortOrder(attachments: MediaGalleryItemAttributes[]) {
   return [sortedAttachments, updateSortedAttachments] as const
 }
 
-function useScrollThumbnailIntoView(activeIndex: number, containerRef: React.RefObject<HTMLDivElement>) {
+function useScrollThumbnailIntoView(activeIndex: number, containerRef: React.RefObject<HTMLDivElement | null>) {
   useExecuteOnChange(activeIndex, () => {
     if (!containerRef.current) return
 
@@ -189,7 +189,7 @@ export function CarouselPagination(props: CarouselPaginationProps) {
   const displayAttachments = draggingId ? sortedAttachments : attachments
 
   return (
-    <div className='mx-auto flex items-start justify-center pb-1.5 pt-1'>
+    <div className='mx-auto flex items-start justify-center pt-1 pb-1.5'>
       <div className='mt-2 flex h-9 flex-none place-items-center'>
         <PaginationButton direction='previous' onClick={() => paginate(-1)} />
       </div>
@@ -237,7 +237,7 @@ export function CarouselPagination(props: CarouselPaginationProps) {
                 {onRemoveItem && (
                   <button
                     type='button'
-                    className='absolute right-0 top-0 -m-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-400'
+                    className='absolute top-0 right-0 -m-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-400'
                     aria-label='Remove item'
                     onClick={() => onRemoveItem(attachment.optimistic_id)}
                   >

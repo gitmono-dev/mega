@@ -46,7 +46,7 @@ export const CompactPost = memo(({ post, display = 'default', hideProject = fals
   }
 
   return (
-    <div className='@xl:px-4 group relative flex min-h-12 items-center gap-3 rounded-lg p-3'>
+    <div className='group relative flex min-h-12 items-center gap-3 rounded-lg p-3 @xl:px-4'>
       <PostOverflowMenu type='context' post={post} onTldrOpen={() => setTldrOpen(true)}>
         <HighlightedCommandItem
           className='absolute inset-0 z-0'
@@ -70,11 +70,11 @@ export const CompactPost = memo(({ post, display = 'default', hideProject = fals
         </ConditionalWrap>
       </div>
 
-      <div className='@xl:flex-row @xl:items-center @xl:gap-3 flex flex-1 flex-col-reverse items-start gap-0.5'>
+      <div className='flex flex-1 flex-col-reverse items-start gap-0.5 @xl:flex-row @xl:items-center @xl:gap-3'>
         <div className='flex flex-1 items-center'>
           <PostTldrPopover postId={post.id} open={tldrOpen} onOpenChange={setTldrOpen}>
             <div className='flex flex-1 flex-col gap-0.5'>
-              <div className='flex flex-shrink items-center'>
+              <div className='flex shrink items-center'>
                 <VersionBadge post={post} />
 
                 <AnimatePresence initial={false}>
@@ -101,7 +101,7 @@ export const CompactPost = memo(({ post, display = 'default', hideProject = fals
                 {display !== 'pinned' && hasComments && (
                   <span
                     className={cn(
-                      'h-4.5 mr-2 mt-px flex items-center justify-center self-start rounded px-1.5 text-[10px] font-semibold uppercase',
+                      'mt-px mr-2 flex h-4.5 items-center justify-center self-start rounded px-1.5 text-[10px] font-semibold uppercase',
                       {
                         'bg-blue-500 text-white': unreadComments,
                         'text-tertiary bg-black/[0.04] dark:bg-white/10': !unreadComments
@@ -129,7 +129,7 @@ export const CompactPost = memo(({ post, display = 'default', hideProject = fals
         </div>
 
         {!hideProject && (
-          <div className='@xl:self-center self-start'>
+          <div className='self-start @xl:self-center'>
             <ProjectTag tabIndex={-1} project={post.project} />
           </div>
         )}

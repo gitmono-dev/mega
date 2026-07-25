@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { AnimatePresence, m } from 'framer-motion'
 import { useAtomValue, useSetAtom } from 'jotai'
 
-import { CallView } from '@/components/CallView'
 import { CopyCurrentUrl } from '@/components/CopyCurrentUrl'
 import { NoteView } from '@/components/NoteView'
 import { PostView } from '@/components/Post/PostView'
@@ -89,9 +88,6 @@ export function SplitViewDetail({ fallback, fallbackWidth = '0px' }: SplitViewDe
                 )}
                 {debouncedSelectedSplitViewSubject?.subjectType === 'note' && (
                   <NoteView noteId={debouncedSelectedSplitViewSubject.id} />
-                )}
-                {debouncedSelectedSplitViewSubject?.subjectType === 'call' && (
-                  <CallView callId={debouncedSelectedSplitViewSubject.id} />
                 )}
               </m.div>
             ) : fallback ? (

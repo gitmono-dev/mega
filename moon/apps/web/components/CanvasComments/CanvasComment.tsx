@@ -145,7 +145,7 @@ function InnerCanvasComment({
   const hasServerComment = comment?.id && comment.id !== comment?.optimistic_id
   const transition = {
     duration: 0.2,
-    ease: [0.16, 1, 0.3, 1]
+    ease: [0.16, 1, 0.3, 1] as const
   }
 
   return (
@@ -209,7 +209,7 @@ function InnerCanvasComment({
                 transition={transition}
               >
                 <m.div
-                  className='flex flex-col whitespace-nowrap pr-2 text-left'
+                  className='flex flex-col pr-2 text-left whitespace-nowrap'
                   style={{ paddingLeft: triggerRect.width + 8 }}
                   initial={{ opacity: 0 }}
                   animate={{
@@ -282,7 +282,7 @@ function InnerCanvasComment({
             >
               <m.div
                 ref={commentRef}
-                className='scrollable w-[365px] outline-none'
+                className='scrollable w-[365px] outline-hidden'
                 style={{
                   translateY,
                   // Hide comment until it has been measured
@@ -292,7 +292,7 @@ function InnerCanvasComment({
                 <m.div
                   {...ANIMATION_CONSTANTS}
                   className={cn(
-                    'bg-elevated flex w-full flex-col rounded-xl shadow-lg shadow-black/20 ring-1 ring-black/[0.04] dark:shadow-[inset_0px_1px_0px_rgba(255,255,255,0.04),_0px_2px_12px_rgba(0,0,0,0.4),_0px_0px_0px_1px_rgba(0,0,0,0.8)] dark:ring-white/[0.02]',
+                    'bg-elevated flex w-full flex-col rounded-xl shadow-lg ring-1 shadow-black/20 ring-black/[0.04] dark:shadow-[inset_0px_1px_0px_rgba(255,255,255,0.04),_0px_2px_12px_rgba(0,0,0,0.4),_0px_0px_0px_1px_rgba(0,0,0,0.8)] dark:ring-white/[0.02]',
                     'origin-[--radix-popover-content-transform-origin]'
                   )}
                   data-zoom-wheel-disabled

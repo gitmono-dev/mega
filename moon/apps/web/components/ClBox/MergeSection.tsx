@@ -128,8 +128,8 @@ export const MergeSection = React.memo<MergeSectionProps>(
         {statusNode}
 
         {showClaHint && (
-          <div className='mb-3 mt-2 flex items-start gap-2 rounded-md bg-amber-50 p-2 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-200'>
-            <WarningTriangleIcon className='mt-0.5 h-4 w-4 flex-shrink-0' />
+          <div className='mt-2 mb-3 flex items-start gap-2 rounded-md bg-amber-50 p-2 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-200'>
+            <WarningTriangleIcon className='mt-0.5 h-4 w-4 shrink-0' />
             <span>
               CLA is not signed yet. This is a reminder only and does not block merging.
               {isClAuthor && ' Please sign the CLA when you can.'}
@@ -139,7 +139,7 @@ export const MergeSection = React.memo<MergeSectionProps>(
 
         {/* Queue Status Info */}
         {inQueue && queueItem && (
-          <div className='mb-3 mt-2 rounded-md bg-blue-50 p-2 text-sm'>
+          <div className='mt-2 mb-3 rounded-md bg-blue-50 p-2 text-sm'>
             <div className='flex items-center justify-between'>
               <span className='text-blue-800'>
                 In merge queue • Status: <strong>{queueItem.status}</strong>

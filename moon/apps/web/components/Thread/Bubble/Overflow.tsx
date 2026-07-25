@@ -176,7 +176,7 @@ export function Overflow({ message, thread, state }: OverflowProps) {
           disabled={!!message.optimistic_id}
           header={
             !isDesktop && (
-              <div className='mx-auto flex max-w-sm items-center justify-between gap-0.5 px-3 pb-3 pt-1'>
+              <div className='mx-auto flex max-w-sm items-center justify-between gap-0.5 px-3 pt-1 pb-3'>
                 {quickReactions.map((reaction) => (
                   <OverflowDefaultReactionButton
                     key={reaction.id}

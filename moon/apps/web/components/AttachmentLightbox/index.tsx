@@ -14,8 +14,6 @@ import { useGetAttachment } from '@/hooks/useGetAttachment'
 import { hoveredCanvasCommentAtom } from '../CanvasComments/CanvasComment'
 import { displayCanvasCommentsAtom, newCommentCoordinatesAtom } from '../CanvasComments/CanvasComments'
 import { zoomAtom } from '../ZoomPane/atom'
-import { FigmaTip } from './FigmaTip'
-import { FigmaToggleButton } from './FigmaToggleButton'
 import { FileMenu } from './FileDropdown'
 import { Gallery } from './Gallery'
 import { LightboxAttachmentRenderer } from './LightboxAttachmentRenderer'
@@ -134,7 +132,7 @@ function InnerAttachmentLightbox({
   return (
     <ScopeProvider atoms={[zoomAtom, hoveredCanvasCommentAtom, displayCanvasCommentsAtom, newCommentCoordinatesAtom]}>
       <m.header
-        className={cn('drag flex h-14 flex-row items-center justify-between border-b pl-4 pr-3 text-sm', {
+        className={cn('drag flex h-14 flex-row items-center justify-between border-b pr-3 pl-4 text-sm', {
           'pl-22': isDesktopApp && isMacOs
         })}
       >
@@ -143,7 +141,6 @@ function InnerAttachmentLightbox({
           <FileMenu type='dropdown' attachment={attachment} links={isPost(subject) ? subject.links : []} />
           {canCanvas && <ZoomSelect />}
           {!viewOnly && hasComments && canCanvas && <ToggleCommentsButton />}
-          <FigmaToggleButton attachment={attachment} />
         </div>
         <div className='flex items-center gap-1'>
           {!viewOnly && isNote(subject) && (
@@ -168,7 +165,6 @@ function InnerAttachmentLightbox({
               attachment={attachment}
               preventNewComment={viewOnly || !isPostAttachment}
             />
-            <FigmaTip attachment={attachment} />
           </div>
           {attachments && attachments.length > 1 && (
             <Gallery

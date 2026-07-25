@@ -14,6 +14,7 @@ interface EditItemProps {
 
 const EditItem = ({ conv }: EditItemProps) => {
   const { data: member } = useGetOrganizationMember({ username: conv.username })
+  const profileUsername = member?.user.username || conv.username
 
   return (
     <>
@@ -22,8 +23,8 @@ const EditItem = ({ conv }: EditItemProps) => {
           <ConditionalWrap
             condition
             wrap={(c) => (
-              <MemberHovercard username={conv?.username}>
-                <UserLinkByName username={conv?.username} className='relative'>
+              <MemberHovercard username={profileUsername}>
+                <UserLinkByName username={profileUsername} className='relative'>
                   {c}
                 </UserLinkByName>
               </MemberHovercard>

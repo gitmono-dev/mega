@@ -202,11 +202,13 @@ export const CommitsDetailView: React.FC = () => {
                     <code className='text-primary font-mono'>{commitSha.substring(0, 7)}</code>
                     <button
                       onClick={() => {
-                        if (copy(commitSha)) {
-                          toast.success('Copied to clipboard')
-                        } else {
-                          toast.error('Copy failed')
-                        }
+                        void copy(commitSha).then((ok) => {
+                          if (ok) {
+                            toast.success('Copied to clipboard')
+                          } else {
+                            toast.error('Copy failed')
+                          }
+                        })
                       }}
                       className='text-tertiary hover:text-secondary transition-colors'
                       title='Copy full SHA'
@@ -220,11 +222,13 @@ export const CommitsDetailView: React.FC = () => {
                     <code className='text-primary font-mono'>{commitSha.substring(0, 7)}</code>
                     <button
                       onClick={() => {
-                        if (copy(commitSha)) {
-                          toast.success('Copied to clipboard')
-                        } else {
-                          toast.error('Copy failed')
-                        }
+                        void copy(commitSha).then((ok) => {
+                          if (ok) {
+                            toast.success('Copied to clipboard')
+                          } else {
+                            toast.error('Copy failed')
+                          }
+                        })
                       }}
                       className='text-tertiary hover:text-secondary transition-colors'
                       title='Copy full SHA'

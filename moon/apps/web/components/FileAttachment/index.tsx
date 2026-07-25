@@ -75,7 +75,7 @@ export function FileAttachment({
       )}
 
       {/* match button height so file attachment doesn't shift height when actions are displayed */}
-      {!showActions && <div className='h-7.5 flex min-h-[30px] w-px flex-none' />}
+      {!showActions && <div className='flex h-7.5 min-h-[30px] w-px flex-none' />}
     </div>
   )
 }

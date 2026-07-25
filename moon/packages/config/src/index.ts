@@ -41,7 +41,6 @@ export const CAMPSITE_API_SESSION_COOKIE = '_campsite_api_session'
 */
 export const IMGIX_DOMAIN = IS_PRODUCTION ? 'https://gitmono.imgix.net' : 'https://campsite-dev.imgix.net'
 
-export const FIGMA_PLUGIN_URL = 'https://www.figma.com/community/plugin/1108886817260186751'
 export const ZAPIER_APP_URL = 'https://zapier.com/apps/campsite/integrations'
 export const CAL_DOT_COM_APP_URL = 'https://app.cal.com/apps/campsite'
 

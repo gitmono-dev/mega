@@ -1,4 +1,4 @@
-@tailwind components;
+@reference '../../../packages/ui/src/styles/reference.css';
 
 @layer components {
   /* 
@@ -6,7 +6,7 @@
   styles when embedded with .not-prose. The ":where" and "class~" selectors are used to avoid specificity conflicts.
   */
   .prose {
-    @apply text-primary max-w-full break-words leading-normal;
+    @apply text-primary max-w-full leading-normal break-words;
     word-break: break-word;
     word-wrap: break-word;
 
@@ -22,7 +22,7 @@
 
     /* Override strong headers for consistent styling when bolded */
     :where(h1, h2, h3, h1 strong, h2 strong, h3 strong):not(:where([class~='not-prose']) *) {
-      @apply text-primary mb-2.5 mt-0 font-semibold;
+      @apply text-primary mt-0 mb-2.5 font-semibold;
 
       a.prose-link:not(.mention) {
         @apply font-semibold;
@@ -46,12 +46,12 @@
       @apply bg-tertiary border p-4 dark:border-neutral-700 dark:bg-neutral-800;
 
       code {
-        @apply text-primary whitespace-pre border-none bg-transparent p-0 dark:bg-transparent;
+        @apply text-primary border-none bg-transparent p-0 whitespace-pre dark:bg-transparent;
       }
     }
 
     code:not(:where([class~='not-prose']) *) {
-      @apply text-primary bg-tertiary whitespace-pre-wrap rounded border px-1 py-px font-medium dark:border-neutral-700 dark:bg-neutral-800;
+      @apply text-primary bg-tertiary rounded border px-1 py-px font-medium whitespace-pre-wrap dark:border-neutral-700 dark:bg-neutral-800;
 
       /* Hide tildes */
       &:before,
@@ -108,8 +108,8 @@
         @apply relative;
 
         input[type='checkbox'] {
-          @apply bg-elevated dark:bg-quaternary -ml-1.5 mr-3 mt-0.5 h-5 w-5 max-w-xs cursor-pointer rounded border border-black/[0.12] bg-clip-border align-top checked:border-blue-500 checked:bg-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:ring-offset-0 disabled:cursor-default dark:border-white/[0.08] dark:checked:bg-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-600/20;
-          @apply absolute -left-5 top-0;
+          @apply bg-elevated dark:bg-quaternary mt-0.5 mr-3 -ml-1.5 h-5 w-5 max-w-xs cursor-pointer rounded border border-black/[0.12] bg-clip-border align-top checked:border-blue-500 checked:bg-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:ring-offset-0 disabled:cursor-default dark:border-white/[0.08] dark:checked:bg-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-600/20;
+          @apply absolute top-0 -left-5;
         }
 
         div:first-of-type:not(:where([class~='not-prose']) *) {
@@ -135,7 +135,7 @@
     }
 
     .task-list-disabled {
-      @apply cursor-default outline-none focus:border-black/[0.12] focus:ring-0 dark:focus:border-white/[0.08];
+      @apply cursor-default outline-hidden focus:border-black/[0.12] focus:ring-0 dark:focus:border-white/[0.08];
     }
 
     strong:not(:where([class~='not-prose']) *) {
@@ -171,7 +171,7 @@
       @apply mb-1;
     }
 
-    .collaboration-cursor__caret {
+    .collaboration-carets__caret {
       @apply relative -mx-px inline border-x;
       word-break: normal;
     }
@@ -182,13 +182,13 @@
       }
     }
 
-    .collaboration-cursor__label {
-      @apply pointer-events-none absolute -left-px top-0 -translate-y-full select-none whitespace-nowrap rounded-md rounded-bl-none p-1 text-xs font-medium leading-none;
+    .collaboration-carets__label {
+      @apply pointer-events-none absolute top-0 -left-px -translate-y-full rounded-md rounded-bl-none p-1 text-xs leading-none font-medium whitespace-nowrap select-none;
       /* Peek cursor briefly when it moves */
       animation: autohide-cursor 100ms ease-out 1500ms forwards;
     }
 
-    .collaboration-cursor__caret:hover .collaboration-cursor__label {
+    .collaboration-carets__caret:hover .collaboration-carets__label {
       @apply animate-none; /* cancel autohide */
     }
 
@@ -215,21 +215,21 @@
       font-size: 1rem;
 
       :where(h1, h2, h3, h4, h5, h6, h1 strong, h2 strong, h3 strong, h4 strong, h5 strong, h6 strong):not(
-          :where([class~='not-prose']) *
-        ) {
-        @apply font-bold leading-[1.3];
+        :where([class~='not-prose']) *
+      ) {
+        @apply leading-[1.3] font-bold;
       }
 
       h1:not(:where([class~='not-prose']) *) {
-        @apply mb-2 mt-10 text-[clamp(1.575rem,_4vw,_1.875rem)];
+        @apply mt-10 mb-2 text-[clamp(1.575rem,_4vw,_1.875rem)];
       }
 
       h2:not(:where([class~='not-prose']) *) {
-        @apply mb-2 mt-8 text-[clamp(1.275rem,_4vw,_1.575rem)];
+        @apply mt-8 mb-2 text-[clamp(1.275rem,_4vw,_1.575rem)];
       }
 
       h3:not(:where([class~='not-prose']) *) {
-        @apply mb-1.5 mt-6 text-[clamp(1.175rem,_4vw,_1.275rem)];
+        @apply mt-6 mb-1.5 text-[clamp(1.175rem,_4vw,_1.275rem)];
       }
 
       &:not(.dragging) .ProseMirror-selectednode {
@@ -257,7 +257,7 @@
     }
 
     code {
-      @apply whitespace-pre-wrap rounded-[3px] px-1 py-0.5 text-[15px] font-medium tracking-tight lg:text-[13px];
+      @apply rounded-[3px] px-1 py-0.5 text-[15px] font-medium tracking-tight whitespace-pre-wrap lg:text-[13px];
     }
 
     /* Respect empty paragraph line breaks in chat messages */
@@ -301,7 +301,7 @@
   .prose,
   .chat-prose {
     a:where(:not([class~='not-prose']) *) {
-      @apply break-words font-normal no-underline;
+      @apply font-normal break-words no-underline;
       /*
         Need these manually to prevent long links from breaking a container boundary
         Ref https://css-tricks.com/snippets/css/prevent-long-urls-from-breaking-out-of-container/

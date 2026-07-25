@@ -6,6 +6,7 @@
     "build": "turbo run build",
     "clean": "turbo run clean && rm -rf .turbo node_modules",
     "dev": "turbo run dev --parallel",
+    "dev:web": "pnpm --filter @gitmono/web dev",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint -- --fix",
@@ -22,16 +23,8 @@
     "turbo": "catalog:",
     "typescript": "catalog:"
   },
-  "packageManager": "pnpm@9.7.1",
+  "packageManager": "pnpm@11.17.0",
   "engines": {
-    "node": ">=20.0.0 <21"
-  },
-  "pnpm": {
-    "overrides": {
-      "@types/react": "^18.0.0"
-    },
-    "patchedDependencies": {
-      "@radix-ui/react-popper": "patches/@radix-ui__react-popper.patch"
-    }
+    "node": ">=26.0.0 <27"
   }
 }

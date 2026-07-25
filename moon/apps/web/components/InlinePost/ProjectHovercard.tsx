@@ -55,7 +55,7 @@ export function ProjectHovercard({
                       {project.accessory}
                     </div>
                   )}
-                  <UIText weight='font-medium' className='break-words text-[15px]'>
+                  <UIText weight='font-medium' className='text-[15px] break-words'>
                     {project.name}
                   </UIText>
                   {project.private && (

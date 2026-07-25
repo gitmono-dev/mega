@@ -238,7 +238,7 @@ const Checks = ({ cl, path, prName }: { cl: string; path?: string; prName?: stri
                   e.stopPropagation()
                   setIsDropdownOpen(!isDropdownOpen)
                 }}
-                className='flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm transition-all hover:border-blue-400 hover:bg-gray-50 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-blue-500 dark:hover:bg-gray-700'
+                className='flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm transition-all hover:border-blue-400 hover:bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800 dark:hover:border-blue-500 dark:hover:bg-gray-700'
               >
                 <div className='flex flex-1 items-center gap-2 overflow-hidden'>
                   {selectedTask ? (
@@ -247,7 +247,7 @@ const Checks = ({ cl, path, prName }: { cl: string; path?: string; prName?: stri
                         {getTaskFileName(selectedTask)}
                       </span>
                       {getTaskStatus(selectedTask) && (
-                        <span className={`flex-shrink-0 text-xs ${getTaskStatus(selectedTask)?.color}`}>
+                        <span className={`shrink-0 text-xs ${getTaskStatus(selectedTask)?.color}`}>
                           • {getTaskStatus(selectedTask)?.status}
                         </span>
                       )}
@@ -257,7 +257,7 @@ const Checks = ({ cl, path, prName }: { cl: string; path?: string; prName?: stri
                   )}
                 </div>
                 <svg
-                  className={`ml-2 h-4 w-4 flex-shrink-0 text-gray-500 transition-transform dark:text-gray-400 ${
+                  className={`ml-2 h-4 w-4 shrink-0 text-gray-500 transition-transform dark:text-gray-400 ${
                     isDropdownOpen ? 'rotate-180' : ''
                   }`}
                   fill='none'
@@ -271,7 +271,7 @@ const Checks = ({ cl, path, prName }: { cl: string; path?: string; prName?: stri
               {isDropdownOpen && (
                 <>
                   <div className='fixed inset-0 z-10' onClick={() => setIsDropdownOpen(false)} />
-                  <div className='absolute left-0 top-full z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-lg border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800'>
+                  <div className='absolute top-full left-0 z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-lg border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800'>
                     {validTasks.map((task) => {
                       const fileName = getTaskFileName(task)
                       const status = getTaskStatus(task)
@@ -300,9 +300,7 @@ const Checks = ({ cl, path, prName }: { cl: string; path?: string; prName?: stri
                               >
                                 {fileName}
                               </span>
-                              {status && (
-                                <span className={`flex-shrink-0 text-xs ${status.color}`}>• {status.status}</span>
-                              )}
+                              {status && <span className={`shrink-0 text-xs ${status.color}`}>• {status.status}</span>}
                             </div>
                             <span className='truncate text-xs text-gray-500 dark:text-gray-400'>
                               {targetsCount} {targetsCount === 1 ? 'target' : 'targets'}
@@ -339,7 +337,7 @@ const Checks = ({ cl, path, prName }: { cl: string; path?: string; prName?: stri
         </div>
         <div
           onMouseDown={handleMouseDown}
-          className='border-primary h-full w-1 flex-shrink-0 cursor-col-resize transition-colors hover:bg-blue-400'
+          className='border-primary h-full w-1 shrink-0 cursor-col-resize transition-colors hover:bg-blue-400'
           style={{ backgroundColor: isDragging ? '#60a5fa' : undefined }}
         />
         <div ref={rightPanelRef} className='flex-1' style={{ display: isDragging ? 'none' : 'block' }}>

@@ -1,0 +1,3 @@
+/* For @apply in CSS files that are not the main Tailwind entry */
+@import 'tailwindcss/theme' theme(reference);
+@import './theme.css';

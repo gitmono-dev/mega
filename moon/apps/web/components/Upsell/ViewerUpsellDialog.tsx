@@ -23,7 +23,7 @@ export function ViewerUpsellDialog({ open, onOpenChange, icon, title }: Props) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange} size='xl' visuallyHiddenTitle={title} disableDescribedBy>
       <Dialog.Content>
-        <div className='flex flex-col justify-center gap-4 px-1 pb-2 pt-6'>
+        <div className='flex flex-col justify-center gap-4 px-1 pt-6 pb-2'>
           {icon}
           <div className='flex flex-col gap-2'>
             <UIText weight='font-semibold' size='text-base'>

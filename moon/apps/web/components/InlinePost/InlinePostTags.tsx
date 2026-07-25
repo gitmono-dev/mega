@@ -15,7 +15,7 @@ function TagPill({ post, tag }: { post: Post; tag: Tag }) {
       wrap={(children) => <Link href={`/${scope}/tags/${tag.name}`}>{children}</Link>}
     >
       <div
-        className={cn('text-quaternary flex items-center gap-0.5 text-[15px] text-sm', {
+        className={cn('text-quaternary flex items-center gap-0.5 text-sm text-[15px]', {
           'hover:text-primary': post.viewer_is_organization_member
         })}
       >

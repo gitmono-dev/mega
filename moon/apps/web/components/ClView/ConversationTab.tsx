@@ -212,13 +212,18 @@ export const ConversationTab = React.memo<ConversationTabProps>(
             return (
               <div className='pointer-events-none'>
                 {names.map((i) => {
-                  const reviewer = reviewers.find((r) => r.username === i)
+                  const member = memberMap.get(i)
+                  const displayName = member?.user?.github_login?.trim() || member?.user?.username || i
+                  const reviewer =
+                    reviewers.find((r) => r.username === i) ||
+                    reviewers.find((r) => r.username === member?.user?.username)
                   const isApproved = reviewer?.approved ?? false
+                  const deleteUsername = reviewer?.username || member?.user?.username || i
 
                   return (
                     <div key={i} className='text-tertiary mb-4 flex items-center gap-2 px-4 text-sm'>
-                      <MemberAvatar size='sm' member={memberMap.get(i)} />
-                      <span className='flex-1'>{i}</span>
+                      <MemberAvatar size='sm' member={member} />
+                      <span className='flex-1'>{displayName}</span>
                       <span
                         className={`ml-2 inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                           isApproved
@@ -243,7 +248,7 @@ export const ConversationTab = React.memo<ConversationTabProps>(
                         <span
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleDeleteReviewer(i)
+                            handleDeleteReviewer(deleteUsername)
                           }}
                           className='pointer-events-auto cursor-pointer rounded-full border-2 hover:bg-red-800 hover:text-white'
                         >
@@ -284,12 +289,17 @@ export const ConversationTab = React.memo<ConversationTabProps>(
 
             return (
               <>
-                {names.map((i) => (
-                  <div key={i} className='text-tertiary mb-4 flex items-center gap-2 px-4 text-sm'>
-                    <MemberAvatar size='sm' member={memberMap.get(i)} />
-                    <span>{i}</span>
-                  </div>
-                ))}
+                {names.map((i) => {
+                  const member = memberMap.get(i)
+                  const displayName = member?.user?.github_login?.trim() || member?.user?.username || i
+
+                  return (
+                    <div key={i} className='text-tertiary mb-4 flex items-center gap-2 px-4 text-sm'>
+                      <MemberAvatar size='sm' member={member} />
+                      <span>{displayName}</span>
+                    </div>
+                  )
+                })}
               </>
             )
           }}

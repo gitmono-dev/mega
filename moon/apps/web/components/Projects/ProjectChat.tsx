@@ -1,5 +1,3 @@
-/* eslint-disable max-lines */
-
 import { useEffect } from 'react'
 
 import { Project } from '@gitmono/types'

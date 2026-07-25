@@ -113,7 +113,7 @@ function CommentPreviewPopoverContent({ previewComment, editor, noteId, onExpand
         >
           <m.div
             className={cn(
-              'dark:bg-elevated relative flex min-w-[32px] max-w-[250px] origin-[--radix-popover-content-transform-origin] gap-2 overflow-hidden rounded-xl bg-white p-1.5 shadow-md ring-1 ring-black/5 transition-shadow hover:shadow-lg dark:shadow-[inset_0px_1px_0px_rgba(255,255,255,0.10),_0px_2px_4px_rgba(0,0,0,0.5),_0px_0px_0px_1px_rgba(0,0,0,1)]',
+              'dark:bg-elevated relative flex max-w-[250px] min-w-[32px] origin-[--radix-popover-content-transform-origin] gap-2 overflow-hidden rounded-xl bg-white p-1.5 shadow-md ring-1 ring-black/5 transition-shadow hover:shadow-lg dark:shadow-[inset_0px_1px_0px_rgba(255,255,255,0.10),_0px_2px_4px_rgba(0,0,0,0.5),_0px_0px_0px_1px_rgba(0,0,0,1)]',
               {
                 'items-center': !comment.body_html,
                 'items-start': comment.body_html

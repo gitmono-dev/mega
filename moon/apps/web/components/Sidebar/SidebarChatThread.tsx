@@ -1,11 +1,9 @@
 import { useState } from 'react'
-import { selectRoomID, useHMSStore } from '@100mslive/react-sdk'
 import { useRouter } from 'next/router'
 
 import { MessageThread } from '@gitmono/types/generated'
 import { Avatar } from '@gitmono/ui/Avatar'
-import { ChatBubbleIcon, VideoCameraFilledIcon } from '@gitmono/ui/Icons'
-import { cn } from '@gitmono/ui/utils'
+import { ChatBubbleIcon } from '@gitmono/ui/Icons'
 
 import { MemberAvatar } from '@/components/MemberAvatar'
 import { useScope } from '@/contexts/scope'
@@ -35,7 +33,6 @@ export function SidebarChatThread({
   const firstMember = thread.other_members.at(0) || thread.deactivated_members.at(0)
   const active = thread.id === router.query.threadId && router.query.focus === 'true'
   const [prefetch, setPrefetch] = useState(false)
-  const onCall = useHMSStore(selectRoomID) === thread?.remote_call_room_id
   const status = firstMember?.status
   const memberCount = thread.other_members.length + (thread.viewer_is_thread_member ? 1 : 0)
   const { mutate: markThreadRead } = useMarkThreadRead()
@@ -77,20 +74,6 @@ export function SidebarChatThread({
         onRemove={onRemove}
         removeTooltip={removeTooltip}
         unread={unread}
-        trailingAccessory={
-          <>
-            {thread.active_call && (
-              <div
-                className={cn('flex h-4 w-4 items-center justify-center rounded-md', {
-                  'bg-green-500 text-white': onCall,
-                  'bg-green-100 text-green-500 dark:bg-green-900/50': !onCall
-                })}
-              >
-                <VideoCameraFilledIcon size={12} />
-              </div>
-            )}
-          </>
-        }
         leadingAccessory={
           thread.integration_dm ? (
             <Avatar urls={thread.avatar_urls} name={thread.title} size='xs' rounded='rounded-md' />

@@ -18,7 +18,6 @@ export interface GetMarkdownExtensionsOptions {
   dropcursor?: Partial<E.DropcursorOptions>
 
   postNoteAttachment?: Partial<E.PostNoteAttachmentOptions> & {
-    postId?: string
     addNodeView?(): NodeViewRenderer
   }
 
@@ -35,8 +34,6 @@ export interface GetMarkdownExtensionsOptions {
   }
 
   codeBlockHighlighted?: Partial<E.CodeBlockHighlightedOptions>
-
-  enableInlineAttachments?: boolean
 
   taskItem?: Partial<E.TaskItemOptions>
 
@@ -85,9 +82,7 @@ export function getMarkdownExtensions(options?: GetMarkdownExtensionsOptions) {
     }),
     E.BlurOnEscape,
     E.ListKeyMap,
-    PasteHandler.configure({
-      enableInlineAttachments: options?.enableInlineAttachments || false
-    }),
+    PasteHandler,
     CodeFenceMarkdownParser,
     ImageMarkdownParser,
     SoftbreakMarkdownParser,
@@ -113,8 +108,7 @@ export function getMarkdownExtensions(options?: GetMarkdownExtensionsOptions) {
     E.DetailsSummary,
 
     E.PostNoteAttachment.extend({
-      addNodeView: options?.postNoteAttachment?.addNodeView,
-      postId: options?.postNoteAttachment?.postId
+      addNodeView: options?.postNoteAttachment?.addNodeView
     }).configure(options?.postNoteAttachment),
 
     E.MediaGallery.extend({

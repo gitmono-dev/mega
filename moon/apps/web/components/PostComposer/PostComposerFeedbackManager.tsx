@@ -130,7 +130,7 @@ function FeedbackRequestListItem({
 
           {!feedbackRequest.has_replied && (
             <button
-              className='text-tertiary hidden hover:text-red-500 group-hover:flex'
+              className='text-tertiary hidden group-hover:flex hover:text-red-500'
               onClick={() => {
                 const feedbackRequests = form.getValues('feedback_requests') ?? []
 

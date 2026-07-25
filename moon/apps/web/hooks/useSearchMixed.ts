@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { GetSearchMixedParams, SearchCall, SearchNote, SearchPost } from '@gitmono/types'
+import { GetSearchMixedParams, SearchNote, SearchPost } from '@gitmono/types'
 
 import { useScope } from '@/contexts/scope'
 import { apiClient } from '@/utils/queryClient'
@@ -11,7 +11,7 @@ interface Props {
 }
 
 function isFocus(str: string | undefined): str is GetSearchMixedParams['focus'] {
-  return str === 'calls' || str === 'posts' || str === 'notes' || str === undefined
+  return str === 'posts' || str === 'notes' || str === undefined
 }
 
 function getFocus(focus: string | undefined) {
@@ -36,17 +36,14 @@ export function useSearchMixed({ query, focus }: Props) {
         focus: getFocus(focus)
       })
 
-      const callsMap = new Map<string, SearchCall>()
       const postsMap = new Map<string, SearchPost>()
       const notesMap = new Map<string, SearchNote>()
 
-      results.calls.forEach((call) => callsMap.set(call.id, call))
       results.posts.forEach((post) => postsMap.set(post.id, post))
       results.notes.forEach((note) => notesMap.set(note.id, note))
 
       return {
-        items: results.items,
-        callsMap,
+        items: results.items.filter((item) => item.type !== 'call'),
         postsMap,
         notesMap
       }

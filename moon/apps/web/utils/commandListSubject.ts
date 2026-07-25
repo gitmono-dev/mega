@@ -1,11 +1,11 @@
 import { z } from 'zod'
 
-import { Call, Note, Post } from '@gitmono/types/generated'
+import { Note, Post } from '@gitmono/types/generated'
 
-type SubjectType = 'post' | 'note' | 'call'
+type SubjectType = 'post' | 'note'
 
 const commandListSubjectSchema = z.object({
-  subjectType: z.enum(['post', 'note', 'call']),
+  subjectType: z.enum(['post', 'note']),
   id: z.string(),
   href: z.string(),
   pinned: z
@@ -16,29 +16,24 @@ const commandListSubjectSchema = z.object({
 
 type CommandListSubject = z.infer<typeof commandListSubjectSchema>
 
-function isPost(subject: Post | Note | Call): subject is Post {
+function isPost(subject: Post | Note): subject is Post {
   return subject.type_name === 'post'
 }
 
-function isNote(subject: Post | Note | Call): subject is Note {
+function isNote(subject: Post | Note): subject is Note {
   return subject.type_name === 'note'
 }
 
-function isCall(subject: Post | Note | Call): subject is Call {
-  return subject.type_name === 'call'
-}
-
-function isCommandListSubject(subject: Post | Note | Call | CommandListSubject): subject is CommandListSubject {
+function isCommandListSubject(subject: Post | Note | CommandListSubject): subject is CommandListSubject {
   return typeof subject === 'object' && 'subjectType' in subject && 'id' in subject
 }
 
-function getSubjectType(subject: Post | Note | Call): SubjectType | undefined {
+function getSubjectType(subject: Post | Note): SubjectType | undefined {
   if (isPost(subject)) return 'post'
   if (isNote(subject)) return 'note'
-  if (isCall(subject)) return 'call'
 }
 
-function getCommandListSubject(subject: Post | Note | Call): CommandListSubject | undefined {
+function getCommandListSubject(subject: Post | Note): CommandListSubject | undefined {
   const subjectType = getSubjectType(subject)
 
   if (!subjectType) return undefined
@@ -52,7 +47,7 @@ function getCommandListSubject(subject: Post | Note | Call): CommandListSubject 
 }
 
 function encodeCommandListSubject(
-  subject: Post | Note | Call | CommandListSubject,
+  subject: Post | Note | CommandListSubject,
   { href, pinned = false }: { href?: string; pinned?: boolean } = {}
 ): string | undefined {
   if (isCommandListSubject(subject)) {

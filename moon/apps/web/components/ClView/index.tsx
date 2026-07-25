@@ -44,6 +44,7 @@ import { useGetLabelList } from '@/hooks/useGetLabelList'
 import { useSyncedMembers } from '@/hooks/useSyncedMembers'
 import { apiErrorToast } from '@/utils/apiErrorToast'
 import { atomWithWebStorage } from '@/utils/atomWithWebStorage'
+import { megaUserHandle } from '@/utils/megaUser'
 
 import { IndexPageContainer, IndexPageContent } from '../IndexPages/components'
 import { Pagination } from '../Issues/Pagenation'
@@ -66,6 +67,14 @@ export default function CLView() {
 
   const { mutate: fetchClList } = usePostClList()
   const { members } = useSyncedMembers()
+
+  const authorHandle = useCallback(
+    (author: string) => {
+      const member = members.find((m) => m.user.username === author || m.user.github_login === author)
+      return megaUserHandle(member?.user, author)
+    },
+    [members]
+  )
 
   const filterState = useFilterState({ scope: scope as string, type: 'cl' })
   const filterStateRef = useRef(filterState)
@@ -218,7 +227,7 @@ export default function CLView() {
             </Tooltip>{' '}
             by{' '}
             <MemberHovercard username={item.author}>
-              <span className='cursor-pointer hover:text-blue-600 hover:underline'>{item.author}</span>
+              <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
             </MemberHovercard>
           </>
         )
@@ -233,7 +242,7 @@ export default function CLView() {
             </Tooltip>{' '}
             by{' '}
             <MemberHovercard username={item.author}>
-              <span className='cursor-pointer hover:text-blue-600 hover:underline'>{item.author}</span>
+              <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
             </MemberHovercard>
           </>
         )
@@ -243,7 +252,7 @@ export default function CLView() {
             <>
               by{' '}
               <MemberHovercard username={item.author}>
-                <span className='cursor-pointer hover:text-blue-600 hover:underline'>{item.author}</span>
+                <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
               </MemberHovercard>
               {' was merged '}
               <Tooltip label={formatFullTime(item.merge_timestamp ?? 0)}>
@@ -261,7 +270,7 @@ export default function CLView() {
           <>
             by{' '}
             <MemberHovercard username={item.author}>
-              <span className='cursor-pointer hover:text-blue-600 hover:underline'>{item.author}</span>
+              <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
             </MemberHovercard>
             {' was closed '}
             <Tooltip label={formatFullTime(item.updated_at)}>
@@ -287,7 +296,7 @@ export default function CLView() {
           id='/[org]/cl'
           className={cn('@container', 'max-w-full lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl')}
         >
-          <div className='border-primary bg-primary group flex min-h-[35px] items-center rounded-md border px-3 shadow-sm transition-all focus-within:border-blue-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-blue-100 hover:border-blue-400 dark:focus-within:ring-blue-900'>
+          <div className='border-primary bg-primary group flex min-h-[35px] items-center rounded-md border px-3 shadow-xs transition-all focus-within:border-blue-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-blue-100 hover:border-blue-400 dark:focus-within:ring-blue-900'>
             <div className='text-quaternary flex items-center'>
               <SearchIcon className='h-4 w-4' />
             </div>
@@ -297,7 +306,7 @@ export default function CLView() {
               value={searchQuery}
               readOnly
               placeholder='Filter change list by author, labels , assignee, or review...'
-              className='text-secondary placeholder:text-quaternary w-full flex-1 border-none bg-transparent text-sm outline-none ring-0 focus:outline-none focus:ring-0'
+              className='text-secondary placeholder:text-quaternary w-full flex-1 border-none bg-transparent text-sm ring-0 outline-hidden focus:ring-0 focus:outline-hidden'
             />
 
             {searchQuery && (

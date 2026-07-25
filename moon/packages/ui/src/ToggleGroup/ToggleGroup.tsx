@@ -25,7 +25,7 @@ export const ToggleGroup = ({ ariaLabel, items, onValueChange, value }: Props) =
           value={item.value}
           aria-label={item.label}
           className={cn(
-            'initial:text-tertiary initial:dark:text-secondary relative flex-1 px-3.5 text-[13px] font-medium focus-visible:outline-none focus-visible:ring-0',
+            'initial:text-tertiary initial:dark:text-secondary relative flex-1 px-3.5 text-[13px] font-medium focus-visible:ring-0 focus-visible:outline-hidden',
             'after:pointer-events-none after:absolute after:-inset-[3px] after:rounded-lg after:border after:border-blue-500 after:opacity-0 after:ring-2 after:ring-blue-500/20 after:transition-opacity focus-visible:after:opacity-100 active:after:opacity-0',
             {
               'text-primary': item.value === value

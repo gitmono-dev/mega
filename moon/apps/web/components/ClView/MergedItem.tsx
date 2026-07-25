@@ -15,6 +15,7 @@ interface MergedItemProps {
 const MergedItem = ({ conv }: MergedItemProps) => {
   const { data: member } = useGetOrganizationMember({ username: conv.username })
   const { scope } = useScope()
+  const profileUsername = member?.user.username || conv.username
 
   return (
     <>
@@ -23,8 +24,8 @@ const MergedItem = ({ conv }: MergedItemProps) => {
           <ConditionalWrap
             condition={true}
             wrap={(c) => (
-              <MemberHovercard username={conv?.username}>
-                <UserLinkByName username={conv?.username} className='relative'>
+              <MemberHovercard username={profileUsername}>
+                <UserLinkByName username={profileUsername} className='relative'>
                   {c}
                 </UserLinkByName>
               </MemberHovercard>

@@ -184,7 +184,11 @@ const GPGKeys = () => {
               <LoadingSpinner />
             </div>
           ) : (
-            <div>{gpgKeys?.map((key) => <GpgKeyItem key={key.key_id} keyData={key} />)}</div>
+            <div>
+              {gpgKeys?.map((key) => (
+                <GpgKeyItem key={key.key_id} keyData={key} />
+              ))}
+            </div>
           )}
         </section>
       </div>

@@ -20,7 +20,7 @@ export function useOptimisticMutation<TData, TError, TVariables>(
   return useMutation({
     ...options,
 
-    onMutate(variables) {
+    onMutate(variables, mutationContext) {
       const optimisticFns = options.optimisticFns(variables)
       const results = optimisticFns.map((value) => {
         const { query: queryKey, updater } = value
@@ -61,23 +61,23 @@ export function useOptimisticMutation<TData, TError, TVariables>(
         return { rollback, invalidate }
       })
 
-      options.onMutate?.(variables)
+      options.onMutate?.(variables, mutationContext)
 
       return { results }
     },
 
-    onError(error, variables, context) {
+    onError(error, variables, context, mutationContext) {
       if (!context) return
       context.results.forEach(({ rollback }) => rollback())
-      options.onError?.(error, variables, context)
+      options.onError?.(error, variables, context, mutationContext)
     },
 
-    onSuccess(data, variables, context) {
+    onSuccess(data, variables, context, mutationContext) {
       if (!context) return
       if (options.invalidateOnSuccess) {
         context.results.forEach(({ invalidate }) => invalidate())
       }
-      options.onSuccess?.(data, variables, context)
+      options.onSuccess?.(data, variables, context, mutationContext)
     }
   })
 }

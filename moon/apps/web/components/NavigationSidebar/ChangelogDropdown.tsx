@@ -1,7 +1,7 @@
-import React, { forwardRef, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import { SITE_URL } from '@gitmono/config'
-import { ArrowUpRightIcon, Button, Link, ShipIcon, ShipUnreadIcon } from '@gitmono/ui'
+import { ArrowUpRightIcon, Button, ShipIcon, ShipUnreadIcon } from '@gitmono/ui'
 import { DropdownMenu } from '@gitmono/ui/DropdownMenu'
 import { buildMenuItems } from '@gitmono/ui/Menu'
 
@@ -9,24 +9,6 @@ import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
 import { useGetChangelog } from '@/hooks/useGetLatestRelease'
 import { useStoredState } from '@/hooks/useStoredState'
 import { Changelog } from '@/utils/types'
-
-interface LinkProps {
-  children: React.ReactNode
-  href: string
-  [key: string]: any
-}
-
-const SettingsLink = forwardRef((props: LinkProps, ref: React.ForwardedRef<HTMLAnchorElement>) => {
-  let { href, children, ...rest } = props
-
-  return (
-    <Link href={href} ref={ref} {...rest}>
-      {children}
-    </Link>
-  )
-})
-
-SettingsLink.displayName = 'SettingsLink'
 
 export function ChangelogDropdown({
   side = 'top',

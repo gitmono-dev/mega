@@ -70,9 +70,10 @@ export function HomeFollowUpDialog({ title, id, type, viewerFollowUp, open, onOp
       {customDate ? (
         <div className='mt-3 flex flex-col items-center gap-2 p-3.5'>
           <Calendar
-            initialFocus
-            fromDate={customFrom}
-            toDate={customTo}
+            autoFocus
+            startMonth={customFrom}
+            endMonth={customTo}
+            hidden={{ before: customFrom, after: customTo }}
             mode='single'
             selected={customDate}
             onSelect={(date) => setCustomDate(date)}
@@ -80,8 +81,8 @@ export function HomeFollowUpDialog({ title, id, type, viewerFollowUp, open, onOp
             classNames={{
               months: '',
               month: 'space-y-2',
-              head_row: 'flex justify-between',
-              row: 'flex justify-between'
+              weekdays: 'flex justify-between',
+              week: 'flex justify-between'
             }}
           />
           <div className='flex w-full items-center justify-end gap-1.5 border-t pt-3'>
@@ -111,7 +112,7 @@ export function HomeFollowUpDialog({ title, id, type, viewerFollowUp, open, onOp
                   deleteFollowUp({ id: viewerFollowUp.id })
                   close()
                 }}
-                className='h-10 gap-2 rounded-lg pl-2 pr-3.5'
+                className='h-10 gap-2 rounded-lg pr-3.5 pl-2'
               >
                 <CloseIcon className='text-tertiary' />
                 <UIText className='flex-1'>Remove follow up</UIText>
@@ -126,7 +127,7 @@ export function HomeFollowUpDialog({ title, id, type, viewerFollowUp, open, onOp
                   upsert(date.date)
                   close()
                 }}
-                className='h-10 gap-2 rounded-lg pl-2 pr-3.5'
+                className='h-10 gap-2 rounded-lg pr-3.5 pl-2'
               >
                 <ClockIcon className='text-tertiary' />
                 <UIText className='flex-1'>{date.label}</UIText>
@@ -136,7 +137,7 @@ export function HomeFollowUpDialog({ title, id, type, viewerFollowUp, open, onOp
 
             <HighlightedCommandItem
               onSelect={() => setCustomDate(customFrom)}
-              className='h-10 gap-2 rounded-lg pl-2 pr-3.5'
+              className='h-10 gap-2 rounded-lg pr-3.5 pl-2'
             >
               <ClockIcon className='text-tertiary' />
               <UIText className='flex-1'>Custom...</UIText>

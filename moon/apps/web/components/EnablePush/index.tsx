@@ -31,11 +31,11 @@ export function EnablePush({
 
   return (
     <div className={containerClassName}>
-      <div className='dark:bg-gray-850 -mt-px flex flex-col gap-3 rounded-2xl bg-gray-100 px-4 pb-4 pt-6'>
+      <div className='dark:bg-gray-850 -mt-px flex flex-col gap-3 rounded-2xl bg-gray-100 px-4 pt-6 pb-4'>
         <div className='flex items-center justify-center'>
           <div className='relative'>
             <Image width={64} height={64} src='/img/desktop-app-icon.png' alt='' className='h-16 w-16 rounded-lg' />
-            <div className='h-4.5 w-4.5 bg-brand-secondary dark:ring-gray-850 absolute right-0 top-0 rounded-full ring-[3px] ring-gray-100' />
+            <div className='bg-brand-secondary dark:ring-gray-850 absolute top-0 right-0 h-4.5 w-4.5 rounded-full ring-[3px] ring-gray-100' />
           </div>
         </div>
         <div className='mb-3 flex flex-col items-center justify-center text-center'>

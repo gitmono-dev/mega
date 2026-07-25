@@ -1,8 +1,5 @@
-import * as Sentry from '@sentry/nextjs'
-
 import { parseCampsiteUrl } from '@gitmono/editor'
 
-import { CallPreviewCard } from '@/components/PreviewCards/CallPreviewCard'
 import { CommentPreviewCard } from '@/components/PreviewCards/CommentPreviewCard'
 import { NotePreviewCard } from '@/components/PreviewCards/NotePreviewCard'
 import { PostPreviewCard } from '@/components/PreviewCards/PostPreviewCard'
@@ -65,7 +62,7 @@ export function RichLinkCard({
   try {
     url = new URL(href)
   } catch {
-    Sentry.captureException(`Invalid URL: ${href}`)
+    console.error(`Invalid URL: ${href}`)
     return null
   }
 
@@ -77,8 +74,6 @@ export function RichLinkCard({
         return <PostPreviewCard className={className} postId={parsedUrl.id} />
       } else if (parsedUrl.subject === 'projects') {
         return <ProjectPreviewCard projectId={parsedUrl.id} interactive={interactive} />
-      } else if (parsedUrl.subject === 'calls') {
-        return <CallPreviewCard callId={parsedUrl.id} interactive={interactive} />
       } else if (parsedUrl.subject === 'comment') {
         return <CommentPreviewCard commentId={parsedUrl.id} />
       }

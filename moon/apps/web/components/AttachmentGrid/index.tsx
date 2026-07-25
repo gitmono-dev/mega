@@ -103,7 +103,7 @@ function MediaThumbnail({
               controls={showVideoControls}
               preload='auto'
               className={cn(
-                'focus:online-none focus:border-0 focus-visible:outline-none',
+                'focus:online-none focus:border-0 focus-visible:outline-hidden',
                 borderRadiusClassName(index, mediaCount),
                 {
                   'h-auto max-h-[500px] w-full object-contain object-top': isSingle,
@@ -193,7 +193,7 @@ export function AttachmentGrid({ postId, attachments, autoPlayVideo }: Attachmen
           />
         ))}
         {hasMore && (
-          <div className='absolute bottom-0 right-0'>
+          <div className='absolute right-0 bottom-0'>
             <button className='hover:underline' onClick={() => setSelectedPostAttachmentId(attachments[0].id)}>
               <AttachmentAccessory>+{extraCount} more&hellip;</AttachmentAccessory>
             </button>

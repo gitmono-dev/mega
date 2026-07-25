@@ -3,14 +3,13 @@ import { useAtomValue } from 'jotai'
 import { useRouter } from 'next/router'
 
 import { MessageThread } from '@gitmono/types'
-import { Button, cn, Link, UIText, UnreadSquareBadgeIcon, VideoCameraIcon } from '@gitmono/ui'
+import { Button, cn, Link, UIText, UnreadSquareBadgeIcon } from '@gitmono/ui'
 import { HoverCard } from '@gitmono/ui/src/HoverCard'
 
 import { sidebarCollapsedAtom } from '@/components/Layout/AppLayout'
 import { MemberStatus } from '@/components/MemberStatus'
 import { ChatFavoriteButton } from '@/components/Thread/ChatFavoriteButton'
 import { useScope } from '@/contexts/scope'
-import { useJoinMessageThreadCall } from '@/hooks/useJoinMessageThreadCall'
 import { useMarkThreadUnread } from '@/hooks/useMarkThreadUnread'
 
 import { ThreadView } from './ThreadView'
@@ -30,7 +29,6 @@ export function ThreadHoverCard({ children, thread, onOpenChange, disabled }: Pr
   const isDisabled = sidebarCollapsed || isViewingThread || disabled
   const href = `/${scope}/chat/${thread.id}`
   const { mutate: markThreadUnread } = useMarkThreadUnread()
-  const { joinCall, canJoin, onCall } = useJoinMessageThreadCall({ thread })
   const handleOpenChange = (newVal: boolean) => {
     setOpen(newVal)
     onOpenChange(newVal)
@@ -52,16 +50,6 @@ export function ThreadHoverCard({ children, thread, onOpenChange, disabled }: Pr
             <ChatFavoriteButton thread={thread} />
           </div>
 
-          {(canJoin || onCall) && (
-            <Button
-              iconOnly={<VideoCameraIcon size={24} />}
-              accessibilityLabel='Start call'
-              variant='plain'
-              tooltip={onCall ? 'Already joined call' : 'Start call'}
-              onClick={joinCall}
-              disabled={onCall}
-            />
-          )}
           <Button
             tooltip='Mark unread'
             variant='plain'

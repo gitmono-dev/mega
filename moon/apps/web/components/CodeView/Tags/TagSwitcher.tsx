@@ -65,7 +65,7 @@ export default function TagSwitcher() {
         <PopoverElementAnchor element={anchorRef.current} />
         <PopoverPortal>
           <PopoverContent
-            className={cn('scrollable min-w-[360px] max-w-[360px] p-0', CONTAINER_STYLES.base)}
+            className={cn('scrollable max-w-[360px] min-w-[360px] p-0', CONTAINER_STYLES.base)}
             side='bottom'
             align='end'
             asChild
@@ -73,7 +73,7 @@ export default function TagSwitcher() {
             <div className='relative flex max-h-[400px] flex-col'>
               {/* Top-right close button for consistency */}
               <Button
-                className='absolute right-2 top-2 z-10'
+                className='absolute top-2 right-2 z-10'
                 variant='plain'
                 iconOnly={<CloseIcon strokeWidth='2' />}
                 accessibilityLabel='Close'

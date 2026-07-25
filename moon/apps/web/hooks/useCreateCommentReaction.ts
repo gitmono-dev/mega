@@ -58,7 +58,9 @@ export function useCreateCommentReaction(commentId: string) {
 
       return { ...optimisticUpdate, client_id }
     },
-    onSuccess(newReaction, _, { client_id }) {
+    onSuccess(newReaction, _, context) {
+      if (!context) return
+      const { client_id } = context
       setNormalizedData({
         queryNormalizer,
         type: 'comment',

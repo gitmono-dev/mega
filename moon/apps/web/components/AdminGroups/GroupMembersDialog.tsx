@@ -46,10 +46,10 @@ export const GroupMembersDialog = ({ groupId, groupName, onClose }: GroupMembers
   if (groupId === null) return null
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4'>
+    <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
       <div className='bg-primary border-primary flex max-h-[90vh] w-full max-w-2xl flex-col rounded-lg border shadow-xl'>
         {/* Fixed header */}
-        <div className='flex-shrink-0 border-b border-gray-200 px-6 py-4 dark:border-gray-700'>
+        <div className='shrink-0 border-b border-gray-200 px-6 py-4 dark:border-gray-700'>
           <div className='flex items-center justify-between'>
             <div>
               <h2 className='text-primary text-xl font-bold'>Group Members{groupName ? ` - ${groupName}` : ''}</h2>
@@ -87,7 +87,7 @@ export const GroupMembersDialog = ({ groupId, groupName, onClose }: GroupMembers
                   key={member.id}
                   className='flex items-center rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900/50 dark:hover:bg-gray-800'
                 >
-                  <div className='mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-gray-200 bg-gray-300 dark:border-gray-600 dark:bg-gray-600'>
+                  <div className='mr-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-gray-300 dark:border-gray-600 dark:bg-gray-600'>
                     <span className='text-sm font-medium text-gray-600 dark:text-gray-300'>
                       {member.username.charAt(0).toUpperCase()}
                     </span>
@@ -98,7 +98,7 @@ export const GroupMembersDialog = ({ groupId, groupName, onClose }: GroupMembers
                       Joined: {new Date(member.joined_at * 1000).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className='flex flex-shrink-0 items-center gap-3'>
+                  <div className='flex shrink-0 items-center gap-3'>
                     <Button
                       variant='plain'
                       size='sm'
@@ -116,7 +116,7 @@ export const GroupMembersDialog = ({ groupId, groupName, onClose }: GroupMembers
         </div>
 
         {/* Fixed bottom buttons */}
-        <div className='flex-shrink-0 rounded-b-lg border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900/50'>
+        <div className='shrink-0 rounded-b-lg border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900/50'>
           <div className='flex justify-end'>
             <Button variant='plain' onClick={onClose}>
               Close

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { addHours } from 'date-fns'
 import { isMobile } from 'react-device-detect'
-import { uniqBy } from 'remeda'
+import { uniqueBy } from 'remeda'
 
 import { OrganizationsOrgSlugMembersMeStatusesPostRequest } from '@gitmono/types/generated'
 import { Button } from '@gitmono/ui/Button'
@@ -103,7 +103,7 @@ function StatusPickerContent({ onOpenChange }: { onOpenChange: (open: boolean) =
       ...DEFAULT_STATUSES
     ]
 
-    return uniqBy(presets, (preset) => preset.message)
+    return uniqueBy(presets, (preset) => preset.message)
       .slice(0, 5)
       .reverse()
   }, [recentStatuses])
@@ -226,7 +226,7 @@ function StatusPickerContent({ onOpenChange }: { onOpenChange: (open: boolean) =
 
         <div className='flex flex-col gap-3 border-t p-4'>
           <div className='relative'>
-            <div className='absolute left-1.5 top-1.5 z-[1]'>
+            <div className='absolute top-1.5 left-1.5 z-[1]'>
               <ReactionPicker
                 onReactionSelect={(reaction) => {
                   if (!isStandardReaction(reaction)) return
@@ -257,7 +257,7 @@ function StatusPickerContent({ onOpenChange }: { onOpenChange: (open: boolean) =
               }}
             />
             {message && (
-              <div className='absolute right-1.5 top-1.5 z-[1]'>
+              <div className='absolute top-1.5 right-1.5 z-[1]'>
                 <Select
                   options={[
                     { value: '30m', label: '30m' },

@@ -75,10 +75,10 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
   if (groupId === null) return null
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4'>
+    <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
       <div className='bg-primary border-primary flex max-h-[90vh] w-full max-w-2xl flex-col rounded-lg border shadow-xl'>
         {/* Fixed header */}
-        <div className='flex-shrink-0 border-b border-gray-200 px-6 py-4 dark:border-gray-700'>
+        <div className='shrink-0 border-b border-gray-200 px-6 py-4 dark:border-gray-700'>
           <h2 className='text-primary text-xl font-bold'>Add Members to Group</h2>
 
           {/* Debug info */}
@@ -114,7 +114,7 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
               type='text'
               value={memberSearchQuery}
               onChange={(e) => setMemberSearchQuery(e.target.value)}
-              className='border-primary bg-secondary text-primary w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+              className='border-primary bg-secondary text-primary w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-hidden'
               placeholder='Search members by name or username...'
               disabled={!!membersError}
             />
@@ -180,7 +180,7 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
                                 <img
                                   src={member.user.avatar_urls?.sm || ''}
                                   alt={member.user.display_name}
-                                  className='mr-3 h-8 w-8 flex-shrink-0 rounded-full border border-gray-200 dark:border-gray-600'
+                                  className='mr-3 h-8 w-8 shrink-0 rounded-full border border-gray-200 dark:border-gray-600'
                                 />
                                 <div className='min-w-0 flex-1'>
                                   <p className='text-primary truncate text-sm font-medium'>
@@ -188,7 +188,7 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
                                   </p>
                                   <p className='text-tertiary truncate text-xs'>@{member.user.username}</p>
                                 </div>
-                                <div className='ml-3 flex flex-shrink-0 items-center gap-2'>
+                                <div className='ml-3 flex shrink-0 items-center gap-2'>
                                   <span
                                     className={`rounded-full px-2 py-1 text-xs font-medium ${
                                       member.role === 'admin'
@@ -231,13 +231,13 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
                               <img
                                 src={member.user.avatar_urls?.sm || ''}
                                 alt={member.user.display_name}
-                                className='mr-3 h-8 w-8 flex-shrink-0 rounded-full border border-gray-200 dark:border-gray-600'
+                                className='mr-3 h-8 w-8 shrink-0 rounded-full border border-gray-200 dark:border-gray-600'
                               />
                               <div className='min-w-0 flex-1'>
                                 <p className='truncate text-sm font-medium text-gray-500'>{member.user.display_name}</p>
                                 <p className='truncate text-xs text-gray-400'>@{member.user.username}</p>
                               </div>
-                              <div className='ml-3 flex flex-shrink-0 items-center gap-2'>
+                              <div className='ml-3 flex shrink-0 items-center gap-2'>
                                 <span
                                   className={`rounded-full px-2 py-1 text-xs font-medium ${
                                     member.role === 'admin'
@@ -273,7 +273,7 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
         </div>
 
         {/* Fixed bottom buttons */}
-        <div className='flex-shrink-0 rounded-b-lg border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900/50'>
+        <div className='shrink-0 rounded-b-lg border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900/50'>
           <div className='flex justify-end gap-3'>
             <Button variant='plain' onClick={handleClose} disabled={addMembersMutation.isPending}>
               Cancel

@@ -57,7 +57,9 @@ export function useCreatePostReaction(postId: string) {
         })
       }
     },
-    onSuccess(newReaction, _, { client_id }) {
+    onSuccess(newReaction, _, context) {
+      if (!context) return
+      const { client_id } = context
       setNormalizedData({
         queryNormalizer,
         type: 'post',

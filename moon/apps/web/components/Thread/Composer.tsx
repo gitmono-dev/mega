@@ -219,7 +219,7 @@ export const Composer = forwardRef<HTMLFormElement, Props>(function Composer(
                 'relative flex min-h-[36px] flex-1 flex-col rounded-[18px]',
                 'bg-elevated border-1',
                 dropzone.isDragActive &&
-                  'border-blue-500 bg-blue-50 ring-2 ring-blue-100 hover:bg-blue-100/20 dark:bg-blue-900/20 dark:ring-blue-600 dark:ring-opacity-20'
+                  'dark:ring-opacity-20 border-blue-500 bg-blue-50 ring-2 ring-blue-100 hover:bg-blue-100/20 dark:bg-blue-900/20 dark:ring-blue-600'
               )}
               data-filled={hasContent}
             >
@@ -242,7 +242,7 @@ export const Composer = forwardRef<HTMLFormElement, Props>(function Composer(
                 defaultMentions={thread?.other_members}
               />
 
-              <div className='absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center'>
+              <div className='absolute right-1 bottom-1 flex h-7 w-7 items-center justify-center'>
                 <Button
                   round
                   variant={editMode ? 'important' : 'primary'}
@@ -275,7 +275,7 @@ const Attachments = memo(function Attachments() {
   if (attachments.length === 0) return null
 
   return (
-    <ul className='flex flex-wrap items-end gap-1.5 px-3 pb-0.5 pt-2.5 lg:pb-0'>
+    <ul className='flex flex-wrap items-end gap-1.5 px-3 pt-2.5 pb-0.5 lg:pb-0'>
       {attachments.map((attachment) => (
         <Tooltip
           key={attachment.id}
@@ -380,7 +380,7 @@ const ComposerEditor = forwardRef<ComposerEditorRef, ComposerEditorProps>(functi
       editorProps: {
         attributes: {
           class: cn(
-            'scrollbar-hide break-words focus:ring-0 focus:outline-none !dark:bg-transparent bg-quaternary border-transparent !bg-transparent focus:border-transparent focus:outline-0 focus:ring-0 max-h-[60vh] text-base lg:text-sm chat-prose overflow-y-auto select-auto',
+            'scrollbar-hide break-words focus:ring-0 focus:outline-hidden !dark:bg-transparent bg-quaternary border-transparent !bg-transparent focus:border-transparent focus:outline-0 focus:ring-0 max-h-[60vh] text-base lg:text-sm chat-prose overflow-y-auto select-auto',
             'pr-10 py-[6px] lg:py-[7px] pl-3'
           )
         }
@@ -410,10 +410,10 @@ const ComposerEditor = forwardRef<ComposerEditorRef, ComposerEditorProps>(functi
     if (editMode) {
       const currentContent = editor?.getHTML() ?? EMPTY_HTML
 
-      editor.chain().setContent(editMode.content, true).focus().run()
+      editor.chain().setContent(editMode.content).focus().run()
 
       return () => {
-        editor.chain().setContent(currentContent, true).focus().run()
+        editor.chain().setContent(currentContent).focus().run()
       }
     }
     // including editor?.commands here causes an infinite loop

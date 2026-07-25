@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
 
-import { OauthApplication, OrganizationsOrgSlugOauthApplicationsIdPutRequest } from '@gitmono/types/generated'
+import { OauthApplication } from '@gitmono/types/generated'
 import { Button } from '@gitmono/ui/Button'
 import { FormError } from '@gitmono/ui/FormError'
 import { UIText } from '@gitmono/ui/Text'
@@ -16,20 +16,18 @@ import { useUpdateOauthApplication } from '@/hooks/useUpdateOauthApplication'
 import { apiErrorToast } from '@/utils/apiErrorToast'
 import { TransformedFile } from '@/utils/types'
 
-type FormSchema = OrganizationsOrgSlugOauthApplicationsIdPutRequest
+const generalSettingsSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  avatar_path: z.string().optional()
+})
 
 function useGeneralSettingsForm(initialValues?: OauthApplication) {
-  return useForm<FormSchema>({
+  return useForm({
     defaultValues: {
       name: initialValues?.name || '',
       avatar_path: initialValues?.avatar_path || ''
     },
-    resolver: zodResolver(
-      z.object({
-        name: z.string().min(1, 'Name is required'),
-        avatar_path: z.string().optional()
-      })
-    )
+    resolver: zodResolver(generalSettingsSchema)
   })
 }
 

@@ -26,7 +26,6 @@ export const useGetClFileChanged = (
   const [, setFileChanged] = useAtom(getFileChangedAtom(link))
 
   const { data, isLoading } = useQuery({
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: [...fetchClFileChanged.requestKey(link), pagination.page, pagination.per_page],
     queryFn: async () => {
       const result = await fetchClFileChanged.request(link, {

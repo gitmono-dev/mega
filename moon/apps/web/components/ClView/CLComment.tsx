@@ -12,6 +12,7 @@ import { usePostComment } from '@/hooks/issues/usePostComment'
 import { useGetOrganizationMember } from '@/hooks/useGetOrganizationMember'
 import { useUploadHelpers } from '@/hooks/useUploadHelpers'
 import { apiErrorToast } from '@/utils/apiErrorToast'
+import { megaUserHandle } from '@/utils/megaUser'
 import { trimHtml } from '@/utils/trimHtml'
 
 import { MemberHovercard } from '../InlinePost/MemberHovercard'
@@ -32,16 +33,18 @@ interface CommentProps {
   conv: ConversationItem
   id: string
   whoamI: string
-  editorRef: React.RefObject<SimpleNoteContentRef>
+  editorRef: React.RefObject<SimpleNoteContentRef | null>
 }
 
 const Comment = React.memo<CommentProps>(({ conv, id, whoamI, editorRef }: CommentProps) => {
   const { data: member } = useGetOrganizationMember({ username: conv.username })
+  const profileUsername = member?.user.username || conv.username
+  const displayName = megaUserHandle(member?.user, conv.username) || 'username not found'
 
   const extensions = useMemo(() => getNoteExtensions({ linkUnfurl: {} }), [])
   const handleReactionSelect = useHandleExpression({ conv, id, type: whoamI })
   const [editId, setEditId] = useAtom(editIdAtom)
-  const editInputRef = useRef<{ handleUpdate: () => void }>()
+  const editInputRef = useRef<{ handleUpdate: () => void } | null>(null)
   const [refresh, setRefresh] = useAtom(refreshAtom)
 
   return (
@@ -52,8 +55,8 @@ const Comment = React.memo<CommentProps>(({ conv, id, whoamI, editorRef }: Comme
             <ConditionalWrap
               condition={true}
               wrap={(c) => (
-                <MemberHovercard username={conv?.username}>
-                  <UserLinkByName username={conv?.username} className='relative'>
+                <MemberHovercard username={profileUsername}>
+                  <UserLinkByName username={profileUsername} className='relative'>
                     {c}
                   </UserLinkByName>
                 </MemberHovercard>
@@ -66,13 +69,13 @@ const Comment = React.memo<CommentProps>(({ conv, id, whoamI, editorRef }: Comme
             <ConditionalWrap
               condition={true}
               wrap={(children) => (
-                <MemberHovercard username={conv?.username}>
-                  <UserLinkByName username={conv?.username}>{children}</UserLinkByName>
+                <MemberHovercard username={profileUsername}>
+                  <UserLinkByName username={profileUsername}>{children}</UserLinkByName>
                 </MemberHovercard>
               )}
             >
               <UIText element='span' primary weight='font-medium' className='break-anywhere line-clamp-1'>
-                {conv?.username || 'username not found'}
+                {displayName}
               </UIText>
             </ConditionalWrap>
           </div>

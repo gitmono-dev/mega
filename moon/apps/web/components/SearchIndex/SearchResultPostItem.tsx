@@ -41,7 +41,7 @@ export function SearchResultPostItem({ post, highlights, titleHighlight, ...rest
       <div className='flex flex-col'>
         <div className='flex flex-1 items-center gap-3'>
           <div className='flex flex-1 flex-col gap-0.5'>
-            <div className='@xl:flex-row @xl:items-center flex flex-col'>
+            <div className='flex flex-col @xl:flex-row @xl:items-center'>
               {title && (
                 <UIText primary weight='font-medium' className='break-anywhere mr-2 line-clamp-1'>
                   <HTMLRenderer text={title} />

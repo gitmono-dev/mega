@@ -9,12 +9,12 @@ import { MenuHeadingType, MenuItemType, MenuSubType, MenuTextType, MenuWidth } f
 import { cn, CONTAINER_STYLES } from '../utils'
 
 function ContextMenuSeparator() {
-  return <ContextMenuPrimitive.Separator className='-mx-1 my-1 h-0 border-b border-t dark:border-t-black/70' />
+  return <ContextMenuPrimitive.Separator className='-mx-1 my-1 h-0 border-t border-b dark:border-t-black/70' />
 }
 
 function ContextMenuHeading({ item }: { item: MenuHeadingType }) {
   return (
-    <ContextMenuPrimitive.Label className='text-tertiary dark:text-secondary pl-1.5 pt-1 text-[10px] font-medium uppercase'>
+    <ContextMenuPrimitive.Label className='text-tertiary dark:text-secondary pt-1 pl-1.5 text-[10px] font-medium uppercase'>
       {item.label}
     </ContextMenuPrimitive.Label>
   )
@@ -22,7 +22,7 @@ function ContextMenuHeading({ item }: { item: MenuHeadingType }) {
 
 function ContextMenuText({ item }: { item: MenuTextType }) {
   return (
-    <ContextMenuPrimitive.Label className='text-tertiary dark:text-secondary pl-1.5 pt-1 text-[10px] font-medium'>
+    <ContextMenuPrimitive.Label className='text-tertiary dark:text-secondary pt-1 pl-1.5 text-[10px] font-medium'>
       {item.label}
     </ContextMenuPrimitive.Label>
   )
@@ -48,7 +48,7 @@ function ContextMenuItem({ item }: ContextMenuItemProps) {
         }
       }}
       className={cn(
-        'text-primary data-[highlighted]:bg-quaternary dark:data-[highlighted]:shadow-select-item group flex h-8 cursor-pointer items-center gap-1.5 rounded-md !border-0 text-sm !ring-0 focus-visible:!border-0 focus-visible:!outline-none focus-visible:!ring-0',
+        'text-primary data-[highlighted]:bg-quaternary dark:data-[highlighted]:shadow-select-item group flex h-8 cursor-pointer items-center gap-1.5 rounded-md !border-0 text-sm !ring-0 focus-visible:!border-0 focus-visible:!ring-0 focus-visible:!outline-hidden',
         {
           'data-[highlighted]:bg-red-500 data-[highlighted]:text-white': item.destructive,
           'pl-1.5': item.leftSlot,
@@ -83,7 +83,7 @@ interface ContextSubItemProps extends React.PropsWithChildren {
 function ContextSubItem({ children, item, width }: ContextSubItemProps) {
   return (
     <ContextMenuPrimitive.Sub>
-      <ContextMenuPrimitive.SubTrigger className='text-primary data-[highlighted]:bg-quaternary dark:data-[highlighted]:shadow-select-item flex h-8 cursor-pointer items-center gap-1.5 rounded-md !border-0 pl-1.5 pr-1 !ring-0 focus-visible:!border-0 focus-visible:!outline-none focus-visible:!ring-0'>
+      <ContextMenuPrimitive.SubTrigger className='text-primary data-[highlighted]:bg-quaternary dark:data-[highlighted]:shadow-select-item flex h-8 cursor-pointer items-center gap-1.5 rounded-md !border-0 pr-1 pl-1.5 !ring-0 focus-visible:!border-0 focus-visible:!ring-0 focus-visible:!outline-hidden'>
         {item.leftSlot && <span className='text-tertiary'>{item.leftSlot}</span>}
         <ContextMenuPrimitive.Label className='flex-1 text-sm'>{item.label}</ContextMenuPrimitive.Label>
         <ChevronRightIcon />
@@ -150,7 +150,7 @@ export function ContextMenu({ children, items, onOpenChange, asChild }: ContextM
             collisionPadding={8}
             alignOffset={4}
             className={cn(
-              'focus:outline-none',
+              'focus:outline-hidden',
               'max-h-[--radix-context-menu-content-available-height] min-w-[--radix-context-menu-trigger-width]',
               'bg-elevated dark:border-primary-opaque overflow-y-auto rounded-lg border border-neutral-400/40 p-1 shadow dark:shadow-[0px_0px_0px_0.5px_rgba(0,0,0,1),_0px_4px_4px_rgba(0,0,0,0.24)]',
               CONTAINER_STYLES.animation

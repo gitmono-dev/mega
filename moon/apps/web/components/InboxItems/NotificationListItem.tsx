@@ -17,8 +17,7 @@ import {
   RefreshIcon,
   RelativeTime,
   Reply2Icon,
-  UIText,
-  VideoCameraIcon
+  UIText
 } from '@gitmono/ui'
 import { cn } from '@gitmono/ui/src/utils'
 
@@ -106,7 +105,7 @@ export function NotificationListItem({ notification, display = 'home' }: Props) 
           <div className='my-1 flex flex-col gap-y-1'>
             {notification.reply_to_body_preview && (
               <div
-                className={cn('flex border-l-2 pl-2 pr-3 leading-tight', {
+                className={cn('flex border-l-2 pr-3 pl-2 leading-tight', {
                   'opacity-60': display !== 'activity' && notification.read
                 })}
               >
@@ -149,7 +148,7 @@ export function NotificationListItem({ notification, display = 'home' }: Props) 
             alt='Notification preview image'
           />
           {notification.preview_is_canvas && (
-            <div className='text-secondary absolute bottom-1 right-1 flex items-center justify-center rounded-md bg-white px-1 py-0.5 ring-1 ring-black/5'>
+            <div className='text-secondary absolute right-1 bottom-1 flex items-center justify-center rounded-md bg-white px-1 py-0.5 ring-1 ring-black/5'>
               <CanvasCommentIcon size={14} />
             </div>
           )}
@@ -182,14 +181,6 @@ function NotificationListItemLeftSlot({ notification }: { notification: Notifica
     return (
       <div className='flex h-6 w-6 items-start justify-end'>
         <AlarmIcon className='text-secondary' size={24} />
-      </div>
-    )
-  }
-
-  if (notification.subject.type === 'Call') {
-    return (
-      <div className='flex h-6 w-6 items-start justify-end'>
-        <VideoCameraIcon className='text-secondary' size={24} />
       </div>
     )
   }
@@ -299,7 +290,7 @@ export function ReasonIcon({ config }: { config: ReasonConfig }) {
   return (
     <div
       className={cn(
-        'absolute -bottom-[5px] -right-[5px] flex items-center justify-center rounded-full',
+        'absolute -right-[5px] -bottom-[5px] flex items-center justify-center rounded-full',
         config.classes
       )}
     >

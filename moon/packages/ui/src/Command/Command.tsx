@@ -792,7 +792,7 @@ const Command = React.forwardRef<CommandRef, CommandProps>(function Command(prop
       <div
         ref={containerRef}
         tabIndex={-1}
-        className={cn('outline-none', className)}
+        className={cn('outline-hidden', className)}
         {...etc}
         // eslint-disable-next-line react/no-unknown-property
         cmdk-root=''
@@ -1206,7 +1206,7 @@ function useAsRef<T>(data: T) {
 const useLayoutEffect = typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect
 
 export function useLazyRef<T>(fn: () => T) {
-  const ref = React.useRef<T>()
+  const ref = React.useRef<T | undefined>(undefined)
 
   if (ref.current === undefined) {
     ref.current = fn()
@@ -1240,12 +1240,12 @@ function useCmdk<T = any>(selector: (state: State) => T) {
 
 function useValue(
   id: string,
-  ref: React.RefObject<HTMLElement>,
-  deps: (string | React.ReactNode | React.RefObject<HTMLElement>)[],
+  ref: React.RefObject<HTMLElement | null>,
+  deps: (string | React.ReactNode | React.RefObject<HTMLElement | null>)[],
   aliases: string[] = [],
   scoreModifier: number = 1
 ) {
-  const valueRef = React.useRef<string>()
+  const valueRef = React.useRef<string | undefined>(undefined)
   const context = useCommand()!
 
   useLayoutEffect(() => {
@@ -1293,7 +1293,7 @@ const useScheduleLayoutEffect = () => {
   }
 }
 
-function renderChildren(children: React.ReactElement) {
+function renderChildren(children: React.ReactElement<{ children?: React.ReactNode }>) {
   const childrenType = children.type as any
   // The children is a component
 
@@ -1306,9 +1306,9 @@ function renderChildren(children: React.ReactElement) {
 
 function SlottableWithNestedChildren(
   { asChild, children }: { asChild?: boolean; children?: React.ReactNode },
-  render: (child: React.ReactNode) => JSX.Element
+  render: (child: React.ReactNode) => React.JSX.Element
 ) {
-  if (asChild && React.isValidElement(children)) {
+  if (asChild && React.isValidElement<{ children?: React.ReactNode }>(children)) {
     return React.cloneElement(renderChildren(children), { ref: (children as any).ref }, render(children.props.children))
   }
   return render(children)

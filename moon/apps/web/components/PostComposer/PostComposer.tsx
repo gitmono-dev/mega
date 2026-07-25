@@ -148,9 +148,9 @@ export function PostComposer() {
             onPointerDownOutside={(e) => e.preventDefault()}
             onInteractOutside={(e) => e.preventDefault()}
             className={cn(
-              'fixed bottom-0 right-4',
-              'focus:outline-none focus:ring-0',
-              'bg-elevated dark:border-primary-opaque flex flex-col overflow-hidden rounded-t-xl border-b-0 border-l border-r border-t shadow-lg dark:border dark:border-b-0 dark:bg-gray-900 dark:shadow-[0px_2px_16px_rgba(0,0,0,1)]',
+              'fixed right-4 bottom-0',
+              'focus:ring-0 focus:outline-hidden',
+              'bg-elevated dark:border-primary-opaque flex flex-col overflow-hidden rounded-t-xl border-t border-r border-b-0 border-l shadow-lg dark:border dark:border-b-0 dark:bg-gray-900 dark:shadow-[0px_2px_16px_rgba(0,0,0,1)]',
               {
                 '3xl:w-[500px] 4xl:w-[520px] 3xl:h-[470px] 4xl:h-[490px] h-[450px] w-[460px] 2xl:w-[480px]':
                   isPostComposerExpanded,
@@ -159,7 +159,7 @@ export function PostComposer() {
             )}
           >
             {!isPostComposerExpanded ? (
-              <div className='flex items-center px-3 pb-2.5 pl-4 pt-3'>
+              <div className='flex items-center px-3 pt-3 pb-2.5 pl-4'>
                 <UIText weight='font-semibold'>New post</UIText>
                 <PostComposerHeaderActions onDeleteDraft={handleDeleteDraftDialog} />
               </div>

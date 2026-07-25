@@ -13,7 +13,6 @@ import { MemberAvatar } from '@/components/MemberAvatar'
 import { RichLinkCard } from '@/components/RichLinkCard'
 import { RichTextRenderer } from '@/components/RichTextRenderer'
 import { Attachments } from '@/components/Thread/Bubble/Attachments'
-import { MessageCallBubble } from '@/components/Thread/Bubble/MessageCallBubble'
 import { Overflow } from '@/components/Thread/Bubble/Overflow'
 import { ReplyPreview } from '@/components/Thread/Bubble/ReplyPreview'
 import { useScope } from '@/contexts/scope'
@@ -166,23 +165,15 @@ export function Bubble({ message, thread, position }: Props) {
               <Attachments message={message} thread={thread} overflowState={[overflowOpen, setOverflowOpen]} />
             )}
 
-            {(message.has_content || message.discarded_at || message.call) && (
+            {(message.has_content || message.discarded_at) && (
               <div
                 className={cn(
                   'flex w-full items-center justify-end gap-1.5',
                   !message.viewer_is_sender && 'flex-row-reverse'
                 )}
               >
-                {message.call && (
-                  <MessageCallBubble thread={thread} call={message.call} className={roundedClasses} message={message} />
-                )}
-
-                {(message.has_content || message.discarded_at) && (
-                  <>
-                    <Overflow message={message} thread={thread} state={[overflowOpen, setOverflowOpen]} />
-                    <TextBubble message={message} thread={thread} position={position} className={roundedClasses} />
-                  </>
-                )}
+                <Overflow message={message} thread={thread} state={[overflowOpen, setOverflowOpen]} />
+                <TextBubble message={message} thread={thread} position={position} className={roundedClasses} />
               </div>
             )}
           </div>
@@ -220,7 +211,7 @@ function TextBubble({
       label={longTimestamp(message.created_at, { month: 'short' })}
     >
       <div
-        className={cn('chat-prose relative select-text whitespace-pre-wrap break-words', className, {
+        className={cn('chat-prose relative break-words whitespace-pre-wrap select-text', className, {
           'bg-quaternary text-primary': !message.viewer_is_sender && !hasReactionsOnly,
           'bg-blue-500 text-white': message.viewer_is_sender && !message.discarded_at && !hasReactionsOnly,
           'bg-quaternary text-tertiary': message.discarded_at && !hasReactionsOnly,

@@ -1,3 +1,4 @@
-import { History as TipTapHistory } from '@tiptap/extension-history'
+import { UndoRedo } from '@tiptap/extensions'
 
-export const History = TipTapHistory
+/** TipTap 3 renamed History → UndoRedo; keep History export for call sites. */
+export const History = UndoRedo

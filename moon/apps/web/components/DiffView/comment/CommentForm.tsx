@@ -104,17 +104,17 @@ export function CommentForm({
   return (
     <div className='flex flex-row gap-0.5 overflow-hidden'>
       <div className='w-full'>
-        <div className='mx-4 my-4 max-w-[95%] whitespace-normal font-[Geist] sm:max-w-[70%]'>
-          <div className='rounded-lg border border-[#d0d7de] bg-white p-4 shadow-sm dark:border-[#30363d] dark:bg-[#0d1117]'>
+        <div className='mx-4 my-4 max-w-[95%] font-[Geist] whitespace-normal sm:max-w-[70%]'>
+          <div className='rounded-lg border border-[#d0d7de] bg-white p-4 shadow-xs dark:border-[#30363d] dark:bg-[#0d1117]'>
             <div className='flex gap-3'>
-              <div className='relative flex-shrink-0'>
+              <div className='relative shrink-0'>
                 <Avatar src={currentUserAvatarUrl} alt={currentUserName} name={currentUserName} size='sm' />
               </div>
               <div className='flex-1'>
                 <textarea
                   ref={textareaRef}
                   placeholder='Leave a comment'
-                  className='min-h-[80px] w-full resize-none rounded-md border border-[#d0d7de] bg-white p-3 font-[inherit] text-sm text-[#24292f] outline-none transition-colors focus:ring-2 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-[#e6edf3]'
+                  className='min-h-[80px] w-full resize-none rounded-md border border-[#d0d7de] bg-white p-3 font-[inherit] text-sm text-[#24292f] outline-hidden transition-colors focus:ring-2 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-[#e6edf3]'
                 />
                 <div className='mt-3 flex items-center justify-end gap-2'>
                   <button

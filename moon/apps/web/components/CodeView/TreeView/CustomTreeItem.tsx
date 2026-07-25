@@ -20,8 +20,7 @@ import { CustomLabel } from './CustomLabel'
 import { getIconFromFileType, MuiTreeNode } from './TreeUtils'
 
 interface CustomTreeItemProps
-  extends Omit<UseTreeItemParameters, 'rootRef'>,
-    Omit<React.HTMLAttributes<HTMLLIElement>, 'onFocus'> {
+  extends Omit<UseTreeItemParameters, 'rootRef'>, Omit<React.HTMLAttributes<HTMLLIElement>, 'onFocus'> {
   onLabelClick?: (path: string, isDirectory: boolean) => void
   loadingDirectories?: Set<string>
 }

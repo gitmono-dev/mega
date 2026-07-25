@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import * as Sentry from '@sentry/nextjs'
 import { QueryClient, useQueryClient } from '@tanstack/react-query'
 import { Editor } from '@tiptap/core'
 import toast from 'react-hot-toast'
@@ -172,7 +171,7 @@ export function useUploadNoteAttachments({ noteId, enabled = true }: Props) {
         })
         .catch((err) => {
           toast.error('Unknown error during file upload')
-          Sentry.captureException(err)
+          console.error(err)
         })
     },
     [createAttachment, enabled, maxFileSize, queryClient, scope]

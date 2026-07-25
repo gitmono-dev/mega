@@ -6,6 +6,7 @@ import { ConditionalWrap } from '@gitmono/ui'
 
 import { useGetOrganizationMember } from '@/hooks/useGetOrganizationMember'
 import { getFontColor } from '@/utils/getFontColor'
+import { megaUserHandle } from '@/utils/megaUser'
 import { legacyApiClient } from '@/utils/queryClient'
 
 import { MemberHovercard } from '../InlinePost/MemberHovercard'
@@ -19,6 +20,8 @@ interface LabelItemProps {
 
 function LabelItem({ conv }: LabelItemProps) {
   const { data: member } = useGetOrganizationMember({ username: conv.username })
+  const profileUsername = member?.user.username || conv.username
+  const displayName = megaUserHandle(member?.user, conv.username)
   const comment = conv.comment?.split(' ') ?? []
 
   const idList = useMemo(() => {
@@ -47,8 +50,8 @@ function LabelItem({ conv }: LabelItemProps) {
         <ConditionalWrap
           condition={true}
           wrap={(c) => (
-            <MemberHovercard username={conv?.username}>
-              <UserLinkByName username={conv?.username} className='relative'>
+            <MemberHovercard username={profileUsername}>
+              <UserLinkByName username={profileUsername} className='relative'>
                 {c}
               </UserLinkByName>
             </MemberHovercard>
@@ -57,7 +60,7 @@ function LabelItem({ conv }: LabelItemProps) {
           {member ? <MemberAvatar member={member} size='sm' /> : 'Avatar not found'}
         </ConditionalWrap>
         <div>
-          <span className='font-semibold'>{conv.username} </span>
+          <span className='font-semibold'>{displayName} </span>
           <span className='text-gray-400'>{comment[1]} </span>
           {labels.map((label) => {
             const fontColor = getFontColor(label.color)

@@ -2,7 +2,7 @@ import { createElement, useState } from 'react'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 
-import { Call, Comment, Note, Post } from '@gitmono/types/generated'
+import { Comment, Note, Post } from '@gitmono/types/generated'
 import { AlarmCheckIcon, AlarmIcon, CloseIcon } from '@gitmono/ui/Icons'
 import { buildMenuItems } from '@gitmono/ui/Menu'
 
@@ -10,7 +10,7 @@ import { getFollowUpDates } from '@/components/FollowUp'
 import { useFollowUpActions } from '@/hooks/useFollowUpActions'
 import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
 
-export function useFollowUpMenuBuilder(subject: Post | Note | Comment | Call) {
+export function useFollowUpMenuBuilder(subject: Post | Note | Comment) {
   const { data: currentUser } = useGetCurrentUser()
 
   const { createFollowUp, deleteFollowUp } = useFollowUpActions({

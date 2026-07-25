@@ -31,7 +31,7 @@ export function ShareTab({
     <>
       <CopyCurrentUrl override={note.url} />
 
-      <Tabs.Content value='share' className='!outline-none'>
+      <Tabs.Content value='share' className='!outline-hidden'>
         <div className='flex flex-col gap-3 p-4'>
           <NoteProjectPermissions note={note} />
           <NotePeoplePermissions note={note} permissions={permissions} />
@@ -47,7 +47,7 @@ export function ShareTab({
             }}
             leftSlot={isCopied ? <CheckIcon /> : <LinkIcon />}
             className={cn({
-              '!border-transparent !bg-green-500 !text-white !shadow-none !outline-none !ring-0': isCopied
+              '!border-transparent !bg-green-500 !text-white !shadow-none !ring-0 !outline-hidden': isCopied
             })}
             tooltipShortcut='mod+shift+c'
           >

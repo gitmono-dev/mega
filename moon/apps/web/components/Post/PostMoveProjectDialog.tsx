@@ -83,7 +83,7 @@ export function PostMoveProjectDialog({ post, open, onOpenChange }: PostMoveProj
             <Command.Input
               ref={inputRef}
               placeholder='Search channels...'
-              className='w-full border-0 bg-transparent py-3 pl-0 pr-4 text-[15px] placeholder-gray-400 outline-none focus:border-black focus:border-black/5 focus:ring-0'
+              className='w-full border-0 bg-transparent py-3 pr-4 pl-0 text-[15px] placeholder-gray-400 outline-hidden focus:border-black focus:border-black/5 focus:ring-0'
             />
           </div>
 

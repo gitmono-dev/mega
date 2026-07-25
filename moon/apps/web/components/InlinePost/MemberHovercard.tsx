@@ -193,7 +193,7 @@ export function MentionInteractivity({
   container,
   highlightSelfMention = true
 }: {
-  container: React.RefObject<HTMLElement>
+  container: React.RefObject<HTMLElement | null>
   highlightSelfMention?: boolean
 }) {
   const hoveredMention = useMentionInteraction(container)

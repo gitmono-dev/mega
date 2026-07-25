@@ -489,7 +489,7 @@ export default function IssueDetailPage({ link }: { link: string }) {
                               <div key={index} className='mb-4 flex items-center justify-center pr-2'>
                                 <div
                                   className='rounded-full border px-2 text-sm text-[#fff]'
-                                  //eslint-disable-next-line react/forbid-dom-props
+
                                   style={{ backgroundColor: label.color, borderColor: label.color }}
                                 >
                                   {label.name}

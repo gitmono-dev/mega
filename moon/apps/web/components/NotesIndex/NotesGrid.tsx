@@ -56,7 +56,7 @@ function NotePreviewThumbnail({ note }: { note: Note }) {
         onLoadStart={() => setShowPlaceholder(true)}
       />
 
-      <div className='dark:from-gray-850 absolute bottom-0 left-px right-px z-[1] h-full rounded-b-lg bg-gradient-to-t from-white via-transparent to-transparent' />
+      <div className='dark:from-gray-850 absolute right-px bottom-0 left-px z-[1] h-full rounded-b-lg bg-gradient-to-t from-white via-transparent to-transparent' />
     </div>
   )
 }
@@ -96,7 +96,7 @@ function NoteGridItem({
         )}
         <div
           className={cn(
-            'absolute bottom-2 right-2 z-[2] flex -space-x-2 group-hover:opacity-100 group-data-[state="open"]:opacity-100',
+            'absolute right-2 bottom-2 z-[2] flex -space-x-2 group-hover:opacity-100 group-data-[state="open"]:opacity-100',
             {
               'opacity-100': note.viewer_has_favorited,
               'opacity-0': !note.viewer_has_favorited
@@ -105,14 +105,14 @@ function NoteGridItem({
         >
           <NoteFavoriteButton note={note} />
         </div>
-        <div className='absolute bottom-3 right-3 z-[2] flex -space-x-2'>
+        <div className='absolute right-3 bottom-3 z-[2] flex -space-x-2'>
           <NoteOwnerAvatar
             note={note}
             className='text-quaternary dark:bg-gray-750 z-[2] flex h-7 w-7 items-center justify-center rounded-full border border-transparent bg-white shadow ring-[0.5px] ring-black/10 dark:border-gray-900 dark:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.1)]'
           />
         </div>
         {isDisabled && (
-          <div className='absolute right-2 top-2 z-[3]'>
+          <div className='absolute top-2 right-2 z-[3]'>
             <span className='flex h-6 w-6 items-center justify-center rounded-full bg-gray-900/80 text-xs text-white'>
               🔒
             </span>
@@ -184,7 +184,7 @@ export function NotesGrid({
   notesPermissions?: Record<string, { hasRead: boolean; hasWrite: boolean; isAdmin: boolean }>
 }) {
   return (
-    <div className='@xl:grid-cols-3 @2xl:grid-cols-4 @2xl:gap-x-6 @4xl:grid-cols-5 grid grid-cols-2 gap-x-4 gap-y-8'>
+    <div className='grid grid-cols-2 gap-x-4 gap-y-8 @xl:grid-cols-3 @2xl:grid-cols-4 @2xl:gap-x-6 @4xl:grid-cols-5'>
       {notes.map((note) => (
         <NoteGridItem note={note} key={note.id} hideProject={hideProject} permission={notesPermissions?.[note.id]} />
       ))}

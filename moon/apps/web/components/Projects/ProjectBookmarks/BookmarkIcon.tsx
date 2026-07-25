@@ -53,10 +53,6 @@ export function BookmarkFavicon(props: Props) {
     case 'www.github.com':
       src = '/img/services/github.png'
       break
-    case 'figma.com':
-    case 'www.figma.com':
-      src = '/img/services/figma.png'
-      break
     case 'notion.so':
     case 'www.notion.so':
       src = '/img/services/notion.png'

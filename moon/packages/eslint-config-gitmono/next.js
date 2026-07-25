@@ -1,6 +1,7 @@
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
-  extends: ['next', 'next/core-web-vitals', require.resolve('./rules/no-restricted-imports')],
+  // next / next/core-web-vitals come from eslint-config-next flat exports in apps/web/eslint.config.mjs
+  extends: [require.resolve('./rules/no-restricted-imports')],
   plugins: ['@tanstack/query', 'react'],
   globals: {
     React: 'writable'
@@ -14,9 +15,8 @@ module.exports = {
     browser: true
   },
   rules: {
-    'no-console': 'error',
+    'no-console': ['error', { allow: ['warn', 'error'] }],
     '@tanstack/query/exhaustive-deps': 'error',
-    '@tanstack/query/prefer-query-object-syntax': 'error',
     'react/no-array-index-key': 'error',
     'react-hooks/exhaustive-deps': 'error',
     /**

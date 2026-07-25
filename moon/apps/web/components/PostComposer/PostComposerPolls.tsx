@@ -90,7 +90,7 @@ export const PostComposerPolls = memo(function PostComposerPolls() {
                 autoFocus={i === 0}
               />
               <div
-                className={cn('absolute right-3 top-1/2 -translate-y-1/2', {
+                className={cn('absolute top-1/2 right-3 -translate-y-1/2', {
                   'text-primary opacity-40': option.description.length < POLL_OPTION_DESCRIPTION_LENGTH,
                   'text-red-500': option.description.length === POLL_OPTION_DESCRIPTION_LENGTH
                 })}

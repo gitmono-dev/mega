@@ -86,7 +86,7 @@ export function EnableTwoFactorAuthenticationDialog({ open, onOpenChange, onComp
               </a>
               .
             </UIText>
-            <div className='mt-4 flex items-center justify-center rounded-lg border bg-black bg-opacity-5 p-8 dark:bg-neutral-50'>
+            <div className='bg-opacity-5 mt-4 flex items-center justify-center rounded-lg border bg-black p-8 dark:bg-neutral-50'>
               {provisioningUri && <QRCode size={144} value={provisioningUri} />}
             </div>
 
@@ -132,7 +132,7 @@ export function EnableTwoFactorAuthenticationDialog({ open, onOpenChange, onComp
 
         {twoFactorEnabled && (
           <div>
-            <div className='grid select-text grid-cols-2 gap-3 rounded-lg border border-black border-opacity-5 bg-neutral-50 p-3'>
+            <div className='border-opacity-5 grid grid-cols-2 gap-3 rounded-lg border border-black bg-neutral-50 p-3 select-text'>
               {backupCodes.map((code, index) => (
                 // eslint-disable-next-line react/no-array-index-key
                 <UIText secondary className='font-mono' key={index}>

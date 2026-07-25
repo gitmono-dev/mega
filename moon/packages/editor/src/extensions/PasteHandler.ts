@@ -5,7 +5,6 @@ import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state'
 import cleanMarkdown from '../utils/cleanMarkdown'
 import { ALIAS_TO_LANGUAGE } from '../utils/codeHighlightedLanguages'
 import { createMarkdownParser } from '../utils/createMarkdownParser'
-import { inlineLinkAttachmentType } from '../utils/inlineLinkAttachmentType'
 import { isDropboxPaper } from '../utils/isDropboxPaper'
 import isInCode from '../utils/isInCode'
 import isInList from '../utils/isInList'
@@ -17,25 +16,14 @@ import { parseSingleIframeSrc } from '../utils/parseSingleIframeSrc'
 import { singleNodeContent } from '../utils/singleNodeContent'
 import { supportedResourceMention } from './ResourceMention'
 
-interface PasteHandlerOptions {
-  enableInlineAttachments: boolean
-}
-
-export const PasteHandler = Extension.create<PasteHandlerOptions>({
+export const PasteHandler = Extension.create({
   name: 'pasteHandler',
-
-  addOptions() {
-    return {
-      enableInlineAttachments: false
-    }
-  },
 
   addProseMirrorPlugins() {
     let shiftKey = false
 
     const { schema, extensionManager } = this.editor
     const pasteParser = createMarkdownParser(schema, extensionManager.extensions)
-    const { enableInlineAttachments } = this.options
 
     return [
       new Plugin({
@@ -89,12 +77,6 @@ export const PasteHandler = Extension.create<PasteHandlerOptions>({
 
             // is this a single URL?
             if (isUrl(text)) {
-              // Handle converting links into attachments for supported services
-              if (enableInlineAttachments && inlineLinkAttachmentType(text)) {
-                this.editor.commands.handleLinkAttachment(text)
-                return true
-              }
-
               // If the clipboard data is files + a single URL, the user is likely pasting an image copied from
               // the web, and the URL is the source of the image. In this case, ignore the URL.
               if (event.clipboardData.files.length > 0) {

@@ -63,6 +63,9 @@ orion-server/docker-compose.override.yml
 # Claude Code configuration and cache
 .claude
 
+# pnpm content-addressable store (local / custom store-dir)
+.pnpm-store
+
 tools/**
 
 .libra

@@ -24,7 +24,7 @@ export function ReplyContent({
   const replyTo = replyToIsViewer ? 'your message' : author.display_name
 
   return (
-    <div className='bg-tertiary flex items-center gap-2 rounded-[18px] pb-2 pl-4 pr-2 pt-2'>
+    <div className='bg-tertiary flex items-center gap-2 rounded-[18px] pt-2 pr-2 pb-2 pl-4'>
       <div className='flex flex-1 flex-col'>
         <div className='text-secondary flex items-center gap-1'>
           <UIText inherit size='text-[13px]' className='line-clamp-1'>

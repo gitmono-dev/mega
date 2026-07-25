@@ -157,12 +157,12 @@ export function MediaGallery(props: MediaGalleryProps) {
 
   return (
     <div className='not-prose relative overflow-hidden rounded-md'>
-      <div className='pointer-events-none absolute inset-0 z-[1] rounded-md ring-1 ring-inset ring-[--border-primary]' />
+      <div className='pointer-events-none absolute inset-0 z-[1] rounded-md ring-1 ring-[--border-primary] ring-inset' />
 
       <div className='bg-tertiary rounded-t-md'>
         <AnimatePresence mode='popLayout' initial={false} custom={direction}>
           <m.div
-            className={cn('group relative flex h-[34rem] select-none items-center justify-center', {
+            className={cn('group relative flex h-[34rem] items-center justify-center select-none', {
               'pointer-events-none': isDragging
             })}
             key={activeIndex}

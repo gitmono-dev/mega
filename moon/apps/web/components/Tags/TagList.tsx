@@ -86,7 +86,7 @@ function InnerTagRow({ tag }: { tag: Tag }) {
   const { scope } = useScope()
 
   return (
-    <li className='hover:bg-tertiary group-has-[button[aria-expanded="true"]]:bg-tertiary group relative -mx-3 flex items-center gap-3 rounded-md py-1.5 pl-3 pr-1.5'>
+    <li className='hover:bg-tertiary group-has-[button[aria-expanded="true"]]:bg-tertiary group relative -mx-3 flex items-center gap-3 rounded-md py-1.5 pr-1.5 pl-3'>
       <Link href={`/${scope}/tags/${tag.name}`} className='absolute inset-0 z-0' />
 
       <div className='flex flex-1 flex-row items-center gap-2'>

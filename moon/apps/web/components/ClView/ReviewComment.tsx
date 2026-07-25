@@ -16,6 +16,7 @@ import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
 import { useGetOrganizationMember } from '@/hooks/useGetOrganizationMember'
 import { useUploadHelpers } from '@/hooks/useUploadHelpers'
 import { apiErrorToast } from '@/utils/apiErrorToast'
+import { megaUserHandle, megaUserHandlesMatch } from '@/utils/megaUser'
 import { legacyApiClient } from '@/utils/queryClient'
 import { trimHtml } from '@/utils/trimHtml'
 
@@ -38,13 +39,15 @@ interface ReviewCommentProps {
   conv: ConversationItem
   id: string
   whoamI: string
-  editorRef: React.RefObject<SimpleNoteContentRef>
+  editorRef: React.RefObject<SimpleNoteContentRef | null>
 }
 
 const ReviewComment = React.memo<ReviewCommentProps>(
   ({ reviewers, conv, id, whoamI, editorRef }: ReviewCommentProps) => {
     const { data: member } = useGetOrganizationMember({ username: conv.username })
     const { data: currentUser } = useGetCurrentUser()
+    const profileUsername = member?.user.username || conv.username
+    const displayName = megaUserHandle(member?.user, conv.username) || 'username not found'
     const { mutate: resolveReview } = usePostClReviewResolve()
     const queryClient = useQueryClient()
     const router = useRouter()
@@ -54,16 +57,16 @@ const ReviewComment = React.memo<ReviewCommentProps>(
     const extensions = useMemo(() => getNoteExtensions({ linkUnfurl: {} }), [])
     const handleReactionSelect = useHandleExpression({ conv, id, type: whoamI })
     const [editId, setEditId] = useAtom(editIdAtom)
-    const editInputRef = useRef<{ handleUpdate: () => void }>()
+    const editInputRef = useRef<{ handleUpdate: () => void } | null>(null)
     const [isResolved, setIsResolved] = useState(conv.resolved ?? false)
     const [refresh, setRefresh] = useAtom(refreshAtom)
 
     const canResolve = useMemo(() => {
-      if (!currentUser?.username) {
+      if (!currentUser) {
         return false
       }
-      return reviewers.some((r) => r.username === currentUser.username)
-    }, [currentUser?.username, reviewers])
+      return reviewers.some((r) => megaUserHandlesMatch(r.username, currentUser))
+    }, [currentUser, reviewers])
 
     useEffect(() => {
       setIsResolved(conv.resolved ?? false)
@@ -126,8 +129,8 @@ const ReviewComment = React.memo<ReviewCommentProps>(
               <ConditionalWrap
                 condition={true}
                 wrap={(c) => (
-                  <MemberHovercard username={conv?.username}>
-                    <UserLinkByName username={conv?.username} className='relative'>
+                  <MemberHovercard username={profileUsername}>
+                    <UserLinkByName username={profileUsername} className='relative'>
                       {c}
                     </UserLinkByName>
                   </MemberHovercard>
@@ -140,13 +143,13 @@ const ReviewComment = React.memo<ReviewCommentProps>(
               <ConditionalWrap
                 condition={true}
                 wrap={(children) => (
-                  <MemberHovercard username={conv?.username}>
-                    <UserLinkByName username={conv?.username}>{children}</UserLinkByName>
+                  <MemberHovercard username={profileUsername}>
+                    <UserLinkByName username={profileUsername}>{children}</UserLinkByName>
                   </MemberHovercard>
                 )}
               >
                 <UIText element='span' primary weight='font-medium' className='break-anywhere line-clamp-1'>
-                  {conv?.username || 'username not found'}
+                  {displayName}
                 </UIText>
               </ConditionalWrap>
             </div>

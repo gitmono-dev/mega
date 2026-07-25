@@ -13,6 +13,7 @@ export interface ReopenItemProps {
 }
 const ReopenItem = ({ conv }: ReopenItemProps) => {
   const { data: member } = useGetOrganizationMember({ username: conv.username })
+  const profileUsername = member?.user.username || conv.username
 
   return (
     <>
@@ -21,8 +22,8 @@ const ReopenItem = ({ conv }: ReopenItemProps) => {
           <ConditionalWrap
             condition={true}
             wrap={(c) => (
-              <MemberHovercard username={conv?.username}>
-                <UserLinkByName username={conv?.username} className='relative'>
+              <MemberHovercard username={profileUsername}>
+                <UserLinkByName username={profileUsername} className='relative'>
                   {c}
                 </UserLinkByName>
               </MemberHovercard>

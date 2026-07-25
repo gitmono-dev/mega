@@ -52,7 +52,7 @@ export const ComfyCompactPost = memo(
     const title = post.title || `Post by ${post.member.user.display_name}`
 
     return (
-      <div className='@xl:px-4 group relative flex min-h-12 items-center gap-3 rounded-lg px-2 py-3'>
+      <div className='group relative flex min-h-12 items-center gap-3 rounded-lg px-2 py-3 @xl:px-4'>
         <PostOverflowMenu type='context' post={post} onTldrOpen={() => setTldrOpen(true)}>
           <HighlightedCommandItem
             className='absolute inset-0 z-0'
@@ -186,7 +186,7 @@ function PostCommenters({ post }: { post: Post }) {
       {showCount && (
         <span
           className={cn(
-            'h-4.5 mt-px flex min-w-4 items-center justify-center self-start rounded px-1 text-[10px] font-semibold uppercase',
+            'mt-px flex h-4.5 min-w-4 items-center justify-center self-start rounded px-1 text-[10px] font-semibold uppercase',
             {
               'bg-blue-50 font-extrabold text-blue-500 dark:bg-blue-500/20 dark:text-blue-400':
                 post.unseen_comments_count > 0,
@@ -284,7 +284,7 @@ function PostHoverActions({ post }: { post: Post }) {
   return (
     <div
       className={cn(
-        'initial:opacity-0 bg-elevated absolute right-2 top-1 flex flex-none -translate-y-1/2 items-center justify-end rounded-lg border p-0.5 shadow transition-opacity',
+        'initial:opacity-0 bg-elevated absolute top-1 right-2 flex flex-none -translate-y-1/2 items-center justify-end rounded-lg border p-0.5 shadow transition-opacity',
         'group-hover:opacity-100 [&:has(button[aria-expanded="true"])]:opacity-100 [@media(hover:none)]:opacity-100',
         {
           'focus-within:opacity-100': isFocusVisible,
@@ -326,7 +326,7 @@ function Attachments({ post }: { post: Post }) {
   return (
     <div
       key={attachment.id}
-      className='bg-elevated max-w-30 max-h-22 pointer-events-none relative flex-1 self-center rounded-lg ring-1 ring-inset ring-[--border-primary]'
+      className='bg-elevated pointer-events-none relative max-h-22 max-w-30 flex-1 self-center rounded-lg ring-1 ring-[--border-primary] ring-inset'
       style={{ aspectRatio }}
     >
       <div className='flex h-full w-full items-center justify-center overflow-hidden rounded-lg'>
@@ -334,7 +334,7 @@ function Attachments({ post }: { post: Post }) {
       </div>
 
       {overflow > 0 && (
-        <div className='absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center overflow-hidden rounded-md bg-black/50 backdrop-blur-lg'>
+        <div className='absolute right-1 bottom-1 flex h-5 w-5 items-center justify-center overflow-hidden rounded-md bg-black/50 backdrop-blur-lg'>
           <UIText className='text-primary dark z-[1] select-none' size='text-xs'>
             {renderables.length}
           </UIText>

@@ -124,7 +124,7 @@ function NewNoteButton({ onSuccess }: { onSuccess?: ({ id }: { id: string }) => 
 function NotesList({ notes }: { notes: Record<string, Note[]> }) {
   return (
     <Command
-      className='scrollbar-hide flex max-h-[420px] flex-col gap-px overflow-y-auto overscroll-contain outline-none'
+      className='scrollbar-hide flex max-h-[420px] flex-col gap-px overflow-y-auto overscroll-contain outline-hidden'
       disableAutoSelect
       focusSelection
     >

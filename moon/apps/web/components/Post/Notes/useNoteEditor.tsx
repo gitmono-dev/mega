@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { HocuspocusProvider } from '@hocuspocus/provider'
 import Collaboration from '@tiptap/extension-collaboration'
-import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
+import CollaborationCaret from '@tiptap/extension-collaboration-caret'
 import { EditorOptions, ReactNodeViewRenderer, useEditor } from '@tiptap/react'
 
 import { ActiveEditorComment, BlurAtTopOptions, getNoteExtensions, PostNoteAttachmentOptions } from '@gitmono/editor'
@@ -129,16 +129,16 @@ export function useNoteEditor({
             }).configure({
               document: provider.document
             }),
-            CollaborationCursor.configure({
+            CollaborationCaret.configure({
               provider: provider,
               render(user) {
                 const element = document.createElement('div')
                 const customColors = user.customColor?.split(' ') ?? []
 
-                element.classList.add('collaboration-cursor__caret', ...customColors)
+                element.classList.add('collaboration-carets__caret', ...customColors)
                 const label = document.createElement('div')
 
-                label.classList.add('collaboration-cursor__label', ...customColors)
+                label.classList.add('collaboration-carets__label', ...customColors)
                 label.textContent = user.name
                 element.appendChild(label)
                 return element
@@ -164,7 +164,7 @@ export function useNoteEditor({
       editorProps: {
         attributes: {
           class:
-            'new-posts prose select-text focus:outline-none w-full relative note min-w-full px-[calc((100%-44rem)/2)]',
+            'new-posts prose select-text focus:outline-hidden w-full relative note min-w-full px-[calc((100%-44rem)/2)]',
           style: "overflow-anchor: ''"
         },
         ...editorProps

@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import * as Sentry from '@sentry/nextjs'
 import { appMenu } from '@todesktop/client-core'
 import { useGetCurrentUser } from 'hooks/useGetCurrentUser'
 import { useRouter } from 'next/router'
@@ -53,13 +52,8 @@ export function AuthProvider({ children, allowLoggedOut }: Props) {
     }
 
     if (currentUser?.logged_in) {
-      Sentry.setUser({ id: currentUser.id, username: currentUser.username })
-
       setupMenuItem()
-    } else {
-      Sentry.setUser(null)
     }
-    Sentry.setContext('desktop', { desktop: isDesktop })
   }, [currentUser?.id, currentUser?.logged_in, currentUser?.username, isDesktop])
 
   if (userError) {

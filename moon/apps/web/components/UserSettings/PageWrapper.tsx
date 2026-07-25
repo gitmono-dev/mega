@@ -67,7 +67,7 @@ export function UserSettingsPageWrapper(props: Props) {
               >
                 Account review
                 {pendingCount > 0 && (
-                  <span className='h-4.5 min-w-4.5 ml-1 inline-flex items-center justify-center rounded-full bg-amber-500 px-1.5 font-mono text-[10px] font-semibold leading-none text-white'>
+                  <span className='ml-1 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-amber-500 px-1.5 font-mono text-[10px] leading-none font-semibold text-white'>
                     {pendingCount}
                   </span>
                 )}
@@ -78,7 +78,7 @@ export function UserSettingsPageWrapper(props: Props) {
       </div>
 
       <div className='h-screen overflow-auto'>
-        <div className='mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 pb-32 pt-8 lg:px-0'>{children}</div>
+        <div className='mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 pt-8 pb-32 lg:px-0'>{children}</div>
       </div>
     </>
   )

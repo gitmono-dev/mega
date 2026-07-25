@@ -1,9 +1,23 @@
 import { useMemo, useRef, useState } from 'react'
-import { ItemInput } from '@primer/react/lib/SelectPanel/types'
+import type { SelectPanelItemInput as ItemInput } from '@primer/react'
 
 import { ReviewerInfo } from '@gitmono/types'
 
 import { useAvatars } from '@/components/Issues/utils/sideEffect'
+
+type MegaAvatar = ReturnType<typeof useAvatars>[number] & { username?: string }
+
+function avatarApiIdentity(item: ItemInput): string | undefined {
+  const mega = item as MegaAvatar
+  // Prefer Campsite username for API identity; SelectPanel text may be github_login.
+  if (typeof mega.username === 'string' && mega.username) return mega.username
+  if (typeof item.text === 'string' && item.text) return item.text
+  return undefined
+}
+
+function avatarMatchesHandle(user: MegaAvatar, handle: string) {
+  return user.text === handle || user.username === handle
+}
 
 export const useReviewerSelector = ({
   reviewers,
@@ -20,7 +34,9 @@ export const useReviewerSelector = ({
   const [open, setOpen] = useState(false)
 
   const handleAssignees = (selected: ItemInput[]) => {
-    const newSelection = [...selected.map((i) => i.text).filter((t): t is string => typeof t === 'string')]
+    const newSelection = [
+      ...selected.map((i) => avatarApiIdentity(i)).filter((t): t is string => typeof t === 'string')
+    ]
 
     setSelectedUsers(newSelection)
     shouldFetch.current = true
@@ -29,11 +45,8 @@ export const useReviewerSelector = ({
   const handleOpenChange = (open: boolean) => {
     setOpen(open)
     if (!open && shouldFetch.current) {
-      // Only submit newly selected reviewers (not existing ones)
-      const currentSet = new Set(initialReviewers)
-      const newlySelected = selectedUsers.filter((user) => !currentSet.has(user))
+      const newlySelected = selectedUsers.filter((user) => !initialReviewers.some((existing) => existing === user))
 
-      // Only make the request if there are new reviewers to add
       if (newlySelected.length > 0) {
         reviewRequest(newlySelected)
       }
@@ -42,14 +55,11 @@ export const useReviewerSelector = ({
   }
 
   const fetchSelected = useMemo(() => {
-    // Only show existing reviewers from backend
-    return avatars.filter((user) => initialReviewers.includes(user.text as string))
+    return avatars.filter((user) => initialReviewers.some((handle) => avatarMatchesHandle(user as MegaAvatar, handle)))
   }, [avatars, initialReviewers])
 
   const availableAvatars = useMemo(() => {
-    const existingReviewerSet = new Set(initialReviewers)
-
-    return avatars.filter((user) => !existingReviewerSet.has(user.text as string))
+    return avatars.filter((user) => !initialReviewers.some((handle) => avatarMatchesHandle(user as MegaAvatar, handle)))
   }, [avatars, initialReviewers])
 
   return {

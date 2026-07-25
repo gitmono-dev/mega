@@ -7,9 +7,7 @@ import { debouncedSelectedSplitViewSubjectAtom } from '@/components/SplitView/ut
 export function useIsSplitViewVisible() {
   const router = useRouter()
   const isProject =
-    router.pathname === '/[org]/projects/[projectId]' ||
-    router.pathname === '/[org]/projects/[projectId]/docs' ||
-    router.pathname === '/[org]/projects/[projectId]/calls'
+    router.pathname === '/[org]/projects/[projectId]' || router.pathname === '/[org]/projects/[projectId]/docs'
   const isDesktopProjectSidebarOpen = useAtomValue(isDesktopProjectSidebarOpenAtom)
   const debouncedSelectedSplitViewSubject = useAtomValue(debouncedSelectedSplitViewSubjectAtom)
 

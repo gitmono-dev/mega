@@ -13,16 +13,7 @@ function CommitsDetailPage() {
 }
 
 CommitsDetailPage.getProviders = (
-  page:
-    | string
-    | number
-    | boolean
-    | React.ReactElement
-    | Iterable<React.ReactNode>
-    | React.ReactPortal
-    | Promise<React.AwaitedReactNode>
-    | null
-    | undefined,
+  page: React.ReactNode,
   pageProps: React.JSX.IntrinsicAttributes & { children?: React.ReactNode }
 ) => {
   return (

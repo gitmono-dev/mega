@@ -20,7 +20,7 @@ export function BreadcrumbTitlebarContainer({
   return (
     <div
       className={cn(
-        'bg-primary sticky top-0 z-10 hidden h-[--navbar-height] flex-none items-center gap-3 border-b px-3.5 lg:flex',
+        'bg-primary sticky top-0 z-10 hidden h-[var(--navbar-height)] flex-none items-center gap-3 border-b px-3.5 lg:flex',
         className,
         {
           'pl-21 lg:pl-21': isDesktopApp && sidebarCollapsed && isMacOs && !hideSidebarToggle
@@ -98,7 +98,7 @@ export function BreadcrumbLabel({
 }: ComponentProps<'p'> & { children: React.ReactNode; className?: string }) {
   return (
     <UIText
-      className={cn('break-anywhere min-w-0 max-w-[32ch] truncate text-[15px] leading-tight', className)}
+      className={cn('break-anywhere max-w-[32ch] min-w-0 truncate text-[15px] leading-tight', className)}
       weight='font-medium'
       {...rest}
     >

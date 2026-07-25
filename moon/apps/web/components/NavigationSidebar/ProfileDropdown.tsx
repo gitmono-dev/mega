@@ -1,4 +1,4 @@
-import React, { forwardRef, useState } from 'react'
+import React, { useState } from 'react'
 import { useSignoutUser } from 'hooks/useSignoutUser'
 import * as R from 'remeda'
 
@@ -11,7 +11,6 @@ import {
   Button,
   DotsHorizontal,
   GearIcon,
-  Link,
   LogOutIcon,
   UserCircleIcon,
   UserCirclePlusIcon
@@ -19,7 +18,6 @@ import {
   // LinearIcon,
   // MonitorIcon,
   // ZapierIcon,
-  // FigmaOutlineIcon,
   // CalendarIcon,
   // CodeIcon,
   // AccessIcon,
@@ -35,24 +33,6 @@ import { useCurrentUserIsStaff } from '@/hooks/useCurrentUserIsStaff'
 import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
 import { usePauseNotificationMenuItem } from '@/hooks/usePauseNotificationMenuItem'
 import { usePendingAccountReviewCount } from '@/hooks/usePendingAccountReviewCount'
-
-interface LinkProps {
-  children: React.ReactNode
-  href: string
-  [key: string]: any
-}
-
-const SettingsLink = forwardRef((props: LinkProps, ref: React.ForwardedRef<HTMLAnchorElement>) => {
-  let { href, children, ...rest } = props
-
-  return (
-    <Link href={href} ref={ref} {...rest}>
-      {children}
-    </Link>
-  )
-})
-
-SettingsLink.displayName = 'SettingsLink'
 
 export function ProfileDropdown({
   trigger,
@@ -101,7 +81,7 @@ export function ProfileDropdown({
       url: '/me/settings/account-review',
       onSelect: () => setOpen(false),
       rightSlot: hasPending ? (
-        <Badge color='amber' className='h-4.5 ml-1 flex font-mono'>
+        <Badge color='amber' className='ml-1 flex h-4.5 font-mono'>
           {pendingCount}
         </Badge>
       ) : undefined
@@ -140,13 +120,6 @@ export function ProfileDropdown({
     //       leftSlot: <ZapierIcon />,
     //       external: true,
     //       url: 'https://zapier.com/apps/campsite/integrations'
-    //     },
-    //     {
-    //       type: 'item',
-    //       label: 'Figma',
-    //       leftSlot: <FigmaOutlineIcon />,
-    //       external: true,
-    //       url: `${SITE_URL}/figma/plugin`
     //     },
     //     {
     //       type: 'item',

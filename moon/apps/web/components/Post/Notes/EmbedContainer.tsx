@@ -29,7 +29,7 @@ export function EmbedContainer({ children, draggable, selected, editor, classNam
           'outline outline-2 outline-offset-2 outline-blue-500 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-500':
             editor.options.editable && selected && editor.isFocused
         },
-        '[.drag-node_&]:outline-none',
+        '[.drag-node_&]:outline-hidden',
         className
       )}
       draggable={draggable}
@@ -50,7 +50,7 @@ export function EmbedActionsContainer({ children }: EmbedActionsContainerProps) 
   return (
     <div
       className={cn(
-        'bg-elevated dark absolute right-2 top-2 z-[1] rounded opacity-0 transition-opacity duration-100 group-hover:opacity-100',
+        'bg-elevated dark absolute top-2 right-2 z-[1] rounded opacity-0 transition-opacity duration-100 group-hover:opacity-100',
         'shadow-[inset_0px_1px_0px_rgb(255_255_255_/_0.04),_inset_0px_0px_0px_1px_rgb(255_255_255_/_0.04),_0px_1px_2px_rgb(0_0_0_/_0.12),_0px_2px_4px_rgb(0_0_0_/_0.08),_0px_0px_0px_0.5px_rgb(0_0_0_/_0.24)]',
         !hasHover && 'opacity-100'
       )}

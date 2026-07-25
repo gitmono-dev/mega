@@ -5,7 +5,7 @@ import { cn } from '@gitmono/ui/src/utils'
 import { useScope } from '@/contexts/scope'
 import { userListTooltipText } from '@/utils/userListTooltipText'
 
-type UserWithWrapper = User & { wrapper?: (children: JSX.Element) => JSX.Element; isPresent?: boolean }
+type UserWithWrapper = User & { wrapper?: (children: React.JSX.Element) => React.JSX.Element; isPresent?: boolean }
 
 interface Props {
   users: UserWithWrapper[]

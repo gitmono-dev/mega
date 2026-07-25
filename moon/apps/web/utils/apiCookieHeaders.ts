@@ -17,6 +17,7 @@ export function apiCookieHeaders(cookies: NextApiRequestCookies) {
   const cookieName = getCampsiteApiSessionCookieName()
 
   const sessionCookie = cookies[cookieName]
+
   if (sessionCookie) {
     const apiCookie = encodeURIComponent(sessionCookie)
 

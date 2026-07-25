@@ -7,7 +7,6 @@ import { legacyApiClient } from '@/utils/queryClient'
 
 export function useGetTreePathCanClone(params: GetApiTreePathCanCloneParams, requestParams?: RequestParams) {
   return useQuery<GetApiTreePathCanCloneData>({
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: legacyApiClient.v1.getApiTreePathCanClone().requestKey(params),
     queryFn: () => legacyApiClient.v1.getApiTreePathCanClone().request(params, requestParams),
     enabled: !!params.path

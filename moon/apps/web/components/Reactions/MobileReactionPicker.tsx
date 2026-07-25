@@ -41,7 +41,7 @@ export function MobileReactionPicker({ showCustomReactions, onReactionSelect }: 
   }, [query])
 
   return (
-    <div className='relative flex w-full flex-col focus:outline-none'>
+    <div className='relative flex w-full flex-col focus:outline-hidden'>
       <div className='mx-auto mt-2 h-1 w-8 rounded-full bg-[--text-primary] opacity-20' />
 
       <div className='px-safe-offset-3 pt-3'>
@@ -54,7 +54,7 @@ export function MobileReactionPicker({ showCustomReactions, onReactionSelect }: 
       </div>
       <div
         ref={scrollAreaRef}
-        className='scrollbar-hide pb-safe-offset-2 flex flex-row overflow-y-hidden overflow-x-scroll'
+        className='scrollbar-hide pb-safe-offset-2 flex flex-row overflow-x-scroll overflow-y-hidden'
       >
         {query ? (
           <MobileReactionPickerCategory
@@ -119,7 +119,7 @@ function MobileReactionPickerCategory({ id, reactions, onReactionSelect }: Mobil
         '[&:first-child>h2]:pl-safe-offset-5 [&:last-child>h2]:pr-safe-offset-3'
       )}
     >
-      <h2 className='sticky left-0 w-fit whitespace-nowrap px-5 py-2 text-base font-medium'>
+      <h2 className='sticky left-0 w-fit px-5 py-2 text-base font-medium whitespace-nowrap'>
         {getReactionCategoryLabel(id)}
       </h2>
       <div

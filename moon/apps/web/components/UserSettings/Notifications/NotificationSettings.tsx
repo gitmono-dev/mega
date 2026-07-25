@@ -72,7 +72,7 @@ export function NotificationSettings() {
           </div>
           {getNotifications.data.find((n) => n.name === NotificationName.WeeklyDigest) && (
             <SettingsSection.Footer>
-              <div className='grid w-full grid-cols-1 pb-1 pt-1 md:grid-cols-2'>
+              <div className='grid w-full grid-cols-1 pt-1 pb-1 md:grid-cols-2'>
                 <UIText weight='font-medium' className='col-span-2 pb-2'>
                   Timezone
                 </UIText>

@@ -61,15 +61,13 @@ export function FileTypeIcon({
   fileType,
   origami,
   principle,
-  stitch,
-  figma
+  stitch
 }: {
   name: string | null
   fileType?: string
   origami?: boolean
   principle?: boolean
   stitch?: boolean
-  figma?: boolean
 }) {
   if (origami) {
     return <Image src='/img/origami.png' width={24} height={24} alt='' className='p-0.5' />
@@ -81,10 +79,6 @@ export function FileTypeIcon({
 
   if (stitch) {
     return <Image src='/img/stitch.png' width={24} height={24} alt='' className='p-0.5' />
-  }
-
-  if (figma) {
-    return <Image src='/img/services/figma.png' width={24} height={24} alt='' />
   }
 
   if (fileType && isCodelike(fileType)) {
@@ -161,10 +155,6 @@ export function FileTypeIcon({
       if (name?.endsWith('.qtz')) return <FileQtzIcon size={24} className='text-tertiary' />
       if (name?.endsWith('.dwg')) return <FileDwgIcon size={24} className='text-tertiary' />
       break
-    // figma
-    case 'application/figma':
-    case 'application/x-figma':
-      return <Image src='/img/services/figma.png' width={24} height={24} alt='' />
     // exe
     case 'application/x-msdownload':
       return <FileExeIcon size={24} className='text-tertiary' />

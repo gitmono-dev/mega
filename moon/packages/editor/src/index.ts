@@ -1,3 +1,5 @@
+import './types/tiptap-markdown'
+
 export * from './chat'
 export * from './createStandaloneMarkdownParser'
 export * from './extensions'

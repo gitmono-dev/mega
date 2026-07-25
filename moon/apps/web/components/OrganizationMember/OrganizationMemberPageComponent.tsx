@@ -94,7 +94,7 @@ export function OrganizationMemberPageComponent() {
 
                   {!isCommunity && (
                     <button
-                      className='text-left outline-none'
+                      className='text-left outline-hidden'
                       onClick={() => {
                         copy(member.user.email)
                         toast('Copied to clipboard')

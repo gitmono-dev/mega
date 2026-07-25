@@ -322,7 +322,7 @@ const TaskItem = memo(function TaskItem({
   return (
     <div
       onClick={handleClick}
-      className={`group flex cursor-pointer items-center gap-2 py-2 pl-9 pr-3 transition-all hover:bg-gray-100 dark:hover:bg-gray-700/30 ${bgClass} ${
+      className={`group flex cursor-pointer items-center gap-2 py-2 pr-3 pl-9 transition-all hover:bg-gray-100 dark:hover:bg-gray-700/30 ${bgClass} ${
         isSelected ? `border-l-2 ${borderColor}` : 'border-l-2 border-transparent'
       } ${!isLast ? 'border-b border-gray-100 dark:border-gray-800' : ''}`}
     >

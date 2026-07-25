@@ -1,4 +1,4 @@
-import { Placeholder as TiptapPlaceholder } from '@tiptap/extension-placeholder'
+import { Placeholder as TiptapPlaceholder } from '@tiptap/extensions'
 
 export const Placeholder = TiptapPlaceholder.configure({
   emptyNodeClass: 'is-empty-prompt',

@@ -4,7 +4,6 @@ const path = require('path')
  * @type {import('next').NextConfig}
  */
 
-const { withSentryConfig } = require('@sentry/nextjs')
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true'
 })
@@ -17,7 +16,7 @@ const cspResourcesByDirective = {
     "'unsafe-inline'",
     'todesktop-internal:',
     'blob:',
-    // unsafe-eval required in development for hot module reloading and in production for 100ms noise cancellation
+    // unsafe-eval required in development for hot module reloading
     "'unsafe-eval'",
     process.env.NODE_ENV !== 'production' && 'https://cdn.vercel-insights.com'
   ],
@@ -63,13 +62,10 @@ const cspResourcesByDirective = {
     process.env.NODE_ENV !== 'production' && 'https://campsite-media-dev.s3.amazonaws.com',
     process.env.NODE_ENV !== 'production' && 'd1tk25h31rf8pv.cloudfront.net', // campsite-hls-dev
     'd2m0evjsyl9ile.cloudfront.net', // campsite-hls
-    'https://o1244295.ingest.sentry.io',
     'https://vercel-vitals.axiom.co',
     'https://cdn.vercel-insights.com',
     'https://vitals.vercel-insights.com',
     'https://*.lottiefiles.com',
-    'https://*.100ms.live',
-    'wss://*.100ms.live',
     'https://*.pusher.com',
     'wss://*.pusher.com',
     'https://gitmono.imgix.net',
@@ -123,10 +119,8 @@ const ContentSecurityPolicy = Object.keys(cspResourcesByDirective).reduce((prevP
 const moduleExports = {
   output: 'standalone',
   experimental: {
-    // https://nextjs.org/docs/messages/import-esm-externals
-    esmExternals: 'loose',
-    externalDir: true,
-    clientRouterFilter: false
+    // Keep monorepo package resolution working for local workspace sources.
+    externalDir: true
   },
   transpilePackages: [
     '@gitmono/ui',
@@ -142,14 +136,14 @@ const moduleExports = {
   reactStrictMode: true,
   images: {
     unoptimized: true,
-    domains: [
-      'app.gitmono.com',
-      'app.gitmono.test',
-      'avatars.slack-edge.com',
-      'gitmono.imgix.net',
-      'campsite-dev.imgix.net',
-      'lh3.googleusercontent.com',
-      'uploads.linear.app'
+    remotePatterns: [
+      { protocol: 'https', hostname: 'app.gitmono.com' },
+      { protocol: 'https', hostname: 'app.gitmono.test' },
+      { protocol: 'https', hostname: 'avatars.slack-edge.com' },
+      { protocol: 'https', hostname: 'gitmono.imgix.net' },
+      { protocol: 'https', hostname: 'campsite-dev.imgix.net' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'uploads.linear.app' }
     ]
   },
   async redirects() {
@@ -206,17 +200,6 @@ const moduleExports = {
             value: 'SAMEORIGIN'
           }
         ]
-      },
-      {
-        // Sentry Profiling
-        // @see https://docs.sentry.io/platforms/javascript/profiling/#step-2-add-document-policy-js-profiling-header
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Document-Policy',
-            value: 'js-profiling'
-          }
-        ]
       }
     ]
   },
@@ -246,7 +229,7 @@ const moduleExports = {
   // This is required to support PostHog trailing slash API requests
   skipTrailingSlashRedirect: true,
   webpack(config, { dev, isServer, webpack }) {
-    if (dev && !isServer) {
+    if (dev && !isServer && process.env.ENABLE_WDYR === '1') {
       const originalEntry = config.entry
 
       config.entry = async () => {
@@ -254,8 +237,6 @@ const moduleExports = {
         const entries = await originalEntry()
 
         if (entries['main.js'] && !entries['main.js'].includes(wdrPath)) {
-          // Comment out this line if you are debugging Sentry issues locally
-          // Loading WDYR breaks Sentry debugging
           entries['main.js'].push(wdrPath)
         }
         return entries
@@ -272,19 +253,4 @@ const moduleExports = {
   }
 }
 
-const sentryWebpackPluginOptions = {
-  // silent: true, // Suppresses all logs
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options.
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  project: process.env.SENTRY_PROJECT,
-  org: process.env.SENTRY_ORG,
-  widenClientFileUpload: true,
-  hideSourceMaps: true,
-  debug: false,
-  tunnelRoute: '/monitoring-tunnel'
-}
-
-// Make sure adding Sentry options is the last code to run before exporting, to
-// ensure that your source maps include changes from all other Webpack plugins
-module.exports = withBundleAnalyzer(withSentryConfig(moduleExports, sentryWebpackPluginOptions))
+module.exports = withBundleAnalyzer(moduleExports)

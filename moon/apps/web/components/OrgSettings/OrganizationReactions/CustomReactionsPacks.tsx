@@ -22,7 +22,9 @@ export function CustomReactionsPacks() {
 
   return (
     <div className='divide-secondary flex flex-col divide-y'>
-      {packs?.map((pack) => <Pack key={pack.name} pack={pack} />)}
+      {packs?.map((pack) => (
+        <Pack key={pack.name} pack={pack} />
+      ))}
     </div>
   )
 }

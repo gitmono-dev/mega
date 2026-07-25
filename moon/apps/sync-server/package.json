@@ -6,7 +6,6 @@
     "build": "tsup",
     "clean": "rm -rf .turbo dist node_modules",
     "dev": "tsup --watch --onSuccess \"node dist/index.mjs\"",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org mega --project sync-server ./dist && sentry-cli sourcemaps upload --org mega --project sync-server --log-level=debug ./dist",
     "start": "node dist/index.mjs"
   },
   "dependencies": {
@@ -16,7 +15,6 @@
     "@hocuspocus/extension-logger": "catalog:",
     "@hocuspocus/server": "catalog:",
     "@hocuspocus/transformer": "catalog:",
-    "@sentry/node": "catalog:",
     "@tiptap/core": "catalog:",
     "@tiptap/html": "catalog:",
     "@tiptap/pm": "catalog:",
@@ -27,7 +25,6 @@
   "devDependencies": {
     "@flydotio/dockerfile": "catalog:",
     "@gitmono/tsconfig": "workspace:*",
-    "@sentry/cli": "catalog:",
     "tsup": "catalog:",
     "typescript": "catalog:"
   }

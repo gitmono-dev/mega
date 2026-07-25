@@ -17,8 +17,6 @@ export interface PostRouteQuery {
   cc?: string
   // comment attachment ID
   ca?: string
-  // figma_file_preview_mode
-  f?: string
   // transcription timestamp
   t?: string
   // inline gallery ID

@@ -73,7 +73,7 @@ const CLASignPage: PageWithProviders<any> = () => {
         <div className='overflow-auto'>
           <div className='mx-auto max-w-4xl px-6 py-8'>
             <div className='bg-primary border-primary rounded-xl border p-8 shadow-lg'>
-              <div className='mb-2 mt-1 flex items-start justify-between'>
+              <div className='mt-1 mb-2 flex items-start justify-between'>
                 <h1 className='text-primary text-3xl font-bold'>Contributor License Agreement</h1>
                 {isAdmin && (
                   <Button variant='plain' onClick={handleOpenEdit}>
@@ -93,7 +93,7 @@ const CLASignPage: PageWithProviders<any> = () => {
                     <LoadingSpinner />
                   </div>
                 ) : (
-                  <div className='text-primary whitespace-pre-wrap text-sm leading-relaxed'>{claContent}</div>
+                  <div className='text-primary text-sm leading-relaxed whitespace-pre-wrap'>{claContent}</div>
                 )}
               </div>
 
@@ -106,7 +106,7 @@ const CLASignPage: PageWithProviders<any> = () => {
                     onChange={(e) => setAgreed(e.target.checked)}
                     className='mt-1 h-5 w-5 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500'
                   />
-                  <span className='text-primary text-sm font-medium leading-relaxed'>
+                  <span className='text-primary text-sm leading-relaxed font-medium'>
                     I have read and agree to the Contributor License Agreement terms and conditions stated above.
                   </span>
                 </label>
@@ -140,7 +140,7 @@ const CLASignPage: PageWithProviders<any> = () => {
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             rows={16}
-            className='border-primary bg-secondary text-primary w-full rounded-lg border p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500'
+            className='border-primary bg-secondary text-primary w-full rounded-lg border p-3 text-sm leading-relaxed focus:ring-2 focus:ring-blue-500 focus:outline-hidden'
             placeholder='Enter CLA content...'
           />
           <div className='flex justify-end gap-3'>

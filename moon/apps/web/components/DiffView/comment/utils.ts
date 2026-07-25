@@ -2,16 +2,22 @@ import type { AnnotationSide, FileDiffMetadata } from '@pierre/diffs'
 
 export function extractLinesFromHunks(fileDiff: FileDiffMetadata, side: 'deletions' | 'additions'): string[] {
   const lines: string[] = []
+  const sourceLines = side === 'deletions' ? fileDiff.deletionLines : fileDiff.additionLines
 
   for (const hunk of fileDiff.hunks) {
     for (const content of hunk.hunkContent) {
       if (content.type === 'context') {
-        lines.push(...content.lines)
+        const start = side === 'deletions' ? content.deletionLineIndex : content.additionLineIndex
+        lines.push(...sourceLines.slice(start, start + content.lines))
       } else if (content.type === 'change') {
         if (side === 'deletions') {
-          lines.push(...content.deletions)
+          lines.push(
+            ...fileDiff.deletionLines.slice(content.deletionLineIndex, content.deletionLineIndex + content.deletions)
+          )
         } else {
-          lines.push(...content.additions)
+          lines.push(
+            ...fileDiff.additionLines.slice(content.additionLineIndex, content.additionLineIndex + content.additions)
+          )
         }
       }
     }

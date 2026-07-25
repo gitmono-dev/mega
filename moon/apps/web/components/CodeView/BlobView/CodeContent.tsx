@@ -304,7 +304,7 @@ const CodeContent = ({
                 <UserAvatarGroup contributors={contributors}></UserAvatarGroup>
               </div>
 
-              <div className='flex items-center space-x-1 pl-2 pr-3'>
+              <div className='flex items-center space-x-1 pr-3 pl-2'>
                 <UsersIcon size={16} className='text-primary' />
                 <span className='text-primary ml-0 text-xs'>Contributors</span>
               </div>
@@ -538,11 +538,11 @@ const CodeContent = ({
                   className={`transition-colors duration-150 ${isLastBlock ? '' : 'border-primary border-b'}`}
                 >
                   <div className='flex'>
-                    <div className='flex w-1 flex-shrink-0 items-center'>
-                      <div className={`${block.colorClass} h-[99%] w-[95%] rounded-sm`}></div>
+                    <div className='flex w-1 shrink-0 items-center'>
+                      <div className={`${block.colorClass} h-[99%] w-[95%] rounded-xs`}></div>
                     </div>
 
-                    <div className='border-primary flex-shrink-0 border-r' style={{ width: '350px' }}>
+                    <div className='border-primary shrink-0 border-r' style={{ width: '350px' }}>
                       <div className='top-0 z-10 flex items-center px-3 py-2'>
                         <span className='text-secondary w-[100px] truncate text-xs'>
                           {formatRelativeTime(block.blameInfo?.commit_time || 0)}
@@ -559,7 +559,7 @@ const CodeContent = ({
                       </div>
                     </div>
 
-                    <div className={`flex-shrink-0 ${block.lines.length === 1 ? 'flex items-center' : ''}`}>
+                    <div className={`shrink-0 ${block.lines.length === 1 ? 'flex items-center' : ''}`}>
                       {block.lines.map((line) => {
                         const isSelected = selectedLine === line.lineNumber - 1
                         const lineTokens = blameTokensMap.get(line.lineNumber) || []
@@ -575,14 +575,14 @@ const CodeContent = ({
                             }}
                           >
                             <div
-                              className='bg-primary text-tertiary flex flex-shrink-0 select-none items-center justify-center text-xs'
+                              className='bg-primary text-tertiary flex shrink-0 items-center justify-center text-xs select-none'
                               style={{ width: '60px' }}
                             >
                               {line.lineNumber}
                             </div>
 
                             <div
-                              className='flex items-center pl-3 pr-4 font-mono text-sm'
+                              className='flex items-center pr-4 pl-3 font-mono text-sm'
                               style={{ whiteSpace: 'pre' }}
                             >
                               <span style={{ display: 'inline' }}>

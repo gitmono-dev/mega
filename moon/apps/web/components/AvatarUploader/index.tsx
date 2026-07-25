@@ -117,8 +117,8 @@ export function AvatarUploader({
         className={cn(
           'bg-elevated text-tertiary hover:text-primary absolute flex translate-y-0 cursor-pointer items-center justify-center p-2 ring-1 ring-black/5 transition-all hover:-translate-y-0.5 hover:shadow dark:ring-white/10',
           {
-            'bottom-1 right-1 rounded-lg': shape === 'square',
-            'bottom-0 right-0 rounded-full': shape === 'circle'
+            'right-1 bottom-1 rounded-lg': shape === 'square',
+            'right-0 bottom-0 rounded-full': shape === 'circle'
           }
         )}
       >

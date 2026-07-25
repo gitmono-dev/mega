@@ -17,7 +17,7 @@ export function FloatingNewDocButton() {
 
   return (
     <div
-      className={cn('fixed bottom-16 right-4 z-20 lg:hidden', {
+      className={cn('fixed right-4 bottom-16 z-20 lg:hidden', {
         'mb-safe-offset-2': isMobile
       })}
     >

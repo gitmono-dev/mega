@@ -1,11 +1,11 @@
 # syntax = docker/dockerfile:1
 
-FROM node:20-slim AS base
+FROM node:26-slim AS base
 
-# configure pnpm
+# configure pnpm (node:26 images no longer ship corepack)
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
-RUN corepack enable && corepack prepare pnpm@9.7.1 --activate
+RUN npm install -g pnpm@11.17.0
 
 
 # Throw-away build stage to reduce size of final image

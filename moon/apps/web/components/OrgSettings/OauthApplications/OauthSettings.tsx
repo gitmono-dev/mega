@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
 
-import { OauthApplication, OrganizationsOrgSlugOauthApplicationsIdPutRequest } from '@gitmono/types/generated'
+import { OauthApplication } from '@gitmono/types/generated'
 import { Button } from '@gitmono/ui/Button'
 import { ConfirmDialog } from '@gitmono/ui/ConfirmDialog'
 import { TextField, TextFieldLabel } from '@gitmono/ui/TextField'
@@ -15,23 +15,21 @@ import { useRenewOauthSecret } from '@/hooks/useRenewOauthSecret'
 import { useUpdateOauthApplication } from '@/hooks/useUpdateOauthApplication'
 import { apiErrorToast } from '@/utils/apiErrorToast'
 
-type FormSchema = OrganizationsOrgSlugOauthApplicationsIdPutRequest
+const oauthSettingsSchema = z.object({
+  redirect_uri: z
+    .string()
+    .optional()
+    .refine((value) => !value || value === 'urn:ietf:wg:oauth:2.0:oob' || value?.startsWith('https://'), {
+      message: 'Redirect URI must be an HTTPS URL'
+    })
+})
 
 function useOauthSettingsForm(initialValues?: Pick<OauthApplication, 'redirect_uri'>) {
-  return useForm<FormSchema>({
+  return useForm({
     defaultValues: {
       redirect_uri: initialValues?.redirect_uri ?? ''
     },
-    resolver: zodResolver(
-      z.object({
-        redirect_uri: z
-          .string()
-          .optional()
-          .refine((value) => !value || value === 'urn:ietf:wg:oauth:2.0:oob' || value?.startsWith('https://'), {
-            message: 'Redirect URI must be an HTTPS URL'
-          })
-      })
-    )
+    resolver: zodResolver(oauthSettingsSchema)
   })
 }
 

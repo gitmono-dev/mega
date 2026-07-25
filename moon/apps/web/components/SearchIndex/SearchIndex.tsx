@@ -4,17 +4,8 @@ import { useAtomValue, useSetAtom } from 'jotai'
 import Router, { useRouter } from 'next/router'
 import { isMobile } from 'react-device-detect'
 
-import { SearchCall, SearchMixedItem, SearchNote, SearchPost } from '@gitmono/types'
-import {
-  Button,
-  CloseIcon,
-  LayeredHotkeys,
-  LazyLoadingSpinner,
-  NoteFilledIcon,
-  SearchIcon,
-  UIText,
-  VideoCameraFilledIcon
-} from '@gitmono/ui'
+import { SearchMixedItem, SearchNote, SearchPost } from '@gitmono/types'
+import { Button, CloseIcon, LayeredHotkeys, LazyLoadingSpinner, NoteFilledIcon, SearchIcon, UIText } from '@gitmono/ui'
 import { cn } from '@gitmono/ui/src/utils'
 
 import { EmptyState } from '@/components/EmptyState'
@@ -88,7 +79,6 @@ export function SearchIndex() {
       <BreadcrumbTitlebarContainer className='h-auto gap-0.5 py-1.5'>
         <FilterButton>Everything</FilterButton>
         <FilterButton focus='posts'>Posts</FilterButton>
-        <FilterButton focus='calls'>Calls</FilterButton>
         <FilterButton focus='notes'>Docs</FilterButton>
         <FilterButton focus='people'>People</FilterButton>
       </BreadcrumbTitlebarContainer>
@@ -147,7 +137,6 @@ export function SearchIndex() {
                 )}
                 <SearchResultsList
                   items={getSearch.data.items}
-                  callMap={getSearch.data.callsMap}
                   postMap={getSearch.data.postsMap}
                   noteMap={getSearch.data.notesMap}
                   selectItem={selectItem}
@@ -199,7 +188,7 @@ export function SearchField({ query, isLoading, mobile }: SearchFieldProps) {
       >
         <div
           className={cn('relative flex flex-1 items-center gap-2', {
-            'bg-quaternary focus:bg-primary h-10 rounded-full border-transparent pl-2 pr-10': mobile
+            'bg-quaternary focus:bg-primary h-10 rounded-full border-transparent pr-10 pl-2': mobile
           })}
         >
           <span className='text-tertiary flex h-5 w-5 items-center justify-center'>
@@ -207,7 +196,7 @@ export function SearchField({ query, isLoading, mobile }: SearchFieldProps) {
           </span>
           <input
             ref={ref}
-            className='flex-1 border-none bg-transparent p-0 text-sm outline-none ring-0 focus:ring-0'
+            className='flex-1 border-none bg-transparent p-0 text-sm ring-0 outline-hidden focus:ring-0'
             placeholder='Search...'
             role='searchbox'
             autoComplete='off'
@@ -235,7 +224,7 @@ export function SearchField({ query, isLoading, mobile }: SearchFieldProps) {
             onMouseDown={(e) => e.preventDefault()}
             accessibilityLabel='Clear search'
             variant='plain'
-            className={cn('absolute right-2 top-1/2 h-6 w-6 -translate-y-1/2', {
+            className={cn('absolute top-1/2 right-2 h-6 w-6 -translate-y-1/2', {
               'pointer-events-none opacity-0': isLoading || !text.length
             })}
           />
@@ -270,13 +259,11 @@ export const getItemRowDOMId = (item: { id: string }) => `search-item-${item.id}
 
 function SearchResultsList({
   items,
-  callMap,
   postMap,
   noteMap,
   selectItem
 }: {
   items: SearchMixedItem[]
-  callMap: Map<string, SearchCall>
   postMap: Map<string, SearchPost>
   noteMap: Map<string, SearchNote>
   selectItem: SelectGroupItemFn
@@ -287,7 +274,6 @@ function SearchResultsList({
         <SearchResultItem
           key={item.id}
           item={item}
-          callMap={callMap}
           postMap={postMap}
           noteMap={noteMap}
           onFocus={() => selectItem({ itemIndex: index, groupIndex: 2 })}
@@ -312,12 +298,11 @@ export type ItemProps = InteractionProps & HighlightProps
 
 type SearchResultProps = InteractionProps & {
   item: SearchMixedItem
-  callMap: Map<string, SearchCall>
   postMap: Map<string, SearchPost>
   noteMap: Map<string, SearchNote>
 }
 
-function SearchResultItem({ item, callMap, postMap, noteMap, onFocus, onPointerMove }: SearchResultProps) {
+function SearchResultItem({ item, postMap, noteMap, onFocus, onPointerMove }: SearchResultProps) {
   const shared = {
     id: item.id,
     onFocus,
@@ -327,8 +312,6 @@ function SearchResultItem({ item, callMap, postMap, noteMap, onFocus, onPointerM
   }
 
   switch (item.type) {
-    case 'call':
-      return <CallItem call={callMap.get(item.id)!} {...shared} />
     case 'note':
       return <NoteItem note={noteMap.get(item.id)!} {...shared} />
     case 'post':
@@ -336,33 +319,6 @@ function SearchResultItem({ item, callMap, postMap, noteMap, onFocus, onPointerM
     default:
       return null
   }
-}
-
-function CallItem({ call, highlights, titleHighlight, ...rest }: ItemProps & { call: SearchCall }) {
-  const { scope } = useScope()
-
-  return (
-    <SearchResult
-      href={`/${scope}/calls/${call.id}`}
-      id={call.id}
-      className={!highlights?.length ? 'items-center' : 'items-start'}
-      {...rest}
-    >
-      <VideoCameraFilledIcon className='text-green-500' size={24} />
-      <div className='flex flex-col gap-0.5'>
-        <div className='flex items-center'>
-          <UIText primary weight='font-medium' className='break-anywhere mr-2 line-clamp-1'>
-            <HTMLRenderer text={titleHighlight || call.title || 'Untitled call'} />
-          </UIText>
-          <UIText quaternary className='break-anywhere line-clamp-1'>
-            {format(call.created_at, 'MMM d, yyyy')}
-          </UIText>
-        </div>
-
-        <SearchHighlights highlights={highlights} />
-      </div>
-    </SearchResult>
-  )
 }
 
 function NoteItem({ note, highlights, titleHighlight, ...rest }: ItemProps & { note: SearchNote }) {

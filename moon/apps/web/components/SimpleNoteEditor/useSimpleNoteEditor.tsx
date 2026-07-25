@@ -109,7 +109,7 @@ export function useSimpleNoteEditor({
       shouldRerenderOnTransaction: false,
       editorProps: {
         attributes: {
-          class: 'new-posts prose select-text focus:outline-none w-full relative note min-w-full px-4',
+          class: 'new-posts prose select-text focus:outline-hidden w-full relative note min-w-full px-4',
           style: "overflow-anchor: ''"
         },
         ...editorProps

@@ -42,6 +42,8 @@ describe('LinkUnfurl', () => {
       ],
       type: 'doc'
     })
+
+    editor.destroy()
   })
 
   it('inserts between paragraphs', () => {
@@ -73,6 +75,8 @@ describe('LinkUnfurl', () => {
       ],
       type: 'doc'
     })
+
+    editor.destroy()
   })
 
   it('inserts after the paragraph', () => {
@@ -99,5 +103,7 @@ describe('LinkUnfurl', () => {
       ],
       type: 'doc'
     })
+
+    editor.destroy()
   })
 })

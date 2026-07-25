@@ -45,7 +45,7 @@ function OuterContainer({ children, isOpen, width }: { children: React.ReactNode
       transition={{ type: 'spring', stiffness: 500, damping: 40 }}
       aria-disabled={!isOpen}
       className={cn(
-        '4xl:max-w-[500px] flex flex-none flex-col border-t focus:outline-none focus:ring-0 lg:w-full lg:max-w-[400px] lg:border-l lg:border-t-0',
+        '4xl:max-w-[500px] flex flex-none flex-col border-t focus:ring-0 focus:outline-hidden lg:w-full lg:max-w-[400px] lg:border-t-0 lg:border-l',
         {
           invisible: !isOpen
         }

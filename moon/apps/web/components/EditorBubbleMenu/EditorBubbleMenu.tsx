@@ -1,5 +1,6 @@
 import { memo, MouseEvent, useCallback, useEffect, useRef, useState } from 'react'
-import { BubbleMenu, Editor, findParentNode, isList, isTextSelection } from '@tiptap/react'
+import { Editor, findParentNode, isList, isTextSelection } from '@tiptap/react'
+import { BubbleMenu } from '@tiptap/react/menus'
 import { isMobile } from 'react-device-detect'
 
 import {
@@ -55,8 +56,8 @@ interface Props {
   enableBlockquote?: boolean
   enableUnderline?: boolean
   enableCodeBlock?: boolean
-  // BubbleMenu uses Tippy under the hood. Use this to append to a different element other than the editor's parent
-  tippyAppendTo?: () => HTMLElement | null
+  // BubbleMenu uses Floating UI. Append to a different element than the editor's parent when needed.
+  appendTo?: () => HTMLElement | null
 }
 
 export const EditorBubbleMenu = memo(function EditorBubbleMemo({
@@ -67,12 +68,12 @@ export const EditorBubbleMenu = memo(function EditorBubbleMemo({
   enableBlockquote = true,
   enableUnderline = true,
   enableCodeBlock = true,
-  tippyAppendTo
+  appendTo
 }: Props) {
   const [linkEditorOpen, setLinkEditorOpen] = useState(false)
   const [url, setUrl] = useState(editor?.getAttributes('link').href ?? '')
 
-  // force rerender when the menu is opened/closed to respond to TipTap and tippy.js changes
+  // force rerender when the menu is opened/closed to respond to TipTap / Floating UI changes
   const forceUpdate = useForceUpdate()
 
   const openLinkEditor = useCallback(
@@ -267,7 +268,7 @@ export const EditorBubbleMenu = memo(function EditorBubbleMemo({
     }
   ])
 
-  const parentContainer = tippyAppendTo?.() ?? undefined
+  const parentContainer = appendTo?.() ?? undefined
 
   return (
     <div
@@ -281,24 +282,15 @@ export const EditorBubbleMenu = memo(function EditorBubbleMemo({
       <BubbleMenu
         pluginKey='bubbleMenuText'
         editor={editor}
-        tippyOptions={{
-          onHidden: closeLinkEditor,
-          maxWidth: 'auto',
-          appendTo: parentContainer,
-          popperOptions: {
-            // prefer top; allow flipping to the bottom to avoid getting clipped.
-            // if the popover is completely off-screen it will be hidden by CSS in editor.css.
-            placement: 'top',
-            modifiers: [
-              {
-                name: 'flip',
-                options: {
-                  fallbackPlacements: ['top', 'bottom'],
-                  boundary: parentContainer
-                }
-              }
-            ]
-          }
+        appendTo={parentContainer}
+        options={{
+          placement: 'top',
+          offset: 6,
+          flip: {
+            fallbackPlacements: ['top', 'bottom'],
+            ...(parentContainer ? { boundary: parentContainer } : {})
+          },
+          onHide: closeLinkEditor
         }}
         updateDelay={50}
         shouldShow={({ editor, view, state, from, to }) => {
@@ -479,7 +471,8 @@ export const EditorBubbleMenu = memo(function EditorBubbleMemo({
       <BubbleMenu
         pluginKey='bubbleMenuLink'
         editor={editor}
-        tippyOptions={{ onHidden: closeLinkEditor, maxWidth: 'auto', appendTo: parentContainer }}
+        appendTo={parentContainer}
+        options={{ onHide: closeLinkEditor }}
         shouldShow={({ editor, from, to }) => {
           // only show the bubble menu for links.
           return from === to && editor.isActive('link')

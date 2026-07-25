@@ -73,7 +73,7 @@ export function ProfileDisplay() {
       <SettingsSection.Separator />
 
       <form className='flex flex-col' onSubmit={handleSubmit}>
-        <div className='flex flex-col items-start px-4 pb-4 pt-2 sm:flex-row sm:space-x-6 sm:pl-6'>
+        <div className='flex flex-col items-start px-4 pt-2 pb-4 sm:flex-row sm:space-x-6 sm:pl-6'>
           <AvatarUploader
             onFileUploadError={(_, error) => setFileError(error)}
             onFileUploadSuccess={(file, key) => {
@@ -137,7 +137,7 @@ export function ProfileDisplay() {
 
                 <UIText
                   size='text-xs'
-                  className='text-balance rounded-md bg-orange-50 p-3 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400'
+                  className='rounded-md bg-orange-50 p-3 text-balance text-orange-800 dark:bg-orange-900/20 dark:text-orange-400'
                 >
                   Changing your organization slug will update the URL to all content, including posts, calls, and docs.
                   Make sure to update any bookmarks or links after making this change.

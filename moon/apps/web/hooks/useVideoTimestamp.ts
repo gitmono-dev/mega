@@ -12,7 +12,7 @@ function formatDuration(seconds: number) {
   return formattedDuration
 }
 
-export function useVideoTimestamp(videoRef: React.RefObject<HTMLVideoElement>, initialDuration?: number) {
+export function useVideoTimestamp(videoRef: React.RefObject<HTMLVideoElement | null>, initialDuration?: number) {
   const [duration, setDuration] = useState<string>(formatDuration(initialDuration ?? videoRef.current?.duration ?? 0))
 
   useEffect(() => {

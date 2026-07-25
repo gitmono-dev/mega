@@ -82,8 +82,12 @@ function PendingOrganizations({
     <>
       <Title title='Join or create an organization' subtitle='You have access to the following organizations.' />
       <Form>
-        {invites?.map((invite) => <InviteRow key={invite.id} invite={invite} />)}
-        {suggested?.map((suggestion) => <SuggestedRow key={suggestion.id} suggestion={suggestion} />)}
+        {invites?.map((invite) => (
+          <InviteRow key={invite.id} invite={invite} />
+        ))}
+        {suggested?.map((suggestion) => (
+          <SuggestedRow key={suggestion.id} suggestion={suggestion} />
+        ))}
 
         <div className='flex items-center gap-4'>
           <div className='h-px flex-1 border-b' />

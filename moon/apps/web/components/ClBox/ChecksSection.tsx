@@ -86,7 +86,7 @@ const CheckStatus = ({
               onUpdateBranch()
             }}
             disabled={isUpdating}
-            className='border-primary bg-secondary hover:bg-tertiary text-secondary flex-shrink-0 rounded-md border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50'
+            className='border-primary bg-secondary hover:bg-tertiary text-secondary shrink-0 rounded-md border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50'
           >
             {isUpdating ? (
               <span className='flex items-center gap-1.5'>
@@ -148,7 +148,7 @@ const AdditionalCheckItemComponent = ({ check }: AdditionalCheckItemProps) => {
 
   return (
     <div className='border-primary flex items-start border-b px-2 py-2 last:border-b-0'>
-      <div className='mr-3 mt-0.5 flex-shrink-0'>{getStatusIcon(check.result, isClaAdvisory)}</div>
+      <div className='mt-0.5 mr-3 shrink-0'>{getStatusIcon(check.result, isClaAdvisory)}</div>
       <div className='min-w-0 flex-1'>
         <div className='flex items-center justify-between'>
           <h5 className='text-primary text-sm font-medium'>{ADDITIONAL_CHECK_LABELS[check.type]}</h5>

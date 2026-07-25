@@ -18,7 +18,6 @@ import { NotificationSettings } from '@/components/UserSettings/Notifications/No
 import { PushNotificationSettings } from '@/components/UserSettings/Notifications/PushNotificationSettings'
 import { NotificationSchedule } from '@/components/UserSettings/NotificationSchedule'
 import { UserSettingsPageWrapper } from '@/components/UserSettings/PageWrapper'
-import { PersonalCallLinks } from '@/components/UserSettings/PersonalCallLinks'
 import { SlackNotificationSettings } from '@/components/UserSettings/SlackNotificationSettings'
 import { Timezone } from '@/components/UserSettings/Timezone'
 import { useAdminCheck } from '@/hooks/admin/useAdminCheck'
@@ -54,7 +53,6 @@ const UserSettingsPage: PageWithProviders<any> = () => {
         <SSHKeys />
         <GPGKeys />
         <PersonalToken />
-        <PersonalCallLinks />
         <ClaStatusSection />
         <ThemePicker />
         {isAdmin && <MenuPicker />}

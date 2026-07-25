@@ -3,7 +3,6 @@ import { atom, PrimitiveAtom, useSetAtom } from 'jotai'
 import { useRouter } from 'next/router'
 
 import { useGetNotesIndex } from '@/components/NotesIndex/useGetNotesIndex'
-import { useGetCalls } from '@/hooks/useGetCalls'
 import { useGetNotifications } from '@/hooks/useGetNotifications'
 import { useGetPostsIndex } from '@/hooks/useGetPostsIndex'
 import { getImmediateScrollableNode, scrollImmediateScrollableNodeToTop } from '@/utils/scroll'
@@ -58,7 +57,6 @@ export function useNavigationTabAction({ active, refetchAtom, refetch, isFetchin
   return handleClick
 }
 
-export const refetchingCallsAtom = atom(false)
 export const refetchingChatAtom = atom(false)
 export const refetchingInboxAtom = atom(false)
 export const refetchingNotesAtom = atom(false)
@@ -100,19 +98,6 @@ export function useRefetchInboxIndex() {
   return useNavigationTabAction({
     active,
     refetchAtom: refetchingInboxAtom,
-    refetch,
-    isFetching
-  })
-}
-
-export function useRefetchCallsIndex() {
-  const router = useRouter()
-  const active = router.pathname === '/[org]/calls'
-  const { refetch, isFetching } = useGetCalls({ enabled: active })
-
-  return useNavigationTabAction({
-    active,
-    refetchAtom: refetchingCallsAtom,
     refetch,
     isFetching
   })

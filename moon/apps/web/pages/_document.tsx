@@ -18,12 +18,11 @@ class MyDocument extends Document {
           <meta name='slack-app-id' content='A03CG5AP4CE' />
           <link rel='preconnect' href='https://api.campsite.com' />
           <link rel='preconnect' href='https://campsite.imgix.net' />
-          <link rel='preconnect' href='https://o1244295.ingest.sentry.io' />
         </Head>
 
         <body
           className={cn(
-            'bg-primary text-primary fixed isolate select-none overflow-hidden antialiased',
+            'bg-primary text-primary fixed isolate overflow-hidden antialiased select-none',
             // force the body to be full width and height, so that libraries
             // like vaul can't highjack the dimensions and screw the layout
             '!h-full !w-full'

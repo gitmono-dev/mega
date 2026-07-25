@@ -113,7 +113,7 @@ function PostTldrContent({ content }: { postId: string; content: string; source:
   const [ref] = useInView({ triggerOnce: true })
 
   return (
-    <div ref={ref} className='prose select-text px-3 py-4 focus:outline-none has-[ul]:pt-2'>
+    <div ref={ref} className='prose px-3 py-4 select-text focus:outline-hidden has-[ul]:pt-2'>
       <RichTextRenderer content={content} extensions={extensions} />
     </div>
   )

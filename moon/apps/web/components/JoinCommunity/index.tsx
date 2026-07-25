@@ -68,7 +68,7 @@ export function JoinCommunityPageComponent() {
     <div className='flex h-full flex-1 flex-col'>
       <BasicTitlebar />
       <ScrollableContainer className='bg-primary flex h-screen w-full flex-col'>
-        <div className='mx-auto flex w-full max-w-2xl flex-1 select-text flex-col gap-16 px-4 py-32'>
+        <div className='mx-auto flex w-full max-w-2xl flex-1 flex-col gap-16 px-4 py-32 select-text'>
           <div className='flex flex-col gap-6'>
             <div className='prose'>
               <p className='text-3xl'>🏕️</p>
@@ -96,7 +96,7 @@ export function JoinCommunityPageComponent() {
             </div>
           </div>
 
-          <div className='bg-secondary flex flex-col gap-6 rounded-xl border p-6 shadow-sm'>
+          <div className='bg-secondary flex flex-col gap-6 rounded-xl border p-6 shadow-xs'>
             <div className='prose'>
               <p>
                 Campsite is also a tool for teams. Hundreds of companies use Campsite every day to share

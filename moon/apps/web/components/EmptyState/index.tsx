@@ -18,7 +18,7 @@ export function EmptyState({ message = '', title = '', emoji = null, icon = null
           </UIText>
         )}
 
-        {icon && <div className='text-primary mb-4 p-2 text-opacity-80'>{icon}</div>}
+        {icon && <div className='text-primary text-opacity-80 mb-4 p-2'>{icon}</div>}
 
         {(title || message) && (
           <div className='flex flex-col gap-2'>

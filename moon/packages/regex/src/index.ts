@@ -1,4 +1,3 @@
-let figmaExpression = /^https:\/\/([\w.-]+\.)?figma.com\/([\w-]+)\/([0-9a-zA-Z]{22,128})(?:\/.*)?$/gi
 let loomExpression = /^https:\/\/([\w.-]+\.)?loom.com\/share\/([0-9a-zA-Z]{22,128})(?:\/.*)?(\?.*)?/gi
 let codepenExpression = /^https:\/\/([\w.-]+\.)?codepen.io\/([0-9a-zA-Z]{1,32})\/pen\/([0-9a-zA-Z]{1,32})(?:\/.*)?$/gi
 let codesandboxExpression = /^https:\/\/([\w.-]+\.)?codesandbox.io\/(embed|s)\/[-a-zA-Z0-9()@:%_+.~#?&//=]*$/gi
@@ -7,7 +6,6 @@ let playExpression = /^https:\/\/([\w.-]+\.)?(share\.)createwithplay.com\/projec
 let tomeExpression = /^https:\/\/([\w.-]+\.)?tome.app\/[0-9a-zA-Z]*\/[-a-zA-Z0-9()@:%_+.~#?&//=]*$/gi
 let youtubeExpression = /^https:\/\/([\w.-]+\.)?youtube.com\/watch\?v=([-a-zA-Z0-9()@:%_+.~#?&//=]*)$/gi
 
-export const figmaRegex = new RegExp(figmaExpression)
 export const loomRegex = new RegExp(loomExpression)
 export const codepenRegex = new RegExp(codepenExpression)
 export const codesandboxRegex = new RegExp(codesandboxExpression)

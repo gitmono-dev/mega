@@ -1,5 +1,5 @@
 import { Attachment, PostLink } from '@gitmono/types'
-import { Button, ContextMenu, DownloadIcon, ExternalLinkIcon, FigmaIcon } from '@gitmono/ui'
+import { Button, ContextMenu, DownloadIcon, ExternalLinkIcon } from '@gitmono/ui'
 import { DropdownMenu } from '@gitmono/ui/DropdownMenu'
 import { buildMenuItems } from '@gitmono/ui/Menu'
 import { useIsDesktopApp } from '@gitmono/ui/src/hooks'
@@ -10,11 +10,8 @@ interface FileMenuProps extends React.PropsWithChildren {
   links: PostLink[]
 }
 
-const openInFigmaLink = (links: PostLink[]) => links.find((link) => !!new URL(link.url)?.hostname.match(/figma.com/))
-
-export function FileMenu({ children, type, attachment, links }: FileMenuProps) {
+export function FileMenu({ children, type, attachment }: FileMenuProps) {
   const isDesktop = useIsDesktopApp()
-  const figmaLink = attachment.file_type !== 'link' && openInFigmaLink(links)
 
   const items = buildMenuItems([
     {
@@ -30,13 +27,6 @@ export function FileMenu({ children, type, attachment, links }: FileMenuProps) {
       url: attachment.url,
       external: true,
       rightSlot: <ExternalLinkIcon />
-    },
-    figmaLink && {
-      type: 'item',
-      label: 'Open in Figma',
-      url: figmaLink.url,
-      external: true,
-      rightSlot: <FigmaIcon />
     }
   ])
 

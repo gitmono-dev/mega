@@ -88,7 +88,7 @@ function DoubleMemberAvatar({ members }: { members: OrganizationMember[] }) {
 
   return (
     <div className='bg-quaternary relative h-10 w-10 rounded-full'>
-      <div className='absolute -left-[5px] -top-[5px] z-[1] scale-[0.48] rounded-full'>
+      <div className='absolute -top-[5px] -left-[5px] z-[1] scale-[0.48] rounded-full'>
         <Avatar
           deactivated={first.deactivated}
           name={first.user.display_name}
@@ -96,7 +96,7 @@ function DoubleMemberAvatar({ members }: { members: OrganizationMember[] }) {
           size='lg'
         />
       </div>
-      <div className='absolute -bottom-[8px] -right-[8px] z-[2] scale-[0.34] rounded-full'>
+      <div className='absolute -right-[8px] -bottom-[8px] z-[2] scale-[0.34] rounded-full'>
         <Avatar
           deactivated={second.deactivated}
           name={second.user.display_name}
@@ -113,7 +113,7 @@ function ManyMemberAvatar({ members }: { members: OrganizationMember[] }) {
 
   return (
     <div className='bg-quaternary relative h-10 w-10 rounded-full'>
-      <div className='absolute -left-[5px] -top-[5px] z-[2] scale-[0.49] rounded-full'>
+      <div className='absolute -top-[5px] -left-[5px] z-[2] scale-[0.49] rounded-full'>
         <Avatar
           deactivated={first.deactivated}
           name={first.user.display_name}
@@ -129,7 +129,7 @@ function ManyMemberAvatar({ members }: { members: OrganizationMember[] }) {
           size='lg'
         />
       </div>
-      <div className='absolute -bottom-[11px] -right-px z-[2] scale-[0.28] rounded-full'>
+      <div className='absolute -right-px -bottom-[11px] z-[2] scale-[0.28] rounded-full'>
         <Avatar
           deactivated={third.deactivated}
           name={third.user.display_name}

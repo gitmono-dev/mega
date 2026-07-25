@@ -61,7 +61,7 @@ const DEFAULT_NEW_PROJECTS: NewProjectsSchema = {
 
 function NewProjectsForm() {
   const createProject = useCreateProject()
-  const { handleSubmit, formState, watch, setValue } = useForm<NewProjectsSchema>({
+  const { handleSubmit, formState, watch, setValue } = useForm({
     resolver: zodResolver(newProjectsSchema),
     defaultValues: DEFAULT_NEW_PROJECTS
   })
@@ -81,7 +81,7 @@ function NewProjectsForm() {
 
   return (
     <Form onSubmit={onSubmit}>
-      <div className='pr-8.5 flex flex-1 flex-row items-center gap-1'>
+      <div className='flex flex-1 flex-row items-center gap-1 pr-8.5'>
         <TextField
           label='Channel name'
           value={channelName}

@@ -29,7 +29,7 @@ export function ScrollableContainer({
       ref={ref}
       className={cn(
         'flex w-full flex-1 flex-col overflow-y-auto',
-        'focus:outline-none focus:ring-0',
+        'focus:ring-0 focus:outline-hidden',
         !disableStableGutter && '[scrollbar-gutter:stable]',
         className
       )}

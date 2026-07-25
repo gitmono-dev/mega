@@ -26,7 +26,7 @@ interface CommentDropdownMenuProps {
   id: string
   Conversation: ConversationItem
   CommentType: 'cl' | 'issue' | (string & {})
-  editorRef: React.RefObject<SimpleNoteContentRef>
+  editorRef: React.RefObject<SimpleNoteContentRef | null>
 }
 
 export function CommentDropdownMenu({ Conversation, id, CommentType, editorRef }: CommentDropdownMenuProps) {

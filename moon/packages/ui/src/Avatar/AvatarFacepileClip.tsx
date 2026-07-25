@@ -5,7 +5,7 @@ export function AvatarFacepileClip({ size, clipId }: ClipProps) {
     case 'xs': {
       return (
         <svg
-          className='absolute left-0 top-0'
+          className='absolute top-0 left-0'
           width='18'
           height='20'
           viewBox='0 0 18 20'
@@ -25,7 +25,7 @@ export function AvatarFacepileClip({ size, clipId }: ClipProps) {
     case 'sm': {
       return (
         <svg
-          className='absolute left-0 top-0'
+          className='absolute top-0 left-0'
           width='21'
           height='24'
           viewBox='0 0 21 24'
@@ -45,7 +45,7 @@ export function AvatarFacepileClip({ size, clipId }: ClipProps) {
     case 'base': {
       return (
         <svg
-          className='absolute left-0 top-0'
+          className='absolute top-0 left-0'
           width='28'
           height='32'
           viewBox='0 0 28 32'
@@ -65,7 +65,7 @@ export function AvatarFacepileClip({ size, clipId }: ClipProps) {
     case 'lg': {
       return (
         <svg
-          className='absolute left-0 top-0'
+          className='absolute top-0 left-0'
           width='33'
           height='40'
           viewBox='0 0 33 40'
@@ -85,7 +85,7 @@ export function AvatarFacepileClip({ size, clipId }: ClipProps) {
     case 'xl': {
       return (
         <svg
-          className='absolute left-0 top-0'
+          className='absolute top-0 left-0'
           width='55'
           height='64'
           viewBox='0 0 55 64'
@@ -105,7 +105,7 @@ export function AvatarFacepileClip({ size, clipId }: ClipProps) {
     case 'xxl': {
       return (
         <svg
-          className='absolute left-0 top-0'
+          className='absolute top-0 left-0'
           width='99'
           height='112'
           viewBox='0 0 99 112'

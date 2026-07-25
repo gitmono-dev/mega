@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import { useEffect, useMemo, useState } from 'react'
 import { nativeWindow } from '@todesktop/client-core'
 import { m } from 'framer-motion'
@@ -20,7 +19,6 @@ import {
   Link,
   LockIcon,
   Logo,
-  PaperAirplaneIcon,
   PlusIcon,
   UIText
 } from '@gitmono/ui'
@@ -29,8 +27,6 @@ import { cn } from '@gitmono/ui/src/utils'
 
 import { PendingAccountReviewButton } from '@/components/AccountReview/PendingAccountReviewButton'
 import { BackButton } from '@/components/BackButton'
-import { CallOverflowMenu } from '@/components/Calls/CallOverflowMenu'
-import { CallSharePopover } from '@/components/CallSharePopover'
 import { GuestBadge } from '@/components/GuestBadge'
 import { InboxFilterButtons } from '@/components/InboxItems/InboxHoverCard'
 import { defaultInboxView, InboxView } from '@/components/InboxItems/InboxSplitView'
@@ -47,7 +43,6 @@ import { NoteTrailingAccessory } from '@/components/NoteView'
 import { InvitePeopleButton } from '@/components/People/InvitePeopleButton'
 import { PostOverflowMenu } from '@/components/Post/PostOverflowMenu'
 import { PostsIndexDisplayDropdown } from '@/components/PostsIndex/PostsIndexDisplayDropdown'
-import { BreadcrumbProjectCallButton } from '@/components/Projects/ProjectCallButton'
 import { ProjectFavoriteButton } from '@/components/Projects/ProjectFavoriteButton'
 import { ProjectOverflowMenu } from '@/components/Projects/ProjectOverflowMenu'
 import { ProjectSidebarMobileToggleButton } from '@/components/Projects/ProjectSidebar/ProjectSidebarToggleButton'
@@ -55,10 +50,8 @@ import { useGoBack } from '@/components/Providers/HistoryProvider'
 import { SearchField } from '@/components/SearchIndex'
 import { addRecentSearchAtom } from '@/components/SearchIndex/RecentSearches'
 import { ChatThreadOverflowMenu } from '@/components/Thread/ChatThreadOverflowMenu'
-import { BreadcrumbCallButton } from '@/components/ThreadView/ThreadViewTitlebar'
 import { useScope } from '@/contexts/scope'
 import { useChatSubscriptions } from '@/hooks/useChatSubscriptions'
-import { useGetCall } from '@/hooks/useGetCall'
 import { useGetCurrentOrganization } from '@/hooks/useGetCurrentOrganization'
 import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
 import { useGetFavorites } from '@/hooks/useGetFavorites'
@@ -94,14 +87,14 @@ const CreateProjectDialog = dynamic(
 export function NavigationBar() {
   const isDesktop = useIsDesktopApp()
   const wrapperClasses = cn(
-    '  lg:hidden min-h-[--navbar-height] z-10 drag border-b transition-shadow flex-none bg-primary'
+    '  lg:hidden min-h-[var(--navbar-height)] z-10 drag border-b transition-shadow flex-none bg-primary'
   )
 
   return (
     <>
       <m.nav onDoubleClick={() => isDesktop && nativeWindow.maximize()} className={wrapperClasses}>
         <div
-          className={cn('mx-auto grid h-[--navbar-height] max-w-7xl grid-cols-5 items-center', {
+          className={cn('mx-auto grid h-[var(--navbar-height)] max-w-7xl grid-cols-5 items-center', {
             'pl-24 2xl:px-3': isDesktop && isMacOs,
             'px-3': !isDesktop || !isMacOs
           })}
@@ -142,7 +135,7 @@ export function SignedOutNavigationBar() {
   return (
     <nav
       onDoubleClick={() => isDesktop && nativeWindow.maximize()}
-      className='drag bg-primary sticky inset-x-0 top-0 z-10 min-h-[--navbar-height] border-b transition-shadow'
+      className='drag bg-primary sticky inset-x-0 top-0 z-10 min-h-[var(--navbar-height)] border-b transition-shadow'
     >
       <div className='mx-auto grid h-14 grid-cols-3 items-center gap-4 px-3'>
         {accessory}
@@ -171,8 +164,6 @@ function TrailingAccessory() {
   const isChatThread = router.pathname === '/[org]/chat/[threadId]'
   const isChat = router.pathname === '/[org]/chat'
   const isNewChat = router.pathname === '/[org]/chat/new'
-  const isCalls = router.pathname === '/[org]/calls'
-  const isCall = router.pathname === '/[org]/calls/[callId]'
   const isNotes = router.pathname === '/[org]/notes' || router.pathname === '/[org]/notes/organization'
   const isNote = router.pathname === '/[org]/notes/[noteId]'
   const isSearch = router.pathname === '/[org]/search'
@@ -188,7 +179,6 @@ function TrailingAccessory() {
     router.push(`/${scope}/projects/${project.id}`)
   }
 
-  if (isCalls) return null
   if (isSearch) return null
   if (isVersions) return null
   if (isNewChat) return null
@@ -197,8 +187,6 @@ function TrailingAccessory() {
   if (isNotes) return <NotesTrailingAccessory />
 
   if (isNote) return <NoteTrailingAccessory noteId={router.query?.noteId as string} />
-
-  if (isCall) return <CallTrailingAccessory />
 
   if (isInbox) return <InboxTrailingAccessory inboxView={router.query.inboxView as InboxView} />
 
@@ -268,7 +256,6 @@ function ProjectTrailingAccessory() {
 
   return (
     <div className='flex items-center gap-0.5'>
-      <BreadcrumbProjectCallButton project={project} />
       <ProjectOverflowMenu type='dropdown' project={project} />
       <ProjectSidebarMobileToggleButton />
     </div>
@@ -287,7 +274,7 @@ function PostTrailingAccessory() {
 
 function PostLeadingAccessory() {
   const router = useRouter()
-  const { postId, projectId, username, threadId, noteId, callId } = router.query
+  const { postId, projectId, username, threadId, noteId } = router.query
   const goBack = useGoBack()
   const { data: currentOrganization } = useGetCurrentOrganization()
   const { data: memberships } = useGetOrganizationMemberships()
@@ -295,7 +282,6 @@ function PostLeadingAccessory() {
   const isNewChat = router.pathname === '/[org]/chat/new'
   const isPosts = router.pathname === '/[org]/posts'
   const isDocs = router.pathname === '/[org]/notes'
-  const isCalls = router.pathname === '/[org]/calls'
   const isSearch = router.pathname === '/[org]/search'
   const isDrafts = router.pathname === '/[org]/drafts'
 
@@ -306,9 +292,7 @@ function PostLeadingAccessory() {
     !!threadId ||
     isNewChat ||
     !!noteId ||
-    !!callId ||
     isDocs ||
-    isCalls ||
     isPosts ||
     isSearch ||
     isDrafts
@@ -417,8 +401,6 @@ function CenterAccessory() {
   const isChatThread = router.pathname === '/[org]/chat/[threadId]'
   const isChat = router.pathname === '/[org]/chat'
   const isNewChat = router.pathname === '/[org]/chat/new'
-  const isCalls = router.pathname === '/[org]/calls'
-  const isCall = router.pathname === '/[org]/calls/[callId]'
   const isNotes = router.pathname === '/[org]/notes' || router.pathname === '/[org]/notes/organization'
   const isNote = router.pathname === '/[org]/notes/[noteId]'
   const isHome = router.pathname === '/[org]/home'
@@ -432,16 +414,6 @@ function CenterAccessory() {
       <CenterAccessoryContainer>
         <UIText size='text-base' weight='font-semibold'>
           Posts
-        </UIText>
-      </CenterAccessoryContainer>
-    )
-  }
-
-  if (isCalls) {
-    return (
-      <CenterAccessoryContainer>
-        <UIText size='text-base' weight='font-semibold'>
-          Calls
         </UIText>
       </CenterAccessoryContainer>
     )
@@ -468,10 +440,6 @@ function CenterAccessory() {
   }
 
   if (isNote) {
-    return <CenterAccessoryContainer />
-  }
-
-  if (isCall) {
     return <CenterAccessoryContainer />
   }
 
@@ -699,32 +667,7 @@ function ChatThreadTrailingAccessory() {
   if (!threadId) return null
   if (!thread) return null
 
-  return (
-    <>
-      <BreadcrumbCallButton thread={thread} />
-      <ChatThreadOverflowMenu thread={thread} />
-    </>
-  )
-}
-
-function CallTrailingAccessory() {
-  const router = useRouter()
-  const { callId } = router.query
-  const { data: call } = useGetCall({ id: callId as string })
-
-  if (!callId) return null
-  if (!call) return null
-
-  return (
-    <div className='flex items-center gap-0.5'>
-      <CallSharePopover call={call}>
-        <Button leftSlot={<PaperAirplaneIcon />} variant='plain' tooltip='Share call'>
-          Share
-        </Button>
-      </CallSharePopover>
-      <CallOverflowMenu call={call} type='dropdown' />
-    </div>
-  )
+  return <ChatThreadOverflowMenu thread={thread} />
 }
 
 export function MobileTabBar() {
@@ -885,7 +828,7 @@ function BadgedChatIcon({ prefetch }: { prefetch?: boolean }) {
   return (
     <div className='relative'>
       {hasUnreads && (
-        <div className='pointer-events-none absolute -right-[3px] -top-px z-10 h-2 w-2 flex-none rounded-full bg-blue-500' />
+        <div className='pointer-events-none absolute -top-px -right-[3px] z-10 h-2 w-2 flex-none rounded-full bg-blue-500' />
       )}
       <ChatBubbleIcon size={28} />
     </div>
@@ -901,7 +844,7 @@ function BadgedNotificationsIcon() {
   return (
     <div className='relative'>
       {hasUnreads && (
-        <div className='pointer-events-none absolute -right-[3px] -top-px z-10 h-2 w-2 flex-none rounded-full bg-blue-500' />
+        <div className='pointer-events-none absolute -top-px -right-[3px] z-10 h-2 w-2 flex-none rounded-full bg-blue-500' />
       )}
       <InboxIcon size={28} />
     </div>
@@ -917,7 +860,7 @@ function BadgedHomeIcon() {
   return (
     <div className='relative'>
       {hasUnreads && (
-        <div className='pointer-events-none absolute -right-[3px] -top-px z-10 h-2 w-2 flex-none rounded-full bg-blue-500' />
+        <div className='pointer-events-none absolute -top-px -right-[3px] z-10 h-2 w-2 flex-none rounded-full bg-blue-500' />
       )}
       <HomeIcon size={28} />
     </div>

@@ -81,7 +81,7 @@ export function PostComposerHeaderActions({ onDeleteDraft }: PostComposerHeaderA
         className='hidden sm:flex'
       />
 
-      <Dialog.CloseButton className='relative right-0 top-0' />
+      <Dialog.CloseButton className='relative top-0 right-0' />
     </div>
   )
 }

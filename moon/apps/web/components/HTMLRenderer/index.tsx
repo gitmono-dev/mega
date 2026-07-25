@@ -22,7 +22,7 @@ export function HTMLRenderer({
   onCheckboxClick,
   linkOptions,
   blur = false,
-  className = 'prose w-full max-w-full select-text focus:outline-none',
+  className = 'prose w-full max-w-full select-text focus:outline-hidden',
   as = 'div',
   ...props
 }: Props) {
@@ -60,7 +60,7 @@ export function HTMLRenderer({
       {...props}
       id={containerId}
       className={cn(className, {
-        'pointer-events-none select-none blur filter will-change-transform': blur,
+        'pointer-events-none blur filter will-change-transform select-none': blur,
         'truncate-links': !!linkOptions?.truncate
       })}
       dangerouslySetInnerHTML={{ __html: text ?? '' }}

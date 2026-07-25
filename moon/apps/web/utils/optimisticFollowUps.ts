@@ -184,7 +184,7 @@ export function handleFollowUpUpdate({
     })
 }
 
-type FollowUpType = 'post' | 'note' | 'comment' | 'call'
+type FollowUpType = 'post' | 'note' | 'comment'
 
 // convert from `api_type_name` and `type_name` from server to Normy type
 export function normyTypeFromApiTypeName(type: string): FollowUpType | undefined {
@@ -198,9 +198,6 @@ export function normyTypeFromApiTypeName(type: string): FollowUpType | undefined
     case 'comment':
     case 'Comment':
       return 'comment'
-    case 'call':
-    case 'Call':
-      return 'call'
     default:
       return undefined
   }

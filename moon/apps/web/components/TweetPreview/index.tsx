@@ -142,7 +142,7 @@ function TweetInfoCreatedAt({ tweet }: { tweet: EnrichedTweet }) {
 
   return !createdAt ? null : (
     <a
-      className={'text-tertiary -mb-1 mt-3 flex items-center text-sm hover:underline'}
+      className={'text-tertiary mt-3 -mb-1 flex items-center text-sm hover:underline'}
       href={tweet.url}
       target='_blank'
       rel='noopener noreferrer'
@@ -161,7 +161,7 @@ function QuotedTweetHeader({ tweet }: { tweet: EnrichedQuotedTweet }) {
   const isUser = user.profile_image_shape === 'Circle' || (!user.profile_image_shape && !isBusiness)
 
   return (
-    <div className='mb-2 flex gap-2 overflow-hidden whitespace-nowrap break-words'>
+    <div className='mb-2 flex gap-2 overflow-hidden break-words whitespace-nowrap'>
       <a className='h-5 w-5 flex-none' href={tweet.url} target='_blank' rel='noopener noreferrer'>
         <div
           className={cn('overflow-hidden', {
@@ -187,7 +187,7 @@ function QuotedTweetHeader({ tweet }: { tweet: EnrichedQuotedTweet }) {
 
 function QuotedTweetBody({ tweet }: { tweet: EnrichedQuotedTweet }) {
   return (
-    <p className='not-prose m-0 whitespace-pre-wrap break-words text-[15px] font-normal leading-normal'>
+    <p className='not-prose m-0 text-[15px] leading-normal font-normal break-words whitespace-pre-wrap'>
       {tweet.entities.map((item, i) => (
         // eslint-disable-next-line react/no-array-index-key
         <span key={i} className='not-prose' dangerouslySetInnerHTML={{ __html: item.text }} />

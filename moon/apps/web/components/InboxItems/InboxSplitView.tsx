@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import { createContext, memo, PropsWithChildren, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, LayoutGroup, m } from 'framer-motion'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
@@ -21,7 +20,6 @@ import {
 import { cn, ConditionalWrap } from '@gitmono/ui/src/utils'
 
 import { useTrackActivityView } from '@/components/Activity/Activity'
-import { CallView } from '@/components/CallView'
 import { HomeFollowUpDialog } from '@/components/Home/HomeFollowUpDialog'
 import { FollowUpListItem } from '@/components/InboxItems/FollowUpListItem'
 import { useInboxFilterHrefs } from '@/components/InboxItems/hooks/useInboxFilterHrefs'
@@ -714,7 +712,7 @@ const Detail = memo(function Detail({ target }: { target: NotificationTarget }) 
     case 'Note':
       return <NoteView noteId={target.id} />
     case 'Call':
-      return <CallView callId={target.id} />
+      return null
     default:
       return <p>Not found</p>
   }
@@ -761,7 +759,7 @@ function InboxItem({ item, children, variant = 'plain', isGroupExpanded, classNa
         ref={ref}
         className={cn(
           'dark:focus:bg-tertiary group relative flex min-h-12 flex-none cursor-pointer scroll-m-2 scroll-mt-12 items-center gap-3 rounded-lg p-2.5',
-          'border-none outline-none ring-0 focus-within:border-none focus-within:outline-none focus-within:ring-0 focus:border-none focus:outline-none focus:ring-0',
+          'border-none ring-0 outline-hidden focus-within:border-none focus-within:ring-0 focus-within:outline-hidden focus:border-none focus:ring-0 focus:outline-hidden',
           className,
           // plain
           variant === 'plain' && isActive && 'bg-tertiary hover:bg-quaternary',
@@ -779,7 +777,7 @@ function InboxItem({ item, children, variant = 'plain', isGroupExpanded, classNa
         )}
       >
         <Link
-          className='absolute inset-0 focus:outline-none focus:ring-0'
+          className='absolute inset-0 focus:ring-0 focus:outline-hidden'
           href={getInboxItemRoutePath(item)}
           onClick={(e) => {
             if (!e.metaKey && showsSplitView) {

@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 
 import { Favorite } from '@gitmono/types/generated'
-import { NoteFilledIcon, PostFilledIcon, VideoCameraFilledIcon } from '@gitmono/ui/Icons'
+import { NoteFilledIcon, PostFilledIcon } from '@gitmono/ui/Icons'
 
 import { useDeleteFavorite } from '@/hooks/useDeleteFavorite'
 
@@ -21,8 +21,8 @@ export function iconForFavoritableType(favoritableType: Favorite['favoritable_ty
       return <NoteFilledIcon size={size} className='text-blue-500' />
     case 'Post':
       return <PostFilledIcon size={size} />
-    case 'Call':
-      return <VideoCameraFilledIcon size={size} className='text-green-500' />
+    default:
+      return null
   }
 }
 
@@ -30,8 +30,8 @@ export function fallbackNameForFavoritableType(favoritableType: Favorite['favori
   switch (favoritableType) {
     case 'Note':
       return 'Untitled doc'
-    case 'Call':
-      return 'Untitled call'
+    default:
+      return undefined
   }
 }
 

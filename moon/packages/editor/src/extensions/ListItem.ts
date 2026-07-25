@@ -1,4 +1,4 @@
-import { ListItem as TiptapListItem } from '@tiptap/extension-list-item'
+import { ListItem as TiptapListItem } from '@tiptap/extension-list'
 
 import { createMarkdownParserSpec } from '../utils/createMarkdownParser'
 

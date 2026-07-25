@@ -154,7 +154,7 @@ export function TroubleshootDesktopNotificationsDialog({ open, setOpen }: Props)
         </D.Description>
       </D.Header>
 
-      <div className='-mb-4 -mt-2 flex items-center justify-center'>
+      <div className='-mt-2 -mb-4 flex items-center justify-center'>
         <Image
           src={resolvedImage}
           alt='An image of the notification settings page for Campsite with notifications enabled'
@@ -265,7 +265,7 @@ export function PWAInstallGuideDialog({ open, setOpen }: Props) {
         </div>
       )}
 
-      <div className='flex items-center justify-center gap-4 px-4 pb-8 pt-4 lg:gap-8'>
+      <div className='flex items-center justify-center gap-4 px-4 pt-4 pb-8 lg:gap-8'>
         <Image
           src={resolvedAddToHomeScreen}
           alt='An image of the the mobile browser share sheet to customize a bookmark details'

@@ -1,5 +1,3 @@
-import { figmaRegex } from '@gitmono/regex'
-
 export function isUrl(text: string, options?: { requireHostname: boolean }) {
   if (text.match(/\n/)) {
     return false
@@ -24,8 +22,4 @@ export function isUrl(text: string, options?: { requireHostname: boolean }) {
   } catch (err) {
     return false
   }
-}
-
-export function isFigmaUrl(text: string) {
-  return figmaRegex.test(text)
 }

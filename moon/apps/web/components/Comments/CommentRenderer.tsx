@@ -27,7 +27,7 @@ export function CommentRenderer(props: CommentRendererProps) {
   }, [onCheckboxClick])
 
   return (
-    <div className='prose select-text focus:outline-none' data-reactions-only={hasReactionsOnly}>
+    <div className='prose select-text focus:outline-hidden' data-reactions-only={hasReactionsOnly}>
       <AttachmentLightbox
         selectedAttachmentId={openAttachmentId}
         attachments={comment.attachments}

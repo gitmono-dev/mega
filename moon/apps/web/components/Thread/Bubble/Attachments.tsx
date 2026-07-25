@@ -87,7 +87,7 @@ export function Attachments({ message, thread, overflowState }: AttachmentsProps
                     })}
                     style={{ aspectRatio }}
                   >
-                    <div className='pointer-events-none absolute inset-0 z-[1] rounded-lg ring-1 ring-inset ring-[--border-primary]' />
+                    <div className='pointer-events-none absolute inset-0 z-[1] rounded-lg ring-1 ring-[--border-primary] ring-inset' />
 
                     <ConditionalWrap
                       condition={overflow}
@@ -220,7 +220,7 @@ function NonRenderableAttachment({ attachment, message }: NonRenderableAttachmen
   return (
     <button
       onClick={download}
-      className={cn('flex items-center gap-2 self-start rounded-lg border py-2 pl-2 pr-3', {
+      className={cn('flex items-center gap-2 self-start rounded-lg border py-2 pr-3 pl-2', {
         'self-end': message.viewer_is_sender
       })}
     >

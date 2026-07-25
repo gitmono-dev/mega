@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { ItemInput } from '@primer/react/lib/SelectPanel/types'
+import type { SelectPanelItemInput as ItemInput } from '@primer/react'
 import { useAtom } from 'jotai'
 
 import { LabelItem } from '@gitmono/types'
@@ -8,20 +8,23 @@ import { MemberAvatar } from '@/components/MemberAvatar'
 import { useScope } from '@/contexts/scope'
 import { useSyncedMembers } from '@/hooks/useSyncedMembers'
 import { atomWithWebStorage } from '@/utils/atomWithWebStorage'
+import { megaUserHandle } from '@/utils/megaUser'
 
 import { extractTextArray } from './extractText'
 
-export const useAvatars = () => {
+export const useAvatars = ({ preferGithubLogin = false }: { preferGithubLogin?: boolean } = {}) => {
   const { members } = useSyncedMembers()
 
   return useMemo(
     () =>
       members?.map((i) => ({
         groupId: 'end',
-        text: i.user.username,
+        text: preferGithubLogin ? megaUserHandle(i.user) : i.user.username,
+        // Campsite username kept for matching legacy CL/reviewer records.
+        username: i.user.username,
         leadingVisual: () => <MemberAvatar size='sm' member={i} />
       })) || [],
-    [members]
+    [members, preferGithubLogin]
   )
 }
 
@@ -39,6 +42,10 @@ export const useMemberMap = () => {
 
     members?.forEach((i) => {
       map.set(i.user.username, i)
+      const github = i.user.github_login?.trim()
+      if (github) {
+        map.set(github, i)
+      }
     })
     return map
   }, [members])
@@ -57,7 +64,7 @@ export const useLabels = () => {
         leadingVisual: () => (
           <div
             className='h-[14px] w-[14px] rounded-full border'
-            //eslint-disable-next-line react/forbid-dom-props
+
             style={{ backgroundColor: i.color, borderColor: i.color }}
           />
         )
@@ -83,6 +90,19 @@ export const useLabelMap = () => {
 
 // assignees逻辑
 
+type MegaAvatarItem = ReturnType<typeof useAvatars>[number] & { username?: string }
+
+function avatarApiIdentity(item: ItemInput): string | undefined {
+  const mega = item as MegaAvatarItem
+  if (typeof mega.username === 'string' && mega.username) return mega.username
+  if (typeof item.text === 'string' && item.text) return item.text
+  return undefined
+}
+
+function avatarMatchesStoredHandle(avatar: MegaAvatarItem, handle: string) {
+  return avatar.text === handle || avatar.username === handle
+}
+
 export const useAssigneesSelector = ({
   assignees,
   assignRequest,
@@ -98,7 +118,7 @@ export const useAssigneesSelector = ({
   const [open, setOpen] = useState(false)
 
   const handleAssignees = (selected: ItemInput[]) => {
-    selects = [...selected.map((i) => i.text).filter((t): t is string => typeof t === 'string')]
+    selects = [...selected.map((i) => avatarApiIdentity(i)).filter((t): t is string => typeof t === 'string')]
   }
 
   const handleOpenChange = (open: boolean) => {
@@ -126,7 +146,9 @@ export const useAssigneesSelector = ({
   const fetchSelected = useMemo(() => {
     const set = new Set(selectRef.current.length ? selectRef.current : assignees)
 
-    return avatars.filter((user) => set.has(user.text as string))
+    return avatars.filter((user) =>
+      [...set].some((handle) => avatarMatchesStoredHandle(user as MegaAvatarItem, handle))
+    )
   }, [selectRef, avatars, assignees])
 
   return {

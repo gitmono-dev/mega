@@ -7,7 +7,7 @@ import { FollowUpDropdown, FollowUpDropdownRef } from '../FollowUp'
 
 interface InlinePostFollowUpDropdownProps extends React.PropsWithChildren {
   post: Post
-  followUpRef?: React.RefObject<FollowUpDropdownRef>
+  followUpRef?: React.RefObject<FollowUpDropdownRef | null>
 }
 
 export function InlinePostFollowUpDropdown({ children, post, followUpRef }: InlinePostFollowUpDropdownProps) {

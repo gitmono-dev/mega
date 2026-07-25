@@ -32,7 +32,7 @@ export function OrganizationOauthApplications() {
           <CreateOauthApplicationDialog open={createDialogIsOpen} onOpenChange={setCreateDialogIsOpen} />
         </div>
       </SettingsSection.Header>
-      <SettingsSection.Separator className='-mb-px mt-0' />
+      <SettingsSection.Separator className='mt-0 -mb-px' />
       <OauthAppsTable />
       <SettingsSection.Footer>
         <p>

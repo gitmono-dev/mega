@@ -5,7 +5,7 @@ export function AvatarOnlineClip({ size, clipId }: ClipProps) {
     case 'xs': {
       return (
         <svg
-          className='absolute bottom-0 right-0'
+          className='absolute right-0 bottom-0'
           width='20'
           height='20'
           viewBox='0 0 20 20'
@@ -25,7 +25,7 @@ export function AvatarOnlineClip({ size, clipId }: ClipProps) {
     case 'sm': {
       return (
         <svg
-          className='absolute bottom-0 right-0'
+          className='absolute right-0 bottom-0'
           width='24'
           height='24'
           viewBox='0 0 24 24'
@@ -45,7 +45,7 @@ export function AvatarOnlineClip({ size, clipId }: ClipProps) {
     case 'base': {
       return (
         <svg
-          className='absolute bottom-0 right-0'
+          className='absolute right-0 bottom-0'
           width='32'
           height='32'
           viewBox='0 0 32 32'
@@ -65,7 +65,7 @@ export function AvatarOnlineClip({ size, clipId }: ClipProps) {
     case 'lg': {
       return (
         <svg
-          className='absolute bottom-0 right-0'
+          className='absolute right-0 bottom-0'
           width='40'
           height='40'
           viewBox='0 0 40 40'
@@ -85,7 +85,7 @@ export function AvatarOnlineClip({ size, clipId }: ClipProps) {
     case 'xl': {
       return (
         <svg
-          className='absolute bottom-0 right-0'
+          className='absolute right-0 bottom-0'
           width='64'
           height='64'
           viewBox='0 0 64 64'
@@ -105,7 +105,7 @@ export function AvatarOnlineClip({ size, clipId }: ClipProps) {
     case 'xxl': {
       return (
         <svg
-          className='absolute bottom-0 right-0'
+          className='absolute right-0 bottom-0'
           width='112'
           height='112'
           viewBox='0 0 112 112'

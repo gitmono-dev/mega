@@ -39,7 +39,7 @@ export function Badge({
     <ConditionalWrap condition={!!tooltip} wrap={(children) => <Tooltip label={tooltip}>{children}</Tooltip>}>
       <span
         className={cn(
-          'min-h-4.5 flex flex-none items-center justify-center rounded px-1.5 pb-px pt-0.5 uppercase',
+          'flex min-h-4.5 flex-none items-center justify-center rounded px-1.5 pt-0.5 pb-px uppercase',
           BG_STYLE[color],
           TEXT_STYLE[color],
           icon && 'gap-0.5 pl-1',

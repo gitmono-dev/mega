@@ -26,7 +26,7 @@ export const DeleteGroupDialog = ({ groupId, onClose }: DeleteGroupDialogProps) 
   if (groupId === null) return null
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'>
+    <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black'>
       <div className='bg-primary border-primary w-full max-w-md rounded-lg border p-6 shadow-lg'>
         <h2 className='text-primary mb-4 text-xl font-bold'>Delete Group</h2>
 

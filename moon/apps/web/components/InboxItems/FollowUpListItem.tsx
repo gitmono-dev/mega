@@ -3,7 +3,7 @@ import { format } from 'date-fns'
 import Image from 'next/image'
 
 import { FollowUp } from '@gitmono/types'
-import { Avatar, Button, DotsHorizontal, UIText, VideoCameraIcon } from '@gitmono/ui'
+import { Avatar, Button, DotsHorizontal, UIText } from '@gitmono/ui'
 import { cn } from '@gitmono/ui/src/utils'
 
 import { NotificationOverflowMenu } from '@/components/InboxItems/NotificationOverflowMenu'
@@ -68,7 +68,7 @@ export function FollowUpListItem({ followUp }: { followUp: FollowUp }) {
           )}
         </div>
         <div className='my-1 flex flex-col gap-y-1'>
-          <div className={cn('flex border-l-2 pl-2 pr-3 leading-tight')}>
+          <div className={cn('flex border-l-2 pr-3 pl-2 leading-tight')}>
             <UIText element='span' secondary className='break-anywhere line-clamp-1'>
               {followUp.subject.body_preview}
             </UIText>
@@ -96,10 +96,6 @@ function FollowUpListItemLeadingAccessory({ followUp }: { followUp: FollowUp }) 
         />
       </div>
     )
-  }
-
-  if (followUp.subject.type === 'Call') {
-    return <VideoCameraIcon size={24} />
   }
 
   return null

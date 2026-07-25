@@ -241,7 +241,7 @@ function InnerThreadView({ threadId }: { threadId: string }) {
               })}
             >
               <div className='flex w-full flex-1 flex-col lg:mx-auto lg:max-w-3xl'>
-                <div className='left-0 right-0 -mb-px h-px flex-none' ref={startRef} />
+                <div className='right-0 left-0 -mb-px h-px flex-none' ref={startRef} />
 
                 {hasMessagesNextPage && (
                   <div
@@ -262,7 +262,7 @@ function InnerThreadView({ threadId }: { threadId: string }) {
                   onNewMessage={onNewMessage}
                 />
 
-                <div className='left-0 right-0 -mt-px h-px flex-none' ref={endRef} />
+                <div className='right-0 left-0 -mt-px h-px flex-none' ref={endRef} />
               </div>
             </div>
 

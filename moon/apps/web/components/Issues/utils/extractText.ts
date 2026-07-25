@@ -10,7 +10,7 @@ export function extractTextArray(node: React.ReactNode): string[] {
     return node.flatMap(extractTextArray)
   }
 
-  if (React.isValidElement(node)) {
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
     // 递归提取 React 元素的 children
     return extractTextArray(node.props.children)
   }

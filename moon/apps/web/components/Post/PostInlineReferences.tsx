@@ -46,7 +46,7 @@ export function PostInlineReferences({ timelineEvents }: PostInlineReferencesPro
             </span>
           </AccordionPrimitive.Trigger>
           {filteredTimelineEvents.length > 0 && (
-            <span className='h-4.5 text-tertiary ml-2 mt-px flex items-center justify-center rounded bg-black/[0.04] px-1.5 font-mono text-[10px] font-semibold dark:bg-white/10'>
+            <span className='text-tertiary mt-px ml-2 flex h-4.5 items-center justify-center rounded bg-black/[0.04] px-1.5 font-mono text-[10px] font-semibold dark:bg-white/10'>
               {filteredTimelineEvents.length}
             </span>
           )}

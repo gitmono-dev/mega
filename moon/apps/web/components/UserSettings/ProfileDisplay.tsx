@@ -127,7 +127,7 @@ export function ProfileDisplay() {
           )}
         </div>
 
-        <div className='flex flex-col items-start px-4 pb-6 pt-2 sm:flex-row sm:space-x-6 sm:pl-6'>
+        <div className='flex flex-col items-start px-4 pt-2 pb-6 sm:flex-row sm:space-x-6 sm:pl-6'>
           <AvatarUploader
             onFileUploadError={onProfilePhotoUploadError}
             onFileUploadSuccess={onProfilePhotoUploadSuccess}

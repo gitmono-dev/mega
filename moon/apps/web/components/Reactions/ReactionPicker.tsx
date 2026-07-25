@@ -135,7 +135,7 @@ export function ReactionPicker({
                   CONTAINER_STYLES.shadows,
                   'bg-elevated relative h-[424px] overflow-hidden border bg-clip-border dark:shadow-[0_0_0_1px_black]'
                 ],
-                !isPopover && 'bg-elevated fixed inset-x-0 bottom-0 rounded-t-xl focus:outline-none focus:ring-0'
+                !isPopover && 'bg-elevated fixed inset-x-0 bottom-0 rounded-t-xl focus:ring-0 focus:outline-hidden'
               )}
             >
               {!isPopover ? (

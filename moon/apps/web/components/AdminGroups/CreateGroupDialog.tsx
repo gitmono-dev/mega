@@ -61,7 +61,7 @@ export const CreateGroupDialog = ({ isOpen, onClose }: CreateGroupDialogProps) =
   if (!isOpen) return null
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'>
+    <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black'>
       <div className='bg-primary border-primary w-full max-w-md rounded-lg border p-6 shadow-lg'>
         <h2 className='text-primary mb-4 text-xl font-bold'>Create New Group</h2>
 
@@ -80,7 +80,7 @@ export const CreateGroupDialog = ({ isOpen, onClose }: CreateGroupDialogProps) =
             type='text'
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
-            className='border-primary bg-secondary text-primary w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            className='border-primary bg-secondary text-primary w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-hidden'
             placeholder='Enter group name'
             autoFocus
           />
@@ -91,7 +91,7 @@ export const CreateGroupDialog = ({ isOpen, onClose }: CreateGroupDialogProps) =
           <textarea
             value={groupDescription}
             onChange={(e) => setGroupDescription(e.target.value)}
-            className='border-primary bg-secondary text-primary w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            className='border-primary bg-secondary text-primary w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-hidden'
             placeholder='Enter group description (optional)'
             rows={3}
           />

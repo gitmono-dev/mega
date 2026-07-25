@@ -53,7 +53,7 @@ function DesktopDragAndExpand() {
   return (
     <div
       onDoubleClick={() => isDesktopApp && nativeWindow.maximize()}
-      className='drag pointer-events-none fixed left-0 right-0 top-0 h-[--navbar-height] w-full'
+      className='drag pointer-events-none fixed top-0 right-0 left-0 h-[var(--navbar-height)] w-full'
     />
   )
 }

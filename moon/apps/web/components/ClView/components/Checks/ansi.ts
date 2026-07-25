@@ -179,7 +179,6 @@ function applyExtended(state: StyleState, codes: number[], start: number): numbe
 
 /** Strip non-SGR escape sequences (cursor moves, erase, etc.). */
 function stripNonSgr(input: string): string {
-  // eslint-disable-next-line no-control-regex -- ESC (\x1b) is intentional for ANSI sequences
   return input.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, (seq) => {
     const letter = seq.slice(-1)
 

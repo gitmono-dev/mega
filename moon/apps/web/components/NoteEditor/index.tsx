@@ -198,7 +198,7 @@ const NoteTitle = forwardRef<HTMLTextAreaElement, NoteTitleProps>(function NoteT
   return (
     <TitleTextField
       ref={ref}
-      className='mx-auto w-full max-w-[44rem] text-[clamp(2rem,_4vw,_2.5rem)] font-bold leading-[1.2]'
+      className='mx-auto w-full max-w-[44rem] text-[clamp(2rem,_4vw,_2.5rem)] leading-[1.2] font-bold'
       placeholder={note ? 'Untitled' : undefined}
       value={formTitle}
       onChange={(value) => {

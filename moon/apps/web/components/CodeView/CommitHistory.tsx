@@ -64,7 +64,7 @@ export default function CommitHistory({ flag, path, refs }: CommitHistoryProps) 
             </Flex>
           )}
 
-          <span className='text-quaternary ml-auto mr-3 text-xs'>
+          <span className='text-quaternary mr-3 ml-auto text-xs'>
             {shortHash} · {formattedDate}
           </span>
 

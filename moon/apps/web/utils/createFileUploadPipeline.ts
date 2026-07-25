@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/nextjs'
 import { v4 as uuid } from 'uuid'
 
 import { IMGIX_DOMAIN } from '@gitmono/config/index'
@@ -264,7 +263,7 @@ export async function createFileUploadPipeline({
       })
       .catch((err) => {
         onUpdate(optimisticId, { client_error: err })
-        Sentry.captureException(err)
+        console.error(err)
       })
   })
 

@@ -56,7 +56,7 @@ export const Link = TiptapLink.extend<LinkOptions>({
       openOnClick: false,
       truncated: false,
       hidden: []
-    }
+    } as LinkOptions
   },
   addAttributes() {
     const parent = this.parent?.()

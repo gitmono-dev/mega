@@ -8,7 +8,6 @@ import { LoadingSpinner } from '@gitmono/ui'
 
 import { useGetMergeBox } from '@/components/ClBox/hooks/useGetMergeBox'
 import { useGetClReviewers } from '@/hooks/CL/useGetClReviewers'
-// import { usePostClMerge } from '@/hooks/CL/usePostClMerge'
 import { usePostClReviewerApprove } from '@/hooks/CL/usePostClReviewerApprove'
 import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
 import { legacyApiClient } from '@/utils/queryClient'

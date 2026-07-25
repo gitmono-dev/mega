@@ -15,7 +15,6 @@
     "@radix-ui/react-dropdown-menu": "catalog:",
     "@radix-ui/react-hover-card": "catalog:",
     "@radix-ui/react-popover": "catalog:",
-    "@radix-ui/react-popper": "catalog:",
     "@radix-ui/react-radio-group": "catalog:",
     "@radix-ui/react-slot": "catalog:",
     "@radix-ui/react-switch": "catalog:",
@@ -42,13 +41,11 @@
     "@gitmono/eslint-config": "workspace:*",
     "@gitmono/tsconfig": "workspace:*",
     "@storybook/react": "catalog:",
-    "@tailwindcss/container-queries": "catalog:",
     "@tailwindcss/forms": "catalog:",
+    "@tailwindcss/postcss": "catalog:",
     "@tailwindcss/typography": "catalog:",
     "@types/react": "catalog:",
-    "@types/react-timeago": "catalog:",
     "postcss": "catalog:",
-    "postcss-import": "catalog:",
     "tailwind-scrollbar-hide": "catalog:",
     "tailwindcss": "catalog:",
     "tailwindcss-animate": "catalog:",
@@ -56,12 +53,11 @@
     "typescript": "catalog:"
   },
   "peerDependencies": {
-    "@sentry/nextjs": "^8.17.0",
     "jotai": "^2.0.3",
     "jotai-scope": "^0.4.1",
-    "next": "^14.2.5",
-    "next-themes": "^0.2.1",
-    "react": "^18.2.0",
+    "next": "^16.2.11",
+    "next-themes": "^0.4.6",
+    "react": "^19.2.0",
     "react-hot-toast": "^2.4.0"
   }
 }

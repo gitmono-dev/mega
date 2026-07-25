@@ -26,13 +26,16 @@ interface WebhookConfigDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-interface FormSchema {
-  url: string
-  eventTypes: string[]
-}
-
 // Sync this with SUPPORTED_EVENTS in the `Webhook` model file
 const SUPPORTED_EVENTS = ['post.created', 'comment.created', 'app.mentioned', 'message.created', 'message.dm']
+
+const webhookConfigSchema = z.object({
+  url: z
+    .string()
+    .url({ message: 'Invalid URL' })
+    .refine((url) => url.startsWith('https://'), { message: 'Webhook URL must use HTTPS' }),
+  eventTypes: z.array(z.string()).min(1, { message: 'Please select at least one event type' })
+})
 
 function WebhookConfigDialog({ open, onOpenChange, oauthApplication, webhook }: WebhookConfigDialogProps) {
   const { mutate: updateOauthApplication, isPending: isUpdating } = useUpdateOauthApplication({
@@ -44,20 +47,12 @@ function WebhookConfigDialog({ open, onOpenChange, oauthApplication, webhook }: 
     setValue,
     watch,
     formState: { errors }
-  } = useForm<FormSchema>({
+  } = useForm({
     defaultValues: {
       url: webhook?.url ?? '',
       eventTypes: webhook?.event_types ?? []
     },
-    resolver: zodResolver(
-      z.object({
-        url: z
-          .string()
-          .url({ message: 'Invalid URL' })
-          .refine((url) => url.startsWith('https://'), { message: 'Webhook URL must use HTTPS' }),
-        eventTypes: z.array(z.string()).min(1, { message: 'Please select at least one event type' })
-      })
-    )
+    resolver: zodResolver(webhookConfigSchema)
   })
 
   const onSubmit = handleSubmit(async (data) => {

@@ -18,15 +18,12 @@ export function useIsSplitViewAvailable() {
     displayPreference === 'comfortable' &&
     (router.pathname === '/[org]/projects/[projectId]' || router.pathname === '/[org]/posts')
   const isProject =
-    router.pathname === '/[org]/projects/[projectId]' ||
-    router.pathname === '/[org]/projects/[projectId]/docs' ||
-    router.pathname === '/[org]/projects/[projectId]/calls'
-  const isCalls = router.pathname === '/[org]/calls'
+    router.pathname === '/[org]/projects/[projectId]' || router.pathname === '/[org]/projects/[projectId]/docs'
   const isNotes = router.pathname === '/[org]/notes'
   const isPosts = router.pathname === '/[org]/posts'
   const isValidRoute = (() => {
     if (isComfortable || isChatProject) return false
-    return isProject || isCalls || isNotes || isPosts
+    return isProject || isNotes || isPosts
   })()
 
   return { isSplitViewAvailable: isLg && isValidRoute }

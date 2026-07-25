@@ -28,13 +28,13 @@ export function NewPostButton({ className }: { className?: string }) {
       <div
         className={cn(
           'text-tertiary relative -mx-2 flex items-center gap-3 rounded-lg',
-          'hover:bg-elevated dark:bg-secondary dark:hover:bg-tertiary border-0 bg-[#fcfcfc] px-4 py-3 shadow-sm ring-[0.5px] ring-black/[0.08] transition-all hover:shadow dark:shadow-[inset_0px_0px_0px_0.5px_rgb(255_255_255_/_0.06),_0px_1px_2px_rgb(0_0_0_/_0.2),_0px_2px_4px_rgb(0_0_0_/_0.12),_0px_0px_0px_0.5px_rgb(0_0_0_/_0.12)]',
+          'hover:bg-elevated dark:bg-secondary dark:hover:bg-tertiary border-0 bg-[#fcfcfc] px-4 py-3 shadow-xs ring-[0.5px] ring-black/[0.08] transition-all hover:shadow dark:shadow-[inset_0px_0px_0px_0.5px_rgb(255_255_255_/_0.06),_0px_1px_2px_rgb(0_0_0_/_0.2),_0px_2px_4px_rgb(0_0_0_/_0.12),_0px_0px_0px_0.5px_rgb(0_0_0_/_0.12)]',
           className
         )}
       >
         <div className='relative'>
           <Avatar size='lg' clip='notificationReason' urls={currentUser.avatar_urls} />
-          <span className='h-5.5 w-5.5 absolute -bottom-1 -right-1 flex items-center justify-center rounded-full bg-black text-white dark:bg-white/10'>
+          <span className='absolute -right-1 -bottom-1 flex h-5.5 w-5.5 items-center justify-center rounded-full bg-black text-white dark:bg-white/10'>
             <PlusIcon size={18} strokeWidth='2.5' />
           </span>
         </div>
@@ -66,7 +66,7 @@ function OnboardingComposerPrompts() {
 
   return (
     <div className='bg-tertiary -mx-2 -mt-2.5 flex flex-col items-start justify-between rounded-b-2xl dark:bg-neutral-900/50'>
-      <div className='pt-5.5 flex w-full items-center gap-2 p-4 pb-2.5 pr-2.5'>
+      <div className='flex w-full items-center gap-2 p-4 pt-5.5 pr-2.5 pb-2.5'>
         <UIText className='flex-1' weight='font-medium' size='text-xs' tertiary>
           Suggestions
         </UIText>

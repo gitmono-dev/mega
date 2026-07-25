@@ -2,9 +2,7 @@ import { useCallback } from 'react'
 
 import { useCallbackRef } from '@gitmono/ui/hooks'
 
-import { useCreateCallFollowUp } from '@/hooks/useCreateCallFollowUp'
 import { useCreateNoteFollowUp } from '@/hooks/useCreateNoteFollowUp'
-import { useDeleteCallFollowUp } from '@/hooks/useDeleteCallFollowUp'
 import { useDeleteNoteFollowUp } from '@/hooks/useDeleteNoteFollowUp'
 import { useUpdateFollowUp } from '@/hooks/useUpdateFollowUp'
 import { normyTypeFromApiTypeName } from '@/utils/optimisticFollowUps'
@@ -34,9 +32,6 @@ export function useFollowUpActions({ subject_id, subject_type, onCreate }: Props
   const { mutate: createCommentFollowUp } = useCreateCommentFollowUp()
   const { mutate: deleteCommentFollowUp } = useDeleteCommentFollowUp()
 
-  const { mutate: createCallFollowUp } = useCreateCallFollowUp()
-  const { mutate: deleteCallFollowUp } = useDeleteCallFollowUp()
-
   const { mutate: updateFollowUpMutation } = useUpdateFollowUp()
 
   const createFollowUp = useCallback(
@@ -48,11 +43,9 @@ export function useFollowUpActions({ subject_id, subject_type, onCreate }: Props
           return createCommentFollowUp({ commentId: subject_id, show_at }, { onSuccess: onCreateRef })
         case 'note':
           return createNoteFollowUp({ noteId: subject_id, show_at }, { onSuccess: onCreateRef })
-        case 'call':
-          return createCallFollowUp({ callId: subject_id, show_at }, { onSuccess: onCreateRef })
       }
     },
-    [type, createPostFollowUp, subject_id, onCreateRef, createCommentFollowUp, createNoteFollowUp, createCallFollowUp]
+    [type, createPostFollowUp, subject_id, onCreateRef, createCommentFollowUp, createNoteFollowUp]
   )
 
   const deleteFollowUp = useCallback(
@@ -64,11 +57,9 @@ export function useFollowUpActions({ subject_id, subject_type, onCreate }: Props
           return deleteCommentFollowUp({ commentId: subject_id, id })
         case 'note':
           return deleteNoteFollowUp({ noteId: subject_id, id })
-        case 'call':
-          return deleteCallFollowUp({ callId: subject_id, id })
       }
     },
-    [type, deletePostFollowUp, subject_id, deleteCommentFollowUp, deleteNoteFollowUp, deleteCallFollowUp]
+    [type, deletePostFollowUp, subject_id, deleteCommentFollowUp, deleteNoteFollowUp]
   )
 
   const updateFollowUp = useCallback(

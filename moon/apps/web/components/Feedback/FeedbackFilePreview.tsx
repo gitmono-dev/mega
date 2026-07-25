@@ -20,7 +20,7 @@ export function FeedbackFilePreview(props: Props) {
   return (
     <>
       {reorderable && (
-        <div className='text-tertiary flex items-center justify-center rounded-md p-1 hover:bg-black hover:bg-opacity-5 hover:text-opacity-70'>
+        <div className='text-tertiary hover:bg-opacity-5 hover:text-opacity-70 flex items-center justify-center rounded-md p-1 hover:bg-black'>
           <ReorderDotsIcon className='translate-x-0.5' />
         </div>
       )}
@@ -28,10 +28,10 @@ export function FeedbackFilePreview(props: Props) {
       <AttachmentPreview file={file} />
 
       <p
-        className={cn('flex-1 break-all font-mono text-sm', {
+        className={cn('flex-1 font-mono text-sm break-all', {
           'text-opacity-50': !file.key,
           'text-primary': file.key,
-          'text-red-500 text-opacity-100': file.error
+          'text-opacity-100 text-red-500': file.error
         })}
       >
         {file.raw.name}

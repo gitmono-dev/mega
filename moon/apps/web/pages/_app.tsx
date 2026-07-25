@@ -23,7 +23,7 @@ const inter = Inter({
   variable: '--font-inter'
 })
 
-export default function App<T>({ Component, pageProps }: AppPropsWithLayout<T>): JSX.Element {
+export default function App<T>({ Component, pageProps }: AppPropsWithLayout<T>): React.JSX.Element {
   const getProviders = Component.getProviders ?? ((page) => page)
   const [_, setLsLastChecked] = useStoredState<number | null>(LAST_CLIENT_JS_BUILD_ID_LS_KEY, null)
 

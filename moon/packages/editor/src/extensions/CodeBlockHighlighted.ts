@@ -12,7 +12,7 @@ export const CodeBlockHighlighted = CodeBlock.extend<CodeBlockHighlightedOptions
     return {
       ...this.parent?.(),
       highlight: false
-    }
+    } as CodeBlockHighlightedOptions
   },
 
   addAttributes() {

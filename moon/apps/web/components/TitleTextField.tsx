@@ -62,7 +62,7 @@ export const TitleTextField = forwardRef<HTMLTextAreaElement, Props>(function Ti
     <TextareaAutosize
       ref={ref}
       className={cn(
-        'scrollbar-hide w-full shrink-0 resize-none rounded-none border-0 bg-transparent p-0 outline-none focus:border-0 focus:outline-none focus:ring-0 dark:bg-transparent',
+        'scrollbar-hide w-full shrink-0 resize-none rounded-none border-0 bg-transparent p-0 outline-hidden focus:border-0 focus:ring-0 focus:outline-hidden dark:bg-transparent',
         className
       )}
       placeholder={placeholder}

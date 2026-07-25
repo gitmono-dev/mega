@@ -1,4 +1,4 @@
-import TipTapListKeyMap from '@tiptap/extension-list-keymap'
+import { ListKeymap as TipTapListKeyMap } from '@tiptap/extension-list'
 
 import { handleBackspace } from '../utils/handleBackspace'
 

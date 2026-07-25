@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/nextjs'
 import { useMutation } from '@tanstack/react-query'
 
 import { PresignedPostFields } from '@gitmono/types'
@@ -81,12 +80,12 @@ export async function handleFile({ file, type, resource, orgSlug }: UploadProps)
     method: 'POST',
     body: formData
   }).catch((err) => {
-    Sentry.captureException(err)
+    console.error(err)
   })
 
   if (result?.ok) return fields.key
 
-  Sentry.captureException('Failed to upload file', { data: result })
+  console.error('Failed to upload file', result)
 
   return null
 }

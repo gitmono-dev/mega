@@ -34,7 +34,7 @@ export function RefreshAppBanner() {
             onClick={() => window.location.reload()}
             className='flex w-full flex-1 items-center justify-center py-2'
           >
-            <div className='bg-elevated text-primary flex items-center gap-1.5 rounded-full py-0.5 pl-2 pr-3 shadow-sm ring-1 ring-black/5 transition-all hover:shadow-md dark:bg-gray-800'>
+            <div className='bg-elevated text-primary flex items-center gap-1.5 rounded-full py-0.5 pr-3 pl-2 shadow-xs ring-1 ring-black/5 transition-all hover:shadow-md dark:bg-gray-800'>
               <RefreshIcon className='text-brand-primary' />
               <UIText size='text-xs' weight='font-semibold' inherit>
                 App update available

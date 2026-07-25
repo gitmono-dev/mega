@@ -50,7 +50,7 @@ export function NotePreviewCard({ className, noteId, interactive = true }: Props
   return (
     <div
       className={cn(
-        'bg-elevated hover:bg-secondary hover:border-primary group/note relative flex w-full max-w-lg flex-1 overflow-clip rounded-lg border focus:outline-none focus:ring-0',
+        'bg-elevated hover:bg-secondary hover:border-primary group/note relative flex w-full max-w-lg flex-1 overflow-clip rounded-lg border focus:ring-0 focus:outline-hidden',
         className
       )}
     >
@@ -79,7 +79,7 @@ export function NotePreviewCard({ className, noteId, interactive = true }: Props
           </div>
         </div>
 
-        <div className='pointer-events-none col-span-1 block h-[128px] w-full min-w-[128px] flex-none pb-0 pr-4 pt-3'>
+        <div className='pointer-events-none col-span-1 block h-[128px] w-full min-w-[128px] flex-none pt-3 pr-4 pb-0'>
           <div className='rounded-b-0 bg-elevated dark:bg-quaternary relative flex aspect-[3/4] h-full min-h-[128px] w-full flex-1 translate-y-1 flex-col rounded-t-lg border border-b-0 p-3 shadow-md transition-all duration-200 group-hover/note:-translate-y-0 group-hover/note:shadow-xl'>
             {showPlaceholder && (
               <div className='absolute inset-3 flex flex-col gap-2'>

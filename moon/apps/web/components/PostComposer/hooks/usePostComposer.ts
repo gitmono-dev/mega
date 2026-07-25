@@ -2,8 +2,7 @@ import { useCallback } from 'react'
 import { useAtom } from 'jotai'
 import { toast } from 'react-hot-toast'
 
-import { Attachment, Call, Comment, Message, Note, Post } from '@gitmono/types/generated'
-import { shortTimestamp } from '@gitmono/ui/RelativeTime'
+import { Attachment, Comment, Message, Note, Post } from '@gitmono/types/generated'
 
 import { getPostSchemaDefaultValues, postDefaultValues } from '@/components/Post/schema'
 import { useDefaultComposerValues } from '@/components/PostComposer/hooks/useDefaultComposerValues'
@@ -40,10 +39,6 @@ type ShowPostComposerArgs = {
   | {
       type: PostComposerType.DraftFromNote
       note: Note
-    }
-  | {
-      type: PostComposerType.DraftFromCall
-      call: Call
     }
   | {
       type: PostComposerType.DraftFromMessage
@@ -122,22 +117,6 @@ export function usePostComposer() {
               title: note.title,
               note_id: note.id,
               unfurled_link: note.url
-            }
-          })
-          break
-        }
-
-        case PostComposerType.DraftFromCall: {
-          const { type, call } = props
-
-          setPostComposerState({
-            type,
-            successBehavior,
-            defaultValues: {
-              ...postDefaultValues,
-              project_id: call.project?.id ?? project_id,
-              title: call.title ?? `Call summary · ${shortTimestamp(call.created_at)}`,
-              unfurled_link: call.url
             }
           })
           break

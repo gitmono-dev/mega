@@ -1,7 +1,4 @@
-import {
-  Dropcursor as TipTapDropcursor,
-  DropcursorOptions as TipTapDropcursorOptions
-} from '@tiptap/extension-dropcursor'
+import { Dropcursor as TipTapDropcursor, type DropcursorOptions as TipTapDropcursorOptions } from '@tiptap/extensions'
 
 export type DropcursorOptions = TipTapDropcursorOptions
 

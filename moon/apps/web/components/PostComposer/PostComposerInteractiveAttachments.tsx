@@ -13,7 +13,7 @@ const ADD_ATTACHMENT_SHORTCUT = 'mod+shift+u'
 
 interface PostComposerInteractiveAttachmentsProps {
   dropzone: DropzoneState
-  editorRef: React.RefObject<MarkdownEditorRef>
+  editorRef: React.RefObject<MarkdownEditorRef | null>
 }
 
 export function PostComposerInteractiveAttachments({ dropzone, editorRef }: PostComposerInteractiveAttachmentsProps) {

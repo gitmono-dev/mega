@@ -50,7 +50,7 @@ export function InlineRelativeTimeRenderer(props: NodeViewWrapperProps) {
           '-focus-visible:outline-offset-1 outline outline-2 outline-blue-500 focus-visible:outline-2 focus-visible:outline-blue-500':
             props.editor.options.editable && props.selected && props.editor.isFocused
         },
-        '[.drag-node_&]:outline-none'
+        '[.drag-node_&]:outline-hidden'
       )}
       draggable={false}
       data-drag-handle={false}

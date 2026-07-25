@@ -14,14 +14,12 @@ import { HomeSpaces } from '@/components/MobileHome/HomeSpaces'
 import { UnreadHomeSpaces } from '@/components/MobileHome/UnreadHomeSpaces'
 import { refetchingHomeAtom } from '@/components/NavigationBar'
 import { RefetchingPageIndicator } from '@/components/NavigationBar/RefetchingPageIndicator'
-// import { UserFeedOnboarding } from '@/components/Onboarding/UserFeedOnboarding'
 import AuthAppProviders from '@/components/Providers/AuthAppProviders'
 import { ScrollableContainer } from '@/components/ScrollableContainer'
-import { CallBreadcrumbIcon, NoteBreadcrumbIcon, PostBreadcrumbIcon } from '@/components/Titlebar/BreadcrumbPageIcons'
+import { NoteBreadcrumbIcon, PostBreadcrumbIcon } from '@/components/Titlebar/BreadcrumbPageIcons'
 import { useScope } from '@/contexts/scope'
 import { useGetCurrentOrganization } from '@/hooks/useGetCurrentOrganization'
 import { useGetPersonalDraftPosts } from '@/hooks/useGetPersonalDraftPosts'
-import { useIsCommunity } from '@/hooks/useIsCommunity'
 import { flattenInfiniteData } from '@/utils/flattenInfiniteData'
 import { PageWithLayout } from '@/utils/types'
 
@@ -29,7 +27,6 @@ const MyWorkHomePage: PageWithLayout<any> = () => {
   const router = useRouter()
   const { scope } = useScope()
   const { data: currentOrganization } = useGetCurrentOrganization()
-  const isCommunity = useIsCommunity()
   const isRefetching = useAtomValue(refetchingHomeAtom)
   const isLg = useBreakpoint('lg')
 
@@ -59,7 +56,6 @@ const MyWorkHomePage: PageWithLayout<any> = () => {
 
       <ScrollableContainer id='/[org]/home' className='pb-20'>
         <div className='flex flex-col lg:hidden'>
-          {/*<UserFeedOnboarding />*/}
           <EnablePush containerClassName='p-4' />
         </div>
         <RefetchingPageIndicator isRefetching={isRefetching} />
@@ -110,18 +106,6 @@ const MyWorkHomePage: PageWithLayout<any> = () => {
               Docs
             </UIText>
           </Link>
-
-          {!isCommunity && (
-            <Link
-              href={`/${scope}/calls`}
-              className='bg-elevated flex min-w-[100px] flex-1 flex-col gap-2 rounded-[10px] border p-3 pb-2.5'
-            >
-              <CallBreadcrumbIcon />
-              <UIText size='text-[15px]' weight='font-medium'>
-                Calls
-              </UIText>
-            </Link>
-          )}
         </div>
 
         <UnreadHomeSpaces />

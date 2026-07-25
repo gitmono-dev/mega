@@ -84,7 +84,7 @@ const TimelineItems = React.memo<{
   detail: CommonDetailData
   id: string
   type: string
-  editorRef: React.RefObject<SimpleNoteContentRef>
+  editorRef: React.RefObject<SimpleNoteContentRef | null>
   reviewers?: ReviewerInfo[]
 }>(({ detail, id, type, editorRef, reviewers = [] }) => {
   const convItems: ConvItem[] = useMemo(

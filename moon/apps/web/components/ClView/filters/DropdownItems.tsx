@@ -21,7 +21,7 @@ export const DropdownItemwithAvatar = ({
     >
       <MemberAvatar size='sm' member={member} />
       <span className='text-primary text-sm font-semibold'>{member.user.display_name}</span>
-      <span className='text-tertiary ml-1 text-xs'>{member.user.username}</span>
+      <span className='text-tertiary ml-1 text-xs'>{member.user.github_login?.trim() || member.user.username}</span>
     </div>
   )
 }

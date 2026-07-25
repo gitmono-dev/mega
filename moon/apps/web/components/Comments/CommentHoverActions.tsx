@@ -82,7 +82,7 @@ function CommentStatusActions({ subjectId, subjectType, optimisticId, isInCanvas
       )}
     >
       {state.status === 'pending' && (
-        <div className='w-7.5 h-7.5 flex items-center justify-center'>
+        <div className='flex h-7.5 w-7.5 items-center justify-center'>
           <LazyLoadingSpinner delay={1000} />
         </div>
       )}

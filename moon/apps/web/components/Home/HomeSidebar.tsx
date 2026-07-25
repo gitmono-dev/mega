@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { m } from 'framer-motion'
 import { useAtomValue } from 'jotai'
@@ -76,7 +75,7 @@ export function HomeSidebar() {
       transition={{ duration: 0.15, ease: 'easeInOut' }}
       style={{ minWidth: 0 }}
     >
-      <div className='bg-secondary dark:bg-primary relative hidden h-screen w-[--sidebar-width] flex-col overflow-hidden border-l lg:flex'>
+      <div className='bg-secondary dark:bg-primary relative hidden h-screen w-[var(--sidebar-width)] flex-col overflow-hidden border-l lg:flex'>
         <SearchInput query={query} setQuery={setQuery} />
         <MembersLists query={query} />
       </div>
@@ -228,7 +227,7 @@ function OfflineMembers({ members, query }: { members: OrganizationMember[]; que
           <button
             onClick={() => setInviteDialogOpen(true)}
             className={cn(
-              'hover:bg-quaternary text-tertiary hover:text-primary group flex items-center justify-center rounded-md px-1.5 py-0.5 text-xs opacity-0 focus:outline-0 focus:ring-0 group-hover:opacity-100 group-has-[[data-state="open"]]:opacity-100',
+              'hover:bg-quaternary text-tertiary hover:text-primary group flex items-center justify-center rounded-md px-1.5 py-0.5 text-xs opacity-0 group-hover:opacity-100 group-has-[[data-state="open"]]:opacity-100 focus:ring-0 focus:outline-0',
               {
                 'opacity-100': inviteDialogOpen
               }
@@ -275,7 +274,7 @@ function Guests({ members, query }: { members: OrganizationMember[]; query: stri
           <button
             onClick={() => setInviteDialogOpen(true)}
             className={cn(
-              'hover:bg-quaternary text-tertiary hover:text-primary group flex items-center justify-center rounded-md px-1.5 py-0.5 text-xs opacity-0 focus:outline-0 focus:ring-0 group-hover:opacity-100 group-has-[[data-state="open"]]:opacity-100',
+              'hover:bg-quaternary text-tertiary hover:text-primary group flex items-center justify-center rounded-md px-1.5 py-0.5 text-xs opacity-0 group-hover:opacity-100 group-has-[[data-state="open"]]:opacity-100 focus:ring-0 focus:outline-0',
               {
                 'opacity-100': inviteDialogOpen
               }
@@ -304,7 +303,7 @@ function SearchNoResults() {
   return (
     <div className='flex flex-1 flex-col items-center justify-center px-3'>
       <SearchIcon className='opacity-20' size={48} />
-      <UIText quaternary className='mb-5 mt-1 text-balance text-center'>
+      <UIText quaternary className='mt-1 mb-5 text-center text-balance'>
         Nobody found
       </UIText>
 
@@ -330,7 +329,7 @@ function SearchNoResults() {
 function SearchInput({ query, setQuery }: { query: string; setQuery: (query: string) => void }) {
   return (
     <div className='text-quaternary relative'>
-      <SearchIcon className='absolute left-3 top-1/2 -translate-y-1/2' />
+      <SearchIcon className='absolute top-1/2 left-3 -translate-y-1/2' />
       <TextField
         additionalClasses='bg-transparent pl-10 h-[--navbar-height] focus:ring-0 pr-10 dark:bg-transparent rounded-none border-0'
         placeholder='Search people...'
@@ -339,7 +338,7 @@ function SearchInput({ query, setQuery }: { query: string; setQuery: (query: str
       />
       {query && (
         <button
-          className='text-quaternary hover:text-secondary absolute right-3 top-1/2 -translate-y-1/2'
+          className='text-quaternary hover:text-secondary absolute top-1/2 right-3 -translate-y-1/2'
           onClick={() => setQuery('')}
         >
           <CircleFilledCloseIcon />
@@ -382,7 +381,7 @@ export function CurrentUserStatus() {
         <button
           onClick={() => setStatusDialogOpen(true)}
           className={cn(
-            'hover:bg-tertiary group relative flex w-full items-center gap-3 rounded-md py-2 pl-2 pr-1.5 text-left',
+            'hover:bg-tertiary group relative flex w-full items-center gap-3 rounded-md py-2 pr-1.5 pl-2 text-left',
             'data-[state="open"]:bg-tertiary'
           )}
         >
@@ -441,7 +440,7 @@ function InnerMember({ member }: { member: OrganizationMember }) {
             }
           }}
           className={cn(
-            'hover:bg-tertiary group relative flex w-full items-center gap-3 rounded-md py-2 pl-2 pr-1.5 text-left',
+            'hover:bg-tertiary group relative flex w-full items-center gap-3 rounded-md py-2 pr-1.5 pl-2 text-left',
             'data-[state="open"]:bg-tertiary'
           )}
         >

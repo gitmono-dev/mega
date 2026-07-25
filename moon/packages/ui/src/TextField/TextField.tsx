@@ -187,7 +187,7 @@ export const TextField = forwardRef<HTMLInputElement, Props>(function TextField(
 
   const copyMarkup = clickToCopy ? (
     <Tooltip side='top' label='Copy'>
-      <span className='absolute right-px top-px'>
+      <span className='absolute top-px right-px'>
         <Button
           variant='plain'
           iconOnly={<ClipboardIcon />}
@@ -288,8 +288,8 @@ export const TextField = forwardRef<HTMLInputElement, Props>(function TextField(
         {maxLength && (
           <div
             className={cn('absolute', {
-              'bottom-2 right-2': multiline,
-              'right-2 top-1/2 -translate-y-1/2': !multiline
+              'right-2 bottom-2': multiline,
+              'top-1/2 right-2 -translate-y-1/2': !multiline
             })}
           >
             <LimitIndicator maxLength={maxLength} currentLength={currentLength} charThreshold={indicatorThreshold} />

@@ -3,14 +3,11 @@
   "extends": ["//"],
   "tasks": {
     "dev": {
-      "dependsOn": ["build"],
+      "dependsOn": ["^build", "build"],
       "passThroughEnv": ["PORT"]
     },
     "build": {
-      "env": ["SENTRY_AUTH_TOKEN", "SENTRY_ORG", "SENTRY_PROJECT", "TIPTAP_PRIVATE_REGISTRY_KEY", "NODE_ENV", "PORT"]
-    },
-    "sentry:sourcemaps": {
-      "env": ["SENTRY_AUTH_TOKEN", "SENTRY_ORG", "SENTRY_PROJECT"]
+      "env": ["TIPTAP_PRIVATE_REGISTRY_KEY", "NODE_ENV", "PORT"]
     }
   }
 }

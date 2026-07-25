@@ -97,7 +97,7 @@ export default function PathInput({ pathState, nameState }: PathInputProps) {
         placeholder='Name your file...'
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        className='border-primary bg-primary text-primary placeholder:text-tertiary focus:border-accent focus:ring-accent/20 min-w-[140px] rounded border px-2 py-1 outline-none transition-colors focus:ring-2'
+        className='border-primary bg-primary text-primary placeholder:text-tertiary focus:border-accent focus:ring-accent/20 min-w-[140px] rounded border px-2 py-1 outline-hidden transition-colors focus:ring-2'
         aria-label='file-path-input'
       />
     </div>

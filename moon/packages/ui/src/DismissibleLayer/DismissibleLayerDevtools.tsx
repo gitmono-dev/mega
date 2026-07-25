@@ -9,7 +9,7 @@ export function DismissibleLayerDevtools() {
   const layers = useAtomValue(layersAtom)
 
   return (
-    <div className='bg-secondary fixed bottom-4 right-4 z-[9999] p-3 font-mono shadow-xl'>
+    <div className='bg-secondary fixed right-4 bottom-4 z-[9999] p-3 font-mono shadow-xl'>
       <ul>
         {Array.from(layers.values()).map((layer) => (
           <li key={layer}>{layer}</li>

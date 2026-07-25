@@ -19,7 +19,7 @@ function CommentReplyPlaceholder({ commentId }: CommentReplyPlaceholderProps) {
   return draftReply ? (
     <>
       <span>Continue reply</span>
-      <span className='inline-block max-w-[180px] truncate break-all font-normal opacity-50'>
+      <span className='inline-block max-w-[180px] truncate font-normal break-all opacity-50'>
         {stripHtml(draftReply.body_html)}
       </span>
     </>

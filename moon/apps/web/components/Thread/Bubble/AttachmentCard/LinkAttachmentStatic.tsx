@@ -57,7 +57,7 @@ export function LinkAttachmentStatic(props: Props) {
           height={24}
           alt='Link attachment'
           src={logo}
-          className='pointer-events-none absolute left-1 top-1 rounded'
+          className='pointer-events-none absolute top-1 left-1 rounded'
           draggable={false}
           onError={onError}
         />

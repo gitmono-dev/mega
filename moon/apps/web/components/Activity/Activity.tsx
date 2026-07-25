@@ -50,7 +50,7 @@ export function Activity() {
                   setActivityOpen(false)
                 }}
                 className={cn(
-                  'text-primary group relative -mx-1 flex flex-none cursor-pointer select-none scroll-m-2 scroll-mt-12 items-start gap-3 rounded-lg px-2.5 py-3 text-[15px] outline-none ease-in-out will-change-[background,_color] focus-within:border-none focus-within:outline-none focus-within:ring-0 focus:border-none focus:outline-none focus:ring-0',
+                  'text-primary group relative -mx-1 flex flex-none cursor-pointer scroll-m-2 scroll-mt-12 items-start gap-3 rounded-lg px-2.5 py-3 text-[15px] outline-hidden ease-in-out will-change-[background,_color] select-none focus-within:border-none focus-within:ring-0 focus-within:outline-hidden focus:border-none focus:ring-0 focus:outline-hidden',
                   {
                     'bg-blue-500/10 dark:bg-blue-500/20': !n.activity_seen,
                     'hover:bg-blue-500/15 aria-selected:bg-blue-500/15 dark:hover:bg-blue-500/25 dark:aria-selected:bg-blue-500/25':

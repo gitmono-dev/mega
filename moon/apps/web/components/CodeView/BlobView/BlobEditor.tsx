@@ -1,9 +1,12 @@
 'use client'
 
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { parsePatchFiles, type FileDiffMetadata } from '@pierre/diffs'
 import { FileDiff } from '@pierre/diffs/react'
+import { useTheme } from 'next-themes'
 import toast from 'react-hot-toast'
+import { codeToTokens } from 'shiki'
+import { useDebounce } from 'use-debounce'
 
 import { Button } from '@gitmono/ui/Button'
 import { Dialog } from '@gitmono/ui/Dialog'
@@ -14,6 +17,8 @@ import { useUpdateBlob } from '@/hooks/useUpdateBlob'
 import { getLanguageForFile } from '@/utils/shikiLanguageFallback'
 
 import { MegaCedarAdminPicker } from './MegaCedarAdminPicker'
+
+type ShikiLine = Array<{ content: string; color?: string }>
 
 interface BlobEditorProps {
   fileContent: string
@@ -30,10 +35,13 @@ function isMegaCedarJsonFile(name: string, path: string) {
 
 export default function BlobEditor({ fileContent, filePath, fileName, onCancel }: BlobEditorProps) {
   const { data: currentUser } = useGetCurrentUser()
+  const { theme, resolvedTheme } = useTheme()
 
   const updateBlobMutation = useUpdateBlob()
   const diffPreviewMutation = useDiffPreview()
   const [content, setContent] = useState(fileContent)
+  const [debouncedContent] = useDebounce(content, 120)
+  const [shikiTokens, setShikiTokens] = useState<ShikiLine[]>([])
 
   const [editedFileName, setEditedFileName] = useState(fileName)
   const [commitMessage, setCommitMessage] = useState(`Update ${fileName}`)
@@ -49,6 +57,7 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
 
   const lineNumbersRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const highlightRef = useRef<HTMLPreElement>(null)
 
   const contentLines = useMemo(() => content.split('\n'), [content])
 
@@ -72,6 +81,41 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
   const showCedarAdminPicker = isMegaCedarJsonFile(editedFileName, fullEditedPath)
 
   const detectedLanguage = useMemo(() => getLanguageForFile(editedFileName), [editedFileName])
+
+  const currentTheme = useMemo(() => {
+    if (theme === 'system') {
+      return resolvedTheme || 'light'
+    }
+
+    return theme || 'light'
+  }, [theme, resolvedTheme])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const shikiTheme = currentTheme === 'dark' ? 'min-dark' : 'min-light'
+    const source = debouncedContent.length > 0 ? debouncedContent : ' '
+
+    codeToTokens(source, {
+      lang: detectedLanguage as any,
+      theme: shikiTheme
+    })
+      .then((result) => {
+        if (!cancelled) {
+          // Keep empty editor visually empty (we tokenized a space only as a fallback).
+          setShikiTokens(debouncedContent.length > 0 ? result.tokens : [[]])
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setShikiTokens(debouncedContent.split('\n').map((line) => [{ content: line || ' ' }]))
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [debouncedContent, detectedLanguage, currentTheme])
 
   const handleCedarContentGenerated = useCallback((generated: string) => {
     setContent(generated)
@@ -183,17 +227,27 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
   }
 
   const handleScroll = useCallback(() => {
-    if (textareaRef.current && lineNumbersRef.current) {
-      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop
+    const textarea = textareaRef.current
+
+    if (!textarea) return
+
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = textarea.scrollTop
+    }
+    if (highlightRef.current) {
+      highlightRef.current.scrollTop = textarea.scrollTop
+      highlightRef.current.scrollLeft = textarea.scrollLeft
     }
   }, [])
+
+  const caretColor = currentTheme === 'dark' ? '#e5e7eb' : '#111827'
 
   const renderEditView = () => {
     return (
       <div className='flex h-full w-full overflow-hidden font-mono text-sm leading-6'>
         <div
           ref={lineNumbersRef}
-          className='border-primary bg-secondary text-quaternary h-full select-none overflow-hidden border-r px-4 text-right'
+          className='border-primary bg-secondary text-quaternary h-full overflow-hidden border-r px-4 text-right select-none'
           style={{ flexShrink: 0 }}
         >
           {contentLines.map((_, index) => (
@@ -204,15 +258,45 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
           ))}
         </div>
 
-        <div className='flex-1 overflow-hidden'>
+        <div className='relative min-w-0 flex-1 overflow-hidden'>
+          <pre
+            ref={highlightRef}
+            aria-hidden='true'
+            className='pointer-events-none absolute inset-0 m-0 overflow-auto p-0 pl-4 font-mono text-sm leading-6 whitespace-pre'
+            style={{ tabSize: 2 }}
+          >
+            {(shikiTokens.length > 0
+              ? shikiTokens
+              : contentLines.map((line): ShikiLine => [{ content: line || ' ' }])
+            ).map((line, lineIndex) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <div key={lineIndex} className='min-h-[1.5rem]'>
+                {line.length === 0 ? (
+                  <br />
+                ) : (
+                  line.map((token, tokenIndex) => (
+                    // eslint-disable-next-line react/no-array-index-key
+                    <span key={tokenIndex} style={{ color: token.color }}>
+                      {token.content}
+                    </span>
+                  ))
+                )}
+              </div>
+            ))}
+          </pre>
           <textarea
             ref={textareaRef}
             value={content}
             onChange={handleTextareaChange}
             onScroll={handleScroll}
-            className='h-full w-full resize-none overflow-auto border-0 bg-transparent p-0 pl-4 font-mono text-sm leading-6 focus:outline-none'
+            className='absolute inset-0 z-10 h-full w-full resize-none overflow-auto border-0 bg-transparent p-0 pl-4 font-mono text-sm leading-6 focus:outline-hidden'
             spellCheck={false}
-            style={{ tabSize: 2 }}
+            style={{
+              tabSize: 2,
+              color: 'transparent',
+              caretColor,
+              WebkitTextFillColor: 'transparent'
+            }}
           />
         </div>
       </div>
@@ -272,7 +356,7 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
 
   return (
     <div className='flex min-h-0 w-full flex-1 flex-col gap-2'>
-      <div className='flex min-h-14 w-full flex-shrink-0 items-center justify-between px-2'>
+      <div className='flex min-h-14 w-full shrink-0 items-center justify-between px-2'>
         <div className='flex max-w-[900px] flex-wrap items-center gap-x-1 gap-y-2 text-gray-700'>
           {pathSegments.map((seg, i) => (
             // eslint-disable-next-line react/no-array-index-key
@@ -287,7 +371,7 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
             value={editedFileName}
             onChange={(e) => setEditedFileName(e.target.value)}
             placeholder='fileName'
-            className='min-w-[180px] rounded border border-gray-300 px-2 py-1 text-sm font-medium text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500'
+            className='min-w-[180px] rounded border border-gray-300 px-2 py-1 text-sm font-medium text-gray-900 outline-hidden focus:border-blue-500 focus:ring-2 focus:ring-blue-500'
             disabled={updateBlobMutation.isPending}
           />
         </div>
@@ -303,7 +387,7 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
       </div>
 
       <div className='flex min-h-0 w-full flex-1 flex-col rounded-xl border border-[#bec7ce]'>
-        <div className='flex h-14 w-full flex-shrink-0 items-center rounded-t-xl border-b border-[#d0d9e0] bg-[#f9fbfd] px-4'>
+        <div className='flex h-14 w-full shrink-0 items-center rounded-t-xl border-b border-[#d0d9e0] bg-[#f9fbfd] px-4'>
           <div className='inline-flex rounded-md border border-gray-300 bg-white'>
             <button
               onClick={() => setViewMode('edit')}
@@ -353,7 +437,7 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
                 value={commitMessage}
                 onChange={(e) => setCommitMessage(e.target.value)}
                 placeholder={`update ${fileName}`}
-                className='w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+                className='w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden'
                 disabled={updateBlobMutation.isPending}
               />
             </div>

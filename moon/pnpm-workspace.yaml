@@ -1,278 +1,240 @@
 packages:
   - apps/*
   - packages/*
+patchedDependencies:
+  '@radix-ui/react-popper@1.2.7': patches/@radix-ui__react-popper@1.2.7.patch
+peerDependencyRules:
+  allowedVersions:
+    react: '*'
+    react-dom: '*'
+    next: '*'
+    eslint: '*'
+    styled-components: '*'
+overrides:
+  # Node 26-compatible native binding (metascraper → url-regex-safe optional peer)
+  re2: 1.26.1
+  # Keep patched transitive Radix popper on the exact patched version
+  '@radix-ui/react-popper': 1.2.7
+allowBuilds:
+  '@vercel/speed-insights': true
+  core-js-pure: true
+  esbuild: true
+  re2: true
+  sharp: true
+  unrs-resolver: true
+# pnpm 11 default release-age gate blocks brand-new publishes during install
+minimumReleaseAge: 0
+# - next / eslint-config-next / @next/bundle-analyzer: pinned 16.2.11 (upgrade target; already latest 16.x)
+# - @tiptap/*: ^3 (Details via OSS @tiptap/extension-details; collaboration-caret; list/extensions kits)
+# - @radix-ui/react-popper: override-pinned 1.2.7 + patchedDependencies; regenerating required before >1.2.7
+# - typescript: ^5.9 — TS 7 not yet validated with Next 16 / eslint-config-next
+# - eslint: ^9.39 — ESLint 10 breaks eslint-config-next@16 / plugin stack
+# - react-day-picker: ^9.8 — not v10 (further Calendar API rewrite)
+# - @primer/react + @primer/primitives: ^38 / ^11 (upgraded together)
+# - @shopify/react-shortcuts: ^5.2.0 — latest; peer still react<19 (allowed via peerDependencyRules)
+# - nextjs-cors: ^2.2.1 — latest; peer declares next<=14 (allowed via peerDependencyRules)
+# - uuid: ^9.0.1 — uuid 10+ is pure ESM, breaks CJS/tsup consumers
+# - swagger-typescript-api: ^12.0.4 — v13 CLI/output breaking
+# - @mui/x-tree-view: pin 8.5.0 — newer 8.x tightens TreeViewDefaultItemModelProperties (no content_type)
+# - @mui/material|icons-material: ^7.3 — not v9
+# - react-dropzone: ^14 — not v19
+# - @pierre/diffs: apps/web pinned 1.2.12 (bundler + DiffView hunk API); not catalogued
+# - tailwindcss: ^4 (+ @tailwindcss/postcss, forms/typography, safe-area ^1, tailwind-merge ^3); container-queries removed (built-in)
+#
 catalog:
-  '@100mslive/hms-noise-cancellation': ^0.0.1
-  '@100mslive/hms-video-store': ^0.12.21
-  '@100mslive/react-sdk': ^0.10.21
-  '@babel/plugin-transform-react-jsx': ^7.22.5
-  '@create-figma-plugin/build': ^2.6.1
-  '@create-figma-plugin/tsconfig': ^2.6.1
-  '@create-figma-plugin/ui': ^2.6.1
-  '@create-figma-plugin/utilities': ^2.6.1
-  '@emoji-mart/data': ^1.1.2
-  '@figma/plugin-typings': 1.74.0
-  '@flydotio/dockerfile': ^0.4.11
-  '@git-diff-view/react': 0.0.26
-  '@hocuspocus/extension-database': ^2.13.5
-  '@hocuspocus/extension-logger': ^2.13.5
-  '@hocuspocus/provider': ^2.13.5
-  '@hocuspocus/server': ^2.13.5
-  '@hocuspocus/transformer': ^2.13.5
-  '@hookform/resolvers': ^3.3.1
-  '@ianvs/prettier-plugin-sort-imports': ^4.2.1
-  '@mdx-js/loader': ^3.0.1
-  '@mdx-js/react': ^3.0.1
-  '@next/bundle-analyzer': ^14.2.5
-  '@next/mdx': ^14.2.5
-  '@octokit/auth-app': ^7.1.0
-  '@octokit/core': ^6.1.2
-  '@playwright/test': ^1.43.1
-  '@primer/octicons-react': ^19.15.3
-  '@primer/primitives': ^10.7.0
-  '@primer/react': ^37.27.0
-  '@radix-ui/react-accordion': ^1.2.0
-  '@radix-ui/react-context-menu': ^2.2.1
-  '@radix-ui/react-collapsible': ^1.1.1
-  '@radix-ui/react-dialog': ^1.1.1
-  '@radix-ui/react-dropdown-menu': ^2.1.1
-  '@radix-ui/react-hover-card': ^1.1.1
-  '@radix-ui/react-popover': ^1.1.1
-  '@radix-ui/react-portal': ^1.1.1
-  '@radix-ui/react-radio-group': ^1.2.0
-  '@radix-ui/react-select': ^2.1.1
-  '@radix-ui/react-slider': ^1.2.0
-  '@radix-ui/react-popper': ^1.2.0
-  '@radix-ui/react-slot': ^1.1.0
-  '@radix-ui/react-switch': ^1.1.0
-  '@radix-ui/react-tabs': ^1.1.0
-  '@radix-ui/react-toggle-group': ^1.1.0
-  '@radix-ui/react-tooltip': ^1.1.2
-  '@radix-ui/react-visually-hidden': ^1.1.0
-  '@radix-ui/themes': '^3.2.1'
-  '@sanity/eslint-config-studio': ^4.0.0
-  '@sanity/vision': ^3.59.0
-  '@sentry/cli': ^2.30.1
-  '@sentry/nextjs': ^8.17.0
-  '@sentry/node': ^7.106.1
-  '@shopify/react-shortcuts': ^5.2.0
-  '@storybook/addon-docs': ^8.0.0-beta.3
-  '@storybook/addon-essentials': ^8.0.0-beta.3
-  '@storybook/addon-interactions': ^8.0.0-beta.3
-  '@storybook/addon-links': ^8.0.0-beta.3
-  '@storybook/blocks': ^8.0.0-beta.3
-  '@storybook/nextjs': ^8.0.0-beta.3
-  '@storybook/react': ^8.0.0-beta.3
-  '@storybook/test': ^8.0.0-beta.3
-  '@storybook/types': ^8.0.0-beta.3
-  '@swc-jotai/react-refresh': ^0.0.7
-  '@tailwindcss/container-queries': ^0.1.1
-  '@tailwindcss/forms': ^0.5.2
-  '@tailwindcss/typography': ^0.5.9
-  '@tanstack/eslint-plugin-query': ^4.34.1
-  '@tanstack/react-query': ^5.56.2
-  '@tanstack/react-query-devtools': ^5.56.2
-  '@tanstack/react-virtual': ^3.5.0
-  '@team-plain/typescript-sdk': ^3.3.0
-  '@testing-library/react': ^15.0.7
-  '@tiptap-pro/extension-details': ^2.10.11
-  '@tiptap-pro/extension-details-content': ^2.10.11
-  '@tiptap-pro/extension-details-summary': ^2.10.11
-  '@tiptap/core': ^2.6.4
-  '@tiptap/extension-blockquote': ^2.6.4
-  '@tiptap/extension-bold': ^2.6.4
-  '@tiptap/extension-bullet-list': ^2.6.4
-  '@tiptap/extension-code': ^2.6.4
-  '@tiptap/extension-code-block': ^2.6.4
-  '@tiptap/extension-collaboration': ^2.6.4
-  '@tiptap/extension-collaboration-cursor': ^2.6.4
-  '@tiptap/extension-document': ^2.6.4
-  '@tiptap/extension-dropcursor': ^2.6.4
-  '@tiptap/extension-hard-break': ^2.6.4
-  '@tiptap/extension-heading': ^2.6.4
-  '@tiptap/extension-history': ^2.6.4
-  '@tiptap/extension-horizontal-rule': ^2.6.4
-  '@tiptap/extension-italic': ^2.6.4
-  '@tiptap/extension-link': ^2.6.4
-  '@tiptap/extension-list-item': ^2.6.4
-  '@tiptap/extension-list-keymap': ^2.6.4
-  '@tiptap/extension-ordered-list': ^2.6.4
-  '@tiptap/extension-paragraph': ^2.6.4
-  '@tiptap/extension-placeholder': ^2.6.4
-  '@tiptap/extension-strike': ^2.6.4
-  '@tiptap/extension-task-item': ^2.6.4
-  '@tiptap/extension-task-list': ^2.6.4
-  '@tiptap/extension-text': ^2.6.4
-  '@tiptap/extension-typography': ^2.6.4
-  '@tiptap/extension-underline': ^2.6.4
-  '@tiptap/html': ^2.6.4
-  '@tiptap/pm': ^2.6.4
-  '@tiptap/react': ^2.6.4
-  '@todesktop/client-core': ^1.10.0
-  '@types/body-parser': ^1.19.5
-  '@types/d3': ^7.4.3
-  '@types/d3-selection': ^3.0.3
-  '@types/d3-transition': ^3.0.3
-  '@types/d3-zoom': ^3.0.3
-  '@types/diff': ^5.0.5
-  '@types/express': ^4.17.21
-  '@types/jsdom': ^21.1.6
-  '@types/markdown-it': ^13.0.7
-  '@types/mdx': ^2.0.13
-  '@types/morgan': ^1.9.9
-  '@types/node': ^20.12.4
-  '@types/pluralize': ^0.0.30
-  '@types/react': ^18.2.74
-  '@types/react-dom': ^18.2.24
-  '@types/react-timeago': ^4.1.3
-  '@types/supertest': ^6.0.2
-  '@types/uuid': ^9.0.4
-  '@typescript-eslint/eslint-plugin': ^7.11.0
-  '@typescript-eslint/parser': ^7.11.0
-  '@vercel/og': ^0.6.2
-  '@vercel/speed-insights': ^1.0.10
-  '@vitejs/plugin-react': ^4.3.0
-  '@welldone-software/why-did-you-render': ^7.0.1
-  autoprefixer: ^10.4.8
-  babel-plugin-jsx-pragmatic: ^1.0.2
-  body-parser: ^1.20.6
-  cheerio: ^1.0.0-rc.12
-  class-variance-authority: ^0.7.0
-  cmark-gfm-js: ^1.1.7
-  concurrently: '>=8'
-  cookies-next: ^2.1.1
-  d3: ^7.8.5
+  '@emoji-mart/data': ^1.2.1
+  '@emotion/styled': ^11.14.1
+  '@flydotio/dockerfile': ^0.7.10
+  '@hocuspocus/extension-database': ^4.4.0
+  '@hocuspocus/extension-logger': ^4.4.0
+  '@hocuspocus/provider': ^4.4.0
+  '@hocuspocus/server': ^4.4.0
+  '@hocuspocus/transformer': ^4.4.0
+  '@hookform/resolvers': ^5.4.2
+  '@ianvs/prettier-plugin-sort-imports': ^4.7.1
+  '@next/bundle-analyzer': 16.2.11 # pinned with next
+  '@octokit/auth-app': ^8.2.0
+  '@octokit/core': ^7.0.6
+  '@playwright/test': ^1.62.0
+  '@primer/octicons-react': ^19.31.0
+  '@primer/primitives': ^11.0.0
+  '@primer/react': ^38.0.0
+  '@radix-ui/react-accordion': ^1.2.20
+  '@radix-ui/react-collapsible': ^1.1.20
+  '@radix-ui/react-context-menu': ^2.3.7
+  '@radix-ui/react-dialog': ^1.1.23
+  '@radix-ui/react-dropdown-menu': ^2.1.24
+  '@radix-ui/react-hover-card': ^1.1.23
+  '@radix-ui/react-popover': ^1.1.23
+  '@radix-ui/react-portal': ^1.1.17
+  '@radix-ui/react-radio-group': ^1.4.7
+  '@radix-ui/react-slider': ^1.4.7
+  '@radix-ui/react-slot': ^1.3.3
+  '@radix-ui/react-switch': ^1.3.7
+  '@radix-ui/react-tabs': ^1.1.21
+  '@radix-ui/react-toggle-group': ^1.1.19
+  '@radix-ui/react-tooltip': ^1.2.16
+  '@radix-ui/react-visually-hidden': ^1.2.11
+  '@radix-ui/themes': ^3.3.0
+  '@shopify/react-shortcuts': ^5.2.0 # latest; peer react<19
+  '@storybook/addon-docs': ^10.5.4
+  '@storybook/addon-links': ^10.5.4
+  '@storybook/nextjs': ^10.5.4
+  '@storybook/react': ^10.5.4
+  '@tailwindcss/forms': ^0.5.11
+  '@tailwindcss/postcss': ^4.1.11
+  '@tailwindcss/typography': ^0.5.20
+  '@tanstack/eslint-plugin-query': ^5.101.4
+  '@tanstack/react-query': ^5.101.4
+  '@tanstack/react-query-devtools': ^5.101.4
+  '@tanstack/react-virtual': ^3.14.8
+  '@testing-library/react': ^16.3.2
+  '@tiptap/core': ^3.29.0
+  '@tiptap/extension-blockquote': ^3.29.0
+  '@tiptap/extension-bold': ^3.29.0
+  '@tiptap/extension-code': ^3.29.0
+  '@tiptap/extension-code-block': ^3.29.0
+  '@tiptap/extension-collaboration': ^3.29.0
+  '@tiptap/extension-collaboration-caret': ^3.29.0
+  '@tiptap/extension-details': ^3.29.0
+  '@tiptap/extension-document': ^3.29.0
+  '@tiptap/extension-hard-break': ^3.29.0
+  '@tiptap/extension-heading': ^3.29.0
+  '@tiptap/extension-horizontal-rule': ^3.29.0
+  '@tiptap/extension-italic': ^3.29.0
+  '@tiptap/extension-link': ^3.29.0
+  '@tiptap/extension-list': ^3.29.0
+  '@tiptap/extension-paragraph': ^3.29.0
+  '@tiptap/extension-strike': ^3.29.0
+  '@tiptap/extension-text': ^3.29.0
+  '@tiptap/extension-typography': ^3.29.0
+  '@tiptap/extension-underline': ^3.29.0
+  '@tiptap/extensions': ^3.29.0
+  '@tiptap/html': ^3.29.0
+  '@tiptap/pm': ^3.29.0
+  '@tiptap/react': ^3.29.0
+  '@todesktop/client-core': ^1.20.0
+  '@floating-ui/dom': ^1.7.4
+  '@types/d3-selection': ^3.0.11
+  '@types/d3-transition': ^3.0.9
+  '@types/d3-zoom': ^3.0.8
+  '@types/diff': ^5.2.3 # keep with diff@5
+  '@types/markdown-it': ^14.1.2
+  '@types/node': ^26.1.1
+  '@types/pluralize': ^0.0.33
+  '@types/react': ^19.2.17
+  '@types/react-dom': ^19.2.3
+  '@types/uuid': ^9.0.8 # keep with uuid@9
+  '@typescript-eslint/eslint-plugin': ^8.65.0
+  '@typescript-eslint/parser': ^8.65.0
+  '@vercel/og': ^1.0.0
+  '@vercel/speed-insights': ^2.0.0
+  '@vitejs/plugin-react': ^5.2.0
+  '@welldone-software/why-did-you-render': ^10.0.1
+  class-variance-authority: ^0.7.1
+  cookies-next: ^5.1.0
+  copy-to-clipboard: ^4.0.2
   d3-selection: ^3.0.0
+  d3-transition: ^3.0.1
   d3-zoom: ^3.0.0
-  date-fns: ^3.6.0
+  date-fns: ^4.4.0
   deepmerge: ^4.3.1
-  diff: ^5.1.0
-  dotenv: ^16.3.1
-  easymde: '2'
-  eslint: ^8.57.0
-  eslint-config-next: ^14.2.3
-  eslint-config-turbo: ^2.9.16
-  eslint-plugin-react: ^7.34.1
-  eslint-plugin-react-hooks: ^4.6.2
-  eslint-plugin-storybook: ^0.8.0
-  eslint-plugin-unused-imports: ^3.2.0
-  express: ^4.18.2
+  diff: ^5.2.2 # not v8/9 — @types/diff + editor consumers
+  dotenv: ^17.4.2
+  eslint: ^9.39.5 # not v10 — eslint-config-next@16
+  eslint-config-next: 16.2.11 # pinned with next
+  eslint-config-turbo: ^2.10.6
+  eslint-plugin-react: ^7.37.5
+  eslint-plugin-react-hooks: ^7.0.0
+  eslint-plugin-storybook: ^10.5.4
+  eslint-plugin-unused-imports: ^4.4.1
   fast-deep-equal: ^3.1.3
-  feed: ^4.2.2
-  framer-motion: ^11.11.11
-  fuse.js: ^7.1.0
+  framer-motion: ^12.42.2
+  github-markdown-css: ^5.9.0
   gray-matter: ^4.0.3
-  jotai: ^2.0.3
-  jotai-scope: ^0.4.1
-  js-base64: ^3.7.5
-  jsdom: ^24.0.0
-  jsx-slack: ^6.1.1
+  jotai: ^2.20.2
+  jotai-scope: ^0.12.1
+  js-base64: ^3.9.1
+  jsdom: ^29.1.1
   jszip: ^3.10.1
-  linkify-react: ^4.1.3
-  linkifyjs: ^4.1.3
-  lottie-web: ^5.11.0
-  markdown-it: ^14.1.0
-  metascraper: ^5.34.8
-  metascraper-audio: ^5.37.0
-  metascraper-author: ^5.33.7
-  metascraper-date: ^5.33.7
-  metascraper-description: ^5.34.10
-  metascraper-image: ^5.34.1
-  metascraper-lang: ^5.34.1
-  metascraper-logo: ^5.34.7
-  metascraper-logo-favicon: ^5.34.7
-  metascraper-publisher: ^5.33.7
-  metascraper-readability: ^5.34.1
-  metascraper-spotify: ^5.33.8
-  metascraper-title: ^5.34.1
-  metascraper-twitter: ^5.33.7
-  metascraper-url: ^5.33.7
-  metascraper-video: ^5.34.7
-  metascraper-youtube: ^5.34.7
-  morgan: ^1.10.0
-  next: ^14.2.5
-  next-mdx-remote: ^5.0.0
-  next-sanity: ^9.5.0
-  next-seo: ^6.0.0
-  next-themes: ^0.2.1
-  nextjs-cors: ^2.2.0
-  node-fetch: ^3.3.0
-  onchange: ^7.1.0
+  linkifyjs: ^4.3.3
+  lottie-web: ^5.13.0
+  markdown-it: ^14.3.0
+  metascraper: ^5.51.1
+  metascraper-audio: ^5.51.1
+  metascraper-author: ^5.51.1
+  metascraper-date: ^5.51.1
+  metascraper-description: ^5.51.1
+  metascraper-image: ^5.51.1
+  metascraper-lang: ^5.51.1
+  metascraper-logo: ^5.51.1
+  metascraper-logo-favicon: ^5.51.1
+  metascraper-publisher: ^5.51.1
+  metascraper-readability: ^5.51.1
+  metascraper-spotify: ^5.51.1
+  metascraper-title: ^5.51.1
+  metascraper-twitter: ^5.45.6 # latest published for this package
+  metascraper-url: ^5.51.1
+  metascraper-video: ^5.51.1
+  metascraper-youtube: ^5.51.1
+  next: 16.2.11 # pinned upgrade target (latest 16.x)
+  next-seo: ^7.0.0
+  next-themes: ^0.4.6
+  nextjs-cors: ^2.2.1 # latest; peer next<=14 (allowed)
+  node-fetch: ^3.3.2
   pluralize: ^8.0.0
-  postcss: ^8.4.29
-  postcss-import: ^15.1.0
-  prettier: ^3.2.5
-  prettier-plugin-packagejson: ^2.4.14
-  prettier-plugin-tailwindcss: ^0.6.8
-  pusher-js: ^8.3.0
-  react: ^18.2.0
-  react-aria: ^3.27.0
-  react-confetti: ^6.1.0
-  react-day-picker: ^8.10.1
-  react-device-detect: ^2.2.2
-  react-dom: ^18.2.0
-  react-dropzone: ^14.2.2
-  react-error-boundary: ^4.0.13
-  react-hook-form: ^7.46.1
-  react-hot-toast: ^2.4.0
-  react-hotkeys-hook: ^4.5.0
+  postcss: ^8.5.23
+  prettier: ^3.9.6
+  prettier-plugin-packagejson: ^3.0.2
+  prettier-plugin-tailwindcss: ^0.8.1
+  pusher-js: ^8.6.0
+  react: ^19.2.8
+  react-aria: ^3.50.0
+  react-day-picker: ^9.8.0
+  react-device-detect: ^2.2.3
+  react-dom: ^19.2.8
+  react-dropzone: ^14.4.1 # not v19
+  react-error-boundary: ^6.0.0
+  react-hook-form: ^7.83.0
+  react-hot-toast: ^2.6.0
+  react-hotkeys-hook: ^5.3.3
   react-image-file-resizer: ^0.4.8
-  react-inlinesvg: ^3.0.1
-  react-intersection-observer: ^9.8.1
-  react-lottie-player: ^1.5.4
-  react-markdown: ^8.0.5
-  react-qr-code: ^2.0.12
-  react-refractor: ^3.1.1
-  react-remove-scroll: ^2.5.10
-  react-select: ^5.7.0
-  react-textarea-autosize: ^8.5.3
-  react-timeago: ^7.2.0
-  react-tweet: ^3.1.1
-  react-use-measure: ^2.1.1
-  react-wrap-balancer: ^0.5.0
-  refractor: ^4.8.1
-  rehype-raw: ^6.1.1
-  remark-gfm: ^3.0.1
-  remeda: ^1.23.0
-  rfc6902: ^5.0.1
-  sanity: ^3.59.0
-  sanity-plugin-markdown: ^5.0.0
-  schema-dts: ^1.1.2
-  slugify: ^1.6.6
-  sonner: ^1.5.0
-  storybook: ^8.0.0-beta.3
-  styled-components: ^6.1.19
-  supertest: ^6.3.3
-  swagger-typescript-api: ^12.0.4
-  tailwind-merge: ^2.3.0
-  tailwind-scrollbar-hide: ^1.1.7
-  tailwindcss: ^3.4.3
+  react-inlinesvg: ^4.5.0
+  react-intersection-observer: ^10.1.0
+  react-lottie-player: ^2.1.0
+  react-markdown: ^10.1.0
+  react-qr-code: ^2.2.0
+  react-refractor: ^4.0.0
+  react-select: ^5.10.2
+  react-textarea-autosize: ^8.5.9
+  react-timeago: ^8.3.0
+  react-tweet: ^3.3.1
+  react-use-measure: ^2.1.7
+  refractor: ^5.0.0
+  remeda: ^2.39.0
+  rfc6902: ^5.3.0
+  slugify: ^1.6.9
+  storybook: ^10.5.4
+  swagger-typescript-api: ^12.0.4 # not v13
+  tailwind-merge: ^3.4.0
+  tailwind-scrollbar-hide: ^1.3.1
+  tailwindcss: ^4.1.11
   tailwindcss-animate: ^1.0.7
-  tailwindcss-safe-area: ^0.4.1
+  tailwindcss-safe-area: ^1.3.0
   tippy.js: ^6.3.7
-  tsup: ^8.0.2
-  typescript: ^5.4.3
-  turbo: ^2.9.16
-  use-debounce: ^9.0.4
-  use-sound: ^4.0.1
-  uuid: ^9.0.1
-  vaul: ^0.9.1
-  vitest: ^1.5.2
-  wait-on: ^7.0.1
-  yjs: ^13.6.8
-  zod: ^3.22.3
-  zustand: ^4.4.1
-  github-markdown-css: ^5.8.1
+  tsup: ^8.5.1
+  turbo: ^2.10.6
+  typescript: ^5.9.3 # not v7
+  use-debounce: ^10.1.1
+  uuid: ^9.0.1 # not v10+ ESM
+  vaul: ^1.1.2
+  vitest: ^4.1.10
+  yjs: ^13.6.31
+  zod: ^4.4.0
   '@heroicons/react': ^2.2.0
   clsx: ^2.1.1
-  copy-to-clipboard: ^3.3.3
-  '@ant-design/icons': ^6.0.0
-  '@mui/icons-material': ^7.1.0
-  '@mui/material': ^7.1.0
-  '@mui/x-tree-view': ^8.5.0
-  '@emotion/styled': ^11.14.0
-  prism-react-renderer: ^2.4.1
+  '@mui/icons-material': ^7.3.11 # not v9
+  '@mui/material': ^7.3.11 # not v9
+  '@mui/x-tree-view': 8.5.0 # not newer 8.x/9 — TreeView item model dropped freeform content_type
   material-file-icons: ^2.4.0
   colord: ^2.9.3
-  merge-stream: ^2.0.0
-  picomatch: ^4.0.3

@@ -79,7 +79,7 @@ export function RecentSearches({ recentSearches, onFocus, onPointerMove }: Props
             <Button
               variant='plain'
               onClick={() => removeRecentSearch({ scope: `${scope}`, search: query })}
-              className='text-tertiary hover:text-primary absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100'
+              className='text-tertiary hover:text-primary absolute top-1/2 right-1.5 -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100'
               iconOnly={<CloseIcon strokeWidth='2' size={16} />}
               accessibilityLabel='Remove'
             />

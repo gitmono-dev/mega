@@ -24,7 +24,7 @@ export function getInboxItemRoutePath(inboxItem: Notification | FollowUp) {
       return `/${inboxItem.organization_slug}/notes/${inboxItem.target.id}${hash ? `#${hash}` : ''}`
 
     case 'Call':
-      return `/${inboxItem.organization_slug}/calls/${inboxItem.target.id}${hash ? `#${hash}` : ''}`
+      return `/${inboxItem.organization_slug}/inbox`
 
     default:
       throw new Error(`Invalid inbox item target type ${inboxItem.target.type}`)

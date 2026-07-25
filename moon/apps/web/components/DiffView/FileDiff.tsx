@@ -94,7 +94,7 @@ function SingleFileDiffView({
             />
           )
         }
-        renderHoverUtility={(getHoveredLine) => (
+        renderGutterUtility={(getHoveredLine) => (
           <HoverButton getHoveredLine={getHoveredLine} onAddComment={addCommentAtLine} />
         )}
         options={{
@@ -104,7 +104,7 @@ function SingleFileDiffView({
           overflow: 'wrap',
           disableFileHeader: true,
           enableLineSelection: true,
-          enableHoverUtility: true,
+          enableGutterUtility: true,
           onLineSelectionEnd: handleLineSelectionEnd,
           unsafeCSS: `
               ::-webkit-scrollbar { display: none !important; }

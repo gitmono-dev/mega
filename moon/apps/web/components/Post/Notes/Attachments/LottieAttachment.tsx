@@ -36,7 +36,7 @@ export function LottieAttachment(props: Props) {
   return (
     <>
       {animationItem && (
-        <div className='dark absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 opacity-0 transition-opacity duration-300 group-hover:opacity-100'>
+        <div className='dark absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 opacity-0 transition-opacity duration-300 group-hover:opacity-100'>
           <Button
             className='shadow-popover focus-visible:ring-0'
             iconOnly={isPlaying ? <PauseIcon /> : <PlayIcon />}
@@ -64,7 +64,7 @@ export function LottieAttachment(props: Props) {
           />
         )}
 
-        <div className='pointer-events-none absolute left-2 top-2 z-[2] flex items-center gap-0.5'>
+        <div className='pointer-events-none absolute top-2 left-2 z-[2] flex items-center gap-0.5'>
           <Accessory label='LOTTIE' />
         </div>
       </div>

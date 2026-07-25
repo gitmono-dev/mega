@@ -13,6 +13,7 @@ interface CloseItemProps {
 }
 const CloseItem = ({ conv }: CloseItemProps) => {
   const { data: member } = useGetOrganizationMember({ username: conv.username })
+  const profileUsername = member?.user.username || conv.username
 
   return (
     <>
@@ -21,8 +22,8 @@ const CloseItem = ({ conv }: CloseItemProps) => {
           <ConditionalWrap
             condition={true}
             wrap={(c) => (
-              <MemberHovercard username={conv?.username}>
-                <UserLinkByName username={conv?.username} className='relative'>
+              <MemberHovercard username={profileUsername}>
+                <UserLinkByName username={profileUsername} className='relative'>
                   {c}
                 </UserLinkByName>
               </MemberHovercard>

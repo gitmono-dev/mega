@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "target": "ES2018",
+    "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
       "@/components/*": ["components/*"],
@@ -27,6 +29,15 @@
     "strictNullChecks": true
   },
   "extends": "@gitmono/tsconfig/nextjs.json",
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "vitest.config.mts", "**/*.config.js", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "dist", "build", ".next", "out"]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.config.js", ".next/types/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    ".next",
+    "out",
+    "**/*.stories.tsx",
+    "**/*.stories.ts",
+    "vitest.config.mts"
+  ]
 }

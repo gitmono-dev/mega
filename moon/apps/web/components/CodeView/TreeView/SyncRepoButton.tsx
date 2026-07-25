@@ -99,7 +99,7 @@ export default function SyncRepoButton({ currentPath }: Props) {
                 GitHub URL <span className='text-red-500'>*</span>
               </label>
               <input
-                className='rounded-md border px-3 py-2 text-sm outline-none focus:ring-2'
+                className='rounded-md border px-3 py-2 text-sm outline-hidden focus:ring-2'
                 value={githubUrl}
                 onChange={(e) => setGithubUrl(e.target.value)}
                 placeholder='https://github.com/owner/repo'
@@ -119,7 +119,7 @@ export default function SyncRepoButton({ currentPath }: Props) {
               <div className='border-primary flex items-center gap-0 overflow-hidden rounded-md border focus-within:ring-2'>
                 <span className='border-primary bg-tertiary text-secondary border-r px-3 py-2 text-sm'>{basePath}</span>
                 <input
-                  className='flex-1 border-none px-3 py-2 text-sm outline-none'
+                  className='flex-1 border-none px-3 py-2 text-sm outline-hidden'
                   value={repoName}
                   onChange={(e) => setRepoName(e.target.value)}
                   placeholder='repo-name'

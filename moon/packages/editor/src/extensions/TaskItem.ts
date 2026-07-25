@@ -2,8 +2,8 @@ import { InputRule, isNodeActive } from '@tiptap/core'
 import {
   inputRegex,
   TaskItem as TiptapTaskItem,
-  TaskItemOptions as TiptapTaskItemOptions
-} from '@tiptap/extension-task-item'
+  type TaskItemOptions as TiptapTaskItemOptions
+} from '@tiptap/extension-list'
 import { Node } from '@tiptap/pm/model'
 import { canJoin, findWrapping } from '@tiptap/pm/transform'
 
@@ -59,6 +59,11 @@ export const TaskItem = TiptapTaskItem.extend<TaskItemOptions>({
             .focus(undefined, { scrollIntoView: false })
             .command(({ tr }) => {
               const position = getPos()
+
+              if (position === undefined) {
+                return false
+              }
+
               const currentNode = tr.doc.nodeAt(position)
 
               tr.setNodeMarkup(position, undefined, {
@@ -167,7 +172,7 @@ export const TaskItem = TiptapTaskItem.extend<TaskItemOptions>({
 
   markdownParseSpec() {
     return createMarkdownParserSpec({
-      block: TaskItem.name,
+      block: TiptapTaskItem.name,
       getAttrs: (token) => ({
         checked: token.attrGet('checked') === 'true'
       })

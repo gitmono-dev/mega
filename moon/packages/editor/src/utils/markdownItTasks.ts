@@ -1,5 +1,6 @@
 import MarkdownIt from 'markdown-it'
-import Token from 'markdown-it/lib/token'
+
+import { MarkdownItToken as Token } from '../types/markdown-it'
 
 const CHECKBOX_REGEX = /\[(X|\s|_|-)\]\s(.*)?/i
 

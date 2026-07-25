@@ -33,8 +33,12 @@ export function LinkUnfurlRenderer(props: NodeViewWrapperProps) {
                   state.selection.to + href.length,
                   editor.schema.marks.link.create({ href })
                 )
+              const pos = props.getPos()
+
+              if (typeof pos !== 'number') return
+
               const transaction = insertTr
-                .setSelection(TextSelection.near(insertTr.doc.resolve(props.getPos() + href.length + 1)))
+                .setSelection(TextSelection.near(insertTr.doc.resolve(pos + href.length + 1)))
                 .scrollIntoView()
 
               editor.view.dispatch(transaction)

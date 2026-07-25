@@ -31,7 +31,7 @@ export function SidebarProjectsGroup() {
   const [collapsed, setCollapsed] = useScopedStorage('sidebar-projects-collapsed', false)
   const hasJoinedSpaces = !!filteredProjectMemberships?.length
   const [draggingId, setDraggingId] = useState<undefined | string>()
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLUListElement>(null)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const { data: organization } = useGetCurrentOrganization()
@@ -106,7 +106,7 @@ export function SidebarProjectsGroup() {
             sideOffset={2}
             items={items}
             trigger={
-              <button className='hover:bg-quaternary data-[state="open"]:bg-quaternary group flex h-6 w-6 items-center justify-center rounded-md p-0.5 opacity-0 focus:outline-0 focus:ring-0 group-hover/spaces:opacity-100 group-has-[[data-state="open"]]/spaces:opacity-100 data-[state="open"]:opacity-100'>
+              <button className='hover:bg-quaternary data-[state="open"]:bg-quaternary group flex h-6 w-6 items-center justify-center rounded-md p-0.5 opacity-0 group-hover/spaces:opacity-100 group-has-[[data-state="open"]]/spaces:opacity-100 focus:ring-0 focus:outline-0 data-[state="open"]:opacity-100'>
                 <span className='scale-[85%]'>
                   <DotsHorizontal />
                 </span>
@@ -144,7 +144,7 @@ export function SidebarProjectsGroup() {
             })}
           >
             {!collapsed && (
-              <span className='text-quaternary absolute -left-[11px] top-1/2 -translate-y-1/2 cursor-move opacity-0 group-hover/reorder-item:opacity-100 group-has-[[data-state="open"]]/reorder-item:opacity-100'>
+              <span className='text-quaternary absolute top-1/2 -left-[11px] -translate-y-1/2 cursor-move opacity-0 group-hover/reorder-item:opacity-100 group-has-[[data-state="open"]]/reorder-item:opacity-100'>
                 <ReorderDotsIcon strokeWidth='2' size={16} />
               </span>
             )}

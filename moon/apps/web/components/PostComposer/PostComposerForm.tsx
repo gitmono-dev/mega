@@ -51,7 +51,7 @@ export const PostComposerFormProvider = forwardRef<InlineComposerRef, React.Prop
   ref
 ) {
   const { defaultValues } = useAtomValue(postComposerStateAtom) ?? {}
-  const methods = useForm<PostSchema>({ resolver: zodResolver(postSchema), defaultValues })
+  const methods = useForm({ resolver: zodResolver(postSchema), defaultValues })
   const isDirty = methods.formState.isDirty
 
   useImperativeHandle(ref, () => ({ isDirty }), [isDirty])
@@ -206,7 +206,7 @@ export function PostComposerForm({ onSubmit, onReportBug, onDeleteDraft }: Compo
         }
       }}
     >
-      <div className='flex items-center px-3 pb-2.5 pt-3'>
+      <div className='flex items-center px-3 pt-3 pb-2.5'>
         <PostComposerProjectPicker />
         <PostComposerHeaderActions onDeleteDraft={onDeleteDraft} />
       </div>
@@ -215,7 +215,7 @@ export function PostComposerForm({ onSubmit, onReportBug, onDeleteDraft }: Compo
 
       <div className={cn('h-px w-full border-t', { 'border-primary': !topInView, 'border-transparent': topInView })} />
 
-      <div className='relative flex flex-1 flex-col gap-1 overflow-y-auto pb-2 pt-0'>
+      <div className='relative flex flex-1 flex-col gap-1 overflow-y-auto pt-0 pb-2'>
         <div ref={topRef} />
 
         {isCampsiteInsiders && (
@@ -245,7 +245,7 @@ export function PostComposerForm({ onSubmit, onReportBug, onDeleteDraft }: Compo
           placeholder='Subject (optional)'
           value={methods.getValues('title')}
           onChange={(val) => setValue('title', val)}
-          className='px-3 pb-0 pt-1 text-[15px] font-semibold leading-snug'
+          className='px-3 pt-1 pb-0 text-[15px] leading-snug font-semibold'
         />
 
         <MarkdownEditor
@@ -308,7 +308,7 @@ export function PostComposerForm({ onSubmit, onReportBug, onDeleteDraft }: Compo
         )}
       </div>
 
-      <div className='bg-elevated sticky bottom-0 z-10 flex flex-row flex-nowrap justify-between gap-3 p-3 pr-2.5 pt-1.5 dark:bg-gray-900'>
+      <div className='bg-elevated sticky bottom-0 z-10 flex flex-row flex-nowrap justify-between gap-3 p-3 pt-1.5 pr-2.5 dark:bg-gray-900'>
         <PostComposerInteractiveAttachments dropzone={dropzone} editorRef={editorRef} />
 
         <PostComposerActions

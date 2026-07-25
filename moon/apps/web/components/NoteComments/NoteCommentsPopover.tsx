@@ -39,7 +39,7 @@ export function NoteCommentsPopover({ children, note, side = 'bottom', align = '
             CONTAINER_STYLES.rounded,
             'max-h-[calc(var(--radix-popper-available-height)-0.5rem)] min-h-[400px]',
             '4xl:max-w-[500px] 4xl:w-[500px] w-[420px] lg:max-w-[420px]',
-            'text-primary bg-elevated flex flex-none flex-col overflow-hidden border border-t lg:border-l lg:border-t-0 dark:border dark:border-black/50 dark:ring-1 dark:ring-gray-700/50'
+            'text-primary bg-elevated flex flex-none flex-col overflow-hidden border border-t lg:border-t-0 lg:border-l dark:border dark:border-black/50 dark:ring-1 dark:ring-gray-700/50'
           )}
         >
           <NoteComments note={note} />

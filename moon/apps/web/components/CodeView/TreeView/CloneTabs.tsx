@@ -29,9 +29,11 @@ const CloneTabs = () => {
   const handleCopy = () => {
     const text = active_tab === 'HTTP' ? `${url.href}${repo_name}.git` : `ssh://git@${url.host}/${repo_name}.git`
 
-    copy(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000) // Reset after 2 seconds
+    void copy(text).then((ok) => {
+      if (!ok) return
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000) // Reset after 2 seconds
+    })
   }
   const tabContent = [
     {
@@ -85,7 +87,7 @@ const CloneTabs = () => {
                         <Flex align='center'>
                           <input
                             value={_item.inputValue}
-                            className='bg-quaternary border-primary m-2 w-[350px] border-b border-r p-1'
+                            className='bg-quaternary border-primary m-2 w-[350px] border-r border-b p-1'
                             style={{ borderRadius: '5px' }}
                           />
                           <Button onClick={handleCopy} size='sm' variant='text' className='text-secondary'>

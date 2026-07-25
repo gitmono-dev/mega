@@ -10,7 +10,6 @@ export function useGetBlob(params: GetApiBlobParams & { refs?: string }, request
   if (params.refs) finalParams.refs = params.refs
 
   return useQuery({
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: legacyApiClient.v1.getApiBlob().requestKey(finalParams as GetApiBlobParams),
     queryFn: () => legacyApiClient.v1.getApiBlob().request(finalParams, requestParams),
     enabled: !!params.path

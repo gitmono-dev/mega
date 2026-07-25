@@ -110,13 +110,13 @@ export function ProjectEditDialog({ open, onOpenChange, project }: ProjectEditDi
                 {accessory && (
                   <button
                     onClick={handleRemoveAccessory}
-                    className='text-primary bg-elevated absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full opacity-0 shadow ring-1 ring-gray-200 hover:bg-red-500 hover:text-white hover:ring-red-500 group-hover/accessory:opacity-100 dark:bg-gray-600 dark:ring-gray-700 dark:hover:bg-red-500'
+                    className='text-primary bg-elevated absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full opacity-0 shadow ring-1 ring-gray-200 group-hover/accessory:opacity-100 hover:bg-red-500 hover:text-white hover:ring-red-500 dark:bg-gray-600 dark:ring-gray-700 dark:hover:bg-red-500'
                   >
                     <MinusIcon size={16} strokeWidth='2.5' />
                   </button>
                 )}
                 {!accessory && (
-                  <span className='text-primary pointer-events-none absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white shadow ring-1 ring-gray-200 group-hover/accessory:bg-blue-500 group-hover/accessory:text-white group-hover/accessory:ring-blue-500 dark:bg-gray-600 dark:ring-gray-700'>
+                  <span className='text-primary pointer-events-none absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white shadow ring-1 ring-gray-200 group-hover/accessory:bg-blue-500 group-hover/accessory:text-white group-hover/accessory:ring-blue-500 dark:bg-gray-600 dark:ring-gray-700'>
                     <PlusIcon size={13} strokeWidth='2.5' />
                   </span>
                 )}

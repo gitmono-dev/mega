@@ -161,7 +161,7 @@ function PostCommenters({ post }: { post: Post }) {
           {post.comments_count} {pluralize('comment', post.comments_count)}
         </UIText>
         {hasNew && (
-          <span className='ml-1 rounded-full bg-blue-500 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-white'>
+          <span className='ml-1 rounded-full bg-blue-500 px-1.5 py-0.5 text-[9px] font-semibold text-white uppercase'>
             new
           </span>
         )}

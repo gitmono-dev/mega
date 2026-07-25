@@ -1,14 +1,5 @@
 type ReactionCategoryType =
-  | 'frequent'
-  | 'custom'
-  | 'people'
-  | 'nature'
-  | 'foods'
-  | 'activity'
-  | 'places'
-  | 'objects'
-  | 'symbols'
-  | 'flags'
+  'frequent' | 'custom' | 'people' | 'nature' | 'foods' | 'activity' | 'places' | 'objects' | 'symbols' | 'flags'
 
 interface StandardReactionSkin {
   unified: string

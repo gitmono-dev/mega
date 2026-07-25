@@ -1,4 +1,4 @@
-import { OrderedList as TipTapOrderedList } from '@tiptap/extension-ordered-list'
+import { OrderedList as TipTapOrderedList } from '@tiptap/extension-list'
 
 import { createMarkdownParserSpec, listIsTight } from '../utils/createMarkdownParser'
 

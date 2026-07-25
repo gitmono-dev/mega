@@ -5,7 +5,7 @@ import { Comment } from '@gitmono/types'
 
 import { draftKey } from '@/atoms/markdown'
 import { useCommentLocalDraft } from '@/components/Comments/hooks/useCommentLocalDraft'
-import { commentSchema, CommentSchema, getDefaultValues } from '@/components/Comments/utils/schema'
+import { commentSchema, getDefaultValues } from '@/components/Comments/utils/schema'
 
 export interface CommentFormProps {
   comment?: Comment
@@ -46,5 +46,5 @@ export function useCommentForm({
 
   const defaultValues = comment ? getDefaultValues(comment) : draftWithCurrentCoords || getDefaultValues(initialValues)
 
-  return useForm<CommentSchema>({ resolver: zodResolver(commentSchema), defaultValues })
+  return useForm({ resolver: zodResolver(commentSchema), defaultValues })
 }

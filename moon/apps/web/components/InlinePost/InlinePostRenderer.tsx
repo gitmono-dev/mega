@@ -30,7 +30,7 @@ export function InlinePostRenderer(props: InlinePostRendererProps) {
   }, [])
 
   return (
-    <div className='prose select-text focus:outline-none'>
+    <div className='prose select-text focus:outline-hidden'>
       <PostAttachmentLightbox
         postId={postId}
         selectedAttachmentId={selectedPostAttachmentId}

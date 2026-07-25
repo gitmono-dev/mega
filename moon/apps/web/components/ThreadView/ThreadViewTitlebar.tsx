@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import pluralize from 'pluralize'
 
 import { MessageThread } from '@gitmono/types'
-import { Button, LayeredHotkeys, UIText, VideoCameraIcon } from '@gitmono/ui'
+import { UIText } from '@gitmono/ui'
 import { ConditionalWrap } from '@gitmono/ui/src/utils'
 
 import { AuthorLink } from '@/components/AuthorLink'
@@ -15,7 +15,6 @@ import { ChatThreadOverflowMenu } from '@/components/Thread/ChatThreadOverflowMe
 import { ThreadAvatar } from '@/components/ThreadAvatar'
 import { BreadcrumbLabel, BreadcrumbTitlebar } from '@/components/Titlebar/BreadcrumbTitlebar'
 import { useGetThread } from '@/hooks/useGetThread'
-import { useJoinMessageThreadCall } from '@/hooks/useJoinMessageThreadCall'
 
 function ThreadBreadcrumbTitlebar({ thread }: { thread: MessageThread }) {
   const otherMembersTooltip = thread.other_members.map((m) => m.user.display_name).join(', ')
@@ -80,32 +79,6 @@ function ThreadBreadcrumbTitlebar({ thread }: { thread: MessageThread }) {
   return title
 }
 
-export function BreadcrumbCallButton({ thread }: { thread: MessageThread }) {
-  const { joinCall, canJoin, onCall } = useJoinMessageThreadCall({ thread })
-
-  if (!canJoin && !onCall) return null
-
-  return (
-    <>
-      <LayeredHotkeys
-        keys='mod+shift+h'
-        callback={joinCall}
-        options={{ preventDefault: true, enableOnContentEditable: true }}
-      />
-
-      <Button
-        iconOnly={<VideoCameraIcon size={24} />}
-        accessibilityLabel='Start call'
-        variant='plain'
-        tooltip={onCall ? 'Already joined call' : 'Start call'}
-        tooltipShortcut='⌘+shift+H'
-        onClick={joinCall}
-        disabled={onCall}
-      />
-    </>
-  )
-}
-
 export function ThreadViewTitlebar({
   threadId,
   placement,
@@ -147,7 +120,6 @@ export function ThreadViewTitlebar({
           </div>
 
           <div className='relative flex items-center gap-0.5'>
-            <BreadcrumbCallButton thread={thread} />
             <ChatThreadOverflowMenu thread={thread} />
           </div>
         </>

@@ -19,7 +19,7 @@ export const IndexPageContent = forwardRef<HTMLDivElement, Props>(({ className, 
       <div
         ref={ref}
         className={cn(
-          'mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-4 py-4 focus-visible:outline-none md:gap-6 md:py-6 lg:gap-8 lg:px-6 lg:py-8',
+          'mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-4 py-4 focus-visible:outline-hidden md:gap-6 md:py-6 lg:gap-8 lg:px-6 lg:py-8',
           className
         )}
       >
@@ -73,7 +73,7 @@ export function IndexSearchInput({ query, setQuery, isSearchLoading }: IndexSear
       </span>
       <input
         ref={ref}
-        className='flex-1 border-none bg-transparent p-0 text-sm outline-none ring-0 focus:ring-0'
+        className='flex-1 border-none bg-transparent p-0 text-sm ring-0 outline-hidden focus:ring-0'
         placeholder='Search...'
         role='searchbox'
         autoComplete='off'

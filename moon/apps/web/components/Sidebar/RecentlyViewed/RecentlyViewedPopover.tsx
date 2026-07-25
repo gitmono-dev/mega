@@ -15,11 +15,7 @@ import {
   useIsDesktopApp
 } from '@gitmono/ui'
 
-import {
-  RecentlyViewedCall,
-  RecentlyViewedNote,
-  RecentlyViewedPost
-} from '@/components/Sidebar/RecentlyViewed/RecentlyViewedItem'
+import { RecentlyViewedNote, RecentlyViewedPost } from '@/components/Sidebar/RecentlyViewed/RecentlyViewedItem'
 import { useScope } from '@/contexts/scope'
 
 import { recentlyViewedAtom } from './utils'
@@ -91,7 +87,7 @@ function RecentlyViewedPopoverContent({ onClose }: { onClose: () => void }) {
 
       <Command
         autoFocus
-        className='flex flex-1 flex-col ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0'
+        className='flex flex-1 flex-col ring-0 focus-visible:border-0 focus-visible:ring-0 focus-visible:outline-hidden'
         loop
         tabIndex={0}
       >
@@ -100,13 +96,11 @@ function RecentlyViewedPopoverContent({ onClose }: { onClose: () => void }) {
             <Command.Empty className='flex h-full w-full flex-1 flex-col items-center justify-center gap-1 p-8'>
               <ClockIcon className='text-quaternary opacity-50' size={48} />
             </Command.Empty>
-            {recentlyViewed.map(({ post, call, note }) => {
+            {recentlyViewed.map(({ post, note }) => {
               if (post) {
                 return <RecentlyViewedPost key={post.id} onSelect={onClose} post={post} />
               } else if (note) {
                 return <RecentlyViewedNote key={note.id} onSelect={onClose} note={note} />
-              } else if (call) {
-                return <RecentlyViewedCall key={call.id} onSelect={onClose} call={call} />
               } else {
                 return null
               }

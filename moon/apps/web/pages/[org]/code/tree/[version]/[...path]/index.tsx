@@ -162,7 +162,7 @@ function TreeDetailPage() {
           {/* Resizer handle */}
           <div
             onMouseDown={handleMouseDown}
-            className='bg-border-primary h-full w-1 flex-shrink-0 cursor-col-resize transition-colors hover:bg-blue-400'
+            className='bg-border-primary h-full w-1 shrink-0 cursor-col-resize transition-colors hover:bg-blue-400'
             style={{ backgroundColor: isDragging ? '#60a5fa' : undefined }}
           />
 
@@ -174,7 +174,7 @@ function TreeDetailPage() {
               <CodeTable directory={directory} loading={!TreeCommitInfo} readmeContent={readmeContent?.data} />
             </div>
           ) : (
-            <div className='pb-18 bg-primary flex-1 overflow-hidden'>
+            <div className='bg-primary flex-1 overflow-hidden pb-18'>
               <NewCodeView currentPath={new_path} onClose={handleCloseClick} defaultType={newEntryType} />
             </div>
           )}
@@ -185,16 +185,7 @@ function TreeDetailPage() {
 }
 
 TreeDetailPage.getProviders = (
-  page:
-    | string
-    | number
-    | boolean
-    | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-    | Iterable<React.ReactNode>
-    | React.ReactPortal
-    | Promise<React.AwaitedReactNode>
-    | null
-    | undefined,
+  page: React.ReactNode,
   pageProps: React.JSX.IntrinsicAttributes & { children?: React.ReactNode | undefined }
 ) => {
   return (

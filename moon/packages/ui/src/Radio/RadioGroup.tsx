@@ -8,7 +8,7 @@ export function RadioGroup({ label, children, ...props }: React.PropsWithChildre
   return (
     <RadixRadioGroup.Root {...props} className={props.className}>
       {label && (
-        <span className='block cursor-default select-none text-sm font-medium leading-none tracking-tight'>
+        <span className='block cursor-default text-sm leading-none font-medium tracking-tight select-none'>
           {label}
         </span>
       )}

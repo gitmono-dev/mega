@@ -1,8 +1,7 @@
 import { DependencyList } from 'react'
 import { useShortcut } from '@shopify/react-shortcuts'
 // eslint-disable-next-line no-restricted-imports
-import { Options, useHotkeys } from 'react-hotkeys-hook'
-import { HotkeyCallback, Keys } from 'react-hotkeys-hook/dist/types'
+import { useHotkeys, type HotkeyCallback, type Keys, type Options } from 'react-hotkeys-hook'
 
 import { useIsTopLayer } from '.'
 

@@ -88,7 +88,7 @@ export function GalleryThumbnail({ attachment, size }: { attachment: Attachment;
           controls={false}
           preload='auto'
           draggable={false}
-          className='focus:online-none h-full w-full bg-black object-cover focus:border-0 focus-visible:outline-none'
+          className='focus:online-none h-full w-full bg-black object-cover focus:border-0 focus-visible:outline-hidden'
           onError={handleError}
         >
           <source src={src} type={'video/mp4'} />

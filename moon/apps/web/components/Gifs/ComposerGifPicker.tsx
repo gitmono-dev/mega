@@ -7,7 +7,7 @@ import { MarkdownEditorRef } from '../MarkdownEditor'
 interface ComposerGifPickerProps {
   open?: boolean
   onOpenChange?: (value: boolean) => void
-  editorRef: React.RefObject<MarkdownEditorRef>
+  editorRef: React.RefObject<MarkdownEditorRef | null>
   disabled?: boolean
 }
 

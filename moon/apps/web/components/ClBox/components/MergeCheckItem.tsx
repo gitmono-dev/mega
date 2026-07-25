@@ -14,8 +14,8 @@ export function MergeCheckItem({ check }: { check: TaskData }) {
 
   return (
     <div className='hover:bg-tertiary flex items-center rounded-md p-2'>
-      <Icon className={`h-5 w-5 flex-shrink-0 ${className}`} />
-      <div className='ml-3 flex-grow'>
+      <Icon className={`h-5 w-5 shrink-0 ${className}`} />
+      <div className='ml-3 grow'>
         <span className='text-primary font-semibold'>{check.repo_name}</span>
         {check.arguments && <span className='text-tertiary ml-2 text-sm'>{check.arguments}</span>}
       </div>

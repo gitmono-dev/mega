@@ -3,7 +3,7 @@ import { RefObject, useEffect, useState } from 'react'
 import { getImmediateScrollableNode } from '@/utils/scroll'
 
 interface UseAutoScrollOptions {
-  ref: RefObject<HTMLElement>
+  ref: RefObject<HTMLElement | null>
   enabled?: boolean
 }
 

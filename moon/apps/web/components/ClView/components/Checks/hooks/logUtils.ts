@@ -32,7 +32,6 @@ const ERROR_LINE_PATTERNS: RegExp[] = [
 ]
 
 function stripAnsiSequences(line: string): string {
-  // eslint-disable-next-line no-control-regex -- strip SGR for pattern matching only
   return line.replace(/\x1b\[[0-9;?]*m/g, '')
 }
 

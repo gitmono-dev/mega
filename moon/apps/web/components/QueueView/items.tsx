@@ -88,7 +88,7 @@ export const QueueItemsList: React.FC<QueueItemsListProps> = ({ items, stats, is
   }
 
   const header = (
-    <BreadcrumbTitlebarContainer className='bg-secondary justify-between pl-3 pr-3'>
+    <BreadcrumbTitlebarContainer className='bg-secondary justify-between pr-3 pl-3'>
       <div className='flex items-center gap-3'>
         <GitPullRequestClosedIcon />
         <span className='p-2 font-medium'>{sortedItems.length} Queued</span>

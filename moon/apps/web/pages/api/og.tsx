@@ -23,7 +23,19 @@ export default async function handler(request: Request) {
   ])
 
   return new ImageResponse(
-    (
+    <div
+      style={{
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        flexWrap: 'nowrap',
+        backgroundColor: 'white'
+      }}
+    >
+      <BackgroundSVG />
       <div
         style={{
           height: '100%',
@@ -33,62 +45,48 @@ export default async function handler(request: Request) {
           justifyContent: 'center',
           flexDirection: 'column',
           flexWrap: 'nowrap',
-          backgroundColor: 'white'
+          padding: '64px'
         }}
       >
-        <BackgroundSVG />
         <div
           style={{
-            height: '100%',
-            width: '100%',
             display: 'flex',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             justifyContent: 'center',
-            flexDirection: 'column',
-            flexWrap: 'nowrap',
-            padding: '64px'
+            flexDirection: 'row',
+            fontSize: 32,
+            fontFamily: '"Inter-Medium"',
+            lineHeight: '56px',
+            color: 'black'
           }}
         >
-          <div
+          <img
+            src={orgAvatar}
+            width='56'
+            height='56'
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              fontSize: 32,
-              fontFamily: '"Inter-Medium"',
-              lineHeight: '56px',
-              color: 'black'
+              borderRadius: '8px',
+              marginRight: '20px'
             }}
-          >
-            <img
-              src={orgAvatar}
-              width='56'
-              height='56'
-              style={{
-                borderRadius: '8px',
-                marginRight: '20px'
-              }}
-            />
-            <strong>{org}</strong>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              fontSize: 56,
-              fontFamily: '"Inter-Bold"',
-              color: 'black',
-              lineHeight: '1.2em',
-              maxHeight: '3.6em',
-              overflow: 'hidden',
-              marginTop: '32px'
-            }}
-          >
-            <strong>{title}</strong>
-          </div>
+          />
+          <strong>{org}</strong>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            fontSize: 56,
+            fontFamily: '"Inter-Bold"',
+            color: 'black',
+            lineHeight: '1.2em',
+            maxHeight: '3.6em',
+            overflow: 'hidden',
+            marginTop: '32px'
+          }}
+        >
+          <strong>{title}</strong>
         </div>
       </div>
-    ),
+    </div>,
     {
       width: 1200,
       height: 630,

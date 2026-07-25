@@ -151,7 +151,11 @@ const SSHKeys = () => {
               <LoadingSpinner />
             </div>
           ) : (
-            <div>{sshKeys?.map((key) => <SshKeyItem key={key.id} keyData={key} />)}</div>
+            <div>
+              {sshKeys?.map((key) => (
+                <SshKeyItem key={key.id} keyData={key} />
+              ))}
+            </div>
           )}
         </section>
       </div>

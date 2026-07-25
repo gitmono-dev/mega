@@ -24,7 +24,7 @@ export function CoverPhotoPreview(props: Props) {
         <button
           onClick={onRemove}
           type='button'
-          className='bg-primary absolute -bottom-2 -right-2 flex translate-y-0 cursor-pointer items-center justify-center rounded-full p-2 shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg'
+          className='bg-primary absolute -right-2 -bottom-2 flex translate-y-0 cursor-pointer items-center justify-center rounded-full p-2 shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg'
         >
           <TrashIcon />
         </button>

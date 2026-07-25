@@ -13,7 +13,8 @@ import {
   Schema
 } from '@tiptap/pm/model'
 import MarkdownIt from 'markdown-it'
-import Token from 'markdown-it/lib/token'
+
+import { MarkdownItToken as Token } from '../types/markdown-it'
 
 function maybeMerge(a: Node, b: Node): Node | undefined {
   if (a.isText && b.isText && Mark.sameSet(a.marks, b.marks)) return (a as any).withText(a.text! + b.text!)

@@ -203,7 +203,7 @@ function NoteBreadcrumbs({ note }: { note: Note }) {
             {note.project.private && <LockIcon size={16} className='text-tertiary' />}
           </Link>
 
-          <span className='-ml-1 -mr-0.5 inline-flex min-w-1 items-center'>
+          <span className='-mr-0.5 -ml-1 inline-flex min-w-1 items-center'>
             {note.viewer_can_edit && (
               <NoteSharePopover note={note} align='start'>
                 <Button size='sm' variant='plain' iconOnly accessibilityLabel='Move to channel' className='w-5'>

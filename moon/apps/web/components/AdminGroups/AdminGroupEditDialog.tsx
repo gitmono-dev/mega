@@ -251,7 +251,7 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
           <div className='flex items-center border-b border-gray-200 dark:border-gray-700'>
             <button className='relative px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400'>
               Basic Info
-              <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400'></div>
+              <div className='absolute right-0 bottom-0 left-0 h-0.5 bg-blue-600 dark:bg-blue-400'></div>
             </button>
             <button className='px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-400'>Permissions</button>
           </div>
@@ -283,7 +283,7 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
           <div className='flex items-center border-b border-gray-200 dark:border-gray-700'>
             <button className='relative px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400'>
               Basic Info
-              <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400'></div>
+              <div className='absolute right-0 bottom-0 left-0 h-0.5 bg-blue-600 dark:bg-blue-400'></div>
             </button>
             <button className='px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-400'>Permissions</button>
           </div>
@@ -334,7 +334,7 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
           >
             Basic Info
             {activeTab === 'basic' && (
-              <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400'></div>
+              <div className='absolute right-0 bottom-0 left-0 h-0.5 bg-blue-600 dark:bg-blue-400'></div>
             )}
           </button>
           <button
@@ -347,7 +347,7 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
           >
             Permissions
             {activeTab === 'resources' && (
-              <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400'></div>
+              <div className='absolute right-0 bottom-0 left-0 h-0.5 bg-blue-600 dark:bg-blue-400'></div>
             )}
           </button>
         </div>
@@ -391,7 +391,7 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder='Enter group description'
                     rows={3}
-                    className='w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                    className='w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
                   />
                 </div>
               </div>
@@ -409,27 +409,27 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
                 </div>
               ) : (
                 <>
-                  <div className='overflow-hidden rounded-lg border border-gray-200 shadow-sm dark:border-gray-700'>
+                  <div className='overflow-hidden rounded-lg border border-gray-200 shadow-xs dark:border-gray-700'>
                     <div className='overflow-x-auto'>
                       <table className='w-full min-w-full table-fixed'>
                         <thead className='border-b border-gray-200 bg-gradient-to-b from-gray-50 to-gray-100 dark:border-gray-700 dark:from-gray-800 dark:to-gray-800/80'>
                           <tr>
-                            <th className='w-[32%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300'>
+                            <th className='w-[32%] px-4 py-3 text-left text-xs font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300'>
                               Resource
                             </th>
-                            <th className='w-[16%] px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300'>
+                            <th className='w-[16%] px-3 py-3 text-left text-xs font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300'>
                               Project
                             </th>
-                            <th className='w-[10%] px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300'>
+                            <th className='w-[10%] px-2 py-3 text-center text-xs font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300'>
                               Read
                             </th>
-                            <th className='w-[10%] px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300'>
+                            <th className='w-[10%] px-2 py-3 text-center text-xs font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300'>
                               Write
                             </th>
-                            <th className='w-[10%] px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300'>
+                            <th className='w-[10%] px-2 py-3 text-center text-xs font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300'>
                               Admin
                             </th>
-                            <th className='w-[22%] px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300'>
+                            <th className='w-[22%] px-3 py-3 text-center text-xs font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300'>
                               Actions
                             </th>
                           </tr>
@@ -559,7 +559,7 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
                                           <button
                                             onClick={() => handleSaveResourcePermission(resource.id)}
                                             disabled={isSaving || isDeleting}
-                                            className='inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600'
+                                            className='inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow-xs transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600'
                                             title='Save permissions for this resource'
                                           >
                                             {isSaving ? (

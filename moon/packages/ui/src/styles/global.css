@@ -1,6 +1,17 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import 'tailwindcss-safe-area';
+@import './theme.css';
+
+/* Scan UI package sources */
+@source '../**/*.{js,ts,jsx,tsx}';
+/* Scan web app sources (shared PostCSS pipeline) */
+@source '../../../../apps/web/pages/**/*.{js,ts,jsx,tsx}';
+@source '../../../../apps/web/components/**/*.{js,ts,jsx,tsx}';
+@source '../../../../apps/web/hooks/**/*.{js,ts,jsx,tsx}';
+@source '../../../../apps/web/utils/**/*.{js,ts,jsx,tsx}';
+@source '../../../../apps/web/contexts/**/*.{js,ts,jsx,tsx}';
+/* Backend-injected highlight class */
+@source inline('bg-highlight');
 
 @media (prefers-color-scheme: dark) {
   body.sb-main-centered {
@@ -11,7 +22,7 @@
 @layer base {
   button,
   a {
-    @apply ring-2 ring-transparent focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 dark:focus-visible:ring-blue-600/40;
+    @apply ring-2 ring-transparent focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-100 focus-visible:outline-hidden dark:focus-visible:ring-blue-600/40;
     -webkit-app-region: no-drag;
   }
 
@@ -30,6 +41,8 @@
 
 @layer components {
   .prose {
+    font-size: 0.9375rem; /* former typography.DEFAULT.css.fontSize */
+
     h1,
     h2,
     h3,

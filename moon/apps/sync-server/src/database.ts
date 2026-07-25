@@ -1,7 +1,6 @@
 import { Database } from '@hocuspocus/extension-database'
 import { Document } from '@hocuspocus/server'
 import { TiptapTransformer } from '@hocuspocus/transformer'
-import * as Sentry from '@sentry/node'
 import { generateHTML, generateJSON } from '@tiptap/html'
 import { fromUint8Array, toUint8Array } from 'js-base64'
 import * as Y from 'yjs'
@@ -14,14 +13,14 @@ import { Context } from './types'
 const extensions = getNoteExtensions()
 
 export function sendVersionToConnections(document: Document, version: number) {
-  document.connections.forEach((connection) => {
-    const connectionSchemaVersion = connection.connection.context.schemaVersion ?? 0
+  document.getConnections().forEach((connection) => {
+    const connectionSchemaVersion = (connection.context as Context | undefined)?.schemaVersion ?? 0
 
     // Update connections to readOnly if the schema version is lower than the current version
-    connection.connection.readOnly = connectionSchemaVersion < version
+    connection.readOnly = connectionSchemaVersion < version
 
     // Send the schema version to the client
-    connection.connection.sendStateless(
+    connection.sendStateless(
       JSON.stringify({
         type: 'schema',
         version
@@ -45,20 +44,41 @@ export async function getResource({ token, id, type, organization }: GetResource
   }
 }
 
+function resolveContext(data: {
+  context?: Context
+  lastContext?: Context
+  requestParameters?: URLSearchParams
+}): Context | undefined {
+  const fromPayload = data.lastContext ?? data.context
+
+  if (fromPayload?.token && fromPayload.organization) {
+    return fromPayload
+  }
+
+  const organization = data.requestParameters?.get('organization') ?? fromPayload?.organization
+  const type = data.requestParameters?.get('type') ?? fromPayload?.type ?? null
+  const token = fromPayload?.token
+  const schemaVersion = fromPayload?.schemaVersion ?? 0
+
+  if (!token || !organization) return fromPayload
+
+  return { token, schemaVersion, organization, type }
+}
+
 export const database = new Database({
   /**
    * Fetch the document state from Campsite, or generate a new document from the existing
    * HTML if the document has never been edited before.
    */
   async fetch(data) {
-    const context: Context = data.context
+    const context = resolveContext(data)
 
     const id = data.documentName
-    const organization = data.requestParameters.get('organization')
-    const type = data.requestParameters.get('type')
+    const organization = context?.organization
+    const type = context?.type ?? null
 
     try {
-      if (!organization) return new Uint8Array()
+      if (!context?.token || !organization) return new Uint8Array()
 
       const state = await getResource({ token: context.token, id, type, organization })
 
@@ -79,16 +99,11 @@ export const database = new Database({
 
       return Y.encodeStateAsUpdate(ydoc)
     } catch (error) {
-      Sentry.setContext('document', {
-        id,
-        organization,
-        type
+      console.error('database.fetch failed', {
+        document: { id, organization, type },
+        schemaVersion: context?.schemaVersion,
+        error
       })
-      Sentry.setContext('context', {
-        schemaVersion: context.schemaVersion,
-        token: context.token
-      })
-      Sentry.captureException(error)
       throw error
     }
   },
@@ -97,14 +112,14 @@ export const database = new Database({
    * Store the document state in Campsite.
    */
   async store(data) {
-    const context: Context = data.context
+    const context = resolveContext(data)
 
     const id = data.documentName
-    const organization = data.requestParameters.get('organization')
-    const type = data.requestParameters.get('type')
+    const organization = context?.organization
+    const type = context?.type ?? null
 
     try {
-      if (!organization) return
+      if (!context?.token || !organization) return
 
       // Generate a state from the Yjs document
       const state = Y.encodeStateAsUpdate(data.document)
@@ -128,16 +143,11 @@ export const database = new Database({
         }
       )
     } catch (error) {
-      Sentry.setContext('document', {
-        id,
-        organization,
-        type
+      console.error('database.store failed', {
+        document: { id, organization, type },
+        schemaVersion: context?.schemaVersion,
+        error
       })
-      Sentry.setContext('context', {
-        schemaVersion: context.schemaVersion,
-        token: context.token
-      })
-      Sentry.captureException(error)
       throw error
     }
   }

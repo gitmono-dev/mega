@@ -32,7 +32,7 @@ export function CommentPreviewCard({ className, commentId }: Props) {
   }
 
   return (
-    <div className='bg-elevated min-h-22 relative flex w-full flex-col gap-2 overflow-hidden rounded-lg border p-3'>
+    <div className='bg-elevated relative flex min-h-22 w-full flex-col gap-2 overflow-hidden rounded-lg border p-3'>
       <Link href={comment.url} className='absolute inset-0 z-0' />
 
       <span className='text-tertiary not-prose flex items-center gap-1.5'>

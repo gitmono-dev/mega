@@ -83,7 +83,7 @@ export function OrgSettingsPageWrapper(props: Props) {
       </div>
 
       <main id='main' className='no-drag relative flex flex-1 flex-col overflow-y-auto'>
-        <div className='mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 pb-32 pt-8 lg:px-0'>{children}</div>
+        <div className='mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 pt-8 pb-32 lg:px-0'>{children}</div>
       </main>
     </>
   )

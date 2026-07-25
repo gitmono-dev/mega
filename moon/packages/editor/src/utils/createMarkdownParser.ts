@@ -1,8 +1,10 @@
 import { AnyExtension } from '@tiptap/core'
 import { Schema } from '@tiptap/pm/model'
 import MarkdownIt from 'markdown-it'
-import Token from 'markdown-it/lib/token'
 
+import '../types/tiptap-markdown'
+
+import { MarkdownItToken as Token } from '../types/markdown-it'
 import markdownItTasks from './markdownItTasks'
 import { MarkdownParser, ParseSpec } from './MarkdownParser'
 

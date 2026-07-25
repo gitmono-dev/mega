@@ -89,7 +89,9 @@ export function ChatHoverList({
 function ThreadsList({ threads }: { threads: MessageThread[] | undefined }) {
   return (
     <div className='scrollbar-hide flex max-h-[400px] flex-col overflow-y-auto overscroll-contain p-2'>
-      {threads?.map((thread) => <ExistingThreadListItem key={thread.id} thread={thread} />)}
+      {threads?.map((thread) => (
+        <ExistingThreadListItem key={thread.id} thread={thread} />
+      ))}
     </div>
   )
 }

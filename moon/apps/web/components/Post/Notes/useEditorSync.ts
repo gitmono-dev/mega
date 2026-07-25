@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { HocuspocusProvider } from '@hocuspocus/provider'
+import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import { toUint8Array } from 'js-base64'
 import * as Y from 'yjs'
 
@@ -21,6 +21,16 @@ interface Props {
   initialState: string | null | undefined
 }
 
+function buildSyncUrl(scope: string | string[] | undefined, resourceType: string) {
+  const params = new URLSearchParams({
+    schemaVersion: String(NOTE_SCHEMA_VERSION),
+    organization: String(scope ?? ''),
+    type: resourceType
+  })
+
+  return `${SYNC_URL}?${params.toString()}`
+}
+
 export function useEditorSync({ resourceId, resourceType, initialState }: Props) {
   const { scope } = useScope()
   const isLoggedIn = useCurrentUserIsLoggedIn()
@@ -40,9 +50,14 @@ export function useEditorSync({ resourceId, resourceType, initialState }: Props)
       document = ydoc
     }
 
+    const websocketProvider = new HocuspocusProviderWebsocket({
+      url: buildSyncUrl(scope, resourceType),
+      autoConnect: false
+    })
+
     return new HocuspocusProvider({
       document,
-      url: SYNC_URL,
+      websocketProvider,
       name: resourceId,
       token: () =>
         apiClient.users
@@ -53,12 +68,6 @@ export function useEditorSync({ resourceId, resourceType, initialState }: Props)
             apiErrorToast(error)
             return ''
           }),
-      connect: isLoggedIn,
-      parameters: {
-        schemaVersion: NOTE_SCHEMA_VERSION,
-        organization: scope,
-        type: resourceType
-      },
       onStateless: (data) => {
         const message = JSON.parse(data.payload)
 
@@ -82,16 +91,16 @@ export function useEditorSync({ resourceId, resourceType, initialState }: Props)
   })
 
   useEffect(() => {
-    if (!provider.isConnected) {
-      provider.connect()
+    if (isLoggedIn) {
+      void provider.connect()
+    } else {
+      provider.disconnect()
     }
 
     return () => {
-      if (provider.isConnected) {
-        provider.disconnect()
-      }
+      provider.disconnect()
     }
-  }, [provider])
+  }, [provider, isLoggedIn])
 
   return [provider, syncState, syncError] as const
 }

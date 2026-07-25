@@ -1,3 +1,5 @@
+@reference '../../../packages/ui/src/styles/reference.css';
+
 .ProseMirror {
   p.is-editor-empty:first-child:not(:has(post-search))::before {
     @apply text-quaternary pointer-events-none float-left h-0 content-[attr(data-placeholder)];
@@ -8,7 +10,7 @@
     @apply my-2.5 flex rounded-lg;
 
     > button {
-      @apply -ml-1 mr-1 h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 hover:opacity-70 dark:hover:bg-gray-700 dark:hover:text-gray-200;
+      @apply mr-1 -ml-1 h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 hover:opacity-70 dark:hover:bg-gray-700 dark:hover:text-gray-200;
 
       &::before {
         @apply relative -top-px block -rotate-90 transition-transform;
@@ -68,7 +70,7 @@
     content: attr(data-placeholder);
   }
 
-  .ProseMirror-widget:not(.collaboration-cursor__caret) {
+  .ProseMirror-widget:not(.collaboration-carets__caret) {
     @apply flex;
   }
 

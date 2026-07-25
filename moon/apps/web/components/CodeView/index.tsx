@@ -7,7 +7,6 @@ import { CommonResultVecTreeCommitItem } from '@gitmono/types/generated'
 import { useGetBlob } from '@/hooks/useGetBlob'
 import { useGetTreeCommitInfo } from '@/hooks/useGetTreeCommitInfo'
 
-// import CodeViewHeader from './CodeViewHeader'
 import SpinnerTable from './TableWithLoading'
 
 export default function CodeView() {
@@ -19,11 +18,5 @@ export default function CodeView() {
   const reqPath = `/README.md`
   const { data: readmeContent } = useGetBlob({ path: reqPath })
 
-  // return <SpinnerTable isLoading={!TreeCommitInfo} datasource={directory} content={readmeContent?.data} />
-  return (
-    <>
-      {/*<CodeViewHeader />*/}
-      <SpinnerTable isLoading={!TreeCommitInfo} datasource={directory} content={readmeContent?.data} />
-    </>
-  )
+  return <SpinnerTable isLoading={!TreeCommitInfo} datasource={directory} content={readmeContent?.data} />
 }

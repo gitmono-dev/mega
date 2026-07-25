@@ -180,7 +180,7 @@ const COMMANDS: CommandItemProps[] = [
   },
   {
     title: 'Reference',
-    searchTerms: ['link', 'reference', 'post', 'call', 'doc'],
+    searchTerms: ['link', 'reference', 'post', 'doc'],
     icon: <PostIcon />,
     command: ({ editor, range }: CommandProps) => editor.chain().focus().deleteRange(range).insertContent('+').run(),
     kbd: '+'

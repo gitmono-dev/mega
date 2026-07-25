@@ -76,7 +76,7 @@ export function WorkWithChatDialog() {
               onFocus={handleFocus}
               onBlur={handleBlur}
               placeholder=''
-              className={`w-full resize-none border-0 bg-transparent text-sm focus:outline-none focus:ring-0 ${
+              className={`w-full resize-none border-0 bg-transparent text-sm focus:ring-0 focus:outline-hidden ${
                 isShowingHint ? 'text-quaternary' : 'text-primary'
               }`}
               style={{
@@ -88,7 +88,7 @@ export function WorkWithChatDialog() {
           </div>
 
           {/* Bottom toolbar */}
-          <div className='absolute bottom-3 left-3 right-3 flex items-center justify-between'>
+          <div className='absolute right-3 bottom-3 left-3 flex items-center justify-between'>
             {/* Left side icons */}
             <div className='flex items-center gap-2'>
               <Button
@@ -123,7 +123,7 @@ export function WorkWithChatDialog() {
                 >
                   {autoMode}
                 </Button>
-                <div className='absolute -right-1 -top-1 h-2 w-2 rounded-full bg-green-500' />
+                <div className='absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500' />
               </div>
 
               {/* Magic wand icon */}

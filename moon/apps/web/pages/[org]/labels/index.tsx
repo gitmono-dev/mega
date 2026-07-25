@@ -1,14 +1,4 @@
-import React, {
-  AwaitedReactNode,
-  JSX,
-  ReactElement,
-  ReactNode,
-  ReactPortal,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState
-} from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { XIcon } from '@primer/octicons-react'
 import { useAtom } from 'jotai'
 import { useRouter } from 'next/router'
@@ -152,7 +142,7 @@ function LabelsPage() {
           <div className='flex min-h-[35px] items-center gap-2'>
             <div className='relative flex flex-1 flex-row items-center gap-2 overflow-hidden rounded-md border border-gray-300 px-2 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500'>
               <input
-                className='flex-1 border-none bg-transparent p-0 text-sm outline-none ring-0 focus:ring-0'
+                className='flex-1 border-none bg-transparent p-0 text-sm ring-0 outline-hidden focus:ring-0'
                 placeholder='Search...'
                 role='searchbox'
                 autoComplete='off'
@@ -200,7 +190,7 @@ function LabelsPage() {
             isLoading={isLoading}
             lists={labelList}
             header={
-              <BreadcrumbTitlebarContainer className='justify-between bg-gray-100 pl-3 pr-3'>
+              <BreadcrumbTitlebarContainer className='justify-between bg-gray-100 pr-3 pl-3'>
                 <span className='p-2 font-medium'>{numTotal} labels</span>
               </BreadcrumbTitlebarContainer>
             }
@@ -250,17 +240,8 @@ function LabelsPage() {
 }
 
 LabelsPage.getProviders = (
-  page:
-    | string
-    | number
-    | boolean
-    | ReactElement
-    | Iterable<ReactNode>
-    | ReactPortal
-    | Promise<AwaitedReactNode>
-    | null
-    | undefined,
-  pageProps: JSX.IntrinsicAttributes & { children?: ReactNode }
+  page: React.ReactNode,
+  pageProps: React.JSX.IntrinsicAttributes & { children?: React.ReactNode }
 ) => {
   return (
     <AuthAppProviders {...pageProps}>

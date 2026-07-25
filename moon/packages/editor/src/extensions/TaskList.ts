@@ -1,10 +1,10 @@
-import { TaskList as TiptapTaskList } from '@tiptap/extension-task-list'
+import { TaskList as TiptapTaskList } from '@tiptap/extension-list'
 
 import { createMarkdownParserSpec } from '../utils/createMarkdownParser'
 
 export const TaskList = TiptapTaskList.extend({
   markdownParseSpec() {
-    return createMarkdownParserSpec({ block: TaskList.name })
+    return createMarkdownParserSpec({ block: TiptapTaskList.name })
   },
 
   markdownToken: 'task_list'

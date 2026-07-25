@@ -13,7 +13,7 @@ export const highlightedCommandItemStyles = ({
   disablePointerSelection?: boolean
 } = {}) =>
   cn(
-    'text-primary scroll-m-1 flex cursor-pointer select-none items-center rounded-lg px-2 text-[15px] outline-none ease-in-out will-change-[background,_color]',
+    'text-primary scroll-m-1 flex cursor-pointer select-none items-center rounded-lg px-2 text-[15px] outline-hidden ease-in-out will-change-[background,_color]',
     {
       'transition-all ease-out duration-150': modality === 'cursor',
       'hover:bg-black/[0.025] group-hover:bg-black/[0.025] hover:dark:bg-white/5 group-hover:dark:bg-white/5':

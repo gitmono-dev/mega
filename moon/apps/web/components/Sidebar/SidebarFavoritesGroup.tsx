@@ -24,7 +24,7 @@ export function SidebarFavoritesGroup() {
   const [collapsed, setCollapsed] = useScopedStorage('sidebar-favorites-collapsed', false)
   const [draggingId, setDraggingId] = useState<undefined | string>()
   const [hoveredId, setHoveredId] = useState<undefined | string>()
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLUListElement>(null)
 
   if (isLoading) return null
 
@@ -107,7 +107,7 @@ export function SidebarFavoritesGroup() {
                 })}
               >
                 {!collapsed && (
-                  <span className='text-quaternary absolute -left-[11px] top-1/2 -translate-y-1/2 cursor-move opacity-0 group-hover/reorder-item:opacity-100 group-has-[[data-state="open"]]/reorder-item:opacity-100'>
+                  <span className='text-quaternary absolute top-1/2 -left-[11px] -translate-y-1/2 cursor-move opacity-0 group-hover/reorder-item:opacity-100 group-has-[[data-state="open"]]/reorder-item:opacity-100'>
                     <ReorderDotsIcon strokeWidth='2' size={16} />
                   </span>
                 )}

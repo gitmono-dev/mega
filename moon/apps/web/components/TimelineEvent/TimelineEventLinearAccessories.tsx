@@ -59,7 +59,7 @@ function TimelineEventLinearIssueLink({
           <span style={{ color: externalRecord.linear_issue_state.color }} className='mx-0.5'>
             <TimelineEventLinearIssueIcon
               externalRecord={externalRecord}
-              className='size-4.5 -mt-px mr-px inline shrink-0'
+              className='-mt-px mr-px inline size-4.5 shrink-0'
             />
           </span>
         </Tooltip>

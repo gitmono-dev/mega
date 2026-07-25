@@ -73,7 +73,7 @@ export function ClientsTable({
         header: 'Start Time',
         field: 'start_time',
         width: showLogsAction ? '16%' : '18%',
-        renderCell: (row: Row) => <div className='whitespace-normal break-words'>{formatDateTime(row.start_time)}</div>
+        renderCell: (row: Row) => <div className='break-words whitespace-normal'>{formatDateTime(row.start_time)}</div>
       },
       {
         header: 'Last Heartbeat',
@@ -81,7 +81,7 @@ export function ClientsTable({
         width: showLogsAction ? '18%' : '22%',
         renderCell: (row: Row) => (
           <div className='flex flex-col gap-0.5 leading-tight'>
-            <div className='whitespace-normal break-words'>{formatDateTime(row.last_heartbeat)}</div>
+            <div className='break-words whitespace-normal'>{formatDateTime(row.last_heartbeat)}</div>
             <UIText color='text-muted' size='text-xs' className='whitespace-nowrap'>
               {formatRelative(row.last_heartbeat)}
             </UIText>
@@ -95,7 +95,7 @@ export function ClientsTable({
             options={statusOptions}
             onChange={(v) => onStatusChange(v as OrionClientStatus | 'all')}
           >
-            <SelectTrigger className='text-muted-foreground h-auto w-full justify-start gap-1 !border-none !bg-transparent p-0 text-[11px] font-semibold uppercase !shadow-none ring-0 focus:outline-none focus:ring-0'>
+            <SelectTrigger className='text-muted-foreground h-auto w-full justify-start gap-1 !border-none !bg-transparent p-0 text-[11px] font-semibold uppercase !shadow-none ring-0 focus:ring-0 focus:outline-hidden'>
               <SelectValue placeholder='Status' />
             </SelectTrigger>
           </Select>
@@ -138,7 +138,7 @@ export function ClientsTable({
   const isEmpty = !rows || rows.length === 0
 
   return (
-    <div className='border-border overflow-hidden rounded-md border [&_table]:w-full [&_table]:table-fixed [&_tbody_tr:last-child]:border-b-0 [&_tbody_tr]:border-b [&_td]:py-4 [&_th]:py-4 [&_thead_tr]:border-b'>
+    <div className='border-border overflow-hidden rounded-md border [&_table]:w-full [&_table]:table-fixed [&_tbody_tr]:border-b [&_tbody_tr:last-child]:border-b-0 [&_td]:py-4 [&_th]:py-4 [&_thead_tr]:border-b'>
       <DataTable aria-label='Orion clients' data={rows} columns={columns as any} />
       {isEmpty ? (
         <div className='border-border flex h-40 items-center justify-center border-t'>

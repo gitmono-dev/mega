@@ -11,7 +11,7 @@ interface QueueStatsCardProps {
 export const QueueStatsCard: React.FC<QueueStatsCardProps> = ({ stats, isLoading }) => {
   if (isLoading) {
     return (
-      <div className='border-primary bg-primary rounded-lg border p-4 shadow-sm'>
+      <div className='border-primary bg-primary rounded-lg border p-4 shadow-xs'>
         <div className='animate-pulse'>
           <div className='bg-secondary mb-3 h-4 w-32 rounded'></div>
           <div className='space-y-3'>
@@ -26,7 +26,7 @@ export const QueueStatsCard: React.FC<QueueStatsCardProps> = ({ stats, isLoading
 
   return (
     <div className='flex flex-col gap-3'>
-      <div className='border-primary bg-primary rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md'>
+      <div className='border-primary bg-primary rounded-lg border p-4 shadow-xs transition-shadow hover:shadow-md'>
         <div className='mb-3 flex items-center justify-between'>
           <span className='text-tertiary text-xs font-semibold tracking-wide'>Merge Count</span>
         </div>
@@ -43,7 +43,7 @@ export const QueueStatsCard: React.FC<QueueStatsCardProps> = ({ stats, isLoading
       </div>
 
       {(stats.waiting_count > 0 || stats.testing_count > 0 || stats.merging_count > 0 || stats.failed_count > 0) && (
-        <div className='border-primary bg-primary rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md'>
+        <div className='border-primary bg-primary rounded-lg border p-4 shadow-xs transition-shadow hover:shadow-md'>
           <div className='space-y-2.5'>
             {/* Merging */}
             {stats.merging_count > 0 && (

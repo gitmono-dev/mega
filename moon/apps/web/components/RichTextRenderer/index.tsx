@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import * as Sentry from '@sentry/nextjs'
 import { Extensions, generateJSON, JSONContent } from '@tiptap/core'
 
 import { ErrorBoundary } from '@gitmono/ui'
@@ -43,8 +42,8 @@ function RenderBlock({
   node: JSONContent
   extensions: Extensions
   options?: PostHandlersOptions
-}): JSX.Element {
-  const children: JSX.Element[] = []
+}): React.JSX.Element {
+  const children: React.JSX.Element[] = []
 
   node.content &&
     node.content.forEach((child, ix) => {
@@ -118,7 +117,7 @@ function RenderBlock({
       return <RelativeTime {...props} />
     default:
       // unlikely that we reach this since every TipTap node should have a type
-      Sentry.captureException(new Error(`Missing node type in RichTextRenderer`), { extra: { node } })
+      console.error('Missing node type in RichTextRenderer', { node })
 
       return <></>
   }

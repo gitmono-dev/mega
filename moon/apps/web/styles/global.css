@@ -1,17 +1,15 @@
 @import '@primer/primitives/dist/css/functional/themes/light.css';
 @import '@primer/primitives/dist/css/functional/themes/dark.css';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@reference '../../../packages/ui/src/styles/reference.css';
 
 html {
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
   -moz-tab-size: 4;
   tab-size: 4;
-  font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-    'Noto Color Emoji';
+  font-family:
+    ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   font-feature-settings: normal;
   font-variation-settings: normal;
 }
@@ -58,63 +56,65 @@ html {
   .light .dark .invert-color-theme {
     @apply text-primary;
 
-    --text-blue: theme(colors.blue.700);
-    --tag-border: theme(colors.neutral.100);
-    --tag-bg: theme(colors.black / 0.08);
-    --tag-focus: 0px 0px 0px 1px theme(colors.blue.500), 0px 0px 0px 3px theme(colors.blue.500 / 0.15);
+    --text-blue: theme(--color-blue-700);
+    --tag-border: theme(--color-neutral-100);
+    --tag-bg: theme(--color-black / 8%);
+    --tag-focus: 0px 0px 0px 1px theme(--color-blue-500), 0px 0px 0px 3px theme(--color-blue-500 / 15%);
 
-    --text-light: theme(colors.gray.50);
-    --text-dark: theme(colors.gray.900);
-    --text-light-secondary: theme(colors.gray.600);
-    --text-dark-secondary: theme(colors.gray.400);
+    --text-light: theme(--color-gray-50);
+    --text-dark: theme(--color-gray-900);
+    --text-light-secondary: theme(--color-gray-600);
+    --text-dark-secondary: theme(--color-gray-400);
 
-    --text-primary: theme(colors.gray.900);
-    --text-secondary: theme(colors.gray.600);
-    --text-tertiary: theme(colors.gray.500);
-    --text-quaternary: theme(colors.gray.400);
-    --text-primary-action: theme(colors.white);
-    --text-highlight: theme(colors.yellow.900);
+    --text-primary: theme(--color-gray-900);
+    --text-secondary: theme(--color-gray-600);
+    --text-tertiary: theme(--color-gray-500);
+    --text-quaternary: theme(--color-gray-400);
+    --text-primary-action: theme(--color-white);
+    --text-highlight: theme(--color-yellow-900);
 
-    --bg-main: theme(colors.gray.50);
+    --bg-main: theme(--color-gray-50);
 
-    --bg-primary-action: theme(colors.gray.900);
-    --bg-primary-action-hover: theme(colors.gray.750);
-    --bg-secondary-action: theme(colors.gray.200);
-    --bg-tertiary-action: theme(colors.white);
+    --bg-primary-action: theme(--color-gray-900);
+    --bg-primary-action-hover: theme(--color-gray-750);
+    --bg-secondary-action: theme(--color-gray-200);
+    --bg-tertiary-action: theme(--color-white);
 
-    --bg-button: theme(colors.white);
+    --bg-button: theme(--color-white);
 
-    --bg-primary: theme(colors.white);
-    --bg-secondary: theme(colors.gray.50);
-    --bg-tertiary: theme(colors.gray.100);
-    --bg-quaternary: theme(colors.gray.150);
-    --bg-elevated: theme(colors.white);
-    --bg-react-select: theme(colors.white);
-    --bg-highlight: theme(colors.yellow.500 / 20%);
+    --bg-primary: theme(--color-white);
+    --bg-secondary: theme(--color-gray-50);
+    --bg-tertiary: theme(--color-gray-100);
+    --bg-quaternary: theme(--color-gray-150);
+    --bg-elevated: theme(--color-white);
+    --bg-react-select: theme(--color-white);
+    --bg-highlight: theme(--color-yellow-500 / 20%);
 
     --grad-primary-rgb: 255, 255, 255;
 
-    --border-primary: theme(colors.black / 0.1);
-    --border-primary-opaque: theme(colors.gray.200);
-    --border-secondary: theme(colors.black / 0.07);
-    --border-secondary-opaque: theme(colors.gray.150);
-    --border-tertiary: theme(colors.black / 0.04);
+    --border-primary: theme(--color-black / 10%);
+    --border-primary-opaque: theme(--color-gray-200);
+    --border-secondary: theme(--color-black / 7%);
+    --border-secondary-opaque: theme(--color-gray-150);
+    --border-tertiary: theme(--color-black / 4%);
 
-    --scrollbar-color: theme(colors.gray.400 / 0.8);
+    --scrollbar-color: theme(--color-gray-400 / 80%);
 
     --base-shadow-color: rgb(0 0 0 / 0.05);
 
     --button-drop-shadow: rgb(0 0 0 / 0);
-    --button-shadow: inset 0px 1px 0px 0px rgb(255 255 255 / 1), 0px 0px 0px 1px rgb(0 0 0 / 0.06),
-      0px 1px 0px 0px rgb(0 0 0 / 0.08), 0px 2px 2px 0px rgb(0 0 0 / 0.04), 0px 3px 3px 0px rgb(0 0 0 / 0.02),
-      0px 4px 4px 0px rgb(0 0 0 / 0.01);
-    --popover-shadow: 0px 0px 3.6px rgba(0, 0, 0, 0.04), 0px 0px 10px rgba(0, 0, 0, 0.04),
-      0px 0px 24.1px rgba(0, 0, 0, 0.05), 0px 0px 80px rgba(0, 0, 0, 0.08);
-    --dropdown-item-shadow: inset 0px 1px 0px rgb(255 255 255 / 0.02), inset 0px 0px 0px 1px rgb(255 255 255 / 0.02),
+    --button-shadow:
+      inset 0px 1px 0px 0px rgb(255 255 255 / 1), 0px 0px 0px 1px rgb(0 0 0 / 0.06), 0px 1px 0px 0px rgb(0 0 0 / 0.08),
+      0px 2px 2px 0px rgb(0 0 0 / 0.04), 0px 3px 3px 0px rgb(0 0 0 / 0.02), 0px 4px 4px 0px rgb(0 0 0 / 0.01);
+    --popover-shadow:
+      0px 0px 3.6px rgba(0, 0, 0, 0.04), 0px 0px 10px rgba(0, 0, 0, 0.04), 0px 0px 24.1px rgba(0, 0, 0, 0.05),
+      0px 0px 80px rgba(0, 0, 0, 0.08);
+    --dropdown-item-shadow:
+      inset 0px 1px 0px rgb(255 255 255 / 0.02), inset 0px 0px 0px 1px rgb(255 255 255 / 0.02),
       0px 1px 2px rgb(0 0 0 / 0.12), 0px 2px 4px rgb(0 0 0 / 0.08), 0px 0px 0px 0.5px rgb(0 0 0 / 0.24);
-    --button-base-shadow: 0px 1px 1px -1px rgb(0 0 0 / 0.08), 0px 2px 2px -1px rgb(0 0 0 / 0.08),
-      0px 0px 0px 1px rgb(0 0 0 / 0.06), inset 0px 1px 0px #fff, inset 0px 1px 2px 1px #fff,
-      inset 0px 1px 2px rgb(0 0 0 / 0.06);
+    --button-base-shadow:
+      0px 1px 1px -1px rgb(0 0 0 / 0.08), 0px 2px 2px -1px rgb(0 0 0 / 0.08), 0px 0px 0px 1px rgb(0 0 0 / 0.06),
+      inset 0px 1px 0px #fff, inset 0px 1px 2px 1px #fff, inset 0px 1px 2px rgb(0 0 0 / 0.06);
 
     .bg-main,
     .bg-elevated {
@@ -127,7 +127,7 @@ html {
 
     .no-border-input input:focus,
     .no-border-input input:focus-visible {
-      @apply outline-none; /* Tailwind 内置类，去除默认轮廓 */
+      @apply outline-hidden; /* Tailwind 内置类，去除默认轮廓 */
       border-color: transparent !important;
       box-shadow: none !important;
     }
@@ -148,59 +148,63 @@ html {
   .dark .light .invert-color-theme {
     @apply text-primary;
 
-    --text-blue: theme(colors.blue.400);
-    --tag-border: theme(colors.neutral.700);
-    --tag-bg: theme(colors.neutral.600);
-    --tag-focus: 0px 0px 0px 1px theme(colors.blue.600), 0px 0px 0px 3px theme(colors.blue.600 / 0.15);
+    --text-blue: theme(--color-blue-400);
+    --tag-border: theme(--color-neutral-700);
+    --tag-bg: theme(--color-neutral-600);
+    --tag-focus: 0px 0px 0px 1px theme(--color-blue-600), 0px 0px 0px 3px theme(--color-blue-600 / 15%);
 
-    --text-primary: theme(colors.gray.100);
-    --text-secondary: theme(colors.gray.300);
-    --text-tertiary: theme(colors.gray.400);
-    --text-quaternary: theme(colors.gray.500);
-    --text-primary-action: theme(colors.gray.900);
-    --text-highlight: theme(colors.yellow.100);
+    --text-primary: theme(--color-gray-100);
+    --text-secondary: theme(--color-gray-300);
+    --text-tertiary: theme(--color-gray-400);
+    --text-quaternary: theme(--color-gray-500);
+    --text-primary-action: theme(--color-gray-900);
+    --text-highlight: theme(--color-yellow-100);
 
-    --bg-main: theme(colors.gray.950);
+    --bg-main: theme(--color-gray-950);
 
-    --bg-primary-action: theme(colors.white);
-    --bg-primary-action-hover: theme(colors.gray.150);
-    --bg-secondary-action: theme(colors.gray.700);
-    --bg-tertiary-action: theme(colors.gray.800);
+    --bg-primary-action: theme(--color-white);
+    --bg-primary-action-hover: theme(--color-gray-150);
+    --bg-secondary-action: theme(--color-gray-700);
+    --bg-tertiary-action: theme(--color-gray-800);
 
-    --bg-button: theme(colors.gray.750);
+    --bg-button: theme(--color-gray-750);
 
-    --bg-primary: theme(colors.gray.950);
-    --bg-secondary: theme(colors.gray.900);
-    --bg-tertiary: theme(colors.gray.800);
-    --bg-quaternary: theme(colors.gray.750);
-    --bg-elevated: theme(colors.gray.850);
-    --bg-react-select: theme(colors.gray.750);
+    --bg-primary: theme(--color-gray-950);
+    --bg-secondary: theme(--color-gray-900);
+    --bg-tertiary: theme(--color-gray-800);
+    --bg-quaternary: theme(--color-gray-750);
+    --bg-elevated: theme(--color-gray-850);
+    --bg-react-select: theme(--color-gray-750);
 
     --grad-primary-rgb: 13, 13, 13;
 
-    --border-primary: theme(colors.white / 0.12);
-    --border-primary-opaque: theme(colors.gray.750);
-    --border-secondary: theme(colors.white / 0.08);
-    --border-secondary-opaque: theme(colors.gray.800);
-    --border-tertiary: theme(colors.white / 0.06);
+    --border-primary: theme(--color-white / 12%);
+    --border-primary-opaque: theme(--color-gray-750);
+    --border-secondary: theme(--color-white / 8%);
+    --border-secondary-opaque: theme(--color-gray-800);
+    --border-tertiary: theme(--color-white / 6%);
 
-    --scrollbar-color: theme(colors.gray.500);
+    --scrollbar-color: theme(--color-gray-500);
 
     --base-shadow-color: rgb(0 0 0 / 0.16);
 
     --button-drop-shadow: rgb(0 0 0 / 0.4);
     --danger-drop-shadow: rgb(127 29 29 / 0.8);
-    --button-shadow: 0px -1px 0px 0px rgb(255 255 255 / 0.04), 0px 0px 0px 1px rgb(255 255 255 / 0.12),
+    --button-shadow:
+      0px -1px 0px 0px rgb(255 255 255 / 0.04), 0px 0px 0px 1px rgb(255 255 255 / 0.12),
       0px 0px 1px 0px rgb(0 0 0 / 0.04), 0px 2px 2px 0px rgb(0 0 0 / 0.04), 0px 4px 2px 0px rgb(0 0 0 / 0.04),
       0px 6px 3px 0px rgb(0 0 0 / 0.04);
-    --popover-shadow: 0px 0px 4px rgba(0, 0, 0, 0.08), 0px 0px 10px rgba(0, 0, 0, 0.12),
-      0px 0px 24px rgba(0, 0, 0, 0.16), 0px 0px 80px rgba(0, 0, 0, 0.2);
-    --button-base-shadow: 0px 0px 0px 0.5px rgb(0 0 0 / 0.4), 0px 1px 1px -1px rgb(0 0 0 / 0.12),
-      0px 2px 2px -1px rgb(0 0 0 / 0.12), inset 0px 0.5px 0px rgb(255 255 255 / 0.06),
-      inset 0px 0px 1px 0px rgb(255 255 255 / 0.16), inset 0px -6px 12px -4px rgb(0 0 0 / 0.16);
-    --button-primary-shadow: 0px 1px 1px -1px rgb(0 0 0 / 0.08), 0px 2px 2px -1px rgb(0 0 0 / 0.08),
-      0px 0px 0px 1px rgb(0 0 0 / 0.06), inset 0px 1px 0px #fff, inset 0px 0px 2px 1px #fff,
-      inset 0px 1px 2px rgb(0 0 0 / 0.06), inset 0px -4px 8px -4px rgb(0 0 0 / 0.06);
+    --popover-shadow:
+      0px 0px 4px rgba(0, 0, 0, 0.08), 0px 0px 10px rgba(0, 0, 0, 0.12), 0px 0px 24px rgba(0, 0, 0, 0.16),
+      0px 0px 80px rgba(0, 0, 0, 0.2);
+    --button-base-shadow:
+      0px 0px 0px 0.5px rgb(0 0 0 / 0.4), 0px 1px 1px -1px rgb(0 0 0 / 0.12), 0px 2px 2px -1px rgb(0 0 0 / 0.12),
+      inset 0px 0.5px 0px rgb(255 255 255 / 0.06), inset 0px 0px 1px 0px rgb(255 255 255 / 0.16),
+      inset 0px -6px 12px -4px rgb(0 0 0 / 0.16);
+    --button-primary-shadow:
+      0px 1px 1px -1px rgb(0 0 0 / 0.08), 0px 2px 2px -1px rgb(0 0 0 / 0.08), 0px 0px 0px 1px rgb(0 0 0 / 0.06),
+      inset 0px 1px 0px #fff, inset 0px 0px 2px 1px #fff, inset 0px 1px 2px rgb(0 0 0 / 0.06),
+      inset 0px -4px 8px -4px rgb(0 0 0 / 0.06);
 
     .bg-main,
     .bg-elevated {
@@ -263,12 +267,12 @@ body.grabbing * {
 
   [aria-haspopup='dialog']::after,
   [aria-haspopup='menu']::after {
-    @apply border-0 opacity-0 ring-0 !important;
+    @apply !border-0 !opacity-0 !ring-0;
   }
 
   button:focus-visible,
   a:focus-visible {
-    @apply border-transparent outline-none;
+    @apply border-transparent outline-hidden;
   }
 }
 
@@ -331,14 +335,14 @@ body.grabbing * {
   }
 
   .tweet {
-    --tweet-border: 1px solid theme(colors.black / 0.08);
+    --tweet-border: 1px solid theme(--color-black / 8%);
     --tweet-body-font-size: 15px;
     --tweet-body-line-height: 1.25rem;
     --tweet-quoted-body-font-size: 15px;
     --tweet-quoted-body-line-height: 1.25rem;
     --tweet-header-font-size: 15px;
-    --tweet-font-color-secondary: theme(colors.gray.500);
-    --tweet-color-blue-secondary: theme(colors.blue.500);
+    --tweet-font-color-secondary: theme(--color-gray-500);
+    --tweet-color-blue-secondary: theme(--color-blue-500);
     --tweet-quoted-body-margin: 0 0 0.5rem 0;
   }
 
@@ -351,7 +355,7 @@ body.grabbing * {
   }
 
   .dark .tweet {
-    --tweet-border: 1px solid theme(colors.white / 0.12);
+    --tweet-border: 1px solid theme(--color-white / 12%);
   }
 
   .tweet-media-max-height > div {
@@ -382,13 +386,13 @@ details summary::-webkit-details-marker {
 }
 
 .search-highlight {
-  @apply -mx-0.5 rounded-sm bg-amber-100 px-0.5 font-medium text-amber-900 dark:bg-amber-500/30 dark:text-amber-200;
+  @apply -mx-0.5 rounded-xs bg-amber-100 px-0.5 font-medium text-amber-900 dark:bg-amber-500/30 dark:text-amber-200;
 }
 
 /* cmdk does not provide access to heading components so apply styles to headings in wrapper classes */
 .command-menu {
   [cmdk-group-heading] {
-    @apply text-secondary flex h-10 select-none items-center px-2 text-xs;
+    @apply text-secondary flex h-10 items-center px-2 text-xs select-none;
   }
 }
 

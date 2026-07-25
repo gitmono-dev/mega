@@ -90,7 +90,7 @@ export function ResolveDialog({ postId, comment, open, onOpenChange }: Props) {
             {comment.body_html && (
               <HTMLRenderer
                 text={comment.body_html}
-                className='prose text-secondary line-clamp-3 w-full max-w-full text-sm focus:outline-none'
+                className='prose text-secondary line-clamp-3 w-full max-w-full text-sm focus:outline-hidden'
               />
             )}
           </div>

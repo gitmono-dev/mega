@@ -277,7 +277,7 @@ function BookmarkLink({ bookmark }: { bookmark: ProjectBookmark }) {
         href={bookmark.url}
         target={'_blank'}
         rel={'noopener noreferrer'}
-        className='first-line:h-7.5 text-tertiary hover:bg-quaternary hover:text-primary relative flex min-w-0 flex-1 items-center gap-2 rounded-md p-1.5 text-sm font-medium'
+        className='text-tertiary hover:bg-quaternary hover:text-primary relative flex min-w-0 flex-1 items-center gap-2 rounded-md p-1.5 text-sm font-medium first-line:h-7.5'
         draggable={false}
       >
         <span className='flex-none'>
@@ -324,7 +324,7 @@ function ProjectSidebarBookmarks({ project }: ProjectSidebarBookmarksProps) {
         </div>
 
         {bookmarks && !!bookmarks.length && (
-          <ul className='-ml-1.5 -mr-0.5 flex flex-col gap-0.5'>
+          <ul className='-mr-0.5 -ml-1.5 flex flex-col gap-0.5'>
             {bookmarks.map((bookmark) => (
               <BookmarkLink key={bookmark.id} bookmark={bookmark} />
             ))}

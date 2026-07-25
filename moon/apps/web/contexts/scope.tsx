@@ -6,7 +6,7 @@ import { SCOPE_COOKIE_NAME } from '@gitmono/config'
 
 interface State {
   scope: CookieValueTypes | undefined
-  setScope: (scope: CookieValueTypes) => void
+  setScope: (scope: CookieValueTypes | null | undefined) => void
 }
 interface ScopeProviderProps {
   children: React.ReactNode
@@ -15,13 +15,14 @@ interface ScopeProviderProps {
 const ScopeContext = createContext<State | undefined>(undefined)
 
 export function scopePathCookieName(scope: CookieValueTypes) {
-  return `last-path:${scope}`
+  // Cookie names must be RFC 6265 token chars; `:` is rejected by cookie@1+/cookies-next@4.
+  return `last-path.${scope}`
 }
 
-export const allowedSavedScopePaths = ['chat', 'inbox', 'notes', 'people', 'posts', 'projects', 'search', 'calls']
-export const disallowedScopePaths = ['calls/join']
+export const allowedSavedScopePaths = ['chat', 'inbox', 'notes', 'people', 'posts', 'projects', 'search']
+export const disallowedScopePaths: string[] = []
 
-function setScopeCookies(scope: CookieValueTypes, path: string) {
+function setScopeCookies(scope: CookieValueTypes | null | undefined, path: string) {
   if (!scope) return
 
   setCookie(SCOPE_COOKIE_NAME, scope, {
@@ -47,7 +48,7 @@ function setScopeCookies(scope: CookieValueTypes, path: string) {
 function ScopeProvider({ children }: ScopeProviderProps) {
   const router = useRouter()
   const org = router.query.org as string
-  const [scope, setScope] = useState<CookieValueTypes>(org)
+  const [scope, setScope] = useState<CookieValueTypes | undefined>(org)
 
   useEffect(() => {
     // router.query is an empty object on the first render
@@ -61,9 +62,9 @@ function ScopeProvider({ children }: ScopeProviderProps) {
     }
   }, [org, router.asPath, router.isReady])
 
-  const handleSetScope = useCallback((slug: CookieValueTypes) => {
+  const handleSetScope = useCallback((slug: CookieValueTypes | null | undefined) => {
     setScopeCookies(slug, Router.asPath)
-    setScope(slug)
+    setScope(slug ?? undefined)
   }, [])
 
   const activeScope = org || scope

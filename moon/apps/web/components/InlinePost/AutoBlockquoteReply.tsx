@@ -56,7 +56,7 @@ function InnerAutoBlockquoteReply({
   const [selectionRange, setSelectionRange] = useState<Range | null>(null)
   const [selectionHtml, setSelectionHtml] = useState<string>('')
   const [popoverContent, setPopoverContent] = useState<'menu' | 'composer' | 'closed'>('closed')
-  const pendingTextSelectionRef = useRef<NodeJS.Timeout>()
+  const pendingTextSelectionRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const selectionRectRef = useRef<{ getBoundingClientRect(): DOMRect } | null>(null)
 
   const closePopover = useCallback(() => {
@@ -93,7 +93,9 @@ function InnerAutoBlockquoteReply({
     onTextUnselected
   })
 
-  const anchor = <PopoverAnchor virtualRef={selectionRectRef} />
+  const anchor = (
+    <PopoverAnchor virtualRef={selectionRectRef as React.RefObject<{ getBoundingClientRect(): DOMRect }>} />
+  )
 
   return (
     <>
@@ -180,7 +182,7 @@ function InnerAutoBlockquoteReply({
             <PopoverContent align='center' collisionBoundary={closestScrollParent} forceMount>
               <m.div {...ANIMATION_CONSTANTS}>
                 <div
-                  className='bg-elevated flex w-[500px] max-w-[--radix-popover-content-available-width] origin-[--radix-popover-content-transform-origin] flex-col rounded-xl shadow-lg shadow-black/20 ring-1 ring-black/[0.04] dark:shadow-[inset_0px_1px_0px_rgba(255,255,255,0.04),_0px_2px_12px_rgba(0,0,0,0.4),_0px_0px_0px_1px_rgba(0,0,0,0.8)] dark:ring-white/[0.02]'
+                  className='bg-elevated flex w-[500px] max-w-[--radix-popover-content-available-width] origin-[--radix-popover-content-transform-origin] flex-col rounded-xl shadow-lg ring-1 shadow-black/20 ring-black/[0.04] dark:shadow-[inset_0px_1px_0px_rgba(255,255,255,0.04),_0px_2px_12px_rgba(0,0,0,0.4),_0px_0px_0px_1px_rgba(0,0,0,0.8)] dark:ring-white/[0.02]'
                   ref={composerRef}
                 >
                   <PostCommentComposer

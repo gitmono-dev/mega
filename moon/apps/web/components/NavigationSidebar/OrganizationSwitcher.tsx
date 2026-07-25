@@ -69,7 +69,7 @@ export function OrganizationSwitcher({ trigger }: { trigger?: React.ReactNode })
   }
 
   const defaultTrigger = (
-    <button className='hover:bg-quaternary relative flex cursor-pointer items-center justify-between gap-2 overflow-hidden rounded-md p-1.5 text-sm focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100'>
+    <button className='hover:bg-quaternary relative flex cursor-pointer items-center justify-between gap-2 overflow-hidden rounded-md p-1.5 text-sm focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-100 focus-visible:outline-hidden'>
       <OrganizationAvatarAndName organization={currentOrganization} />
       <div className='flex items-center gap-1'>
         {isMobile && otherOrgHasUnread && <div className='h-2 w-2 flex-none rounded-full bg-blue-500' />}
@@ -95,7 +95,7 @@ export function OrganizationSwitcher({ trigger }: { trigger?: React.ReactNode })
       rightSlot: hasMembershipRequests && (
         <Badge
           color='blue'
-          className='h-4.5 ml-1 flex bg-blue-500 font-mono text-white dark:bg-blue-500 dark:text-white'
+          className='ml-1 flex h-4.5 bg-blue-500 font-mono text-white dark:bg-blue-500 dark:text-white'
         >
           {membershipRequests?.data.length} {pluralize('request', membershipRequests?.data.length)}
         </Badge>
@@ -144,7 +144,7 @@ export function OrganizationSwitcher({ trigger }: { trigger?: React.ReactNode })
             <>
               {organization?.slug === COMMUNITY_SLUG && <GlobeIcon />}
               {unreadCount > 0 && (
-                <span className='ml-1 flex h-5 items-center justify-center self-center rounded-full bg-blue-500 px-2.5 font-mono text-[10px] font-semibold leading-none text-white'>
+                <span className='ml-1 flex h-5 items-center justify-center self-center rounded-full bg-blue-500 px-2.5 font-mono text-[10px] leading-none font-semibold text-white'>
                   {unreadCount}
                 </span>
               )}
@@ -186,7 +186,7 @@ export function OrganizationSwitcher({ trigger }: { trigger?: React.ReactNode })
             {otherOrgHasUnread && (
               <div
                 className={cn(
-                  'absolute -right-1 -top-1 z-10 h-2.5 w-2.5 flex-none rounded-full bg-blue-500 ring-4 ring-gray-50 dark:ring-gray-900',
+                  'absolute -top-1 -right-1 z-10 h-2.5 w-2.5 flex-none rounded-full bg-blue-500 ring-4 ring-gray-50 dark:ring-gray-900',
                   { 'right-5.5': !isMobile && memberships && memberships.length > 1 }
                 )}
               />

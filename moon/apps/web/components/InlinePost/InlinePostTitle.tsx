@@ -20,7 +20,7 @@ export function InlinePostTitle({ post, display }: InlinePostTitleProps) {
       <UIText
         selectable
         element='h2'
-        className='text-primary break-anywhere -mb-2 mt-4 text-[22px] font-bold leading-snug'
+        className='text-primary break-anywhere mt-4 -mb-2 text-[22px] leading-snug font-bold'
       >
         {post.title}
       </UIText>
@@ -29,7 +29,7 @@ export function InlinePostTitle({ post, display }: InlinePostTitleProps) {
 
   if (display === 'preview') {
     return (
-      <UIText selectable weight='font-semibold' className='-mb-3 mt-1 leading-snug' size='text-base'>
+      <UIText selectable weight='font-semibold' className='mt-1 -mb-3 leading-snug' size='text-base'>
         {post.title}
       </UIText>
     )
@@ -37,7 +37,7 @@ export function InlinePostTitle({ post, display }: InlinePostTitleProps) {
 
   if (display === 'feed') {
     return (
-      <UIText selectable className='text-primary -mb-4 mt-1 text-xl font-semibold leading-snug'>
+      <UIText selectable className='text-primary mt-1 -mb-4 text-xl leading-snug font-semibold'>
         {post.title}
       </UIText>
     )

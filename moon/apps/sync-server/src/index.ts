@@ -1,12 +1,11 @@
 import { Logger } from '@hocuspocus/extension-logger'
-import { Hocuspocus } from '@hocuspocus/server'
-import * as Sentry from '@sentry/node'
+import { Server } from '@hocuspocus/server'
 
 import { PORT } from './config'
 import { database, getResource, sendVersionToConnections } from './database'
 import { AuthenticationError, Context } from './types'
 
-const server = new Hocuspocus({
+const server = new Server({
   port: PORT,
 
   async onAuthenticate(data): Promise<Context> {
@@ -32,23 +31,20 @@ const server = new Hocuspocus({
       const document = data.instance.documents.get(data.documentName)
 
       if (document) sendVersionToConnections(document, state.description_schema_version)
-      data.connection.readOnly = schemaVersion < state.description_schema_version
+      data.connectionConfig.readOnly = schemaVersion < state.description_schema_version
 
       return {
         token: data.token,
-        schemaVersion
-      }
-    } catch (error) {
-      Sentry.setContext('document', {
-        id: data.documentName,
+        schemaVersion,
         organization,
         type
+      }
+    } catch (error) {
+      console.error('onAuthenticate failed', {
+        document: { id: data.documentName, organization, type },
+        schemaVersion,
+        error
       })
-      Sentry.setContext('context', {
-        schemaVersion: schemaVersion,
-        token: data.token
-      })
-      Sentry.captureException(error)
       throw error
     }
   },

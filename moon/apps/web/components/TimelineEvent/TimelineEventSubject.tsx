@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import { Project, TimelineEvent } from '@gitmono/types'
 import {
   ArchiveIcon,

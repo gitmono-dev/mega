@@ -72,7 +72,7 @@ export function SidebarChatSectionGroup() {
 
         <button
           onClick={() => setCreateDialogOpen(true)}
-          className='hover:bg-quaternary text-tertiary hover:text-primary group flex h-6 w-6 items-center justify-center rounded-md p-0.5 opacity-0 focus:outline-0 focus:ring-0 group-hover/chat:opacity-100 group-has-[[data-state="open"]]/chat:opacity-100'
+          className='hover:bg-quaternary text-tertiary hover:text-primary group flex h-6 w-6 items-center justify-center rounded-md p-0.5 opacity-0 group-hover/chat:opacity-100 group-has-[[data-state="open"]]/chat:opacity-100 focus:ring-0 focus:outline-0'
         >
           <PlusIcon size={16} strokeWidth='2' />
         </button>

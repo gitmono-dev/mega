@@ -89,8 +89,9 @@ const PopoverPortal = (props: PopoverPrimitive.PopoverPortalProps) => {
 
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content> & {
+  Omit<React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>, 'avoidCollisions'> & {
     addDismissibleLayer?: boolean
+    avoidCollisions?: boolean | 'flip' | 'autoPlacement'
   }
 >(
   (
@@ -129,7 +130,7 @@ const PopoverContent = React.forwardRef<
               context.sheet && 'bg-elevated pb-safe-offset-1 fixed inset-x-0 bottom-0 -mb-10 rounded-t-xl',
               !context.sheet && 'max-h-[--radix-popper-available-height] max-w-[--radix-popper-available-width]',
               CONTAINER_STYLES.animation,
-              '!outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0',
+              '!outline-hidden focus:ring-0 focus:outline-hidden focus-visible:ring-0 focus-visible:outline-hidden',
               className
             )}
             collisionPadding={collisionPadding}
@@ -166,7 +167,7 @@ function PopoverElementAnchor({ element, ...rest }: PopoverElementAnchorProps) {
   const ref = React.useRef(element)
 
   ref.current = element
-  return <PopoverAnchor virtualRef={ref} {...rest} />
+  return <PopoverAnchor virtualRef={ref as React.RefObject<{ getBoundingClientRect(): DOMRect }>} {...rest} />
 }
 
 export { Popover, PopoverAnchor, PopoverContent, PopoverElementAnchor, PopoverPortal, PopoverTrigger }

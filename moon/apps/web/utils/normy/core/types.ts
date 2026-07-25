@@ -3,7 +3,6 @@ export type DataPrimitive = string | number | boolean | null | undefined | Date
 export type DataPrimitiveArray = string[] | number[] | boolean[] | null[] | undefined[] | Date[]
 
 export interface DataObject {
-  // eslint-disable-next-line no-use-before-define
   [index: string]: Data
 }
 

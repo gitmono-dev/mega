@@ -19,7 +19,7 @@ import { chatThreadPlacementAtom, editModeAtom, shouldMinimizeComposerActionsAto
 import { ReactionPicker } from '../Reactions/ReactionPicker'
 
 interface ComposerActionsProps {
-  editorRef: React.RefObject<ComposerEditorRef>
+  editorRef: React.RefObject<ComposerEditorRef | null>
   onUpload: (files: File[]) => void
   dropzone: ReturnType<typeof useDropzone>
 }
@@ -33,11 +33,11 @@ export function ComposerActions({ editorRef, onUpload, dropzone }: ComposerActio
   if (threadPlacement === 'hovercard') return null
 
   return (
-    <div className='min-w-8.5 h-8.5 lg:pb-13 relative mb-0.5'>
+    <div className='relative mb-0.5 h-8.5 min-w-8.5 lg:pb-13'>
       <AnimatePresence mode='sync' initial={false}>
         {editMode ? (
           <m.div
-            className='h-8.5 w-8.5 absolute right-0 top-0 z-50 flex items-center justify-center'
+            className='absolute top-0 right-0 z-50 flex h-8.5 w-8.5 items-center justify-center'
             transition={{ type: 'spring', duration: 0.2, bounce: 0 }}
             key='cancel'
             initial={{ width: 0, opacity: 0 }}
@@ -58,7 +58,7 @@ export function ComposerActions({ editorRef, onUpload, dropzone }: ComposerActio
           </m.div>
         ) : !isLg && shouldMinimizeComposerActions ? (
           <m.div
-            className='h-8.5 w-8.5 absolute right-0 top-0 z-50 flex items-center justify-center'
+            className='absolute top-0 right-0 z-50 flex h-8.5 w-8.5 items-center justify-center'
             transition={{ type: 'spring', duration: 0.2, bounce: 0 }}
             key='show'
             initial={{ width: 0, opacity: 0 }}
@@ -78,7 +78,7 @@ export function ComposerActions({ editorRef, onUpload, dropzone }: ComposerActio
           </m.div>
         ) : (
           <m.div
-            className='min-w-8.5 flex'
+            className='flex min-w-8.5'
             key='actions'
             transition={{ type: 'spring', duration: 0.2, bounce: 0 }}
             initial={{ width: 0, opacity: 0, translateX: -32 }}

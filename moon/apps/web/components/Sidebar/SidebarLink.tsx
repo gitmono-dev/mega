@@ -100,7 +100,7 @@ export const SidebarLink = React.forwardRef<SidebarElement, SidebarLinkProps>(
             target={external ? '_blank' : undefined}
             rel={external ? 'noopener noreferrer' : undefined}
             className={cn(
-              'h-7.5 group-[[data-state="open"]]/sidebar-link:bg-quaternary group-[[data-state="open"]]/sidebar-link:text-primary relative flex w-full items-center gap-2 rounded-md p-1.5 font-medium',
+              'group-[[data-state="open"]]/sidebar-link:bg-quaternary group-[[data-state="open"]]/sidebar-link:text-primary relative flex h-7.5 w-full items-center gap-2 rounded-md p-1.5 font-medium',
               {
                 'text-primary dark:bg-gray-750 bg-quaternary': active,
                 'text-tertiary group-hover/sidebar-link:bg-quaternary group-hover/sidebar-link:text-primary': !active
@@ -144,7 +144,7 @@ export const SidebarLink = React.forwardRef<SidebarElement, SidebarLinkProps>(
             onClick={onClick}
             onMouseEnter={onMouseEnter}
             className={cn(
-              'h-7.5 group-[[data-state="open"]]/sidebar-link:bg-quaternary group-[[data-state="open"]]/sidebar-link:text-primary relative flex w-full items-center gap-2 rounded-md p-1.5 text-left font-medium',
+              'group-[[data-state="open"]]/sidebar-link:bg-quaternary group-[[data-state="open"]]/sidebar-link:text-primary relative flex h-7.5 w-full items-center gap-2 rounded-md p-1.5 text-left font-medium',
               {
                 'text-primary dark:bg-gray-750 bg-quaternary': active,
                 'text-tertiary group-hover/sidebar-link:bg-quaternary group-hover/sidebar-link:text-primary': !active
@@ -178,8 +178,8 @@ export const SidebarLink = React.forwardRef<SidebarElement, SidebarLinkProps>(
                 onRemove(id)
               }}
               className={cn(
-                'hover:text-primary bg-quaternary text-tertiary absolute right-0.5 top-1/2 z-[1] -translate-y-1/2 rounded p-1 opacity-0',
-                'focus:opacity-100 group-hover/sidebar-link:opacity-100 group-[[data-state="open"]]/sidebar-link:opacity-100'
+                'hover:text-primary bg-quaternary text-tertiary absolute top-1/2 right-0.5 z-[1] -translate-y-1/2 rounded p-1 opacity-0',
+                'group-hover/sidebar-link:opacity-100 group-[[data-state="open"]]/sidebar-link:opacity-100 focus:opacity-100'
               )}
             >
               <CloseIcon size={16} strokeWidth='2' />

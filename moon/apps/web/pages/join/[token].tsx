@@ -79,7 +79,7 @@ const JoinOrganizationPage: PageWithLayout<any> = () => {
       <div className='flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center'>
         <div className='relative flex-none'>
           <Avatar urls={organization.avatar_urls} rounded='rounded-lg' size='xl' name={organization.name} />
-          <div className='absolute -bottom-2.5 -right-2.5 rounded-full border-4 border-white dark:border-gray-950'>
+          <div className='absolute -right-2.5 -bottom-2.5 rounded-full border-4 border-white dark:border-gray-950'>
             <Avatar size='sm' name={currentUser?.display_name} urls={currentUser?.avatar_urls} />
           </div>
         </div>

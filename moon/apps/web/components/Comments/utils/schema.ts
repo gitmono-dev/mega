@@ -6,7 +6,7 @@ import { EMPTY_HTML } from '@/atoms/markdown'
 
 export const commentSchema = z.object({
   body_html: z.string(),
-  attachments: z.array(z.any() as unknown as z.Schema<Attachment>),
+  attachments: z.array(z.custom<Attachment>()),
   attachment_ids: z.array(z.string()),
   file_id: z.string().optional().nullable(),
   x: z.number().optional().nullable(),

@@ -79,6 +79,7 @@ export async function fetcher<T>(url: string, { method, body, cookies }: Fetcher
   if (cookies) {
     const cookieName = getCampsiteApiSessionCookieName()
     const sessionCookie = cookies[cookieName]
+
     if (sessionCookie) {
       const apiCookie = encodeURIComponent(sessionCookie)
 

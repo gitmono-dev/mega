@@ -2,7 +2,7 @@
 // https://github.com/ueberdosis/tiptap/blob/main/packages/extension-list-keymap/src/list-keymap.ts
 
 import { Editor, isAtStartOfNode, isNodeActive } from '@tiptap/core'
-import { listHelpers } from '@tiptap/extension-list-keymap'
+import { listHelpers } from '@tiptap/extension-list'
 import { Node } from '@tiptap/pm/model'
 
 export const handleBackspace = (editor: Editor, name: string, parentListTypes: string[]) => {

@@ -12,7 +12,6 @@ export function useGetTreeCommitInfo(path: string, refs?: string, requestParams?
   if (refs) params.refs = refs
 
   return useQuery({
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
     queryKey: treeCommitInfoQuery.requestKey(params),
     queryFn: () => treeCommitInfoQuery.request(params, requestParams)
   })

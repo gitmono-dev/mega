@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { HMSRoomProvider } from '@100mslive/react-sdk'
 import { ShortcutProvider } from '@shopify/react-shortcuts'
 import { QueryClientProvider } from '@tanstack/react-query'
 import AccountApprovalGuard from 'components/AccountApprovalGuard'
@@ -11,7 +10,6 @@ import { ActiveModalityProvider } from '@gitmono/ui/hooks/useActiveModality'
 import { ToasterProvider } from '@gitmono/ui/Toast'
 
 import { AutoTimezoneSwitcher } from '@/components/AutoTimezoneSwitcher'
-import { IncomingCallRoomInvitationToast } from '@/components/Call/IncomingCallRoomInvitationToast'
 import { LocalCommandMenu } from '@/components/CommandMenu'
 import { FeedbackDialog } from '@/components/Feedback/FeedbackDialog'
 import { GithubLoginRequiredDialog } from '@/components/GithubLoginRequiredDialog'
@@ -22,7 +20,6 @@ import { BackgroundAppRefresh } from '@/components/Providers/BackgroundAppRefres
 import { DesktopProtocolUrlHandler } from '@/components/Providers/DesktopProtocolUrlHandler'
 import { DesktopRedirectProvider } from '@/components/Providers/DesktopRedirectProvider'
 import { DisableZoom } from '@/components/Providers/DisableZoom'
-import { HMSRoomStateSubscriber } from '@/components/Providers/HMSRoomStateSubscriber'
 import { MetaTags } from '@/components/Providers/MetaTags'
 import { ThemeProvider } from '@/components/Providers/ThemeProvider'
 import { StaffDevTools } from '@/components/StaffDevTools'
@@ -56,40 +53,36 @@ export const AuthAppProviders: PageWithProviders<any> = ({ children, allowLogged
               <ScopeProvider>
                 <ThemeProvider>
                   <MetaTags postSeoInfo={postSeoInfo} />
-                  <HMSRoomProvider>
-                    <HMSRoomStateSubscriber />
-                    <AuthProvider allowLoggedOut={allowLoggedOut}>
-                      <WebPushProvider>
-                        <PusherProvider>
-                          <IncomingCallRoomInvitationToast />
-                          <DesktopRedirectProvider>
-                            <ShortcutProvider>
-                              <DisableZoom />
-                              <ToasterProvider />
-                              <StaffDevTools />
-                              <FeedbackDialog />
-                              <LocalCommandMenu />
-                              <BackgroundAppRefresh />
-                              <GlobalKeyboardShortcuts />
-                              <DesktopProtocolUrlHandler />
-                              <PostComposer />
-                              <AutoTimezoneSwitcher />
-                              <ActiveModalityProvider />
+                  <AuthProvider allowLoggedOut={allowLoggedOut}>
+                    <WebPushProvider>
+                      <PusherProvider>
+                        <DesktopRedirectProvider>
+                          <ShortcutProvider>
+                            <DisableZoom />
+                            <ToasterProvider />
+                            <StaffDevTools />
+                            <FeedbackDialog />
+                            <LocalCommandMenu />
+                            <BackgroundAppRefresh />
+                            <GlobalKeyboardShortcuts />
+                            <DesktopProtocolUrlHandler />
+                            <PostComposer />
+                            <AutoTimezoneSwitcher />
+                            <ActiveModalityProvider />
 
-                              <ConfirmEmailGuard allowLoggedOut={allowLoggedOut}>
-                                <AccountApprovalGuard allowLoggedOut={allowLoggedOut}>
-                                  {children}
+                            <ConfirmEmailGuard allowLoggedOut={allowLoggedOut}>
+                              <AccountApprovalGuard allowLoggedOut={allowLoggedOut}>
+                                {children}
 
-                                  <GithubLoginRequiredDialog />
-                                  <OrganizationUserPresenceSubscription />
-                                </AccountApprovalGuard>
-                              </ConfirmEmailGuard>
-                            </ShortcutProvider>
-                          </DesktopRedirectProvider>
-                        </PusherProvider>
-                      </WebPushProvider>
-                    </AuthProvider>
-                  </HMSRoomProvider>
+                                <GithubLoginRequiredDialog />
+                                <OrganizationUserPresenceSubscription />
+                              </AccountApprovalGuard>
+                            </ConfirmEmailGuard>
+                          </ShortcutProvider>
+                        </DesktopRedirectProvider>
+                      </PusherProvider>
+                    </WebPushProvider>
+                  </AuthProvider>
                 </ThemeProvider>
               </ScopeProvider>
             </QueryClientProvider>

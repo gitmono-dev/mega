@@ -29,9 +29,10 @@ export function FollowUpCalendarDialog({
       <Dialog.Content className='place-self-center p-6'>
         <div className='flex h-full w-full flex-col gap-3'>
           <Calendar
-            initialFocus
-            fromDate={addDays(new Date(), 1)}
-            toDate={addYears(new Date(), 1)}
+            autoFocus
+            startMonth={addDays(new Date(), 1)}
+            endMonth={addYears(new Date(), 1)}
+            hidden={{ before: addDays(new Date(), 1), after: addYears(new Date(), 1) }}
             mode='single'
             selected={customDate}
             onSelect={(date) => setCustomDate(date)}

@@ -1,4 +1,4 @@
-import { BulletList as TipTapBulletList } from '@tiptap/extension-bullet-list'
+import { BulletList as TipTapBulletList } from '@tiptap/extension-list'
 
 import { createMarkdownParserSpec, listIsTight } from '../utils/createMarkdownParser'
 

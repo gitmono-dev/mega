@@ -3,7 +3,6 @@ import { PinTackFilledIcon } from '@gitmono/ui/Icons'
 import { UIText } from '@gitmono/ui/Text'
 import { cn } from '@gitmono/ui/utils'
 
-import { CompactCallRow } from '@/components/Calls'
 import { CompactPost } from '@/components/CompactPost/CompactPost'
 import { NoteRow } from '@/components/NotesIndex/NoteRow'
 import { useIsSplitViewAvailable } from '@/components/SplitView/hooks'
@@ -40,13 +39,11 @@ export function ProjectPinnedFeed({ project }: ProjectPinnedFeedProps) {
       </div>
 
       <ul className='@container -mx-2 flex flex-col gap-px py-2'>
-        {getPins.data.data.map(({ post, note, call }) => {
+        {getPins.data.data.map(({ post, note }) => {
           if (post) {
             return <CompactPost key={post.id} post={post} display='pinned' hideProject />
           } else if (note) {
             return <NoteRow key={note.id} note={note} display='pinned' hideProject />
-          } else if (call) {
-            return <CompactCallRow key={call.id} call={call} display='pinned' hideProject />
           }
         })}
       </ul>

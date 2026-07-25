@@ -158,7 +158,7 @@ export function InboxHoverCardItemLink({
     <Link
       href={getInboxItemSplitViewPath(view, notification)}
       className={cn(
-        'dark:focus:bg-tertiary hover:bg-tertiary group relative -mx-1 flex min-h-12 flex-none cursor-pointer scroll-m-2 scroll-mt-12 items-start gap-3 rounded-lg p-2.5 focus-within:border-none focus-within:outline-none focus-within:ring-0 focus:border-none focus:outline-none focus:ring-0'
+        'dark:focus:bg-tertiary hover:bg-tertiary group relative -mx-1 flex min-h-12 flex-none cursor-pointer scroll-m-2 scroll-mt-12 items-start gap-3 rounded-lg p-2.5 focus-within:border-none focus-within:ring-0 focus-within:outline-hidden focus:border-none focus:ring-0 focus:outline-hidden'
       )}
       onClick={() => {
         setInboxSelection(notification.id)

@@ -10,21 +10,33 @@ export const TabLayout = ({ children }: PropsWithChildren) => {
 
   return (
     <>
-      <UnderlineNav aria-label='Repository with leading icons'>
+      <UnderlineNav aria-label='Change list sections' hideIconsBreakpoint={null}>
         <UnderlineNav.Item
-          aria-selected={tab === 'conversation'}
-          onClick={() => setTab('conversation')}
+          aria-current={tab === 'conversation' ? 'page' : undefined}
+          onSelect={(event) => {
+            event.preventDefault()
+            setTab('conversation')
+          }}
           icon={CommentDiscussionIcon}
-          // aria-current='page'
         >
           Conversation
         </UnderlineNav.Item>
-        <UnderlineNav.Item aria-selected={tab === 'check'} onClick={() => setTab('check')} icon={ChecklistIcon}>
+        <UnderlineNav.Item
+          aria-current={tab === 'check' ? 'page' : undefined}
+          onSelect={(event) => {
+            event.preventDefault()
+            setTab('check')
+          }}
+          icon={ChecklistIcon}
+        >
           Checks
         </UnderlineNav.Item>
         <UnderlineNav.Item
-          aria-selected={tab === 'filechange'}
-          onClick={() => setTab('filechange')}
+          aria-current={tab === 'filechange' ? 'page' : undefined}
+          onSelect={(event) => {
+            event.preventDefault()
+            setTab('filechange')
+          }}
           icon={FileDiffIcon}
         >
           Files Changed

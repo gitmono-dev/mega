@@ -188,7 +188,7 @@ export function CommentThread({ thread, clLink }: CommentThreadProps) {
         {isResolved && <span className='rounded-full border px-2 py-0.5 text-xs font-medium'>Resolved</span>}
       </button>
 
-      <div className='rounded-b-lg border border-gray-300 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900'>
+      <div className='rounded-b-lg border border-gray-300 bg-white p-4 shadow-xs dark:border-gray-700 dark:bg-gray-900'>
         {/* 主评论 */}
         <CommentItem
           comment={mainComment}
@@ -208,7 +208,7 @@ export function CommentThread({ thread, clLink }: CommentThreadProps) {
 
         {/* 回复列表 */}
         {replies.length > 0 && (
-          <div className='ml-11 mt-4 space-y-4 border-l-2 border-gray-200 pl-4 dark:border-gray-700'>
+          <div className='mt-4 ml-11 space-y-4 border-l-2 border-gray-200 pl-4 dark:border-gray-700'>
             {replies.map((reply) => (
               <CommentItem
                 key={reply.comment_id}
@@ -230,7 +230,7 @@ export function CommentThread({ thread, clLink }: CommentThreadProps) {
         )}
 
         {/* 回复输入区域 */}
-        <div className='ml-11 mt-4'>
+        <div className='mt-4 ml-11'>
           {showReplyInput ? (
             <div className='flex gap-3'>
               <Avatar src={currentUser?.avatar_url} alt={currentUser?.username} size='xs' />
@@ -239,7 +239,7 @@ export function CommentThread({ thread, clLink }: CommentThreadProps) {
                   value={replyContent}
                   onChange={(e) => setReplyContent(e.target.value)}
                   placeholder='Write a reply...'
-                  className='min-h-[60px] w-full resize-none rounded-md border border-gray-300 bg-white p-2 text-xs text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100'
+                  className='min-h-[60px] w-full resize-none rounded-md border border-gray-300 bg-white p-2 text-xs text-gray-900 outline-hidden transition-colors focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100'
                   autoFocus
                 />
                 <div className='mt-2 flex items-center justify-end gap-2'>
@@ -339,7 +339,7 @@ function CommentItem({
               {showMenu && (
                 <>
                   <div className='fixed inset-0 z-10' onClick={() => setShowMenu(false)} />
-                  <div className='absolute right-0 top-8 z-20 w-32 rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800'>
+                  <div className='absolute top-8 right-0 z-20 w-32 rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800'>
                     {onEdit && (
                       <button
                         onClick={() => {
@@ -374,7 +374,7 @@ function CommentItem({
             <textarea
               value={editContent}
               onChange={(e) => onEditContentChange?.(e.target.value)}
-              className='min-h-[60px] w-full resize-none rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100'
+              className='min-h-[60px] w-full resize-none rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-900 outline-hidden transition-colors focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100'
             />
             <div className='mt-2 flex justify-end gap-2'>
               <Button onClick={onCancelEdit} variant='base' size='sm'>

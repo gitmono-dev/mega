@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
 
-import { OauthApplication, OrganizationsOrgSlugOauthApplicationsPostRequest } from '@gitmono/types/generated'
+import { OauthApplication } from '@gitmono/types/generated'
 import { Button } from '@gitmono/ui/Button'
 import { FormError } from '@gitmono/ui/FormError'
 import * as Dialog from '@gitmono/ui/src/Dialog'
@@ -24,20 +24,18 @@ interface OauthApplicationFormDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-type FormSchema = OrganizationsOrgSlugOauthApplicationsPostRequest
+const createAppSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  avatar_path: z.string().optional()
+})
 
 function useCreateAppForm() {
-  return useForm<FormSchema>({
+  return useForm({
     defaultValues: {
       name: '',
       avatar_path: ''
     },
-    resolver: zodResolver(
-      z.object({
-        name: z.string().min(1, 'Name is required'),
-        avatar_path: z.string().optional()
-      })
-    )
+    resolver: zodResolver(createAppSchema)
   })
 }
 

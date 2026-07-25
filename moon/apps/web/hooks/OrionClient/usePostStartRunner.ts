@@ -11,6 +11,7 @@ export function usePostStartRunner() {
   return useMutation<StartRunnerResponse, Error, StartRunnerRequest | void>({
     mutationFn: async (body) => {
       const result = await mutation.request(body ?? {})
+
       if (!result.req_result || !result.data) {
         throw new Error(result.err_message || 'Failed to start runner')
       }

@@ -1,4 +1,3 @@
-import { figmaRegex } from '@gitmono/regex'
 import { Attachment } from '@gitmono/types/generated'
 
 /**
@@ -22,21 +21,14 @@ export function getFileMetadata(
   }
 
   let openUrl
-  let downloadUrl = attachment.download_url
+  const downloadUrl = attachment.download_url
   const fileType = attachment.file_type
-
-  const figma = !!(attachment.link && attachment.url?.match(figmaRegex))
 
   if (origami) openUrl = downloadUrl?.replace('https', 'origami-public')
   if (principle) openUrl = downloadUrl?.replace('https', 'principle')
   if (stitch) openUrl = downloadUrl?.replace('https', 'stitch')
 
-  if (figma) {
-    openUrl = downloadUrl
-    downloadUrl = undefined
-  }
-
   const qrCode = origami || principle || stitch
 
-  return { name, fileType, downloadUrl, openUrl, qrCode, origami, principle, stitch, figma }
+  return { name, fileType, downloadUrl, openUrl, qrCode, origami, principle, stitch }
 }

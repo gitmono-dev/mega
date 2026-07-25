@@ -255,7 +255,7 @@ function ProjectIndexRow({
     <ProjectOverflowMenu type='context' project={project}>
       <li
         className={cn(
-          '[&:has(button[aria-expanded="true"])]:bg-tertiary group relative flex flex-col gap-3 rounded-md py-2.5 pl-2 pr-1.5 sm:flex-row sm:items-center lg:py-2',
+          '[&:has(button[aria-expanded="true"])]:bg-tertiary group relative flex flex-col gap-3 rounded-md py-2.5 pr-1.5 pl-2 sm:flex-row sm:items-center lg:py-2',
           'data-[state="open"]:bg-tertiary',
           {
             'focus-within:bg-tertiary': canHover
@@ -273,7 +273,7 @@ function ProjectIndexRow({
         <div className='flex flex-1 items-center gap-2'>
           <ReactionPicker
             trigger={
-              <button className='h-7.5 w-7.5 relative flex cursor-pointer items-center justify-center self-start rounded-md font-["emoji"] text-base hover:bg-black/[0.08] dark:hover:bg-white/[0.08]'>
+              <button className='relative flex h-7.5 w-7.5 cursor-pointer items-center justify-center self-start rounded-md font-["emoji"] text-base hover:bg-black/[0.08] dark:hover:bg-white/[0.08]'>
                 {project.accessory ? (
                   <UIText className='font-["emoji"] text-[17px]'>{project.accessory}</UIText>
                 ) : (
@@ -291,7 +291,7 @@ function ProjectIndexRow({
               </UIText>
 
               {project.private && (
-                <div className='text-quaternary h-5.5 w-5.5 flex items-center justify-center'>
+                <div className='text-quaternary flex h-5.5 w-5.5 items-center justify-center'>
                   <LockIcon size={16} strokeWidth='2' />
                 </div>
               )}
@@ -320,7 +320,7 @@ function ProjectIndexRow({
         <div className='ml-10 hidden flex-none items-center gap-1 lg:ml-0 lg:flex'>
           <div className='flex flex-1 flex-row-reverse items-center gap-1 sm:flex-row'>
             <ProjectSubscriptionButton project={project} />
-            <ProjectMembershipButton project={project} joinLabel='Join' className='lg:w-18 w-full' />
+            <ProjectMembershipButton project={project} joinLabel='Join' className='w-full lg:w-18' />
           </div>
           <div className='flex lg:opacity-0 lg:group-hover:opacity-100 [&:has(button[aria-expanded="true"])]:opacity-100'>
             <ProjectOverflowMenu type='dropdown' project={project} />

@@ -1,8 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActionList, FormControl, SelectPanel, Stack, Text, TextInput } from '@primer/react'
-import { ItemInput } from '@primer/react/lib/deprecated/ActionList'
+import { ActionList, FormControl, SelectPanel, Stack, Text, TextInput, type SelectPanelItemInput } from '@primer/react'
 import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
 
@@ -53,7 +52,7 @@ export default function IssueNewPage() {
   }, [user])
 
   const avatars = useAvatars()
-  // const [avatarTems, setAvatarItems] = useState<ItemInput[]>(avatars)
+  // const [avatarTems, setAvatarItems] = useState<SelectPanelItemInput[]>(avatars)
 
   const labels = useLabels()
 
@@ -110,7 +109,7 @@ export default function IssueNewPage() {
 
   const labelMap = useLabelMap()
 
-  // const createGroup = (selected: ItemInput[]) => {
+  // const createGroup = (selected: SelectPanelItemInput[]) => {
   //   setAvatarItems((prev) => {
   //     return mergeAndDeduplicate(prev, selected, 'end', '1')
   //   })
@@ -231,7 +230,7 @@ export default function IssueNewPage() {
                             <div key={index} className='mb-4 flex items-center justify-center pr-2'>
                               <div
                                 className='rounded-full border px-2 text-sm text-[#fff]'
-                                //eslint-disable-next-line react/forbid-dom-props
+
                                 style={{ backgroundColor: label.color, borderColor: label.color }}
                               >
                                 {label.name}
@@ -256,14 +255,7 @@ export default function IssueNewPage() {
 }
 
 type SelectPanelExcludedProps =
-  | 'open'
-  | 'onOpenChange'
-  | 'items'
-  | 'selected'
-  | 'onSelectedChange'
-  | 'onFilterChange'
-  | 'renderAnchor'
-  | 'variant'
+  'open' | 'onOpenChange' | 'items' | 'selected' | 'onSelectedChange' | 'onFilterChange' | 'renderAnchor' | 'variant'
 
 export const BadgeItem = ({
   title,
@@ -280,12 +272,12 @@ export const BadgeItem = ({
   selectPannelProps?: Omit<React.ComponentProps<typeof SelectPanel>, SelectPanelExcludedProps> & {
     variant?: 'anchored'
   }
-  items: ItemInput[]
+  items: SelectPanelItemInput[]
   children?: (el: React.ReactNode) => React.ReactNode
-  handleGroup?: (selected: ItemInput[]) => void
+  handleGroup?: (selected: SelectPanelItemInput[]) => void
   open?: boolean
   onOpenChange?: (open: boolean) => void
-  selected?: ItemInput[]
+  selected?: SelectPanelItemInput[]
   emptyExtra?: React.ReactNode
 }) => {
   // const { open, onOpenChange } = selectPannelProps ?? {}
@@ -296,7 +288,7 @@ export const BadgeItem = ({
 
   const currentOpen = isControl ? open : control
 
-  const [chose, setChose] = useState<ItemInput[]>([])
+  const [chose, setChose] = useState<SelectPanelItemInput[]>([])
 
   const [filter, setFilter] = React.useState('')
 
@@ -348,7 +340,7 @@ export const BadgeItem = ({
             onOpenChange={(open, gesture) => handleOpenChange(open, gesture)}
             items={filteredItems}
             selected={chose}
-            onSelectedChange={(selected: ItemInput[]) => {
+            onSelectedChange={(selected: SelectPanelItemInput[]) => {
               setChose(selected)
               handleGroup?.(selected)
             }}
@@ -365,7 +357,7 @@ export const SideBarItem = ({ emptyState, extra }: { emptyState: string; extra?:
   return (
     <>
       <div className='mx-4 text-sm text-gray-500'>
-        <div className='mb-4 mt-4'>{emptyState}</div>
+        <div className='mt-4 mb-4'>{emptyState}</div>
         {extra}
         <div className='h-[1px] w-full bg-gray-200'></div>
       </div>

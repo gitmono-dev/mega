@@ -10,8 +10,7 @@ import {
   QuestionMarkCircleIcon,
   SquircleIconContainer,
   UIText,
-  UserCircleFilledIcon,
-  VideoCameraFilledIcon
+  UserCircleFilledIcon
 } from '@gitmono/ui'
 
 import { useCurrentUserOrOrganizationHasFeature } from '@/hooks/useCurrentUserOrOrganizationHasFeature'
@@ -36,14 +35,6 @@ export function IssueBreadcrumbIcon() {
   return (
     <SquircleIconContainer className='text-blue-500' size='small'>
       <QuestionMarkCircleIcon className='relative z-10 text-white' />
-    </SquircleIconContainer>
-  )
-}
-
-export function CallBreadcrumbIcon() {
-  return (
-    <SquircleIconContainer className='text-green-500' size='small'>
-      <VideoCameraFilledIcon size={16} className='relative z-10 text-white' />
     </SquircleIconContainer>
   )
 }

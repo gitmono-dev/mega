@@ -70,7 +70,7 @@ export function CommentComponent({ comment, note, hideAttachment = false, highli
       <div className='relative'>
         <div
           className={cn(
-            'dark:before:border-gray-750 before:absolute before:-bottom-2.5 before:left-6 before:top-12 before:block before:w-3.5 before:rounded-bl-2xl before:border-b before:border-l',
+            'dark:before:border-gray-750 before:absolute before:top-12 before:-bottom-2.5 before:left-6 before:block before:w-3.5 before:rounded-bl-2xl before:border-b before:border-l',
             {
               'before:-bottom-2 before:rounded-bl-none before:border-b-0': highlightPopover
             }
@@ -89,7 +89,7 @@ export function CommentComponent({ comment, note, hideAttachment = false, highli
                 const timelineEvent = mixedItem as TimelineEvent
 
                 return (
-                  <div key={timelineEvent.id} className='-ml-3 pb-4 pt-1'>
+                  <div key={timelineEvent.id} className='-ml-3 pt-1 pb-4'>
                     <TimelineEventComment timelineEvent={timelineEvent} />
                   </div>
                 )
@@ -190,7 +190,7 @@ const CommentDetails = (props: CommentProps) => {
                   <MemberAvatar member={comment.member} size='sm' />
                   {comment.resolved_at && (
                     <Tooltip label={`Resolved by ${comment.resolved_by?.user.display_name}`}>
-                      <span className='absolute -bottom-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-500 text-white ring-2 ring-white dark:ring-gray-950'>
+                      <span className='absolute -right-1 -bottom-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-500 text-white ring-2 ring-white dark:ring-gray-950'>
                         <CheckIcon className='text-white' size={12} strokeWidth={'2.5'} />
                       </span>
                     </Tooltip>
@@ -208,7 +208,7 @@ const CommentDetails = (props: CommentProps) => {
           })}
         >
           <>
-            <div className='relative z-50 -mb-1 -mt-1.5 flex items-center'>
+            <div className='relative z-50 -mt-1.5 -mb-1 flex items-center'>
               <div className='flex-1 flex-col space-x-1.5 truncate align-baseline leading-none'>
                 <MemberHovercard username={comment.member.user.username as string}>
                   {/* span needed to attach popover listener events to a dom node */}
@@ -252,7 +252,7 @@ const CommentDetails = (props: CommentProps) => {
                 <div className='-mt-1.5 flex max-w-full flex-1 flex-col gap-2'>
                   {!!comment.note_highlight && !highlightPopover && (
                     <button
-                      className='relative mt-1 select-auto text-start'
+                      className='relative mt-1 text-start select-auto'
                       onClick={() => {
                         if (!activeNodeEditor) return
                         const commentMarkElement = commentElement(comment.id, false, activeNodeEditor.view.dom)
@@ -274,7 +274,7 @@ const CommentDetails = (props: CommentProps) => {
                       }}
                     >
                       <span
-                        className='prose text-secondary line-clamp-3 pl-3 leading-normal before:absolute before:bottom-0 before:left-0 before:top-0 before:w-[3px] before:rounded-full before:bg-yellow-300 dark:before:bg-yellow-500'
+                        className='prose text-secondary line-clamp-3 pl-3 leading-normal before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[3px] before:rounded-full before:bg-yellow-300 dark:before:bg-yellow-500'
                         dangerouslySetInnerHTML={{ __html: comment.note_highlight }}
                       ></span>
                     </button>
@@ -328,7 +328,7 @@ const Reply = ({ reply, note }: ReplyProps) => {
   return (
     <div className='relative rounded-md transition-colors duration-150' id={`#comment-${reply.id}`}>
       <svg
-        className='dark:text-gray-750 absolute -left-3 top-2.5 text-gray-200'
+        className='dark:text-gray-750 absolute top-2.5 -left-3 text-gray-200'
         width='13'
         height='13'
         viewBox='0 0 13 13'

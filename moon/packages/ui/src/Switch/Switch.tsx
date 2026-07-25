@@ -93,7 +93,7 @@ export const Label = ({ htmlFor, label, onClick }: LabelProps) => {
   return (
     <UIText
       element='label'
-      className='block cursor-default select-none text-sm font-medium leading-none tracking-tight'
+      className='block cursor-default text-sm leading-none font-medium tracking-tight select-none'
       htmlFor={htmlFor}
       onClick={onClick}
     >

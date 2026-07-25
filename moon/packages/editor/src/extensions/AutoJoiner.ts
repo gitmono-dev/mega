@@ -3,7 +3,7 @@ import { Plugin, PluginKey } from '@tiptap/pm/state'
 
 import { autoJoin } from '../utils/autoJoin'
 
-interface AutoJoinerOptions {
+export interface AutoJoinerOptions {
   nodeTypes: string[]
 }
 

@@ -5,7 +5,7 @@ import { atom, useSetAtom } from 'jotai'
 import { atomFamily } from 'jotai/utils'
 import { useInView } from 'react-intersection-observer'
 
-import { Call, Note, Post } from '@gitmono/types/generated'
+import { Note, Post } from '@gitmono/types/generated'
 
 import { useScope } from '@/contexts/scope'
 import { atomWithWebStorage } from '@/utils/atomWithWebStorage'
@@ -14,17 +14,17 @@ interface LocalRecentlyViewedType {
   id: string
   post?: LocalPost
   note?: LocalNote
-  call?: LocalCall
+  /** @deprecated Call history removed; ignored if present in stored data */
+  call?: unknown
 }
 
 interface RecentlyViewedItem {
   id: string
   post?: Post
   note?: Note
-  call?: Call
 }
 
-const pluckedRecentlyViewedItem = ({ id, post, note, call }: RecentlyViewedItem): LocalRecentlyViewedType => ({
+const pluckedRecentlyViewedItem = ({ id, post, note }: RecentlyViewedItem): LocalRecentlyViewedType => ({
   id,
   post: post
     ? {
@@ -35,8 +35,7 @@ const pluckedRecentlyViewedItem = ({ id, post, note, call }: RecentlyViewedItem)
         url: post.url
       }
     : undefined,
-  note: note ? { id, title: note.title, project: note.project, created_at: note.created_at, url: note.url } : undefined,
-  call: call ? { id, title: call.title, project: call.project, created_at: call.created_at, url: call.url } : undefined
+  note: note ? { id, title: note.title, project: note.project, created_at: note.created_at, url: note.url } : undefined
 })
 
 export const recentlyViewedAtom = atomFamily((scope: CookieValueTypes) =>
@@ -45,7 +44,6 @@ export const recentlyViewedAtom = atomFamily((scope: CookieValueTypes) =>
 
 export type LocalPost = Pick<Post, 'id' | 'title' | 'project' | 'created_at' | 'url'>
 export type LocalNote = Pick<Note, 'id' | 'title' | 'project' | 'created_at' | 'url'>
-export type LocalCall = Pick<Call, 'id' | 'title' | 'project' | 'created_at' | 'url'>
 
 const addRecentlyViewedAtom = atom(
   null,
@@ -85,27 +83,21 @@ const updateRecentlyViewedAtom = atom(
   }
 )
 
-export function useTrackRecentlyViewedItem({ id, post, note, call }: RecentlyViewedItem) {
+export function useTrackRecentlyViewedItem({ id, post, note }: RecentlyViewedItem) {
   const { scope } = useScope()
   const addRecentlyViewed = useSetAtom(addRecentlyViewedAtom)
   const [inViewRef, inView] = useInView({ triggerOnce: true })
 
   useEffect(() => {
     if (inView) {
-      addRecentlyViewed({ scope, item: { id, post, note, call } })
+      addRecentlyViewed({ scope, item: { id, post, note } })
     }
-  }, [addRecentlyViewed, call, id, inView, note, post, scope])
+  }, [addRecentlyViewed, id, inView, note, post, scope])
 
   return inViewRef
 }
 
-export function useSyncRecentlyViewedItem({
-  id,
-  post,
-  note,
-  call,
-  isError
-}: RecentlyViewedItem & { isError: boolean }) {
+export function useSyncRecentlyViewedItem({ id, post, note, isError }: RecentlyViewedItem & { isError: boolean }) {
   const { scope } = useScope()
   const removeRecentlyViewed = useSetAtom(removeRecentlyViewedAtom)
   const updateRecentlyViewed = useSetAtom(updateRecentlyViewedAtom)
@@ -114,7 +106,7 @@ export function useSyncRecentlyViewedItem({
     if (isError) {
       removeRecentlyViewed({ scope, id })
     } else {
-      updateRecentlyViewed({ scope, item: { id, post, note, call } })
+      updateRecentlyViewed({ scope, item: { id, post, note } })
     }
-  }, [post, note, call, removeRecentlyViewed, updateRecentlyViewed, scope, id, isError])
+  }, [post, note, removeRecentlyViewed, updateRecentlyViewed, scope, id, isError])
 }

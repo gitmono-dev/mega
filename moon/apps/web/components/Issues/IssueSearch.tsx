@@ -1,15 +1,9 @@
-// import { useState } from 'react'
-// import { useDebounce } from 'use-debounce'
-
 import React from 'react'
 import { XIcon } from '@primer/octicons-react'
 
 import { Button, Link, SearchIcon } from '@gitmono/ui'
 
 import { useScope } from '@/contexts/scope'
-
-// import Search from './Search'
-// import { fuseOptions, searchList } from './utils/consts'
 
 interface IssueSearchProps {
   filterQuery?: string
@@ -20,7 +14,7 @@ export default function IssueSearch({ filterQuery, onClearFilters }: IssueSearch
   return (
     <>
       <div className='flex min-h-[35px] items-center gap-2 bg-transparent'>
-        <div className='border-primary bg-primary group flex min-h-[35px] flex-1 items-center rounded-md border px-3 shadow-sm transition-all focus-within:border-blue-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-blue-100 hover:border-gray-400 dark:focus-within:ring-blue-900/50 dark:hover:border-gray-600'>
+        <div className='border-primary bg-primary group flex min-h-[35px] flex-1 items-center rounded-md border px-3 shadow-xs transition-all focus-within:border-blue-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-blue-100 hover:border-gray-400 dark:focus-within:ring-blue-900/50 dark:hover:border-gray-600'>
           <div className='text-quaternary flex items-center'>
             <SearchIcon className='w-4' />
           </div>
@@ -30,7 +24,7 @@ export default function IssueSearch({ filterQuery, onClearFilters }: IssueSearch
             value={filterQuery || ''}
             readOnly
             placeholder='Filter issues by author, labels, or assignee...'
-            className='text-quaternary placeholder:text-quaternary w-full flex-1 border-none bg-transparent text-sm outline-none ring-0 focus:outline-none focus:ring-0'
+            className='text-quaternary placeholder:text-quaternary w-full flex-1 border-none bg-transparent text-sm ring-0 outline-hidden focus:ring-0 focus:outline-hidden'
           />
           {filterQuery && (
             <button

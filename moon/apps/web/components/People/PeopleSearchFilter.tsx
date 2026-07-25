@@ -89,7 +89,7 @@ export function PeopleSearchFilter() {
 
           {!!query && (
             <Button
-              className='absolute right-3 top-1/2 -translate-y-1/2'
+              className='absolute top-1/2 right-3 -translate-y-1/2'
               variant='flat'
               iconOnly={<CloseIcon size={16} strokeWidth='2' />}
               size='sm'

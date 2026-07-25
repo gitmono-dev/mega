@@ -1,11 +1,9 @@
-/* eslint-disable max-lines */
 import { Dispatch, SetStateAction, useMemo, useRef, useState } from 'react'
 import * as RadixDialog from '@radix-ui/react-dialog'
 import { useAtom, useSetAtom } from 'jotai'
 import { Url } from 'next/dist/shared/lib/router/router'
 import { useRouter } from 'next/router'
 import { isMacOs } from 'react-device-detect'
-import toast from 'react-hot-toast'
 
 import {
   OrganizationMember,
@@ -25,13 +23,11 @@ import {
   cn,
   CodeIcon,
   Command,
-  desktopJoinCall,
   DismissibleLayer,
   GearIcon,
   HomeIcon,
   InboxIcon,
   LayeredHotkeys,
-  LinkIcon,
   LockIcon,
   NoteIcon,
   NotePlusIcon,
@@ -41,12 +37,7 @@ import {
   QuestionMarkCircleIcon,
   SearchIcon,
   UIText,
-  useCopyToClipboard,
-  useIsDesktopApp,
-  UserCircleIcon,
-  UserLinkIcon,
-  VideoCameraBoltIcon,
-  VideoCameraIcon
+  UserCircleIcon
 } from '@gitmono/ui'
 import { CommandRef, HighlightedCommandItem } from '@gitmono/ui/Command'
 
@@ -60,14 +51,12 @@ import { usePostComposer } from '@/components/PostComposer'
 import { CreateProjectDialog } from '@/components/Projects/Create/CreateProjectDialog'
 import { enableDevToolsAtom } from '@/components/StaffDevTools'
 import { useScope } from '@/contexts/scope'
-import { useCreateCallRoom } from '@/hooks/useCreateCallRoom'
 import { useCreateNewNote } from '@/hooks/useCreateNote'
 import { useCurrentUserIsStaff } from '@/hooks/useCurrentUserIsStaff'
 import { useCurrentUserOrOrganizationHasFeature } from '@/hooks/useCurrentUserOrOrganizationHasFeature'
 import { useGetCurrentOrganization } from '@/hooks/useGetCurrentOrganization'
 import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
 import { useGetOrganizationMemberships } from '@/hooks/useGetOrganizationMemberships'
-import { useGetPersonalCallRoom } from '@/hooks/useGetPersonalCallRoom'
 import { useGetPersonalDraftPosts } from '@/hooks/useGetPersonalDraftPosts'
 import { useIsCommunity } from '@/hooks/useIsCommunity'
 import { useSyncedMessageThreads } from '@/hooks/useSyncedMessageThreads'
@@ -157,7 +146,7 @@ export function LocalCommandMenu() {
         <RadixDialog.Portal>
           <RadixDialog.Overlay className='data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed inset-0 bg-black/10 dark:bg-black/60' />
           <RadixDialog.Content
-            className='data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed left-1/2 top-16 w-full max-w-[calc(100%_-_16px)] origin-[50%] -translate-x-1/2 transition-all md:max-w-3xl'
+            className='data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed top-16 left-1/2 w-full max-w-[calc(100%_-_16px)] origin-[50%] -translate-x-1/2 transition-all md:max-w-3xl'
             onOpenAutoFocus={(e) => {
               e.preventDefault()
               inputRef.current?.focus()
@@ -190,10 +179,10 @@ export function LocalCommandMenu() {
                   placeholder='Type a command or search...'
                   onValueChange={setQuery}
                   value={query}
-                  className='w-full border-0 bg-transparent px-4 py-3 text-[15px] placeholder-gray-400 outline-none focus:border-black focus:border-black/5 focus:ring-0'
+                  className='w-full border-0 bg-transparent px-4 py-3 text-[15px] placeholder-gray-400 outline-hidden focus:border-black focus:border-black/5 focus:ring-0'
                 />
 
-                <Command.List className='scrollbar-hide scroll-pb-2 overflow-y-auto overflow-x-hidden px-2 pb-2 outline-none'>
+                <Command.List className='scrollbar-hide scroll-pb-2 overflow-x-hidden overflow-y-auto px-2 pb-2 outline-hidden'>
                   <Home navigate={navigate} />
 
                   <Command.Group>
@@ -266,11 +255,6 @@ function Home({ navigate }: { navigate: NavigateFn }) {
         Docs
       </Item>
 
-      <Item onSelect={() => navigate(`/${scope}/calls`)}>
-        <VideoCameraIcon />
-        Calls
-      </Item>
-
       <DraftPageItem navigate={navigate} />
 
       {organization?.viewer_can_see_projects_index && (
@@ -324,67 +308,9 @@ function Create({
   close: () => void
   setDialogState: Dispatch<SetStateAction<DialogState>>
 }) {
-  const { mutate: createCallRoom } = useCreateCallRoom()
-  const [copy] = useCopyToClipboard()
   const { showPostComposer } = usePostComposer()
   const { handleCreate } = useCreateNewNote()
-  const { data: personalCallRoom } = useGetPersonalCallRoom()
-  const isDesktop = useIsDesktopApp()
   const { data: organization } = useGetCurrentOrganization()
-
-  function onInstantCall() {
-    createCallRoom(
-      { source: 'new_call_button' },
-      {
-        onSuccess: (data) => {
-          setTimeout(() => {
-            if (isDesktop) {
-              desktopJoinCall(`${data?.url}?im=open`)
-            } else {
-              window.open(`${data?.url}?im=open`, '_blank')
-            }
-          })
-          close()
-        },
-        onError: () => {
-          toast('Unable to start a call, try again.')
-        }
-      }
-    )
-  }
-
-  function onCallLink() {
-    createCallRoom(
-      { source: 'new_call_button' },
-      {
-        onSuccess: (data) => {
-          copy(data.url)
-          toast('Call link copied to clipboard.')
-          close()
-        },
-        onError: () => {
-          toast('Unable to create a link, try again.')
-        }
-      }
-    )
-  }
-
-  function onJoinPersonalCall() {
-    if (!personalCallRoom) return
-    if (isDesktop) {
-      desktopJoinCall(`${personalCallRoom.url}?im=open`)
-    } else {
-      window.open(`${personalCallRoom.url}?im=open`, '_blank')
-    }
-    close()
-  }
-
-  function onPersonalCallLink() {
-    if (!personalCallRoom) return
-    copy(personalCallRoom.url)
-    toast('Personal call link copied to clipboard.')
-    close()
-  }
 
   function onCreateChannel() {
     setDialogState({
@@ -433,22 +359,6 @@ function Create({
           New channel
         </Item>
       )}
-      <Item onSelect={onInstantCall}>
-        <VideoCameraBoltIcon />
-        Start an instant call
-      </Item>
-      <Item onSelect={onCallLink}>
-        <LinkIcon />
-        Create call link
-      </Item>
-      <Item onSelect={onJoinPersonalCall}>
-        <VideoCameraBoltIcon />
-        Join your personal call
-      </Item>
-      <Item onSelect={onPersonalCallLink}>
-        <UserLinkIcon />
-        Use your personal call link
-      </Item>
     </Command.Group>
   )
 }
@@ -516,7 +426,7 @@ function ProjectItem({ navigate, project }: { navigate: NavigateFn; project: Syn
       )}
       {project.name}
       {project.private && (
-        <div className='text-quaternary h-5.5 w-5.5 flex items-center justify-center'>
+        <div className='text-quaternary flex h-5.5 w-5.5 items-center justify-center'>
           <LockIcon size={16} strokeWidth='2' />
         </div>
       )}

@@ -1,8 +1,8 @@
 import { RefObject, useLayoutEffect } from 'react'
 
 interface UseScrollToBottomOptions {
-  stickyRef: RefObject<HTMLElement>
-  scrollElementRef: RefObject<HTMLElement>
+  stickyRef: RefObject<HTMLElement | null>
+  scrollElementRef: RefObject<HTMLElement | null>
   /**
    * Buffer of pixels to consider the user at the bottom of the scroll area.
    * Especially useful on mobile devices where the scroll area is not always

@@ -1,6 +1,5 @@
-import { LazyLoadingSpinner, LoadingSpinner } from '@gitmono/ui/Spinner'
+import { LazyLoadingSpinner } from '@gitmono/ui/Spinner'
 import { cn } from '@gitmono/ui/src/utils'
-import { UIText } from '@gitmono/ui/Text'
 
 import { AudioAttachment } from '@/components/Post/Notes/Attachments/AudioAttachment'
 import { NoteAttachmentHoverActions } from '@/components/Post/Notes/Attachments/NoteAttachmentHoverActions'
@@ -35,7 +34,7 @@ interface InlineAttachmentRendererProps {
 export function InlineAttachmentRenderer(props: InlineAttachmentRendererProps) {
   const { onOpen, onDelete, editable = false, id, optimisticId, error, width, height } = props
 
-  const { attachment, isUploading, hasServerAttachment } = useServerOrOptimisticAttachment({
+  const { attachment, isUploading } = useServerOrOptimisticAttachment({
     id,
     optimisticId
   })
@@ -53,9 +52,7 @@ export function InlineAttachmentRenderer(props: InlineAttachmentRendererProps) {
   return (
     <div
       className={cn('not-prose group relative flex w-full items-center justify-center rounded leading-none', {
-        'hover:bg-secondary': editable,
-        // take up space while uploading
-        'aspect-video w-full max-w-full': !hasServerAttachment && isUploading && attachment?.remote_figma_url
+        'hover:bg-secondary': editable
       })}
     >
       {attachment && isRenderable && !isUploading && <NoteAttachmentHoverActions onDelete={onDelete} />}
@@ -65,7 +62,7 @@ export function InlineAttachmentRenderer(props: InlineAttachmentRendererProps) {
           {isRenderable && (
             <div
               className={cn(
-                'group/attachment relative flex h-full w-full select-none items-center justify-center rounded',
+                'group/attachment relative flex h-full w-full items-center justify-center rounded select-none',
                 {
                   'pointer-events-none opacity-25': !!clientError
                 }
@@ -107,16 +104,6 @@ export function InlineAttachmentRenderer(props: InlineAttachmentRendererProps) {
         !!width && !!height && <SizedAttachmentPlaceholder width={width} height={height} />
       )}
 
-      {attachment?.remote_figma_url && isUploading && (
-        <div className='bg-tertiary absolute inset-0 flex flex-col items-center justify-center rounded'>
-          <div className='mb-6 scale-[2] opacity-30'>
-            <LoadingSpinner />
-          </div>
-          <UIText weight='font-medium'>Creating Figma preview</UIText>
-          <UIText tertiary>This may take a few seconds...</UIText>
-        </div>
-      )}
-
       {!!clientError && (
         <div className='absolute inset-0 flex items-center justify-center p-8'>
           <p className='text-primary text-center font-medium'>{clientError}</p>
@@ -136,7 +123,7 @@ function SizedAttachmentPlaceholder(props: { width: number; height: number }) {
   const { width, height } = fitDimensions(props)
 
   return (
-    <div className='relative flex h-full w-full select-none items-center justify-center'>
+    <div className='relative flex h-full w-full items-center justify-center select-none'>
       <div
         className='max-h-[50vh] rounded object-contain'
         style={{ width, height, aspectRatio: `${width}/${height}` }}

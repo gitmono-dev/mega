@@ -1,0 +1,404 @@
+/*
+  Tailwind v4 theme — migrated from packages/ui/tailwind.config.js
+*/
+
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+@plugin 'tailwind-scrollbar-hide';
+@plugin 'tailwindcss-animate';
+
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant initial (html :where(&));
+@custom-variant data-highlighted (&[data-highlighted=true]);
+
+@theme {
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+
+  --breakpoint-xs: 430px;
+  --breakpoint-3xl: 1792px;
+  --breakpoint-4xl: 2048px;
+
+  --spacing-*: initial;
+  /* Base unit required by --spacing() (safe-area offsets, etc.) */
+  --spacing: 4px;
+  --spacing-0: 0px;
+  --spacing-0.5: 2px;
+  --spacing-1: 4px;
+  --spacing-1.5: 6px;
+  --spacing-2: 8px;
+  --spacing-2.5: 10px;
+  --spacing-3: 12px;
+  --spacing-3.5: 14px;
+  --spacing-4: 16px;
+  --spacing-4.5: 18px;
+  --spacing-5: 20px;
+  --spacing-5.5: 22px;
+  --spacing-6: 24px;
+  --spacing-6.5: 26px;
+  --spacing-7: 28px;
+  --spacing-7.5: 30px;
+  --spacing-8: 32px;
+  --spacing-8.5: 34px;
+  --spacing-9: 36px;
+  --spacing-9.5: 38px;
+  --spacing-10: 40px;
+  --spacing-10.5: 42px;
+  --spacing-11: 44px;
+  --spacing-11.5: 46px;
+  --spacing-12: 48px;
+  --spacing-12.5: 50px;
+  --spacing-13: 52px;
+  --spacing-13.5: 54px;
+  --spacing-14: 56px;
+  --spacing-14.5: 58px;
+  --spacing-15: 60px;
+  --spacing-15.5: 62px;
+  --spacing-16: 64px;
+  --spacing-16.5: 66px;
+  --spacing-17: 68px;
+  --spacing-17.5: 70px;
+  --spacing-18: 72px;
+  --spacing-18.5: 74px;
+  --spacing-19: 76px;
+  --spacing-19.5: 78px;
+  --spacing-20: 80px;
+  --spacing-20.5: 82px;
+  --spacing-21: 84px;
+  --spacing-21.5: 86px;
+  --spacing-22: 88px;
+  --spacing-22.5: 90px;
+  --spacing-23: 92px;
+  --spacing-23.5: 94px;
+  --spacing-24: 96px;
+  --spacing-24.5: 98px;
+  --spacing-25: 100px;
+  --spacing-25.5: 102px;
+  --spacing-26: 104px;
+  --spacing-26.5: 106px;
+  --spacing-27: 108px;
+  --spacing-27.5: 110px;
+  --spacing-28: 112px;
+  --spacing-28.5: 114px;
+  --spacing-29: 116px;
+  --spacing-29.5: 118px;
+  --spacing-30: 120px;
+  --spacing-30.5: 122px;
+  --spacing-31: 124px;
+  --spacing-31.5: 126px;
+  --spacing-32: 128px;
+  --spacing-32.5: 130px;
+  --spacing-33: 132px;
+  --spacing-33.5: 134px;
+  --spacing-34: 136px;
+  --spacing-34.5: 138px;
+  --spacing-35: 140px;
+  --spacing-35.5: 142px;
+  --spacing-36: 144px;
+  --spacing-36.5: 146px;
+  --spacing-37: 148px;
+  --spacing-37.5: 150px;
+  --spacing-38: 152px;
+  --spacing-38.5: 154px;
+  --spacing-39: 156px;
+  --spacing-39.5: 158px;
+  --spacing-40: 160px;
+  --spacing-40.5: 162px;
+  --spacing-41: 164px;
+  --spacing-41.5: 166px;
+  --spacing-42: 168px;
+  --spacing-42.5: 170px;
+  --spacing-43: 172px;
+  --spacing-43.5: 174px;
+  --spacing-44: 176px;
+  --spacing-44.5: 178px;
+  --spacing-45: 180px;
+  --spacing-45.5: 182px;
+  --spacing-46: 184px;
+  --spacing-46.5: 186px;
+  --spacing-47: 188px;
+  --spacing-47.5: 190px;
+  --spacing-48: 192px;
+  --spacing-48.5: 194px;
+  --spacing-49: 196px;
+  --spacing-49.5: 198px;
+  --spacing-50: 200px;
+  --spacing-50.5: 202px;
+  --spacing-51: 204px;
+  --spacing-51.5: 206px;
+  --spacing-52: 208px;
+  --spacing-52.5: 210px;
+  --spacing-53: 212px;
+  --spacing-53.5: 214px;
+  --spacing-54: 216px;
+  --spacing-54.5: 218px;
+  --spacing-55: 220px;
+  --spacing-55.5: 222px;
+  --spacing-56: 224px;
+  --spacing-56.5: 226px;
+  --spacing-57: 228px;
+  --spacing-57.5: 230px;
+  --spacing-58: 232px;
+  --spacing-58.5: 234px;
+  --spacing-59: 236px;
+  --spacing-59.5: 238px;
+  --spacing-60: 240px;
+  --spacing-px: 1px;
+  --spacing-sm: 2px;
+
+  --height-screen: 100dvh;
+
+  --color-neutral-150: #f0f0f0;
+  --color-gray-50: #fcfcfc;
+  --color-gray-100: #f5f5f5;
+  --color-gray-150: #f0f0f0;
+  --color-gray-200: #e5e5e5;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a3a3a3;
+  --color-gray-500: #737373;
+  --color-gray-600: #525252;
+  --color-gray-700: #404040;
+  --color-gray-750: #313131;
+  --color-gray-800: #262626;
+  --color-gray-850: #1e1e1e;
+  --color-gray-900: #171717;
+  --color-gray-950: #0d0d0d;
+  --color-brand-primary: #ff591e;
+  --color-brand-secondary: #fb432c;
+  --color-primary: var(--bg-primary);
+  --color-highlight: var(--bg-highlight);
+
+  --background-color-main: var(--bg-main);
+  --background-color-primary-action: var(--bg-primary-action);
+  --background-color-primary-action-hover: var(--bg-primary-action-hover);
+  --background-color-secondary-action: var(--bg-secondary-action);
+  --background-color-tertiary-action: var(--bg-tertiary-action);
+  --background-color-button: var(--bg-button);
+  --background-color-primary: var(--bg-primary);
+  --background-color-secondary: var(--bg-secondary);
+  --background-color-tertiary: var(--bg-tertiary);
+  --background-color-quaternary: var(--bg-quaternary);
+  --background-color-elevated: var(--bg-elevated);
+  --background-color-highlight: var(--bg-highlight);
+
+  --default-border-width: 0.5px;
+  /* Restore v3 default so bare border/divide utilities use design tokens, not currentColor. */
+  --default-border-color: var(--border-primary);
+  --border-width-1: 1px;
+
+  --border-color: var(--border-primary);
+  --border-color-primary: var(--border-primary);
+  --border-color-primary-opaque: var(--border-primary-opaque);
+  --border-color-secondary: var(--border-secondary);
+  --border-color-secondary-opaque: var(--border-secondary-opaque);
+  --border-color-tertiary: var(--border-tertiary);
+
+  --text-color-light: var(--text-light);
+  --text-color-dark: var(--text-dark);
+  --text-color-primary: var(--text-primary);
+  --text-color-secondary: var(--text-secondary);
+  --text-color-tertiary: var(--text-tertiary);
+  --text-color-quaternary: var(--text-quaternary);
+  --text-color-primary-action: var(--text-primary-action);
+  --text-color-secondary-action: var(--text-secondary-action);
+
+  --default-transition-duration: 100ms;
+
+  --shadow:
+    0px 3px 6px -3px var(--base-shadow-color, var(--tw-shadow-color)),
+    0px 2px 4px -2px var(--base-shadow-color, var(--tw-shadow-color)),
+    0px 1px 2px -1px var(--base-shadow-color, var(--tw-shadow-color)),
+    0px 1px 1px -1px var(--base-shadow-color, var(--tw-shadow-color)),
+    0px 1px 0px -1px var(--base-shadow-color, var(--tw-shadow-color));
+  --shadow-button: var(--button-shadow);
+  --shadow-popover: var(--popover-shadow);
+  --shadow-dropdown-item: var(--dropdown-item-shadow);
+  --shadow-button-base: var(--button-base-shadow);
+  --shadow-button-primary: var(--button-primary-shadow);
+  --shadow-inset-image-border: inset 0px 0px 0px 1px var(--border-primary);
+  --shadow-select-item:
+    var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+    inset 0px 1px 0px rgb(255 255 255 / 0.02), inset 0px 0px 0px 1px rgb(255 255 255 / 0.02),
+    0px 1px 2px rgb(0 0 0 / 0.12), 0px 2px 4px rgb(0 0 0 / 0.08), 0px 0px 0px 0.5px rgb(0 0 0 / 0.24);
+
+  --shadow-color: var(--base-shadow-color);
+
+  --animate-shake: shake infinite;
+  --animate-shake-alt: shake-alt infinite alternate;
+  --animate-ping-slow: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-slide-up-fade: slide-up-fade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-scale-fade: scale-fade 0.15s ease-in-out;
+  --animate-backdrop: fade 0.15s ease-in-out;
+  --animate-dialog: slide-up-scale-fade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-fade-in: fade-in 100ms ease-out;
+  --animate-fade-out: fade-out 75ms ease-in;
+  --animate-hero-overlay-fade-in: fade-in 250ms ease;
+  --animate-hero-overlay-fade-out: fade-out 250ms ease;
+  --animate-hero-content-slide-up: hero-slide-up 250ms ease;
+  --animate-hero-content-slide-down: hero-slide-up 250ms ease;
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  --scale-flip: -1;
+}
+
+@keyframes shake {
+  0% {
+    transform: rotate(-2deg);
+    animation-timing-function: ease-in;
+  }
+  50% {
+    transform: rotate(2.5deg);
+    animation-timing-function: ease-out;
+  }
+  100% {
+    transform: rotate(-2deg);
+    animation-timing-function: ease-in;
+  }
+}
+
+@keyframes shake-alt {
+  0% {
+    transform: rotate(2deg);
+    animation-timing-function: ease-in;
+  }
+  50% {
+    transform: rotate(-2.5deg);
+    animation-timing-function: ease-out;
+  }
+  100% {
+    transform: rotate(2deg);
+    animation-timing-function: ease-in;
+  }
+}
+
+@keyframes fade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-up-scale-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.98) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes hero-slide-up {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -49%) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes hero-slide-down {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -49%) scale(0.95);
+  }
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+@layer base {
+  /*
+    Tailwind v4 defaults border-color to currentColor. Re-apply the previous
+    theme DEFAULT (var(--border-primary)) for bare border-* / divide-* utilities.
+  */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border-primary);
+  }
+
+  .border,
+  .border-x,
+  .border-y,
+  .border-t,
+  .border-r,
+  .border-b,
+  .border-l {
+    background-clip: padding-box;
+    border-color: var(--border-primary);
+  }
+
+  [class^='divide-'] > :not([hidden]) ~ :not([hidden]),
+  [class*=' divide-'] > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--border-primary);
+  }
+}

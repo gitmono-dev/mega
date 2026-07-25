@@ -63,7 +63,7 @@ export function AccountReviewSection() {
   const pendingCount = filter === 'pending' ? users.length : users.filter((user) => user.status === 'pending').length
 
   return (
-    <SettingsSection.Section className='shadow-sm'>
+    <SettingsSection.Section className='shadow-xs'>
       <SettingsSection.Header>
         <SettingsSection.Title>Account review</SettingsSection.Title>
       </SettingsSection.Header>
@@ -144,7 +144,7 @@ function ReviewRow({ user, approving, rejecting, onApprove, onReject }: ReviewRo
     <TableRow>
       <div className='flex-1 text-sm'>
         <div className='flex items-center'>
-          <div className='h-10 w-10 flex-shrink-0'>
+          <div className='h-10 w-10 shrink-0'>
             <Avatar name={displayName} size='lg' />
           </div>
           <div className='ml-4 min-w-0'>

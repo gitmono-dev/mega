@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { filter, isTruthy, uniqBy } from 'remeda'
+import { filter, isTruthy, uniqueBy } from 'remeda'
 
 import { OrganizationMember, OrganizationMembershipStatus } from '@gitmono/types'
 
@@ -43,7 +43,7 @@ export function useDeleteStatus() {
             exact: true
           },
           updater: (old: OrganizationMembershipStatus[]): OrganizationMembershipStatus[] =>
-            uniqBy(filter([currentMember.status, ...old], isTruthy), (s) => s.message)
+            uniqueBy(filter([currentMember.status, ...old], isTruthy), (s) => s.message)
         }
       ]
     }

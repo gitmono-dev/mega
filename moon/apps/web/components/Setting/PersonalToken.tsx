@@ -23,7 +23,7 @@ const TokenItem = ({ item }: { item: ListToken }) => {
         <LockIcon className='text-quaternary h-6 w-6' aria-hidden='true' />
         <div className='ml-4'>
           <p className='text-primary text-base font-bold'>Token #{item.id}</p>
-          <p className='text-tertiary mt-1 break-all font-mono text-sm'>{item.token}</p>
+          <p className='text-tertiary mt-1 font-mono text-sm break-all'>{item.token}</p>
           <p className='text-tertiary mt-2 text-xs'>
             <HandleTime created_at={item.created_at} />
           </p>
@@ -76,7 +76,7 @@ const CopySpace = ({ copyText }: { copyText: string }) => {
 
   return (
     <div className='mb-4 flex items-center gap-3'>
-      <code className='border-primary bg-secondary flex-1 break-all rounded border px-3 py-2 font-mono text-sm'>
+      <code className='border-primary bg-secondary flex-1 rounded border px-3 py-2 font-mono text-sm break-all'>
         {copyText}
       </code>
       <Button variant='flat' onClick={() => handleCopy(copyText)}>

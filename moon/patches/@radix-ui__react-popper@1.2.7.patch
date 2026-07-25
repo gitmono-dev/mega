@@ -1,0 +1,112 @@
+diff --git a/dist/index.d.mts b/dist/index.d.mts
+index bffb3cd79339bf87dd2527967055423518ec7645..18b4a96b99b28819e862c4fc8e844a6f553a6e01 100644
+--- a/dist/index.d.mts
++++ b/dist/index.d.mts
+@@ -25,7 +25,7 @@ interface PopperContentProps extends PrimitiveDivProps {
+     align?: Align;
+     alignOffset?: number;
+     arrowPadding?: number;
+-    avoidCollisions?: boolean;
++    avoidCollisions?: boolean | 'flip' | 'autoPlacement';
+     collisionBoundary?: Boundary | Boundary[];
+     collisionPadding?: number | Partial<Record<Side, number>>;
+     sticky?: 'partial' | 'always';
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index bffb3cd79339bf87dd2527967055423518ec7645..18b4a96b99b28819e862c4fc8e844a6f553a6e01 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -25,7 +25,7 @@ interface PopperContentProps extends PrimitiveDivProps {
+     align?: Align;
+     alignOffset?: number;
+     arrowPadding?: number;
+-    avoidCollisions?: boolean;
++    avoidCollisions?: boolean | 'flip' | 'autoPlacement';
+     collisionBoundary?: Boundary | Boundary[];
+     collisionPadding?: number | Partial<Record<Side, number>>;
+     sticky?: 'partial' | 'always';
+diff --git a/dist/index.js b/dist/index.js
+index f7a999496ba1a76f2114b76f99e2bd3d10c7aa09..4425d60d1bbea59ae07124ee4eb853656ec36b8c 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -83,6 +83,13 @@ var PopperAnchor = React.forwardRef(
+ PopperAnchor.displayName = ANCHOR_NAME;
+ var CONTENT_NAME = "PopperContent";
+ var [PopperContentProvider, useContentContext] = createPopperContext(CONTENT_NAME);
++function getPlacement(side, align) {
++  return side + (align !== "center" ? "-" + align : "");
++}
++function getAllowedPlacements(side, align) {
++  const sides = side === "top" || side === "bottom" ? ["top", "bottom"] : ["left", "right"];
++  return sides.map((side2) => getPlacement(side2, align));
++}
+ var PopperContent = React.forwardRef(
+   (props, forwardedRef) => {
+     const {
+@@ -108,7 +115,7 @@ var PopperContent = React.forwardRef(
+     const arrowSize = (0, import_react_use_size.useSize)(arrow);
+     const arrowWidth = arrowSize?.width ?? 0;
+     const arrowHeight = arrowSize?.height ?? 0;
+-    const desiredPlacement = side + (align !== "center" ? "-" + align : "");
++    const desiredPlacement = getPlacement(side, align);
+     const collisionPadding = typeof collisionPaddingProp === "number" ? collisionPaddingProp : { top: 0, right: 0, bottom: 0, left: 0, ...collisionPaddingProp };
+     const boundary = Array.isArray(collisionBoundary) ? collisionBoundary : [collisionBoundary];
+     const hasExplicitBoundaries = boundary.length > 0;
+@@ -139,7 +146,10 @@ var PopperContent = React.forwardRef(
+           limiter: sticky === "partial" ? (0, import_react_dom.limitShift)() : void 0,
+           ...detectOverflowOptions
+         }),
+-        avoidCollisions && (0, import_react_dom.flip)({ ...detectOverflowOptions }),
++        avoidCollisions === true || avoidCollisions === "flip" ? (0, import_react_dom.flip)({ ...detectOverflowOptions }) : avoidCollisions === "autoPlacement" && (0, import_react_dom.autoPlacement)({
++          ...detectOverflowOptions,
++          allowedPlacements: getAllowedPlacements(side, align)
++        }),
+         (0, import_react_dom.size)({
+           ...detectOverflowOptions,
+           apply: ({ elements, rects, availableWidth, availableHeight }) => {
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 49fe2635a0ad72c4611e4383209dc249d60ab0cd..d9ae88e61f559eac126508f9a5657639634aaac4 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -5,6 +5,7 @@ import * as React from "react";
+ import {
+   useFloating,
+   autoUpdate,
++  autoPlacement,
+   offset,
+   shift,
+   limitShift,
+@@ -48,6 +49,13 @@ var PopperAnchor = React.forwardRef(
+ PopperAnchor.displayName = ANCHOR_NAME;
+ var CONTENT_NAME = "PopperContent";
+ var [PopperContentProvider, useContentContext] = createPopperContext(CONTENT_NAME);
++function getPlacement(side, align) {
++  return side + (align !== "center" ? "-" + align : "");
++}
++function getAllowedPlacements(side, align) {
++  const sides = side === "top" || side === "bottom" ? ["top", "bottom"] : ["left", "right"];
++  return sides.map((side2) => getPlacement(side2, align));
++}
+ var PopperContent = React.forwardRef(
+   (props, forwardedRef) => {
+     const {
+@@ -73,7 +81,7 @@ var PopperContent = React.forwardRef(
+     const arrowSize = useSize(arrow);
+     const arrowWidth = arrowSize?.width ?? 0;
+     const arrowHeight = arrowSize?.height ?? 0;
+-    const desiredPlacement = side + (align !== "center" ? "-" + align : "");
++    const desiredPlacement = getPlacement(side, align);
+     const collisionPadding = typeof collisionPaddingProp === "number" ? collisionPaddingProp : { top: 0, right: 0, bottom: 0, left: 0, ...collisionPaddingProp };
+     const boundary = Array.isArray(collisionBoundary) ? collisionBoundary : [collisionBoundary];
+     const hasExplicitBoundaries = boundary.length > 0;
+@@ -104,7 +112,10 @@ var PopperContent = React.forwardRef(
+           limiter: sticky === "partial" ? limitShift() : void 0,
+           ...detectOverflowOptions
+         }),
+-        avoidCollisions && flip({ ...detectOverflowOptions }),
++        avoidCollisions === true || avoidCollisions === "flip" ? flip({ ...detectOverflowOptions }) : avoidCollisions === "autoPlacement" && autoPlacement({
++          ...detectOverflowOptions,
++          allowedPlacements: getAllowedPlacements(side, align)
++        }),
+         size({
+           ...detectOverflowOptions,
+           apply: ({ elements, rects, availableWidth, availableHeight }) => {

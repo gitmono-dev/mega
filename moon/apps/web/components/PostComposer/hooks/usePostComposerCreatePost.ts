@@ -25,12 +25,7 @@ export function usePostComposerCreatePost() {
           height: attachment.height,
           duration: attachment.duration,
           name: attachment.name,
-          size: attachment.size,
-          figma_file_id: attachment.figma_file_id,
-          remote_figma_node_id: attachment.remote_figma_node_id,
-          remote_figma_node_type: attachment.remote_figma_node_type,
-          remote_figma_node_name: attachment.remote_figma_node_name,
-          figma_share_url: attachment.figma_share_url
+          size: attachment.size
         })),
         poll: data.poll
           ? { ...data.poll, options: data.poll.options.map((o) => ({ description: o.description })) }

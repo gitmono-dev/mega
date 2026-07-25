@@ -7,13 +7,10 @@ import { LayeredHotkeys } from '@gitmono/ui/DismissibleLayer'
 import { LockIcon } from '@gitmono/ui/Icons'
 import { cn } from '@gitmono/ui/utils'
 
-import { FloatingNewCallButton } from '@/components/FloatingButtons/NewCall'
 import { FloatingNewDocButton } from '@/components/FloatingButtons/NewDoc'
 import { FloatingNewPostButton } from '@/components/FloatingButtons/NewPost'
 import { IndexPageContainer } from '@/components/IndexPages/components'
 import { ProjectArchiveBanner } from '@/components/Projects/ProjectArchiveBanner'
-import { BreadcrumbProjectCallButton } from '@/components/Projects/ProjectCallButton'
-import { ProjectCalls } from '@/components/Projects/ProjectCalls'
 import { ProjectChat } from '@/components/Projects/ProjectChat'
 import { ProjectFavoriteButton } from '@/components/Projects/ProjectFavoriteButton'
 import { ProjectNotes } from '@/components/Projects/ProjectNotes'
@@ -44,7 +41,6 @@ export function ProjectView({ project }: ProjectViewProps) {
   const isPosts = isIndex && !isChatProject
   const isChat = isIndex && isChatProject
   const isDocs = router.pathname === '/[org]/projects/[projectId]/docs'
-  const isCalls = router.pathname === '/[org]/projects/[projectId]/calls'
 
   function toggleProjectDetailsSidebar() {
     setIsDesktopProjectSidebarOpen((prev) => !prev)
@@ -59,14 +55,8 @@ export function ProjectView({ project }: ProjectViewProps) {
         callback={() => router.push(`/${scope}/projects/${project.id}/docs`)}
         options={{ enabled: !isChatProject }}
       />
-      <LayeredHotkeys
-        keys={isChatProject ? '2' : '3'}
-        callback={() => router.push(`/${scope}/projects/${project.id}/calls`)}
-      />
-
       {isPosts && <FloatingNewPostButton />}
       {isDocs && <FloatingNewDocButton />}
-      {isCalls && <FloatingNewCallButton />}
 
       <SplitViewContainer>
         <IndexPageContainer>
@@ -80,7 +70,6 @@ export function ProjectView({ project }: ProjectViewProps) {
             <ProjectIndexLayoutFilter project={project} />
 
             <div className={cn('ml-auto flex items-center gap-1.5', { hidden: isSplitViewVisible })}>
-              <BreadcrumbProjectCallButton project={project} />
               <ProjectOverflowMenu type='dropdown' project={project} size='sm' />
               <ProjectSidebarDesktopToggleButton />
             </div>
@@ -92,7 +81,6 @@ export function ProjectView({ project }: ProjectViewProps) {
             <div className='flex flex-1 flex-col'>
               {isPosts && <ProjectPosts project={project} />}
               {isDocs && <ProjectNotes project={project} />}
-              {isCalls && <ProjectCalls project={project} />}
               {isChat && <ProjectChat project={project} />}
             </div>
           </div>
@@ -111,7 +99,6 @@ function ProjectIndexLayoutFilter({ project, fullWidth }: ProjectViewProps & { f
   const isChatProject = !!project.message_thread_id
   const isRoot = router.pathname === '/[org]/projects/[projectId]'
   const isDocs = router.pathname === '/[org]/projects/[projectId]/docs'
-  const isCalls = router.pathname === '/[org]/projects/[projectId]/calls'
 
   return (
     <div className='ml-2 flex flex-1 items-center gap-0.5'>
@@ -137,16 +124,6 @@ function ProjectIndexLayoutFilter({ project, fullWidth }: ProjectViewProps & { f
           Docs
         </Button>
       )}
-      <Button
-        size='sm'
-        fullWidth={fullWidth}
-        tooltip='Calls'
-        tooltipShortcut={isChatProject ? '2' : '3'}
-        href={`/${scope}/projects/${project.id}/calls`}
-        variant={isCalls ? 'flat' : 'plain'}
-      >
-        Calls
-      </Button>
     </div>
   )
 }

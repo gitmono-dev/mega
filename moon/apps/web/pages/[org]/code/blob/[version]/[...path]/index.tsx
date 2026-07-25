@@ -101,7 +101,7 @@ function BlobPage() {
           {/* Resizer handle */}
           <div
             onMouseDown={handleMouseDown}
-            className='bg-border-primary h-full w-1 flex-shrink-0 cursor-col-resize transition-colors hover:bg-blue-400'
+            className='bg-border-primary h-full w-1 shrink-0 cursor-col-resize transition-colors hover:bg-blue-400'
             style={{ backgroundColor: isDragging ? '#60a5fa' : undefined }}
           />
 
@@ -117,7 +117,7 @@ function BlobPage() {
             }}
             className='bg-primary'
           >
-            <div className='flex-shrink-0'>
+            <div className='shrink-0'>
               <CommitHistory flag={'details'} path={new_path} refs={refs} />
             </div>
             <div className='flex flex-1 flex-col overflow-hidden pt-2'>
@@ -131,16 +131,7 @@ function BlobPage() {
 }
 
 BlobPage.getProviders = (
-  page:
-    | string
-    | number
-    | boolean
-    | React.ReactElement
-    | Iterable<React.ReactNode>
-    | React.ReactPortal
-    | Promise<React.AwaitedReactNode>
-    | null
-    | undefined,
+  page: React.ReactNode,
   pageProps: React.JSX.IntrinsicAttributes & { children?: React.ReactNode }
 ) => {
   return (

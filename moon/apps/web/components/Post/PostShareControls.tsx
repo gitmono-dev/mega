@@ -169,7 +169,7 @@ export function PostShareControls({ isOpen, post }: PostShareControlsProps) {
             onClick={onCopy}
             leftSlot={isCopied ? <CheckIcon /> : <LinkIcon />}
             className={cn({
-              '!border-transparent !bg-green-500 !text-white !shadow-none !outline-none !ring-0': isCopied
+              '!border-transparent !bg-green-500 !text-white !shadow-none !ring-0 !outline-hidden': isCopied
             })}
           >
             {isCopied ? 'Copied' : 'Copy link'}
@@ -202,7 +202,7 @@ export function PostShareControls({ isOpen, post }: PostShareControlsProps) {
             )}
 
             {post.project.private && post.visibility === 'public' && (
-              <div className='-mx-4 -mb-4 mt-2 flex items-start gap-2 rounded-b-lg border-t border-yellow-300 bg-yellow-100 p-4 text-yellow-800 dark:border-yellow-900/70 dark:bg-yellow-800/30 dark:text-yellow-400'>
+              <div className='-mx-4 mt-2 -mb-4 flex items-start gap-2 rounded-b-lg border-t border-yellow-300 bg-yellow-100 p-4 text-yellow-800 dark:border-yellow-900/70 dark:bg-yellow-800/30 dark:text-yellow-400'>
                 <span className='flex-none'>
                   <InformationIcon />
                 </span>

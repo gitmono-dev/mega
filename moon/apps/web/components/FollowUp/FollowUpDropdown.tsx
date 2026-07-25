@@ -175,9 +175,10 @@ export const FollowUpDropdown = forwardRef<FollowUpDropdownRef, FollowUpDropdown
                       initial={false}
                     >
                       <Calendar
-                        initialFocus
-                        fromDate={addDays(new Date(), 1)}
-                        toDate={addYears(new Date(), 1)}
+                        autoFocus
+                        startMonth={addDays(new Date(), 1)}
+                        endMonth={addYears(new Date(), 1)}
+                        hidden={{ before: addDays(new Date(), 1), after: addYears(new Date(), 1) }}
                         mode='single'
                         selected={customDate}
                         onSelect={(date) => setCustomDate(date)}

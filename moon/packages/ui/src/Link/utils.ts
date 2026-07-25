@@ -1,4 +1,3 @@
-import { nativeWindow, newApp, webContents } from '@todesktop/client-core'
 import { os } from '@todesktop/client-core/platform'
 import Router from 'next/router'
 
@@ -8,14 +7,11 @@ import { isDesktopApp } from '../hooks'
 
 const isWebUrl = (href?: string) => !!href?.startsWith(WEB_URL)
 const hasPublicSharePath = (href?: string) => !!href?.includes('/p/')
-const hasCallJoinPath = (href?: string) => !!href?.includes('/calls/join/')
 
 export function linkType(href?: string) {
   if (isWebUrl(href)) {
     if (hasPublicSharePath(href)) {
       return 'public_share'
-    } else if (hasCallJoinPath(href)) {
-      return 'call'
     } else {
       return 'internal'
     }
@@ -31,8 +27,7 @@ const OAUTH_DOMAINS = [
   'twitter.com',
   'google.com',
   'linear.app',
-  'slack.com',
-  'figma.com'
+  'slack.com'
 ]
 
 // ToDesktop has very naive OAuth detection and will override any navigation to OAuth URLs
@@ -43,26 +38,6 @@ function isOAuthLink(href?: string) {
 
 export function isAppMention(target: HTMLElement) {
   return target.matches('span[data-type="mention"]') && target.getAttribute('data-role') === 'app'
-}
-
-export async function desktopJoinCall(url: string) {
-  const windowRef = await nativeWindow.create({
-    titleBarStyle: 'hiddenInset',
-    autoHideMenuBar: true,
-    minHeight: 350,
-    minWidth: 350,
-    trafficLightPosition: { x: 20, y: 20 }
-  })
-
-  // On MacOS, show the call window when clicking the dock icon.
-  const unsubscribe = await newApp.on('activate', () => {
-    nativeWindow.show({ ref: windowRef }).catch(() => {
-      // If the window has closed, unsubscribe from the activate event.
-      unsubscribe()
-    })
-  })
-
-  await webContents.loadURL({ ref: await nativeWindow.getWebContents({ ref: windowRef }) }, url)
 }
 
 export function closestMentionURL(scope: string, target: HTMLElement) {
@@ -128,9 +103,7 @@ export function specialLinkClickHandler(scope: string, event: MouseEvent, isCont
     const isDesktop = isDesktopApp()
     const type = linkType(href)
 
-    if (readonlyOrMeta && isDesktop && type === 'call') {
-      desktopJoinCall(href)
-    } else if (readonlyOrMeta && isDesktop && (type === 'public_share' || type === 'desktop_oauth')) {
+    if (readonlyOrMeta && isDesktop && (type === 'public_share' || type === 'desktop_oauth')) {
       os.openURL(href)
     } else if (anchor.target === '_blank' && type === 'internal') {
       if (isMetaClick(event)) {

@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 export const timezones = [
   {
     value: 'UTC-11',

@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import pluralize from 'pluralize'
@@ -108,7 +107,7 @@ function SearchPeopleDialogBody({
           <Command.Input
             ref={inputRef}
             placeholder='Search people...'
-            className='w-full border-0 bg-transparent py-3 pl-0 pr-4 text-[15px] placeholder-gray-400 outline-none focus:border-black focus:border-black/5 focus:ring-0'
+            className='w-full border-0 bg-transparent py-3 pr-4 pl-0 text-[15px] placeholder-gray-400 outline-hidden focus:border-black focus:border-black/5 focus:ring-0'
             autoFocus
           />
         </div>
@@ -140,7 +139,7 @@ function SearchPeopleDialogBody({
                 {project.viewer_can_update && (
                   <Button
                     variant='plain'
-                    className='opacity-0 hover:bg-red-500 hover:text-white group-data-[selected="true"]:opacity-100 dark:hover:bg-red-500'
+                    className='opacity-0 group-data-[selected="true"]:opacity-100 hover:bg-red-500 hover:text-white dark:hover:bg-red-500'
                     accessibilityLabel='Remove member'
                   >
                     {member.user.id === currentUser?.id ? 'Leave' : 'Remove'}

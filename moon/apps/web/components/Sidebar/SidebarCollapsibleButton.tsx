@@ -14,7 +14,7 @@ export function SidebarCollapsibleButton({
 }) {
   return (
     <m.button
-      className='hover:bg-quaternary group flex flex-1 items-center rounded-md px-2 py-1 focus:outline-0 focus:ring-0'
+      className='hover:bg-quaternary group flex flex-1 items-center rounded-md px-2 py-1 focus:ring-0 focus:outline-0'
       onClick={() => setCollapsed(!collapsed)}
     >
       <span

@@ -21,7 +21,7 @@ export function InboundRequests() {
   if (!requests?.length) return null
 
   return (
-    <SettingsSection.Section className='shadow-sm'>
+    <SettingsSection.Section className='shadow-xs'>
       <SettingsSection.Header>
         <SettingsSection.Title>Needs review</SettingsSection.Title>
       </SettingsSection.Header>
@@ -74,7 +74,7 @@ function RequestsRows(props: RequestsRowsProps) {
         <TableRow key={request.id}>
           <div className='flex-1 text-sm'>
             <div className='flex items-center'>
-              <div className='h-10 w-10 flex-shrink-0'>
+              <div className='h-10 w-10 shrink-0'>
                 <Avatar name={request.user.display_name} size='lg' urls={request.user.avatar_urls} />
               </div>
               <div className='ml-4'>

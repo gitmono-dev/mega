@@ -1,15 +1,14 @@
 import { PropsWithChildren } from 'react'
 import Router from 'next/router'
 
-import { NoteFilledIcon, PostFilledIcon, UIText, VideoCameraFilledIcon } from '@gitmono/ui'
+import { NoteFilledIcon, PostFilledIcon, UIText } from '@gitmono/ui'
 import { HighlightedCommandItem } from '@gitmono/ui/Command'
 
 import { useScope } from '@/contexts/scope'
-import { useGetCall } from '@/hooks/useGetCall'
 import { useGetNote } from '@/hooks/useGetNote'
 import { useGetPost } from '@/hooks/useGetPost'
 
-import { LocalCall, LocalNote, LocalPost, useSyncRecentlyViewedItem } from './utils'
+import { LocalNote, LocalPost, useSyncRecentlyViewedItem } from './utils'
 
 type RecentlyViewedContainerProps = PropsWithChildren & {
   value: string
@@ -59,22 +58,6 @@ export function RecentlyViewedNote({ note, onSelect }: { note: LocalNote; onSele
       <NoteFilledIcon className='flex-none text-blue-500' />
       <UIText className='line-clamp-1' weight='font-medium'>
         {note.title || 'Untitled doc'}
-      </UIText>
-    </RecentlyViewedContainer>
-  )
-}
-
-export function RecentlyViewedCall({ call, onSelect }: { call: LocalCall; onSelect: () => void }) {
-  const { data: syncedCall, isError } = useGetCall({ id: call.id, enabled: false })
-  const { scope } = useScope()
-
-  useSyncRecentlyViewedItem({ id: call.id, call: syncedCall, isError })
-
-  return (
-    <RecentlyViewedContainer value={call.id} onSelect={onSelect} route={`/${scope}/calls/${call.id}`}>
-      <VideoCameraFilledIcon className='flex-none text-green-500' />
-      <UIText className='line-clamp-1' weight='font-medium'>
-        {call.title}
       </UIText>
     </RecentlyViewedContainer>
   )

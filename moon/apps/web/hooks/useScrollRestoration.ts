@@ -20,7 +20,10 @@ let isNavigatingBack = false
  * Remembers scroll position for the current path x element and
  * restores scroll position if the user navigates back.
  */
-export function useScrollRestoration(ref: RefObject<HTMLDivElement>, { enabled = true }: { enabled?: boolean } = {}) {
+export function useScrollRestoration(
+  ref: RefObject<HTMLDivElement | null>,
+  { enabled = true }: { enabled?: boolean } = {}
+) {
   const { scope } = useScope()
   const scopeRef = useRef(scope)
   const router = useRouter()

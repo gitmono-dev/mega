@@ -6,7 +6,6 @@ import { useDebounce } from 'use-debounce'
 import { ResourceMention } from '@gitmono/editor'
 import { Command, LoadingSpinner, RelativeTime, UIText } from '@gitmono/ui'
 
-import { useCallView } from '@/components/CallView'
 import { ResourceMentionIcon } from '@/components/InlineResourceMentionRenderer'
 import { useNoteView } from '@/components/NoteView'
 import { usePostView } from '@/components/Post/PostView'
@@ -60,9 +59,8 @@ function InnerResourceMentionList({ editor }: Pick<Props, 'editor'>) {
 
   // disallow self-mentions
   const postId = usePostView()
-  const callId = useCallView()
   const noteId = useNoteView()
-  const containedResourceId = postId || callId || noteId
+  const containedResourceId = postId || noteId
 
   if (query) {
     if (isFetching && (!results || results.items.length === 0)) {
@@ -70,7 +68,7 @@ function InnerResourceMentionList({ editor }: Pick<Props, 'editor'>) {
         <SuggestionItem
           editor={editor}
           value={query}
-          className='text-tertiary pointer-events-none cursor-none select-none px-3'
+          className='text-tertiary pointer-events-none cursor-none px-3 select-none'
           // eslint-disable-next-line no-empty-function
           onSelect={() => {}}
         >
@@ -81,11 +79,10 @@ function InnerResourceMentionList({ editor }: Pick<Props, 'editor'>) {
     }
 
     const posts: ResourceMentionItemType[] = []
-    const calls: ResourceMentionItemType[] = []
     const notes: ResourceMentionItemType[] = []
 
     results?.items?.forEach(({ item, project }) => {
-      const resource = item.post || item.call || item.note
+      const resource = item.post || item.note
 
       if (!resource || resource.id === containedResourceId) return
 
@@ -99,14 +96,12 @@ function InnerResourceMentionList({ editor }: Pick<Props, 'editor'>) {
 
       if (item.post) {
         posts.push(resourceItem)
-      } else if (item.call) {
-        calls.push(resourceItem)
       } else if (item.note) {
         notes.push(resourceItem)
       }
     })
 
-    return <ResourceMentionGroups editor={editor} posts={posts} calls={calls} notes={notes} />
+    return <ResourceMentionGroups editor={editor} posts={posts} notes={notes} />
   }
 
   return <DefaultResourceMentionList editor={editor} containedResourceId={containedResourceId} />
@@ -120,11 +115,10 @@ function DefaultResourceMentionList({
   const recentlyViewed = useAtomValue(recentlyViewedAtom(`${scope}`))
 
   const posts: ResourceMentionItemType[] = []
-  const calls: ResourceMentionItemType[] = []
   const notes: ResourceMentionItemType[] = []
 
-  recentlyViewed?.forEach(({ post, call, note }) => {
-    const resource = post || call || note
+  recentlyViewed?.forEach(({ post, note }) => {
+    const resource = post || note
     const id = resource?.id
 
     if (!resource?.url || !resource?.title || !id) return
@@ -142,14 +136,12 @@ function DefaultResourceMentionList({
 
     if (post) {
       posts.push(resourceItem)
-    } else if (call) {
-      calls.push(resourceItem)
     } else if (note) {
       notes.push(resourceItem)
     }
   })
 
-  return <ResourceMentionGroups editor={editor} posts={posts} calls={calls} notes={notes} />
+  return <ResourceMentionGroups editor={editor} posts={posts} notes={notes} />
 }
 
 interface ResourceMentionItemType {
@@ -163,12 +155,10 @@ interface ResourceMentionItemType {
 function ResourceMentionGroups({
   editor,
   posts,
-  calls,
   notes
 }: {
   editor: Editor
   posts: ResourceMentionItemType[]
-  calls: ResourceMentionItemType[]
   notes: ResourceMentionItemType[]
 }) {
   return (
@@ -187,13 +177,6 @@ function ResourceMentionGroups({
           ))}
         </MentionListGroup>
       )}
-      {calls.length > 0 && (
-        <MentionListGroup label='Calls'>
-          {calls.map((call) => (
-            <ResourceMentionItem key={call.id} {...call} type='call' editor={editor} />
-          ))}
-        </MentionListGroup>
-      )}
     </>
   )
 }
@@ -207,7 +190,7 @@ function ResourceMentionItem({
   type,
   editor
 }: ResourceMentionItemType & {
-  type: 'call' | 'note' | 'post'
+  type: 'note' | 'post'
   editor: Editor
 }) {
   return (
@@ -221,7 +204,7 @@ function ResourceMentionItem({
     >
       <ResourceMentionIcon type={type} size={24} />
       <div className='flex min-w-0 flex-col'>
-        <span className='overflow-hidden text-ellipsis whitespace-nowrap text-sm'>{title}</span>
+        <span className='overflow-hidden text-sm text-ellipsis whitespace-nowrap'>{title}</span>
         <span className='text-quaternary text-xs'>
           {projectName ?? 'Private'} <RelativeTime time={created_at} />
         </span>

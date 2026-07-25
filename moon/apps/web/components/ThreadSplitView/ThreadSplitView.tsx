@@ -22,7 +22,7 @@ export function ThreadSplitView({ children }: { children?: React.ReactNode }) {
     <div className='flex flex-1 overflow-hidden'>
       {(!focus || focus === 'false') && (
         <div
-          className={cn('w-full flex-col overflow-hidden border-r lg:min-w-[200px] lg:max-w-[400px] lg:basis-[40%]', {
+          className={cn('w-full flex-col overflow-hidden border-r lg:max-w-[400px] lg:min-w-[200px] lg:basis-[40%]', {
             hidden: isThread && !hasSidebarDms,
             'flex lg:hidden': !isThread && !hasSidebarDms,
             'hidden lg:flex': isThread && hasSidebarDms,

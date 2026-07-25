@@ -103,7 +103,7 @@ export default function NewMonoTagDialog({ open, onOpenChange, onCreated }: Prop
           <div className='flex flex-col gap-2'>
             <label className='text-quaternary text-sm'>Name</label>
             <input
-              className='border-primary bg-primary text-primary focus:border-accent focus:ring-accent/20 rounded-md border px-2 py-1 text-sm outline-none transition-colors focus:ring-2'
+              className='border-primary bg-primary text-primary focus:border-accent focus:ring-accent/20 rounded-md border px-2 py-1 text-sm outline-hidden transition-colors focus:ring-2'
               value={name}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
               placeholder='v1.0.0'
@@ -112,7 +112,7 @@ export default function NewMonoTagDialog({ open, onOpenChange, onCreated }: Prop
           <div className='flex flex-col gap-2'>
             <label className='text-quaternary text-sm'>Message (optional)</label>
             <textarea
-              className='border-primary bg-primary text-primary focus:border-accent focus:ring-accent/20 rounded-md border px-2 py-1 text-sm outline-none transition-colors focus:ring-2'
+              className='border-primary bg-primary text-primary focus:border-accent focus:ring-accent/20 rounded-md border px-2 py-1 text-sm outline-hidden transition-colors focus:ring-2'
               value={message}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessage(e.target.value)}
               placeholder='Release notes'
@@ -134,7 +134,7 @@ export default function NewMonoTagDialog({ open, onOpenChange, onCreated }: Prop
               <div className='border-primary bg-secondary mt-2 flex flex-col gap-2 rounded-md border p-2'>
                 <div className='flex items-center gap-2'>
                   <input
-                    className='border-primary bg-primary text-primary focus:border-accent focus:ring-accent/20 flex-1 rounded-md border px-2 py-1 text-sm outline-none transition-colors focus:ring-2'
+                    className='border-primary bg-primary text-primary focus:border-accent focus:ring-accent/20 flex-1 rounded-md border px-2 py-1 text-sm outline-hidden transition-colors focus:ring-2'
                     value={target}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTarget(e.target.value)}
                     placeholder='Commit SHA'

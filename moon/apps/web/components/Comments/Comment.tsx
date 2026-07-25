@@ -66,7 +66,7 @@ export const CommentComponent = memo(
           className={cn(
             'divide-secondary relative isolate divide-y',
             !isCanvas &&
-              'bg-elevated dark:bg-secondary my-3 overflow-hidden rounded-lg border-[0.5px] shadow-sm dark:border-0 dark:shadow-[inset_0_0.5px_0_rgb(255_255_255/0.06),_inset_0_0_0.5px_rgb(255_255_255/0.1)]'
+              'bg-elevated dark:bg-secondary my-3 overflow-hidden rounded-lg border-[0.5px] shadow-xs dark:border-0 dark:shadow-[inset_0_0.5px_0_rgb(255_255_255/0.06),_inset_0_0_0.5px_rgb(255_255_255/0.1)]'
           )}
         >
           {/* Comment Root */}
@@ -259,7 +259,7 @@ const CommentDetails = ({ comment, post, replyingToCommentId, isReply = false, i
             }
           )}
         >
-          <div className='relative z-50 -mb-1 -mt-1.5 flex items-center'>
+          <div className='relative z-50 -mt-1.5 -mb-1 flex items-center'>
             <div className='flex min-w-0 flex-1 space-x-1.5 align-baseline leading-none'>
               <ConditionalWrap
                 condition={post.viewer_is_organization_member}
@@ -277,7 +277,7 @@ const CommentDetails = ({ comment, post, replyingToCommentId, isReply = false, i
               <PostLink
                 postId={post.id}
                 hash={`#comment-${comment.id}`}
-                className={cn('text-tertiary hover:text-primary whitespace-nowrap text-sm', {
+                className={cn('text-tertiary hover:text-primary text-sm whitespace-nowrap', {
                   'pointer-events-none': comment.is_optimistic
                 })}
               >
@@ -304,7 +304,7 @@ const CommentDetails = ({ comment, post, replyingToCommentId, isReply = false, i
           </div>
 
           <CommentInnerLayoutTransitionContainer initial={false} show={!hideResolvesPostBadge}>
-            <Badge color='green' className='mb-1.5 mt-1 w-fit self-start font-mono'>
+            <Badge color='green' className='mt-1 mb-1.5 w-fit self-start font-mono'>
               Resolves post
             </Badge>
           </CommentInnerLayoutTransitionContainer>
@@ -352,7 +352,7 @@ const CommentDetails = ({ comment, post, replyingToCommentId, isReply = false, i
                       alt='Canvas comment'
                     />
 
-                    <div className='absolute bottom-1 right-1 flex items-center justify-center rounded-md bg-white px-1 py-1 text-black ring-1 ring-black/5 group-hover/canvas-comment:text-black'>
+                    <div className='absolute right-1 bottom-1 flex items-center justify-center rounded-md bg-white px-1 py-1 text-black ring-1 ring-black/5 group-hover/canvas-comment:text-black'>
                       <CanvasCommentIcon size={14} />
                     </div>
                   </button>

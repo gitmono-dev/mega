@@ -100,12 +100,12 @@ export const NewLabelDialog: React.FC<NewLabelDialogProps> = ({ isOpen, onClose,
                 type='button'
                 onClick={generateRandomColor}
                 title='Randomize color'
-                className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-black/10'
+                className='flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-black/10'
                 style={{ backgroundColor: normalizedColor, color: fontColor.toHex() }}
               >
                 <RefreshIcon className='h-4 w-4' />
               </button>
-              <div className='flex flex-grow items-center gap-2 rounded-md border px-2 py-1'>
+              <div className='flex grow items-center gap-2 rounded-md border px-2 py-1'>
                 <input
                   type='color'
                   value={normalizedColor}
@@ -114,7 +114,7 @@ export const NewLabelDialog: React.FC<NewLabelDialogProps> = ({ isOpen, onClose,
                   title='Pick a color'
                 />
                 <input
-                  className='flex-grow border-none bg-transparent p-0 text-sm outline-none ring-0 focus:ring-0'
+                  className='grow border-none bg-transparent p-0 text-sm ring-0 outline-hidden focus:ring-0'
                   value={color}
                   onChange={(e) => handleColorInputChange(e.target.value)}
                   placeholder='#ffffff'

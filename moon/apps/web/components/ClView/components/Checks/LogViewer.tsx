@@ -61,7 +61,7 @@ function highlightSegmentText(text: string, query: string, baseStyle: CSSPropert
     }
 
     parts.push(
-      <mark key={`${idx}-${start}`} className='rounded-sm bg-yellow-500/40 text-inherit' style={baseStyle}>
+      <mark key={`${idx}-${start}`} className='rounded-xs bg-yellow-500/40 text-inherit' style={baseStyle}>
         {text.slice(idx, idx + query.length)}
       </mark>
     )
@@ -90,13 +90,13 @@ const LogRow = memo(function LogRow({
       }`}
     >
       <div
-        className={`text-tertiary shrink-0 select-none text-right ${GUTTER_PAD}`}
+        className={`text-tertiary shrink-0 text-right select-none ${GUTTER_PAD}`}
         style={{ width: LINE_NUMBER_WIDTH, minWidth: LINE_NUMBER_WIDTH }}
       >
         {lineNumber}
       </div>
       <div
-        className={`min-w-0 flex-1 select-text ${GUTTER_PAD} ${wrap ? 'whitespace-pre-wrap break-all' : 'whitespace-pre'}`}
+        className={`min-w-0 flex-1 select-text ${GUTTER_PAD} ${wrap ? 'break-all whitespace-pre-wrap' : 'whitespace-pre'}`}
       >
         {(() => {
           let offset = 0
@@ -222,7 +222,7 @@ export function LogViewer({ text, height }: LogViewerProps) {
   const currentMatchLine = matches[currentMatchIdx]
 
   return (
-    <div className='flex h-full flex-col overflow-hidden rounded-sm border border-[#333]'>
+    <div className='flex h-full flex-col overflow-hidden rounded-xs border border-[#333]'>
       <div
         className='flex shrink-0 items-center gap-2 border-b border-[#333] bg-[#252526] px-2'
         style={{ height: TOOLBAR_HEIGHT }}
@@ -237,7 +237,7 @@ export function LogViewer({ text, height }: LogViewerProps) {
               e.shiftKey ? goToPrevMatch() : goToNextMatch()
             }
           }}
-          className='h-7 min-w-0 flex-1 rounded border border-[#3c3c3c] bg-[#3c3c3c] px-2 text-xs text-[#d4d4d4] placeholder:text-[#888] focus:border-[#007acc] focus:outline-none'
+          className='h-7 min-w-0 flex-1 rounded border border-[#3c3c3c] bg-[#3c3c3c] px-2 text-xs text-[#d4d4d4] placeholder:text-[#888] focus:border-[#007acc] focus:outline-hidden'
         />
         {searchQuery.trim() ? (
           <span className='shrink-0 text-xs text-[#888]'>
@@ -293,7 +293,7 @@ export function LogViewer({ text, height }: LogViewerProps) {
           <button
             type='button'
             onClick={jumpToBottom}
-            className='absolute bottom-3 right-4 z-10 rounded-full bg-[#007acc] px-3 py-1 text-xs text-white shadow-lg hover:bg-[#0062a3]'
+            className='absolute right-4 bottom-3 z-10 rounded-full bg-[#007acc] px-3 py-1 text-xs text-white shadow-lg hover:bg-[#0062a3]'
           >
             Jump to bottom
           </button>

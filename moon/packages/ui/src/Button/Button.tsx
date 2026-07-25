@@ -14,12 +14,12 @@ export const ANIMATIONS = {
     stiffness: 600,
     damping: 30
   }
-}
+} as const
 
 export const buttonVariants = cva(
   [
     'relative font-medium shrink-0 group inline-flex items-center justify-center select-none transform-gpu initial:border-none disabled:opacity-50',
-    'focus:!outline-none focus:!ring-0 active:!outline-none active:!ring-0',
+    'focus:!outline-hidden focus:!ring-0 active:!outline-hidden active:!ring-0',
     'after:pointer-events-none after:absolute after:-inset-[3px] after:rounded-lg after:border after:border-blue-500 after:opacity-0 after:ring-2 after:ring-blue-500/20 after:transition-opacity focus-visible:after:opacity-100 active:after:opacity-0',
     'before:pointer-events-none before:bg-gradient-to-b before:transition-opacity before:from-white/[0.12] before:absolute before:inset-0 before:z-[1] before:rounded before:opacity-0'
   ],
@@ -179,7 +179,7 @@ export const Button = forwardRef<HTMLButtonElement & HTMLAnchorElement, ButtonPr
             id={id}
             href={href}
             className={cn(
-              'relative outline-none transition',
+              'relative outline-hidden transition',
               buttonVariants({ variant, fullWidth, loading, size, round }),
               { '!pl-1': leftSlot && size === 'sm' },
               { '!pl-2': leftSlot && size === 'base' },
@@ -237,7 +237,7 @@ export const Button = forwardRef<HTMLButtonElement & HTMLAnchorElement, ButtonPr
         <button
           id={id}
           className={cn(
-            'outline-none',
+            'outline-hidden',
             buttonVariants({ variant, fullWidth, loading, size, round }),
             { '!pl-1': leftSlot && size === 'sm' },
             { '!pl-2': leftSlot && size === 'base' },

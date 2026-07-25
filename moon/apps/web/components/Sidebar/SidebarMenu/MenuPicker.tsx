@@ -193,7 +193,7 @@ export const MenuPicker = () => {
                   </td>
                   <td className='text-muted-foreground px-3 py-2 text-xs'>
                     <input
-                      className={`bg-background w-full rounded border px-2 py-1 text-xs focus:outline-none focus:ring-1 ${
+                      className={`bg-background w-full rounded border px-2 py-1 text-xs focus:ring-1 focus:outline-hidden ${
                         fieldErrors[item.id]?.public_id
                           ? 'border-red-500 focus:border-red-500 focus:ring-red-300'
                           : 'focus:border-primary focus:ring-primary/30 border-transparent'
@@ -222,7 +222,7 @@ export const MenuPicker = () => {
                   </td>
                   <td className='px-3 py-2 font-medium'>
                     <input
-                      className={`bg-background w-full rounded border px-2 py-1 text-sm focus:outline-none focus:ring-1 ${
+                      className={`bg-background w-full rounded border px-2 py-1 text-sm focus:ring-1 focus:outline-hidden ${
                         fieldErrors[item.id]?.label
                           ? 'border-red-500 focus:border-red-500 focus:ring-red-300'
                           : 'focus:border-primary focus:ring-primary/30 border-transparent'
@@ -251,7 +251,7 @@ export const MenuPicker = () => {
                   </td>
                   <td className='text-muted-foreground px-3 py-2 text-xs'>
                     <input
-                      className={`bg-background w-full rounded border px-2 py-1 text-xs focus:outline-none focus:ring-1 ${
+                      className={`bg-background w-full rounded border px-2 py-1 text-xs focus:ring-1 focus:outline-hidden ${
                         fieldErrors[item.id]?.href
                           ? 'border-red-500 focus:border-red-500 focus:ring-red-300'
                           : 'focus:border-primary focus:ring-primary/30 border-transparent'
@@ -298,7 +298,7 @@ export const MenuPicker = () => {
                       />
                     </button>
                   </td>
-                  <td className='space-x-2 whitespace-nowrap px-3 py-2 text-right text-xs'>
+                  <td className='space-x-2 px-3 py-2 text-right text-xs whitespace-nowrap'>
                     <button
                       type='button'
                       onClick={() => {
@@ -386,7 +386,7 @@ export const MenuPicker = () => {
             </button>
           </div>
 
-          <div className='flex flex-shrink-0 gap-2'>
+          <div className='flex shrink-0 gap-2'>
             <button
               onClick={handleReset}
               disabled={isResetting || isFetching}
