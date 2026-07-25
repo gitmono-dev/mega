@@ -46,7 +46,8 @@ impl MonoApiService {
             let expected_tree = root_ref.ref_tree_hash.clone();
             let root_ref_id = root_ref.id;
 
-            let save_trees = tree_ops::search_and_create_tree(self, &path_buf).await?;
+            let (save_trees, gitkeep_blob) =
+                tree_ops::search_and_create_tree(self, &path_buf).await?;
             let leaf_tree = save_trees
                 .back()
                 .ok_or_else(|| MegaError::Other("no tree generated".to_string()))?;
@@ -59,6 +60,13 @@ impl MonoApiService {
                 ],
                 &commit_msg,
             );
+
+            // Persist .gitkeep before attaching trees. Previously only trees/commits
+            // were saved, leaving object storage without the blob and breaking clone.
+            self.storage()
+                .mono_service
+                .save_blobs(&new_commit.id.to_string(), vec![gitkeep_blob])
+                .await?;
 
             let txn = self.storage().begin_db_transaction().await?;
             match storage

@@ -9,6 +9,7 @@ use git_internal::{
     errors::GitError,
     internal::object::{
         ObjectTrait,
+        blob::Blob,
         tree::{Tree, TreeItem, TreeItemMode},
     },
 };
@@ -112,11 +113,15 @@ pub async fn search_tree_by_path<T: ApiHandler + ?Sized>(
 ///
 /// # Errors
 ///
-/// Returns a `GitError` if an error occurs during the search or tree creation process.
+/// Returns a `MegaError` if an error occurs during the search or tree creation process.
+///
+/// The returned [`Blob`] is the placeholder `.gitkeep` referenced by the new leaf tree.
+/// Callers **must** persist it via object storage (`save_blobs` / `put_objects`) before
+/// or with the trees; otherwise clone/fetch will 404 on that object.
 pub async fn search_and_create_tree<T: ApiHandler + ?Sized>(
     handler: &T,
     path: &Path,
-) -> Result<VecDeque<Tree>, MegaError> {
+) -> Result<(VecDeque<Tree>, Blob), MegaError> {
     let relative_path = handler.strip_relative(path)?;
     let root_tree = handler.get_root_tree(None).await?;
     let mut search_tree = root_tree.clone();
@@ -190,7 +195,7 @@ pub async fn search_and_create_tree<T: ApiHandler + ?Sized>(
         }
     }
 
-    Ok(saving_trees)
+    Ok((saving_trees, blob))
 }
 
 /// return the dir's hash only

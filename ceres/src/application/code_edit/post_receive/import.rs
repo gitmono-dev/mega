@@ -63,7 +63,8 @@ pub async fn dispatch_import_receive_pack_finalized(
         let expected_tree = root_ref.ref_tree_hash.clone();
         let root_ref_id = root_ref.id;
 
-        let save_trees = tree_ops::search_and_create_tree(mono_api_service, &repo_path).await?;
+        let (save_trees, gitkeep_blob) =
+            tree_ops::search_and_create_tree(mono_api_service, &repo_path).await?;
 
         let new_commit = Commit::from_tree_id(
             save_trees
@@ -73,6 +74,12 @@ pub async fn dispatch_import_receive_pack_finalized(
             vec![ObjectHash::from_str(&expected_commit).unwrap()],
             &format!("\n{commit_msg}"),
         );
+
+        // Persist placeholder .gitkeep referenced by newly created path trees.
+        storage
+            .mono_service
+            .save_blobs(&new_commit.id.to_string(), vec![gitkeep_blob])
+            .await?;
 
         let txn = storage.begin_db_transaction().await?;
         let git_db = storage.git_db_storage();

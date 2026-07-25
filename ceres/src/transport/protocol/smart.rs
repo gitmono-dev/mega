@@ -6,7 +6,7 @@ use std::{
 use anyhow::Result;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use callisto::sea_orm_active_enums::RefTypeEnum;
-use common::errors::{ProtocolError, mega_to_protocol_error};
+use common::errors::{ProtocolError, git_to_protocol_error, mega_to_protocol_error};
 use tokio_stream::wrappers::ReceiverStream;
 
 use crate::{
@@ -153,47 +153,52 @@ impl SmartSession {
         let have: Vec<String> = have.into_iter().collect();
 
         if have.is_empty() {
-            pack_data = repo_handler.full_pack(want).await.unwrap();
+            pack_data = repo_handler.full_pack(want).await.map_err(|e| {
+                tracing::error!(error = %e, "git upload-pack full_pack failed");
+                git_to_protocol_error(e)
+            })?;
             add_pkt_line_string(&mut protocol_buf, String::from("NAK\n"));
-        } else {
-            if self.capabilities.contains(&Capability::MultiAckDetailed) {
-                // multi_ack_detailed mode, the server will differentiate the ACKs where it is signaling that
-                // it is ready to send data with ACK obj-id ready lines,
-                // and signals the identified common commits with ACK obj-id common lines
+        } else if self.capabilities.contains(&Capability::MultiAckDetailed) {
+            // multi_ack_detailed mode, the server will differentiate the ACKs where it is signaling that
+            // it is ready to send data with ACK obj-id ready lines,
+            // and signals the identified common commits with ACK obj-id common lines
 
-                for hash in &have {
-                    if repo_handler.check_commit_exist(hash).await {
-                        add_pkt_line_string(&mut protocol_buf, format!("ACK {hash} common\n"));
-                        if last_common_commit.is_empty() {
-                            last_common_commit = hash.to_string();
-                        }
+            for hash in &have {
+                if repo_handler.check_commit_exist(hash).await {
+                    add_pkt_line_string(&mut protocol_buf, format!("ACK {hash} common\n"));
+                    if last_common_commit.is_empty() {
+                        last_common_commit = hash.to_string();
                     }
                 }
-                pack_data = repo_handler
-                    .incremental_pack(want.clone(), have)
-                    .await
-                    .unwrap();
-
-                if last_common_commit.is_empty() {
-                    //send NAK if missing common commit
-                    add_pkt_line_string(&mut protocol_buf, String::from("NAK\n"));
-                    // need to handle rebase option, still need pack data when has no common commit
-                    return Ok((pack_data, protocol_buf));
-                }
-
-                for hash in want {
-                    if self.capabilities.contains(&Capability::NoDone) {
-                        // If multi_ack_detailed and no-done are both present, then the sender is free to immediately send a pack
-                        // following its first "ACK obj-id ready" message.
-                        add_pkt_line_string(&mut protocol_buf, format!("ACK {hash} ready\n"));
-                    }
-                }
-            } else {
-                tracing::error!("capability unsupported");
-                // init a empty receiverstream
-                let (_, rx) = tokio::sync::mpsc::channel::<Vec<u8>>(1);
-                pack_data = ReceiverStream::new(rx);
             }
+            pack_data = repo_handler
+                .incremental_pack(want.clone(), have)
+                .await
+                .map_err(|e| {
+                    tracing::error!(error = %e, "git upload-pack incremental_pack failed");
+                    git_to_protocol_error(e)
+                })?;
+
+            if last_common_commit.is_empty() {
+                //send NAK if missing common commit
+                add_pkt_line_string(&mut protocol_buf, String::from("NAK\n"));
+                // need to handle rebase option, still need pack data when has no common commit
+                return Ok((pack_data, protocol_buf));
+            }
+
+            for hash in want {
+                if self.capabilities.contains(&Capability::NoDone) {
+                    // If multi_ack_detailed and no-done are both present, then the sender is free to immediately send a pack
+                    // following its first "ACK obj-id ready" message.
+                    add_pkt_line_string(&mut protocol_buf, format!("ACK {hash} ready\n"));
+                }
+            }
+            add_pkt_line_string(&mut protocol_buf, format!("ACK {last_common_commit} \n"));
+        } else {
+            tracing::error!("capability unsupported");
+            // init a empty receiverstream
+            let (_, rx) = tokio::sync::mpsc::channel::<Vec<u8>>(1);
+            pack_data = ReceiverStream::new(rx);
             add_pkt_line_string(&mut protocol_buf, format!("ACK {last_common_commit} \n"));
         }
         Ok((pack_data, protocol_buf))

@@ -352,13 +352,33 @@ pub fn protocol_error_is_client_safe(err: &ProtocolError) -> bool {
 pub fn mega_to_protocol_error(err: MegaError) -> ProtocolError {
     match err {
         MegaError::NotFound(msg) => ProtocolError::NotFound(msg),
+        MegaError::ObjStorageNotFound(msg) => {
+            // Missing blob/object content: return a typed client error instead of
+            // panicking in upload-pack (which surfaces to git as HTTP 502).
+            ProtocolError::NotFound(format!("git object missing from object storage: {msg}"))
+        }
+        MegaError::ObjStorageInconsistent(msg) => {
+            ProtocolError::InvalidInput(format!("git object storage inconsistent: {msg}"))
+        }
         MegaError::BadRequest(msg) => ProtocolError::InvalidInput(msg),
         MegaError::Unauthorized(msg) => ProtocolError::Deny(msg),
         MegaError::Forbidden(msg) => ProtocolError::InvalidInput(msg),
         MegaError::Unavailable(msg) => ProtocolError::InvalidInput(msg),
         MegaError::Conflict(msg) => ProtocolError::InvalidInput(msg),
+        MegaError::Git(e) => git_to_protocol_error(e),
         MegaError::Io(e) => ProtocolError::IO(e),
         other => ProtocolError::InvalidInput(other.to_string()),
+    }
+}
+
+/// Map [`GitError`] into a protocol-layer error for upload/receive-pack handlers.
+pub fn git_to_protocol_error(err: GitError) -> ProtocolError {
+    let msg = err.to_string();
+    match git_error_http_status(&err) {
+        404 => ProtocolError::NotFound(msg),
+        401 => ProtocolError::Deny(msg),
+        400 | 403 | 409 | 413 => ProtocolError::InvalidInput(msg),
+        _ => ProtocolError::IO(std::io::Error::other(msg)),
     }
 }
 
@@ -413,5 +433,21 @@ mod tests {
     fn mega_to_protocol_error_preserves_not_found() {
         let err = mega_to_protocol_error(MegaError::NotFound("repo".into()));
         assert!(matches!(err, ProtocolError::NotFound(_)));
+    }
+
+    #[test]
+    fn mega_to_protocol_error_maps_objstorage_not_found() {
+        let err = mega_to_protocol_error(MegaError::ObjStorageNotFound("missing key".into()));
+        assert!(matches!(err, ProtocolError::NotFound(_)));
+        assert_eq!(protocol_error_http_status(&err), 404);
+    }
+
+    #[test]
+    fn git_to_protocol_error_maps_objstorage_custom_error() {
+        let err = git_to_protocol_error(GitError::CustomError(
+            "ObjStorage not found: Object at location git/ab/cd/ef/123 not found".into(),
+        ));
+        assert!(matches!(err, ProtocolError::NotFound(_)));
+        assert_eq!(protocol_error_http_status(&err), 404);
     }
 }
