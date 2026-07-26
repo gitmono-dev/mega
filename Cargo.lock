@@ -618,6 +618,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "asyncfuse"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73944bd789372ebf1f10a25ee59296bbb437b31dbe234dcd959e98a1f3238fac"
+dependencies = [
+ "aligned_box",
+ "async-notify",
+ "async-trait",
+ "bincode 1.3.3",
+ "bytes",
+ "dashmap 6.2.1",
+ "futures-channel",
+ "futures-util",
+ "libc",
+ "nix 0.29.0",
+ "serde",
+ "slab",
+ "tokio",
+ "tracing",
+ "trait-make",
+ "which",
+]
+
+[[package]]
 name = "atoi"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1583,6 +1607,15 @@ dependencies = [
  "anstyle",
  "clap_lex",
  "strsim",
+]
+
+[[package]]
+name = "clap_complete"
+version = "4.6.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db8b397918185f0161ff3d6fcaa9e4bfc09b8367caf6e1d4a2848e5477ed027b"
+dependencies = [
+ "clap",
 ]
 
 [[package]]
@@ -4759,11 +4792,12 @@ dependencies = [
 
 [[package]]
 name = "libfuse-fs"
-version = "0.1.14"
+version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "818b22fed635a8c39500037246a136595ac01fdc00c029dce59b42f6bd800f39"
+checksum = "be34f425e314ea461827fae3b4f8a23c48575af9fca974df51a74ee2c463c0d1"
 dependencies = [
  "async-trait",
+ "asyncfuse",
  "bitflags 2.13.1",
  "bytes",
  "clap",
@@ -4777,7 +4811,6 @@ dependencies = [
  "nix 0.29.0",
  "radix_trie 0.2.1",
  "reqwest 0.12.28",
- "rfuse3",
  "serde",
  "serde_json",
  "tokio",
@@ -7414,30 +7447,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rfuse3"
-version = "0.0.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6edadac8a81eefae9a2c3ad55cb5af4b8421cb27e44bc8a3334916973582bd2"
-dependencies = [
- "aligned_box",
- "async-notify",
- "async-trait",
- "bincode 1.3.3",
- "bytes",
- "dashmap 6.2.1",
- "futures-channel",
- "futures-util",
- "libc",
- "nix 0.29.0",
- "serde",
- "slab",
- "tokio",
- "tracing",
- "trait-make",
- "which",
-]
-
-[[package]]
 name = "ring"
 version = "0.17.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8063,16 +8072,18 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scorpiofs"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7be35390c9691cc1023b9b1673dd84595e2db60f908f9bf6de42b97d84a1daa"
+checksum = "f97b336153167ba1101236eb8c55c29736e5651d17f02e551c5b4fb4f4aab3ff"
 dependencies = [
  "async-recursion",
  "async-trait",
+ "asyncfuse",
  "axum",
  "bincode 2.0.1",
  "bytes",
  "clap",
+ "clap_complete",
  "crossbeam",
  "dashmap 6.2.1",
  "env_logger",
@@ -8085,7 +8096,6 @@ dependencies = [
  "once_cell",
  "radix_trie 0.3.0",
  "reqwest 0.13.4",
- "rfuse3",
  "ring",
  "serde",
  "serde_json",
@@ -8095,6 +8105,7 @@ dependencies = [
  "toml 0.9.12+spec-1.1.0",
  "tracing",
  "tracing-subscriber",
+ "url",
  "uuid",
  "whoami 1.6.1",
 ]
