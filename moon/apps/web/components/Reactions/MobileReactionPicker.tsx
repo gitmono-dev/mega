@@ -42,7 +42,7 @@ export function MobileReactionPicker({ showCustomReactions, onReactionSelect }: 
 
   return (
     <div className='relative flex w-full flex-col focus:outline-hidden'>
-      <div className='mx-auto mt-2 h-1 w-8 rounded-full bg-[--text-primary] opacity-20' />
+      <div className='mx-auto mt-2 h-1 w-8 rounded-full bg-[var(--text-primary)] opacity-20' />
 
       <div className='px-safe-offset-3 pt-3'>
         <TextField

@@ -1,7 +1,9 @@
 'use client'
 
 import React from 'react'
+import { ThemeProvider } from '@primer/react'
 import { DataTable } from '@primer/react/experimental'
+import { useTheme } from 'next-themes'
 
 import { CoreWorkerStatus, TaskPhase } from '@gitmono/types/generated'
 import { Button, Select, SelectTrigger, SelectValue, UIText } from '@gitmono/ui'
@@ -28,6 +30,11 @@ interface ClientsTableProps {
 type Row = OrionClient & { statusDerived: OrionClientStatus }
 type UniqueRow = Row & { id: string }
 
+/** Primer DataTable uses CSS Grid; fr tracks keep original proportions and can shrink. */
+function colWidth(parts: number) {
+  return `minmax(0, ${parts}fr)`
+}
+
 export function ClientsTable({
   clients,
   isLoading,
@@ -37,6 +44,7 @@ export function ClientsTable({
   onViewLogs,
   canViewLogs = false
 }: ClientsTableProps) {
+  const { resolvedTheme } = useTheme()
   const rows = React.useMemo<UniqueRow[]>(() => {
     return clients.map((c) => ({
       ...c,
@@ -53,7 +61,8 @@ export function ClientsTable({
         header: 'Client ID',
         field: 'client_id',
         rowHeader: true,
-        width: showLogsAction ? '16%' : '18%',
+        // Original ratios: 18/18/10/18/22/14 (or 16/16/10/16/18/14/10 with Logs)
+        width: colWidth(showLogsAction ? 16 : 18),
         renderCell: (row: Row) => (
           <div className='min-w-0'>
             <UIText weight='font-semibold' className='block truncate text-sm'>
@@ -65,24 +74,24 @@ export function ClientsTable({
       {
         header: 'Hostname',
         field: 'hostname',
-        width: showLogsAction ? '16%' : '18%',
+        width: colWidth(showLogsAction ? 16 : 18),
         renderCell: (row: Row) => <div className='min-w-0 truncate'>{row.hostname || '—'}</div>
       },
-      { header: 'Version', field: 'orion_version', width: '10%' },
+      { header: 'Version', field: 'orion_version', width: colWidth(10) },
       {
         header: 'Start Time',
         field: 'start_time',
-        width: showLogsAction ? '16%' : '18%',
+        width: colWidth(showLogsAction ? 16 : 18),
         renderCell: (row: Row) => <div className='break-words whitespace-normal'>{formatDateTime(row.start_time)}</div>
       },
       {
         header: 'Last Heartbeat',
         field: 'last_heartbeat',
-        width: showLogsAction ? '18%' : '22%',
+        width: colWidth(showLogsAction ? 18 : 22),
         renderCell: (row: Row) => (
-          <div className='flex flex-col gap-0.5 leading-tight'>
+          <div className='flex min-w-0 flex-col gap-0.5 leading-tight'>
             <div className='break-words whitespace-normal'>{formatDateTime(row.last_heartbeat)}</div>
-            <UIText color='text-muted' size='text-xs' className='whitespace-nowrap'>
+            <UIText tertiary size='text-xs' className='whitespace-nowrap'>
               {formatRelative(row.last_heartbeat)}
             </UIText>
           </div>
@@ -95,21 +104,22 @@ export function ClientsTable({
             options={statusOptions}
             onChange={(v) => onStatusChange(v as OrionClientStatus | 'all')}
           >
-            <SelectTrigger className='text-muted-foreground h-auto w-full justify-start gap-1 !border-none !bg-transparent p-0 text-[11px] font-semibold uppercase !shadow-none ring-0 focus:ring-0 focus:outline-hidden'>
+            <SelectTrigger className='text-tertiary h-auto w-full min-w-0 justify-start gap-1 !border-none !bg-transparent p-0 text-[11px] font-semibold uppercase !shadow-none ring-0 focus:ring-0 focus:outline-hidden'>
               <SelectValue placeholder='Status' />
             </SelectTrigger>
           </Select>
         ),
         field: 'statusDerived',
-        width: '14%',
+        width: colWidth(14),
         renderCell: (row: Row) => <OrionClientStatusCell client={row} />
       },
       ...(showLogsAction
         ? [
             {
               header: 'Logs',
+              id: 'logs',
               field: 'client_id',
-              width: '10%',
+              width: colWidth(10),
               renderCell: (row: Row) => (
                 <Button
                   variant='plain'
@@ -130,7 +140,7 @@ export function ClientsTable({
   if (isLoading) {
     return (
       <div className='flex h-40 items-center justify-center'>
-        <UIText color='text-muted'>Loading clients…</UIText>
+        <UIText tertiary>Loading clients…</UIText>
       </div>
     )
   }
@@ -138,14 +148,25 @@ export function ClientsTable({
   const isEmpty = !rows || rows.length === 0
 
   return (
-    <div className='border-border overflow-hidden rounded-md border [&_table]:w-full [&_table]:table-fixed [&_tbody_tr]:border-b [&_tbody_tr:last-child]:border-b-0 [&_td]:py-4 [&_th]:py-4 [&_thead_tr]:border-b'>
-      <DataTable aria-label='Orion clients' data={rows} columns={columns as any} />
-      {isEmpty ? (
-        <div className='border-border flex h-40 items-center justify-center border-t'>
-          <UIText color='text-muted'>No Orion clients</UIText>
-        </div>
-      ) : null}
-    </div>
+    <ThemeProvider colorMode={resolvedTheme === 'dark' ? 'dark' : 'light'}>
+      <div
+        className={[
+          'border-primary overflow-hidden rounded-md border',
+          // Keep Primer grid full-width; drop side/top cell chrome that doubles our outer border.
+          '[&_table]:w-full',
+          '[&_td]:min-w-0 [&_td]:py-4 [&_th]:min-w-0 [&_th]:py-4',
+          '[&_td]:!border-x-0 [&_th]:!border-x-0 [&_th]:!border-t-0',
+          '[&_tbody_tr]:border-b [&_tbody_tr:last-child]:border-b-0 [&_thead_tr]:border-b'
+        ].join(' ')}
+      >
+        <DataTable aria-label='Orion clients' data={rows} columns={columns as any} />
+        {isEmpty ? (
+          <div className='border-primary flex h-40 items-center justify-center border-t'>
+            <UIText tertiary>No Orion clients</UIText>
+          </div>
+        ) : null}
+      </div>
+    </ThemeProvider>
   )
 }
 
@@ -154,7 +175,7 @@ function OrionClientStatusCell({ client }: { client: OrionClient }) {
 
   if (isLoading) {
     return (
-      <UIText color='text-muted' size='text-xs'>
+      <UIText tertiary size='text-xs'>
         Loading…
       </UIText>
     )

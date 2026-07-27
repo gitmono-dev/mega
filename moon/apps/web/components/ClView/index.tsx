@@ -71,6 +71,7 @@ export default function CLView() {
   const authorHandle = useCallback(
     (author: string) => {
       const member = members.find((m) => m.user.username === author || m.user.github_login === author)
+
       return megaUserHandle(member?.user, author)
     },
     [members]

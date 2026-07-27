@@ -138,7 +138,7 @@ export function GifPicker({
           >
             <div className='relative isolate flex h-full flex-col overflow-hidden focus:outline-0'>
               {!isPopover && (
-                <div className='mx-auto mt-2 h-1 w-8 shrink-0 rounded-full bg-[--text-primary] opacity-20' />
+                <div className='mx-auto mt-2 h-1 w-8 shrink-0 rounded-full bg-[var(--text-primary)] opacity-20' />
               )}
               <div className='bg-elevated z-20 px-2 py-2'>
                 <TextField

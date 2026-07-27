@@ -157,7 +157,7 @@ export function MediaGallery(props: MediaGalleryProps) {
 
   return (
     <div className='not-prose relative overflow-hidden rounded-md'>
-      <div className='pointer-events-none absolute inset-0 z-[1] rounded-md ring-1 ring-[--border-primary] ring-inset' />
+      <div className='pointer-events-none absolute inset-0 z-[1] rounded-md ring-1 ring-[var(--border-primary)] ring-inset' />
 
       <div className='bg-tertiary rounded-t-md'>
         <AnimatePresence mode='popLayout' initial={false} custom={direction}>

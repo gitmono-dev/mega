@@ -38,7 +38,7 @@ orion = { path = "orion" }
 orion-client = { path = "clients/orion-client" }
 orion-scheduler-client = { path = "clients/orion-scheduler-client" }
 
-git-internal = "0.8.3"
+git-internal = "0.8.4"
 libvault-core = "0.1.0"
 
 #====
@@ -109,7 +109,7 @@ utoipa-swagger-ui = { version = "9.0.2", features = ["vendored"] }
 tempfile = "3.27.0"
 dashmap = "6.2.1"
 once_cell = "1.21.4"
-serial_test = "3.5.0"
+serial_test = "4.0.1"
 sysinfo = "0.39.6"
 http = "1.4.2"
 url = "2.5.8"

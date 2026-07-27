@@ -15,7 +15,11 @@ module.exports = {
   rules: {
     'no-irregular-whitespace': 'error',
     'no-empty-function': 'error',
-    'newline-after-var': 'error',
+    'padding-line-between-statements': [
+      'error',
+      { blankLine: 'always', prev: ['const', 'let', 'var'], next: '*' },
+      { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] }
+    ],
     'no-unused-vars': 'off',
     'no-fallthrough': ['error', { allowEmptyCase: true }],
     'no-extra-semi': 'off',

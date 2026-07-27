@@ -2,7 +2,7 @@ packages:
   - apps/*
   - packages/*
 patchedDependencies:
-  '@radix-ui/react-popper@1.2.7': patches/@radix-ui__react-popper@1.2.7.patch
+  '@radix-ui/react-popper@1.3.7': patches/@radix-ui__react-popper@1.3.7.patch
 peerDependencyRules:
   allowedVersions:
     react: '*'
@@ -14,7 +14,7 @@ overrides:
   # Node 26-compatible native binding (metascraper → url-regex-safe optional peer)
   re2: 1.26.1
   # Keep patched transitive Radix popper on the exact patched version
-  '@radix-ui/react-popper': 1.2.7
+  '@radix-ui/react-popper': 1.3.7
 allowBuilds:
   '@vercel/speed-insights': true
   core-js-pure: true
@@ -24,21 +24,15 @@ allowBuilds:
   unrs-resolver: true
 # pnpm 11 default release-age gate blocks brand-new publishes during install
 minimumReleaseAge: 0
-# - next / eslint-config-next / @next/bundle-analyzer: pinned 16.2.11 (upgrade target; already latest 16.x)
+# - next / eslint-config-next / @next/bundle-analyzer: pinned 16.2.12 (latest 16.x)
 # - @tiptap/*: ^3 (Details via OSS @tiptap/extension-details; collaboration-caret; list/extensions kits)
-# - @radix-ui/react-popper: override-pinned 1.2.7 + patchedDependencies; regenerating required before >1.2.7
-# - typescript: ^5.9 — TS 7 not yet validated with Next 16 / eslint-config-next
-# - eslint: ^9.39 — ESLint 10 breaks eslint-config-next@16 / plugin stack
-# - react-day-picker: ^9.8 — not v10 (further Calendar API rewrite)
+# - typescript: ^6.0 — TS 7 blocked until typescript-eslint has Compiler API (7.1+)
+# - eslint: ^10 — eslintrc removed; editor/ui use flat. Some next transitive plugins still peer eslint<=9 (allowed via peerDependencyRules)
 # - @primer/react + @primer/primitives: ^38 / ^11 (upgraded together)
 # - @shopify/react-shortcuts: ^5.2.0 — latest; peer still react<19 (allowed via peerDependencyRules)
 # - nextjs-cors: ^2.2.1 — latest; peer declares next<=14 (allowed via peerDependencyRules)
-# - uuid: ^9.0.1 — uuid 10+ is pure ESM, breaks CJS/tsup consumers
-# - swagger-typescript-api: ^12.0.4 — v13 CLI/output breaking
-# - @mui/x-tree-view: pin 8.5.0 — newer 8.x tightens TreeViewDefaultItemModelProperties (no content_type)
-# - @mui/material|icons-material: ^7.3 — not v9
-# - react-dropzone: ^14 — not v19
-# - @pierre/diffs: apps/web pinned 1.2.12 (bundler + DiffView hunk API); not catalogued
+# - @pierre/diffs: apps/web pinned 1.2.12 (latest stable; DiffView hunk API); not catalogued
+# - metascraper-twitter: ^5.45.6 — last publish; migrate to metascraper-x separately
 # - tailwindcss: ^4 (+ @tailwindcss/postcss, forms/typography, safe-area ^1, tailwind-merge ^3); container-queries removed (built-in)
 #
 catalog:
@@ -52,7 +46,7 @@ catalog:
   '@hocuspocus/transformer': ^4.4.0
   '@hookform/resolvers': ^5.4.2
   '@ianvs/prettier-plugin-sort-imports': ^4.7.1
-  '@next/bundle-analyzer': 16.2.11 # pinned with next
+  '@next/bundle-analyzer': 16.2.12 # pinned with next
   '@octokit/auth-app': ^8.2.0
   '@octokit/core': ^7.0.6
   '@playwright/test': ^1.62.0
@@ -118,13 +112,12 @@ catalog:
   '@types/d3-selection': ^3.0.11
   '@types/d3-transition': ^3.0.9
   '@types/d3-zoom': ^3.0.8
-  '@types/diff': ^5.2.3 # keep with diff@5
   '@types/markdown-it': ^14.1.2
   '@types/node': ^26.1.1
   '@types/pluralize': ^0.0.33
   '@types/react': ^19.2.17
   '@types/react-dom': ^19.2.3
-  '@types/uuid': ^9.0.8 # keep with uuid@9
+  # '@types/uuid' removed — uuid@14 ships its own types
   '@typescript-eslint/eslint-plugin': ^8.65.0
   '@typescript-eslint/parser': ^8.65.0
   '@vercel/og': ^1.0.0
@@ -132,18 +125,21 @@ catalog:
   '@vitejs/plugin-react': ^5.2.0
   '@welldone-software/why-did-you-render': ^10.0.1
   class-variance-authority: ^0.7.1
-  cookies-next: ^5.1.0
+  cookies-next: ^6.1.1
   copy-to-clipboard: ^4.0.2
   d3-selection: ^3.0.0
   d3-transition: ^3.0.1
   d3-zoom: ^3.0.0
   date-fns: ^4.4.0
   deepmerge: ^4.3.1
-  diff: ^5.2.2 # not v8/9 — @types/diff + editor consumers
+  diff: ^9.0.0
   dotenv: ^17.4.2
-  eslint: ^9.39.5 # not v10 — eslint-config-next@16
-  eslint-config-next: 16.2.11 # pinned with next
+  eslint: ^10.8.0
+  '@eslint/eslintrc': ^3.3.6
+  '@eslint/js': ^10.0.1
+  eslint-config-next: 16.2.12 # pinned with next
   eslint-config-turbo: ^2.10.6
+  eslint-plugin-turbo: ^2.10.6
   eslint-plugin-react: ^7.37.5
   eslint-plugin-react-hooks: ^7.0.0
   eslint-plugin-storybook: ^10.5.4
@@ -177,7 +173,7 @@ catalog:
   metascraper-url: ^5.51.1
   metascraper-video: ^5.51.1
   metascraper-youtube: ^5.51.1
-  next: 16.2.11 # pinned upgrade target (latest 16.x)
+  next: 16.2.12 # pinned upgrade target (latest 16.x)
   next-seo: ^7.0.0
   next-themes: ^0.4.6
   nextjs-cors: ^2.2.1 # latest; peer next<=14 (allowed)
@@ -190,10 +186,10 @@ catalog:
   pusher-js: ^8.6.0
   react: ^19.2.8
   react-aria: ^3.50.0
-  react-day-picker: ^9.8.0
+  react-day-picker: ^10.0.1
   react-device-detect: ^2.2.3
   react-dom: ^19.2.8
-  react-dropzone: ^14.4.1 # not v19
+  react-dropzone: ^19.1.1
   react-error-boundary: ^6.0.0
   react-hook-form: ^7.83.0
   react-hot-toast: ^2.6.0
@@ -215,7 +211,7 @@ catalog:
   rfc6902: ^5.3.0
   slugify: ^1.6.9
   storybook: ^10.5.4
-  swagger-typescript-api: ^12.0.4 # not v13
+  swagger-typescript-api: ^13.12.6
   tailwind-merge: ^3.4.0
   tailwind-scrollbar-hide: ^1.3.1
   tailwindcss: ^4.1.11
@@ -223,18 +219,18 @@ catalog:
   tailwindcss-safe-area: ^1.3.0
   tippy.js: ^6.3.7
   tsup: ^8.5.1
-  turbo: ^2.10.6
-  typescript: ^5.9.3 # not v7
+  turbo: ^2.10.7
+  typescript: ^6.0.3
   use-debounce: ^10.1.1
-  uuid: ^9.0.1 # not v10+ ESM
+  uuid: ^14.0.1
   vaul: ^1.1.2
   vitest: ^4.1.10
   yjs: ^13.6.31
   zod: ^4.4.0
   '@heroicons/react': ^2.2.0
   clsx: ^2.1.1
-  '@mui/icons-material': ^7.3.11 # not v9
-  '@mui/material': ^7.3.11 # not v9
-  '@mui/x-tree-view': 8.5.0 # not newer 8.x/9 — TreeView item model dropped freeform content_type
+  '@mui/icons-material': ^9.2.0
+  '@mui/material': ^9.2.0
+  '@mui/x-tree-view': ^9.10.1
   material-file-icons: ^2.4.0
   colord: ^2.9.3

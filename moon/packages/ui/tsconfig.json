@@ -1,5 +1,5 @@
 {
   "extends": "@gitmono/tsconfig/nextjs.json",
   "include": ["."],
-  "exclude": ["dist", "build", "node_modules"]
+  "exclude": ["dist", "build", "node_modules", "eslint.config.mjs", "**/*.stories.tsx", "**/*.stories.ts"]
 }

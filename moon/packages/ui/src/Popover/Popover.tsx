@@ -128,7 +128,8 @@ const PopoverContent = React.forwardRef<
             sideOffset={sideOffset}
             className={cn(
               context.sheet && 'bg-elevated pb-safe-offset-1 fixed inset-x-0 bottom-0 -mb-10 rounded-t-xl',
-              !context.sheet && 'max-h-[--radix-popper-available-height] max-w-[--radix-popper-available-width]',
+              !context.sheet &&
+                'max-h-[var(--radix-popper-available-height)] max-w-[var(--radix-popper-available-width)]',
               CONTAINER_STYLES.animation,
               '!outline-hidden focus:ring-0 focus:outline-hidden focus-visible:ring-0 focus-visible:outline-hidden',
               className
@@ -140,7 +141,7 @@ const PopoverContent = React.forwardRef<
               {/* Handle */}
               {context.sheet && (
                 <div className='flex cursor-grab justify-center p-3 pt-1'>
-                  <div className='h-1 w-8 rounded-full bg-[--text-primary] opacity-20' />
+                  <div className='h-1 w-8 rounded-full bg-[var(--text-primary)] opacity-20' />
                 </div>
               )}
 

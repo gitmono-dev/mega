@@ -128,7 +128,7 @@ function DrawerActions({ items, onClose, header }: DrawerActionsProps) {
         >
           {/* Handle */}
           <div className='flex w-full cursor-grab justify-center p-3 py-2'>
-            <DrawerPrimitive.Handle className='!h-1 !w-8 !rounded-full !bg-[--text-primary] !opacity-20' />
+            <DrawerPrimitive.Handle className='!h-1 !w-8 !rounded-full !bg-[var(--text-primary)] !opacity-20' />
           </div>
 
           <div className='scrollbar-hide pb-safe-offset-1 relative overflow-x-hidden overflow-y-auto'>

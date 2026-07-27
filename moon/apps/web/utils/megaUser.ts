@@ -4,8 +4,10 @@ export function megaUserHandle(
   fallback = ''
 ): string {
   const github = user?.github_login?.trim()
+
   if (github) return github
   const username = user?.username?.trim()
+
   if (username) return username
   return fallback
 }
@@ -18,5 +20,6 @@ export function megaUserHandlesMatch(
   if (!stored || !user) return false
   if (stored === user.username) return true
   const github = user.github_login?.trim()
+
   return !!github && stored === github
 }

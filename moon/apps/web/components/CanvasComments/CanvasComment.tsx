@@ -293,7 +293,7 @@ function InnerCanvasComment({
                   {...ANIMATION_CONSTANTS}
                   className={cn(
                     'bg-elevated flex w-full flex-col rounded-xl shadow-lg ring-1 shadow-black/20 ring-black/[0.04] dark:shadow-[inset_0px_1px_0px_rgba(255,255,255,0.04),_0px_2px_12px_rgba(0,0,0,0.4),_0px_0px_0px_1px_rgba(0,0,0,0.8)] dark:ring-white/[0.02]',
-                    'origin-[--radix-popover-content-transform-origin]'
+                    'origin-[var(--radix-popover-content-transform-origin)]'
                   )}
                   data-zoom-wheel-disabled
                 >

@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import { Pagination } from '@primer/react'
+import { Pagination, ThemeProvider as PrimerThemeProvider } from '@primer/react'
+import { useTheme } from 'next-themes'
 import Head from 'next/head'
 
 import {
@@ -43,6 +44,7 @@ function domainFromClientHostname(hostname: string): string | null {
 type LogPanelSource = 'runner' | 'client'
 
 const OrionClientPage: PageWithLayout<any> = () => {
+  const { resolvedTheme } = useTheme()
   const [hostnameInput, setHostnameInput] = React.useState<string>('')
   const [debouncedHostname, setDebouncedHostname] = React.useState<string>('')
   const [statusFilter, setStatusFilter] = React.useState<OrionClientStatus | 'all'>('all')
@@ -308,7 +310,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
             <div>
               <h1 className='text-xl font-semibold'>Orion Clients</h1>
               {!showingLogs ? (
-                <UIText color='text-muted' size='text-sm'>
+                <UIText tertiary size='text-sm'>
                   Total clients {total}
                 </UIText>
               ) : null}
@@ -512,19 +514,21 @@ const OrionClientPage: PageWithLayout<any> = () => {
             />
 
             {error ? (
-              <UIText color='text-muted' size='text-sm'>
+              <UIText tertiary size='text-sm'>
                 Failed to load Orion clients: {error.message}
               </UIText>
             ) : null}
 
             {pageCount > 1 ? (
               <div className='flex w-full justify-center pt-2'>
-                <Pagination
-                  pageCount={pageCount}
-                  currentPage={currentPage}
-                  showPages={{ narrow: false }}
-                  onPageChange={(_e: any, page: number) => setCurrentPage(page)}
-                />
+                <PrimerThemeProvider colorMode={resolvedTheme === 'dark' ? 'dark' : 'light'}>
+                  <Pagination
+                    pageCount={pageCount}
+                    currentPage={currentPage}
+                    showPages={{ narrow: false }}
+                    onPageChange={(_e: any, page: number) => setCurrentPage(page)}
+                  />
+                </PrimerThemeProvider>
               </div>
             ) : null}
           </>

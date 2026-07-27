@@ -29,8 +29,8 @@ mv .prettierrc.json .prettierrc_temp.json
 
 OUT=./gen node api/merge-swagger.js
 
-# generate client types
-pnpm swagger-typescript-api \
+# generate client types (v13+ requires the `generate` subcommand)
+pnpm swagger-typescript-api generate \
   --extract-request-params \
   --extract-request-body \
   --extract-response-body \

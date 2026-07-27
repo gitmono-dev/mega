@@ -93,7 +93,7 @@ function ContextSubItem({ children, item, width }: ContextSubItemProps) {
           sideOffset={4}
           alignOffset={-4}
           className={cn(
-            'bg-elevated dark:border-primary-opaque max-h-[--radix-context-menu-content-available-height] min-w-[--radix-context-menu-trigger-width] origin-[--radix-context-menu-content-transform-origin] overflow-y-auto rounded-lg border border-neutral-400/40 p-1 shadow-md dark:shadow-[0px_0px_0px_0.5px_rgba(0,0,0,1),_0px_4px_4px_rgba(0,0,0,0.24)]',
+            'bg-elevated dark:border-primary-opaque max-h-[var(--radix-context-menu-content-available-height)] min-w-[var(--radix-context-menu-trigger-width)] origin-[var(--radix-context-menu-content-transform-origin)] overflow-y-auto rounded-lg border border-neutral-400/40 p-1 shadow-md dark:shadow-[0px_0px_0px_0.5px_rgba(0,0,0,1),_0px_4px_4px_rgba(0,0,0,0.24)]',
             width
           )}
         >
@@ -151,7 +151,7 @@ export function ContextMenu({ children, items, onOpenChange, asChild }: ContextM
             alignOffset={4}
             className={cn(
               'focus:outline-hidden',
-              'max-h-[--radix-context-menu-content-available-height] min-w-[--radix-context-menu-trigger-width]',
+              'max-h-[var(--radix-context-menu-content-available-height)] min-w-[var(--radix-context-menu-trigger-width)]',
               'bg-elevated dark:border-primary-opaque overflow-y-auto rounded-lg border border-neutral-400/40 p-1 shadow dark:shadow-[0px_0px_0px_0.5px_rgba(0,0,0,1),_0px_4px_4px_rgba(0,0,0,0.24)]',
               CONTAINER_STYLES.animation
             )}

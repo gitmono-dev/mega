@@ -140,7 +140,7 @@ export function Bubble({ message, thread, position }: Props) {
             {!message.discarded_at && message.unfurled_link && !message.attachments.length && (
               <div
                 className={cn(
-                  'relative flex w-full ring-2 ring-[--bg-primary] sm:max-w-md',
+                  'relative flex w-full ring-2 ring-[var(--bg-primary)] sm:max-w-md',
                   {
                     'justify-start': !message.viewer_is_sender,
                     'justify-end': message.viewer_is_sender
@@ -220,7 +220,7 @@ function TextBubble({
             position === 'only' && hasReactionsOnly && !message.viewer_is_sender && isGroupOrIntegrationDm(thread),
           'pt-1':
             position === 'first' && hasReactionsOnly && !message.viewer_is_sender && isGroupOrIntegrationDm(thread),
-          'ring-2 ring-[--bg-primary]': message.reply && !hasReactionsOnly,
+          'ring-2 ring-[var(--bg-primary)]': message.reply && !hasReactionsOnly,
           'mt-1': hasReactionsOnly && message.reply,
           'rounded-tr': message.viewer_is_sender && message.reply,
           'rounded-tl': !message.viewer_is_sender && message.reply,

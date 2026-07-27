@@ -10,6 +10,7 @@ type MegaAvatar = ReturnType<typeof useAvatars>[number] & { username?: string }
 function avatarApiIdentity(item: ItemInput): string | undefined {
   const mega = item as MegaAvatar
   // Prefer Campsite username for API identity; SelectPanel text may be github_login.
+
   if (typeof mega.username === 'string' && mega.username) return mega.username
   if (typeof item.text === 'string' && item.text) return item.text
   return undefined

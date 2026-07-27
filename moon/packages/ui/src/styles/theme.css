@@ -4,8 +4,26 @@
 
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
-@plugin 'tailwind-scrollbar-hide';
 @plugin 'tailwindcss-animate';
+
+/* Replaces tailwind-scrollbar-hide @plugin (CJS; breaks under TW4 ESM loader). */
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility scrollbar-default {
+  -ms-overflow-style: auto;
+  scrollbar-width: auto;
+
+  &::-webkit-scrollbar {
+    display: block;
+  }
+}
 
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant initial (html :where(&));
@@ -19,6 +37,13 @@
   --breakpoint-xs: 430px;
   --breakpoint-3xl: 1792px;
   --breakpoint-4xl: 2048px;
+
+  /*
+    Do NOT define --spacing-sm / --spacing-md / etc.
+    In Tailwind v4, max-w-sm prefers --spacing-sm over --container-sm when both exist,
+    which crushed dialogs/tooltips to 2px. Keep container sizes on the container scale.
+  */
+  --container-sm: 24rem;
 
   --spacing-*: initial;
   /* Base unit required by --spacing() (safe-area offsets, etc.) */
@@ -145,7 +170,6 @@
   --spacing-59.5: 238px;
   --spacing-60: 240px;
   --spacing-px: 1px;
-  --spacing-sm: 2px;
 
   --height-screen: 100dvh;
 

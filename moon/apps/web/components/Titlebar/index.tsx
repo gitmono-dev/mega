@@ -34,7 +34,7 @@ export function BasicTitlebar({
     <header
       onDoubleClick={() => isDesktop && nativeWindow.maximize()}
       className={cn(
-        'drag bg-primary grid h-[--navbar-height] flex-none grid-cols-5 items-center px-4 lg:grid-cols-3',
+        'drag bg-primary grid h-[var(--navbar-height)] flex-none grid-cols-5 items-center px-4 lg:grid-cols-3',
         { 'border-b': !disableBottomBorder },
         className
       )}

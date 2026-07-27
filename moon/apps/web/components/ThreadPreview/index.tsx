@@ -42,7 +42,9 @@ export function ThreadPreview({ className, postId, username }: Props) {
       <div className={cn('absolute inset-0 overflow-hidden rounded-xl', className)}>
         <div className={cn('pointer-events-none absolute inset-0 rounded-xl border border-[white]')} />
       </div>
-      <div className={cn('pointer-events-none absolute inset-0 rounded-xl border border-[--bg-primary]', className)} />
+      <div
+        className={cn('pointer-events-none absolute inset-0 rounded-xl border border-[var(--bg-primary)]', className)}
+      />
       <div className={cn('pointer-events-none absolute inset-0 rounded-xl border', className)} />
     </div>
   )

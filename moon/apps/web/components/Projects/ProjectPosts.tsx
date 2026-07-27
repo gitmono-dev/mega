@@ -83,7 +83,7 @@ export function ProjectPosts({ project }: ProjectPostsProps) {
           >
             <div
               className={cn('flex flex-col gap-4 md:gap-6 lg:gap-8', {
-                'mx-auto w-full max-w-[--feed-width]':
+                'mx-auto w-full max-w-[var(--feed-width)]':
                   !isSplitViewAvailable && !hasComfyCompactLayout && displayPreference === 'comfortable',
                 'mb-8': isSearching
               })}

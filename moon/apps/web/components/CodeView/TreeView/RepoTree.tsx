@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Box, Skeleton } from '@mui/material'
-import { useTreeViewApiRef } from '@mui/x-tree-view'
+import { useRichTreeViewApiRef } from '@mui/x-tree-view'
 import { RichTreeView } from '@mui/x-tree-view/RichTreeView'
 import { useAtom } from 'jotai'
 import { usePathname } from 'next/navigation'
@@ -35,7 +35,7 @@ const RepoTree = ({ onCommitInfoChange }: { onCommitInfoChange?: Function }) => 
     basePath = basePath.substring(`/${version}`.length) || '/'
   }
 
-  const apiRef = useTreeViewApiRef()
+  const apiRef = useRichTreeViewApiRef<MuiTreeNode>()
 
   const [treeAllData, setTreeAllData] = useAtom(treeAllDataAtom)
   const [expandedNodes, setExpandedNodes] = useAtom(expandedNodesAtom)

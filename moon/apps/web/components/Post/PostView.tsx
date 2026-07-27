@@ -215,7 +215,7 @@ function InnerPostViewContent({ post, getComments, timelineEvents }: Omit<Props,
           <div className='bg-primary'>
             <div
               className={cn(
-                'relative mx-auto flex w-full max-w-[--post-width] flex-col',
+                'relative mx-auto flex w-full max-w-[var(--post-width)] flex-col',
                 'px-4 pt-6 pb-4 md:pt-8 lg:pt-10 xl:pt-12 2xl:pt-14'
               )}
             >
@@ -238,7 +238,7 @@ function InnerPostViewContent({ post, getComments, timelineEvents }: Omit<Props,
 
           {/* Comments */}
           <div className='bg-secondary dark:bg-primary border-t'>
-            <div className='relative mx-auto flex w-full max-w-[--post-width] flex-col px-4'>
+            <div className='relative mx-auto flex w-full max-w-[var(--post-width)] flex-col px-4'>
               <Comments
                 postId={post.id}
                 replyingToCommentId={replyingToCommentId}
@@ -408,7 +408,7 @@ function ReplyComposer({
           'border-transparent': endOfCommentsInView
         })}
       />
-      <div className='pb-safe-offset-3 sticky bottom-0 mx-auto flex w-full max-w-[--post-width] flex-1 flex-col gap-3 p-4'>
+      <div className='pb-safe-offset-3 sticky bottom-0 mx-auto flex w-full max-w-[var(--post-width)] flex-1 flex-col gap-3 p-4'>
         {isReplyingInStickyEditor && (
           <div className='w-full'>
             <ReplyContent

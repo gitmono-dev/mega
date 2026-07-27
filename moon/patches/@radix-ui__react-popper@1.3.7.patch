@@ -1,8 +1,6 @@
-diff --git a/dist/index.d.mts b/dist/index.d.mts
-index bffb3cd79339bf87dd2527967055423518ec7645..18b4a96b99b28819e862c4fc8e844a6f553a6e01 100644
 --- a/dist/index.d.mts
 +++ b/dist/index.d.mts
-@@ -25,7 +25,7 @@ interface PopperContentProps extends PrimitiveDivProps {
+@@ -25,7 +25,7 @@
      align?: Align;
      alignOffset?: number;
      arrowPadding?: number;
@@ -11,11 +9,9 @@ index bffb3cd79339bf87dd2527967055423518ec7645..18b4a96b99b28819e862c4fc8e844a6f
      collisionBoundary?: Boundary | Boundary[];
      collisionPadding?: number | Partial<Record<Side, number>>;
      sticky?: 'partial' | 'always';
-diff --git a/dist/index.d.ts b/dist/index.d.ts
-index bffb3cd79339bf87dd2527967055423518ec7645..18b4a96b99b28819e862c4fc8e844a6f553a6e01 100644
 --- a/dist/index.d.ts
 +++ b/dist/index.d.ts
-@@ -25,7 +25,7 @@ interface PopperContentProps extends PrimitiveDivProps {
+@@ -25,7 +25,7 @@
      align?: Align;
      alignOffset?: number;
      arrowPadding?: number;
@@ -24,12 +20,10 @@ index bffb3cd79339bf87dd2527967055423518ec7645..18b4a96b99b28819e862c4fc8e844a6f
      collisionBoundary?: Boundary | Boundary[];
      collisionPadding?: number | Partial<Record<Side, number>>;
      sticky?: 'partial' | 'always';
-diff --git a/dist/index.js b/dist/index.js
-index f7a999496ba1a76f2114b76f99e2bd3d10c7aa09..4425d60d1bbea59ae07124ee4eb853656ec36b8c 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -83,6 +83,13 @@ var PopperAnchor = React.forwardRef(
- PopperAnchor.displayName = ANCHOR_NAME;
+@@ -122,6 +122,13 @@
+ );
  var CONTENT_NAME = "PopperContent";
  var [PopperContentProvider, useContentContext] = createPopperContext(CONTENT_NAME);
 +function getPlacement(side, align) {
@@ -39,10 +33,10 @@ index f7a999496ba1a76f2114b76f99e2bd3d10c7aa09..4425d60d1bbea59ae07124ee4eb85365
 +  const sides = side === "top" || side === "bottom" ? ["top", "bottom"] : ["left", "right"];
 +  return sides.map((side2) => getPlacement(side2, align));
 +}
- var PopperContent = React.forwardRef(
-   (props, forwardedRef) => {
+ var PopperContent = /* @__PURE__ */ React.forwardRef(
+   /* @__PURE__ */ __name(function PopperContent2(props, forwardedRef) {
      const {
-@@ -108,7 +115,7 @@ var PopperContent = React.forwardRef(
+@@ -147,7 +154,7 @@
      const arrowSize = (0, import_react_use_size.useSize)(arrow);
      const arrowWidth = arrowSize?.width ?? 0;
      const arrowHeight = arrowSize?.height ?? 0;
@@ -51,7 +45,7 @@ index f7a999496ba1a76f2114b76f99e2bd3d10c7aa09..4425d60d1bbea59ae07124ee4eb85365
      const collisionPadding = typeof collisionPaddingProp === "number" ? collisionPaddingProp : { top: 0, right: 0, bottom: 0, left: 0, ...collisionPaddingProp };
      const boundary = Array.isArray(collisionBoundary) ? collisionBoundary : [collisionBoundary];
      const hasExplicitBoundaries = boundary.length > 0;
-@@ -139,7 +146,10 @@ var PopperContent = React.forwardRef(
+@@ -178,7 +185,10 @@
            limiter: sticky === "partial" ? (0, import_react_dom.limitShift)() : void 0,
            ...detectOverflowOptions
          }),
@@ -62,12 +56,10 @@ index f7a999496ba1a76f2114b76f99e2bd3d10c7aa09..4425d60d1bbea59ae07124ee4eb85365
 +        }),
          (0, import_react_dom.size)({
            ...detectOverflowOptions,
-           apply: ({ elements, rects, availableWidth, availableHeight }) => {
-diff --git a/dist/index.mjs b/dist/index.mjs
-index 49fe2635a0ad72c4611e4383209dc249d60ab0cd..d9ae88e61f559eac126508f9a5657639634aaac4 100644
+           apply: /* @__PURE__ */ __name(({ elements, rects, availableWidth, availableHeight }) => {
 --- a/dist/index.mjs
 +++ b/dist/index.mjs
-@@ -5,6 +5,7 @@ import * as React from "react";
+@@ -7,6 +7,7 @@
  import {
    useFloating,
    autoUpdate,
@@ -75,8 +67,8 @@ index 49fe2635a0ad72c4611e4383209dc249d60ab0cd..d9ae88e61f559eac126508f9a5657639
    offset,
    shift,
    limitShift,
-@@ -48,6 +49,13 @@ var PopperAnchor = React.forwardRef(
- PopperAnchor.displayName = ANCHOR_NAME;
+@@ -88,6 +89,13 @@
+ );
  var CONTENT_NAME = "PopperContent";
  var [PopperContentProvider, useContentContext] = createPopperContext(CONTENT_NAME);
 +function getPlacement(side, align) {
@@ -86,10 +78,10 @@ index 49fe2635a0ad72c4611e4383209dc249d60ab0cd..d9ae88e61f559eac126508f9a5657639
 +  const sides = side === "top" || side === "bottom" ? ["top", "bottom"] : ["left", "right"];
 +  return sides.map((side2) => getPlacement(side2, align));
 +}
- var PopperContent = React.forwardRef(
-   (props, forwardedRef) => {
+ var PopperContent = /* @__PURE__ */ React.forwardRef(
+   /* @__PURE__ */ __name(function PopperContent2(props, forwardedRef) {
      const {
-@@ -73,7 +81,7 @@ var PopperContent = React.forwardRef(
+@@ -113,7 +121,7 @@
      const arrowSize = useSize(arrow);
      const arrowWidth = arrowSize?.width ?? 0;
      const arrowHeight = arrowSize?.height ?? 0;
@@ -98,7 +90,7 @@ index 49fe2635a0ad72c4611e4383209dc249d60ab0cd..d9ae88e61f559eac126508f9a5657639
      const collisionPadding = typeof collisionPaddingProp === "number" ? collisionPaddingProp : { top: 0, right: 0, bottom: 0, left: 0, ...collisionPaddingProp };
      const boundary = Array.isArray(collisionBoundary) ? collisionBoundary : [collisionBoundary];
      const hasExplicitBoundaries = boundary.length > 0;
-@@ -104,7 +112,10 @@ var PopperContent = React.forwardRef(
+@@ -144,7 +152,10 @@
            limiter: sticky === "partial" ? limitShift() : void 0,
            ...detectOverflowOptions
          }),
@@ -109,4 +101,4 @@ index 49fe2635a0ad72c4611e4383209dc249d60ab0cd..d9ae88e61f559eac126508f9a5657639
 +        }),
          size({
            ...detectOverflowOptions,
-           apply: ({ elements, rects, availableWidth, availableHeight }) => {
+           apply: /* @__PURE__ */ __name(({ elements, rects, availableWidth, availableHeight }) => {

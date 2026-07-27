@@ -87,7 +87,7 @@ export function Attachments({ message, thread, overflowState }: AttachmentsProps
                     })}
                     style={{ aspectRatio }}
                   >
-                    <div className='pointer-events-none absolute inset-0 z-[1] rounded-lg ring-1 ring-[--border-primary] ring-inset' />
+                    <div className='pointer-events-none absolute inset-0 z-[1] rounded-lg ring-1 ring-[var(--border-primary)] ring-inset' />
 
                     <ConditionalWrap
                       condition={overflow}

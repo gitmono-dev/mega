@@ -97,7 +97,7 @@ function VersionsFeed({ versions }: { versions: PostVersion[] }) {
         </div>
       </BreadcrumbTitlebar>
       <ScrollableContainer>
-        <div className='mx-auto flex w-full max-w-[--feed-width] flex-col gap-5 px-4 py-4 md:py-6 lg:py-8'>
+        <div className='mx-auto flex w-full max-w-[var(--feed-width)] flex-col gap-5 px-4 py-4 md:py-6 lg:py-8'>
           {sortedVersions.map((version) => (
             <FetchingInlinePost key={version.id} postId={version.id} />
           ))}

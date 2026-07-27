@@ -326,7 +326,7 @@ function Attachments({ post }: { post: Post }) {
   return (
     <div
       key={attachment.id}
-      className='bg-elevated pointer-events-none relative max-h-22 max-w-30 flex-1 self-center rounded-lg ring-1 ring-[--border-primary] ring-inset'
+      className='bg-elevated pointer-events-none relative max-h-22 max-w-30 flex-1 self-center rounded-lg ring-1 ring-[var(--border-primary)] ring-inset'
       style={{ aspectRatio }}
     >
       <div className='flex h-full w-full items-center justify-center overflow-hidden rounded-lg'>

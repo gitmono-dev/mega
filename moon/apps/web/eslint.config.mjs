@@ -5,6 +5,25 @@ import unusedImports from 'eslint-plugin-unused-imports'
 
 /** @type {import('eslint').Linter.Config[]} */
 const eslintConfig = [
+  // Global ignores must be alone in a config object; keep first so legacy
+  // parsers never see eslint/storybook config JS under ESLint 10 ScopeManager.
+  {
+    ignores: [
+      '.next/**',
+      'out/**',
+      'build/**',
+      'next-env.d.ts',
+      'storybook-static/**',
+      'public/**',
+      '.storybook/**',
+      'eslint.config.mjs',
+      '**/*.js',
+      '**/*.mjs',
+      '**/*.cjs',
+      '**/*.mts',
+      'vitest.config.*'
+    ]
+  },
   ...nextVitals,
   ...storybook.configs['flat/recommended'],
   {
@@ -14,7 +33,7 @@ const eslintConfig = [
     },
     settings: {
       react: {
-        version: 'detect'
+        version: '19.2'
       }
     },
     languageOptions: {
@@ -27,7 +46,11 @@ const eslintConfig = [
       'no-console': ['error', { allow: ['warn', 'error'] }],
       'no-irregular-whitespace': 'error',
       'no-empty-function': 'error',
-      'newline-after-var': 'error',
+      'padding-line-between-statements': [
+        'error',
+        { blankLine: 'always', prev: ['const', 'let', 'var'], next: '*' },
+        { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] }
+      ],
       'no-unused-vars': 'off',
       'no-fallthrough': ['error', { allowEmptyCase: true }],
       'no-extra-semi': 'off',
@@ -98,9 +121,6 @@ const eslintConfig = [
         jest: true
       }
     }
-  },
-  {
-    ignores: ['.next/**', 'out/**', 'build/**', 'next-env.d.ts', 'storybook-static/**', 'public/**']
   }
 ]
 

@@ -63,7 +63,7 @@ const CloneTabs = () => {
           {open && (
             <PopoverContent
               className={cn(
-                'animate-scale-fade shadow-popover dark:border-primary-opaque bg-primary relative flex h-[130px] w-[400px] flex-1 origin-[--radix-hover-card-content-transform-origin] flex-col overflow-hidden rounded-lg border border-transparent dark:shadow-[0px_2px_16px_rgba(0,0,0,1)]'
+                'animate-scale-fade shadow-popover dark:border-primary-opaque bg-primary relative flex h-[130px] w-[400px] flex-1 origin-[var(--radix-hover-card-content-transform-origin)] flex-col overflow-hidden rounded-lg border border-transparent dark:shadow-[0px_2px_16px_rgba(0,0,0,1)]'
               )}
               sideOffset={4}
               align='start'

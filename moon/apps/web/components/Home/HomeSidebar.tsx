@@ -331,7 +331,7 @@ function SearchInput({ query, setQuery }: { query: string; setQuery: (query: str
     <div className='text-quaternary relative'>
       <SearchIcon className='absolute top-1/2 left-3 -translate-y-1/2' />
       <TextField
-        additionalClasses='bg-transparent pl-10 h-[--navbar-height] focus:ring-0 pr-10 dark:bg-transparent rounded-none border-0'
+        additionalClasses='bg-transparent pl-10 h-[var(--navbar-height)] focus:ring-0 pr-10 dark:bg-transparent rounded-none border-0'
         placeholder='Search people...'
         value={query}
         onChange={setQuery}
@@ -355,7 +355,12 @@ function needsGithubRelogin(user: { github_login?: string | null; integration?: 
 
 function GithubReloginHint() {
   return (
-    <Tooltip label='Sign out and sign in with GitHub again to sync your GitHub login for permissions'>
+    <Tooltip
+      label='Sign out and sign in with GitHub again to sync your GitHub login for permissions'
+      side='left'
+      align='center'
+      alignOffset={0}
+    >
       <span className='relative z-10'>
         <UIText className='line-clamp-1 text-[13px] leading-snug text-amber-600 dark:text-amber-400'>
           Re-login required

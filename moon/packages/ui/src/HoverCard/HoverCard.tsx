@@ -195,7 +195,7 @@ function Content({
         collisionPadding={collisionPadding}
         hideWhenDetached
         className={cn(
-          'animate-scale-fade shadow-popover dark:border-primary-opaque bg-primary relative flex h-[420px] w-[420px] flex-1 origin-[--radix-hover-card-content-transform-origin] flex-col rounded-lg border border-transparent dark:shadow-[0px_2px_16px_rgba(0,0,0,1)]',
+          'animate-scale-fade shadow-popover dark:border-primary-opaque bg-primary relative flex h-[420px] w-[420px] flex-1 origin-[var(--radix-hover-card-content-transform-origin)] flex-col rounded-lg border border-transparent dark:shadow-[0px_2px_16px_rgba(0,0,0,1)]',
           className,
           'overflow-visible' // prediction cone only works if we allow the triangle to "leak" beyond the bounds of the container
         )}

@@ -8,6 +8,7 @@ export function extractLinesFromHunks(fileDiff: FileDiffMetadata, side: 'deletio
     for (const content of hunk.hunkContent) {
       if (content.type === 'context') {
         const start = side === 'deletions' ? content.deletionLineIndex : content.additionLineIndex
+
         lines.push(...sourceLines.slice(start, start + content.lines))
       } else if (content.type === 'change') {
         if (side === 'deletions') {

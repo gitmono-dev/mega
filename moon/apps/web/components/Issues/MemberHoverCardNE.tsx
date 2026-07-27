@@ -95,7 +95,7 @@ export function MemberHovercard({
             >
               <m.div
                 {...ANIMATION_CONSTANTS}
-                className='border-primary-opaque bg-elevated w-[312px] origin-[--radix-hover-card-content-transform-origin] overflow-hidden rounded-lg border shadow max-md:hidden dark:shadow-[0px_0px_0px_0.5px_rgba(0,0,0,1),_0px_4px_4px_rgba(0,0,0,0.24)]'
+                className='border-primary-opaque bg-elevated w-[312px] origin-[var(--radix-hover-card-content-transform-origin)] overflow-hidden rounded-lg border shadow max-md:hidden dark:shadow-[0px_0px_0px_0.5px_rgba(0,0,0,1),_0px_4px_4px_rgba(0,0,0,0.24)]'
               >
                 {member && (
                   <div>

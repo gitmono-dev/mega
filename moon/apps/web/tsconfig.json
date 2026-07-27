@@ -4,12 +4,12 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "@/components/*": ["components/*"],
-      "@/contexts/*": ["contexts/*"],
-      "@/atoms/*": ["atoms/*"],
-      "@/hooks/*": ["hooks/*"],
-      "@/pages/*": ["pages/*"],
-      "@/utils/*": ["utils/*"],
+      "@/components/*": ["./components/*"],
+      "@/contexts/*": ["./contexts/*"],
+      "@/atoms/*": ["./atoms/*"],
+      "@/hooks/*": ["./hooks/*"],
+      "@/pages/*": ["./pages/*"],
+      "@/utils/*": ["./utils/*"],
       "@gitmono/editor/*": ["../../packages/editor/src/*"],
       "@gitmono/editor": ["../../packages/editor/src/index"],
       "@gitmono/config/*": ["../../packages/config/src/*"],
@@ -26,7 +26,8 @@
         "name": "next"
       }
     ],
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "types": ["node"]
   },
   "extends": "@gitmono/tsconfig/nextjs.json",
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.config.js", ".next/types/**/*.ts"],

@@ -45,6 +45,7 @@
     "@tailwindcss/postcss": "catalog:",
     "@tailwindcss/typography": "catalog:",
     "@types/react": "catalog:",
+    "eslint": "catalog:",
     "postcss": "catalog:",
     "tailwind-scrollbar-hide": "catalog:",
     "tailwindcss": "catalog:",
@@ -55,7 +56,7 @@
   "peerDependencies": {
     "jotai": "^2.0.3",
     "jotai-scope": "^0.4.1",
-    "next": "^16.2.11",
+    "next": "^16.2.12",
     "next-themes": "^0.4.6",
     "react": "^19.2.0",
     "react-hot-toast": "^2.4.0"

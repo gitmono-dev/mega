@@ -182,7 +182,7 @@ function InnerAutoBlockquoteReply({
             <PopoverContent align='center' collisionBoundary={closestScrollParent} forceMount>
               <m.div {...ANIMATION_CONSTANTS}>
                 <div
-                  className='bg-elevated flex w-[500px] max-w-[--radix-popover-content-available-width] origin-[--radix-popover-content-transform-origin] flex-col rounded-xl shadow-lg ring-1 shadow-black/20 ring-black/[0.04] dark:shadow-[inset_0px_1px_0px_rgba(255,255,255,0.04),_0px_2px_12px_rgba(0,0,0,0.4),_0px_0px_0px_1px_rgba(0,0,0,0.8)] dark:ring-white/[0.02]'
+                  className='bg-elevated flex w-[500px] max-w-[var(--radix-popover-content-available-width)] origin-[var(--radix-popover-content-transform-origin)] flex-col rounded-xl shadow-lg ring-1 shadow-black/20 ring-black/[0.04] dark:shadow-[inset_0px_1px_0px_rgba(255,255,255,0.04),_0px_2px_12px_rgba(0,0,0,0.4),_0px_0px_0px_1px_rgba(0,0,0,0.8)] dark:ring-white/[0.02]'
                   ref={composerRef}
                 >
                   <PostCommentComposer

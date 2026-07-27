@@ -1,5 +1,5 @@
 {
-  "$schema": "https://turbo.build/schema.json",
+  "$schema": "https://v2-10-7.turborepo.dev/schema.json",
   "globalDependencies": [".env.*"],
   "globalEnv": ["NEXT_PUBLIC_CRATES_PRO_URL", "NEXT_PUBLIC_ORION_API_URL"],
   "tasks": {

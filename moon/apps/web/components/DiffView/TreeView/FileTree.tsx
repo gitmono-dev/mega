@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useCallback, useEffect } from 'react'
 import { Box, Skeleton } from '@mui/material'
-import { useTreeViewApiRef } from '@mui/x-tree-view'
+import { useRichTreeViewApiRef } from '@mui/x-tree-view'
 import { RichTreeView } from '@mui/x-tree-view/RichTreeView'
 import { useAtom } from 'jotai'
 
@@ -9,7 +9,7 @@ import { CommonResultVecMuiTreeNode } from '@gitmono/types'
 
 import { expandedNodesAtom, treeAllDataAtom } from './codeTreeAtom'
 import { CustomTreeItem } from './CustomTreeItem'
-import { convertToTreeData, getDescendantIds } from './TreeUtils'
+import { convertToTreeData, getDescendantIds, MuiTreeNode } from './TreeUtils'
 
 interface FileTreeProps {
   treeData: CommonResultVecMuiTreeNode['data']
@@ -18,7 +18,7 @@ interface FileTreeProps {
 }
 
 const FileTree = ({ treeData, treeDataLoading, onFileClick }: FileTreeProps) => {
-  const apiRef = useTreeViewApiRef()
+  const apiRef = useRichTreeViewApiRef<MuiTreeNode>()
 
   const [treeAllData, setTreeAllData] = useAtom(treeAllDataAtom)
   const [expandedNodes, setExpandedNodes] = useAtom(expandedNodesAtom)

@@ -42,10 +42,9 @@
   "devDependencies": {
     "@gitmono/eslint-config": "workspace:*",
     "@gitmono/tsconfig": "workspace:*",
-    "@types/diff": "catalog:",
     "@types/markdown-it": "catalog:",
     "@types/node": "catalog:",
-    "@types/uuid": "catalog:",
+    "eslint": "catalog:",
     "jsdom": "catalog:",
     "tsup": "catalog:",
     "typescript": "catalog:",

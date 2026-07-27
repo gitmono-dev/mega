@@ -43,6 +43,7 @@ export const useMemberMap = () => {
     members?.forEach((i) => {
       map.set(i.user.username, i)
       const github = i.user.github_login?.trim()
+
       if (github) {
         map.set(github, i)
       }
@@ -94,6 +95,7 @@ type MegaAvatarItem = ReturnType<typeof useAvatars>[number] & { username?: strin
 
 function avatarApiIdentity(item: ItemInput): string | undefined {
   const mega = item as MegaAvatarItem
+
   if (typeof mega.username === 'string' && mega.username) return mega.username
   if (typeof item.text === 'string' && item.text) return item.text
   return undefined

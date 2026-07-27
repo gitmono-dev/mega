@@ -13,7 +13,7 @@ interface Props {
 export const ToggleGroup = ({ ariaLabel, items, onValueChange, value }: Props) => {
   return (
     <RadixToggleGroup.Root
-      className='p-sm inline-flex h-8 flex-1 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700'
+      className='inline-flex h-8 flex-1 overflow-hidden rounded-lg bg-gray-100 p-0.5 dark:bg-gray-700'
       type='single'
       value={value}
       aria-label={ariaLabel}

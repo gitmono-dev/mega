@@ -49,7 +49,7 @@ function MyWorkPosts() {
       <IndexPageContent id='/[org]/posts' className='@container lg:py-16'>
         <div
           className={cn('flex flex-col', {
-            'mx-auto w-full max-w-[--feed-width]': !hasComfyCompactLayout && displayPreference === 'comfortable'
+            'mx-auto w-full max-w-[var(--feed-width)]': !hasComfyCompactLayout && displayPreference === 'comfortable'
           })}
         >
           <div className='mb-4 flex flex-col gap-4 md:mb-6 lg:mb-8'>

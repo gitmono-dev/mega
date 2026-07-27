@@ -28,7 +28,7 @@ export function ComfortableFeed({ getPosts, isWriteableForViewer = true, hidePro
 
   if (!hasPosts) {
     return (
-      <div className='isolate mx-auto flex w-full max-w-[--feed-width] flex-1 flex-col transition-opacity lg:px-0'>
+      <div className='isolate mx-auto flex w-full max-w-[var(--feed-width)] flex-1 flex-col transition-opacity lg:px-0'>
         {isWriteableForViewer && !currentOrganization?.viewer_can_post && <ViewerRoleInlineComposerUpsell />}
         <PostsIndexEmptyState isWriteableForViewer={isWriteableForViewer} />
       </div>
@@ -36,7 +36,7 @@ export function ComfortableFeed({ getPosts, isWriteableForViewer = true, hidePro
   }
 
   return (
-    <div className='isolate mx-auto flex w-full max-w-[--feed-width] flex-1 flex-col transition-opacity lg:px-0'>
+    <div className='isolate mx-auto flex w-full max-w-[var(--feed-width)] flex-1 flex-col transition-opacity lg:px-0'>
       {isWriteableForViewer && currentOrganization?.viewer_can_post && <NewPostButton className='mb-8' />}
 
       {isWriteableForViewer && !currentOrganization?.viewer_can_post && <ViewerRoleInlineComposerUpsell />}

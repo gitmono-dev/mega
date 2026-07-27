@@ -74,7 +74,7 @@ export function OrganizationMemberPageComponent() {
               style={{ backgroundImage: `url(${member.user.cover_photo_url})` }}
             />
           )}
-          <div className={cn({ 'mx-auto w-full max-w-[--feed-width]': !hasComfyCompactLayout })}>
+          <div className={cn({ 'mx-auto w-full max-w-[var(--feed-width)]': !hasComfyCompactLayout })}>
             <div
               className={cn('max-sm: flex w-full flex-col justify-between gap-4 px-4 sm:flex-row sm:items-center', {
                 'max-sm:border-b': !hasComfyCompactLayout,

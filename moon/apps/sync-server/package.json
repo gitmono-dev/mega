@@ -25,6 +25,7 @@
   "devDependencies": {
     "@flydotio/dockerfile": "catalog:",
     "@gitmono/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
     "tsup": "catalog:",
     "typescript": "catalog:"
   }

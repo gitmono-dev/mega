@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -8,6 +9,193 @@
  * ## SOURCE: https://github.com/acacode/swagger-typescript-api ##
  * ---------------------------------------------------------------
  */
+
+/** Task phase when in buck2 build */
+export enum TaskPhase {
+  DownloadingSource = 'DownloadingSource',
+  RunningBuild = 'RunningBuild'
+}
+
+export enum TargetState {
+  Pending = 'Pending',
+  Building = 'Building',
+  Completed = 'Completed',
+  Failed = 'Failed',
+  Interrupted = 'Interrupted',
+  Uninitialized = 'Uninitialized'
+}
+
+/** Supported read modes for log APIs. */
+export enum LogReadMode {
+  Full = 'full',
+  Segment = 'segment'
+}
+
+export enum CoreWorkerStatus {
+  Idle = 'Idle',
+  Busy = 'Busy',
+  Error = 'Error',
+  Lost = 'Lost'
+}
+
+export enum BuildStatus {
+  Running = 'Running',
+  Completed = 'Completed',
+  Failed = 'Failed'
+}
+
+export enum TransferMode {
+  Basic = 'basic',
+  Multipart = 'multipart',
+  STREAMING = 'STREAMING'
+}
+
+export enum ThreadStatus {
+  Open = 'Open',
+  Resolved = 'Resolved'
+}
+
+export enum ResourceTypeValue {
+  Note = 'note'
+}
+
+export enum RequirementsState {
+  UNMERGEABLE = 'UNMERGEABLE',
+  MERGEABLE = 'MERGEABLE'
+}
+
+/** CL queue status for API */
+export enum QueueStatus {
+  Waiting = 'Waiting',
+  Testing = 'Testing',
+  Merging = 'Merging',
+  Merged = 'Merged',
+  Failed = 'Failed'
+}
+
+export enum PositionStatus {
+  Exact = 'Exact',
+  Shifted = 'Shifted',
+  PendingReanchor = 'PendingReanchor',
+  Ambiguous = 'Ambiguous',
+  NotFound = 'NotFound'
+}
+
+export enum PermissionValue {
+  Read = 'read',
+  Write = 'write',
+  Admin = 'admin'
+}
+
+export enum Operation {
+  Download = 'download',
+  Upload = 'upload'
+}
+
+export enum MergeStatus {
+  Open = 'Open',
+  Merged = 'Merged',
+  Closed = 'Closed',
+  Draft = 'Draft'
+}
+
+export enum InstallationTargetType {
+  Organization = 'Organization',
+  Repository = 'Repository'
+}
+
+export enum InstallationBotStatus {
+  Disabled = 'Disabled',
+  Enabled = 'Enabled'
+}
+
+export enum GpgStatus {
+  Verified = 'Verified',
+  Unverified = 'Unverified',
+  NoSignature = 'NoSignature'
+}
+
+/** Failure type for API */
+export enum FailureType {
+  TestFailure = 'TestFailure',
+  BuildFailure = 'BuildFailure',
+  Conflict = 'Conflict',
+  MergeFailure = 'MergeFailure',
+  SystemError = 'SystemError',
+  Timeout = 'Timeout'
+}
+
+export enum DiffSide {
+  Deletions = 'Deletions',
+  Additions = 'Additions'
+}
+
+export enum ConvType {
+  Comment = 'Comment',
+  Deploy = 'Deploy',
+  Commit = 'Commit',
+  ForcePush = 'ForcePush',
+  Edit = 'Edit',
+  Review = 'Review',
+  Approve = 'Approve',
+  MergeQueue = 'MergeQueue',
+  Merged = 'Merged',
+  Closed = 'Closed',
+  Reopen = 'Reopen',
+  Label = 'Label',
+  Assignee = 'Assignee',
+  Mention = 'Mention',
+  Draft = 'Draft'
+}
+
+export enum ConditionResult {
+  FAILED = 'FAILED',
+  PASSED = 'PASSED'
+}
+
+export enum CheckType {
+  GpgSignature = 'GpgSignature',
+  BranchProtection = 'BranchProtection',
+  CommitMessage = 'CommitMessage',
+  ClSync = 'ClSync',
+  MergeConflict = 'MergeConflict',
+  CiStatus = 'CiStatus',
+  CodeReview = 'CodeReview',
+  ClaSign = 'ClaSign'
+}
+
+/**
+ * Canonical object type labels aligned with `git-internal`'s `ObjectType` (0.7.4).
+ *
+ * This enum intentionally uses the **string labels** defined by `ObjectType` in
+ * `git-internal/src/internal/object/types.rs` (e.g. `snapshot`, `context_frame`, `plan_step_event`).
+ */
+export enum ArtifactObjectType {
+  Snapshot = 'snapshot',
+  Decision = 'decision',
+  Evidence = 'evidence',
+  Patchset = 'patchset',
+  Plan = 'plan',
+  Provenance = 'provenance',
+  Run = 'run',
+  Task = 'task',
+  Intent = 'intent',
+  Invocation = 'invocation',
+  ContextFrame = 'context_frame',
+  IntentEvent = 'intent_event',
+  TaskEvent = 'task_event',
+  RunEvent = 'run_event',
+  PlanStepEvent = 'plan_step_event',
+  RunUsage = 'run_usage'
+}
+
+/**
+ * What the `POST .../batch` call is for. V1 only defines [`Upload`](ArtifactIntent::Upload)
+ * (negotiate object uploads). Not to be confused with `ObjectType::Intent`.
+ */
+export enum ArtifactIntent {
+  Upload = 'upload'
+}
 
 export type UserNotificationCounts = {
   inbox: Record<string, number>
@@ -3199,17 +3387,9 @@ export type ArtifactFileDescriptor = {
   size: number
 }
 
-/**
- * What the `POST .../batch` call is for. V1 only defines [`Upload`](ArtifactIntent::Upload)
- * (negotiate object uploads). Not to be confused with `ObjectType::Intent`.
- */
-export enum ArtifactIntent {
-  Upload = 'upload'
-}
-
 export type ArtifactLink = {
   expires_at?: string | null
-  header?: object | null
+  header?: Partial<Record<string, string>> | null
   href: string
 }
 
@@ -3240,31 +3420,6 @@ export type ArtifactObjectReadActions = {
 export type ArtifactObjectReadResponse = {
   /** Optional JSON body when `GET .../objects/{oid}` returns a link instead of bytes (read API §4.4). */
   actions: ArtifactObjectReadActions
-}
-
-/**
- * Canonical object type labels aligned with `git-internal`'s `ObjectType` (0.7.4).
- *
- * This enum intentionally uses the **string labels** defined by `ObjectType` in
- * `git-internal/src/internal/object/types.rs` (e.g. `snapshot`, `context_frame`, `plan_step_event`).
- */
-export enum ArtifactObjectType {
-  Snapshot = 'snapshot',
-  Decision = 'decision',
-  Evidence = 'evidence',
-  Patchset = 'patchset',
-  Plan = 'plan',
-  Provenance = 'provenance',
-  Run = 'run',
-  Task = 'task',
-  Intent = 'intent',
-  Invocation = 'invocation',
-  ContextFrame = 'context_frame',
-  IntentEvent = 'intent_event',
-  TaskEvent = 'task_event',
-  RunEvent = 'run_event',
-  PlanStepEvent = 'plan_step_event',
-  RunUsage = 'run_usage'
 }
 
 export type ArtifactResolveFileResponse = {
@@ -3429,17 +3584,6 @@ export type ChangeReviewStatePayload = {
 
 export type ChangeReviewerStatePayload = {
   approved: boolean
-}
-
-export enum CheckType {
-  GpgSignature = 'GpgSignature',
-  BranchProtection = 'BranchProtection',
-  CommitMessage = 'CommitMessage',
-  ClSync = 'ClSync',
-  MergeConflict = 'MergeConflict',
-  CiStatus = 'CiStatus',
-  CodeReview = 'CodeReview',
-  ClaSign = 'ClaSign'
 }
 
 export type ClFilesRes = {
@@ -4332,7 +4476,7 @@ export type CommonResultThreadStatusResponse = {
 
 export type CommonResultTreeResponse = {
   data?: {
-    file_tree: Record<string, FileTreeItem>
+    file_tree: Partial<Record<string, FileTreeItem>>
     tree_items: TreeBriefItem[]
   }
   err_message: string
@@ -4579,7 +4723,7 @@ export type CommonResultVecListToken = {
 
 export type CommonResultVecMuiTreeNode = {
   data?: {
-    children?: any[] | null
+    children?: MuiTreeNode[] | null
     id: string
     label: string
     path: string
@@ -4725,11 +4869,6 @@ export type Condition = {
   type: CheckType
 }
 
-export enum ConditionResult {
-  FAILED = 'FAILED',
-  PASSED = 'PASSED'
-}
-
 export type ContentPayload = {
   content: string
 }
@@ -4742,24 +4881,6 @@ export type Contributor = {
   /** @min 0 */
   total_lines: number
   username?: string | null
-}
-
-export enum ConvType {
-  Comment = 'Comment',
-  Deploy = 'Deploy',
-  Commit = 'Commit',
-  ForcePush = 'ForcePush',
-  Edit = 'Edit',
-  Review = 'Review',
-  Approve = 'Approve',
-  MergeQueue = 'MergeQueue',
-  Merged = 'Merged',
-  Closed = 'Closed',
-  Reopen = 'Reopen',
-  Label = 'Label',
-  Assignee = 'Assignee',
-  Mention = 'Mention',
-  Draft = 'Draft'
 }
 
 export type ConversationItem = {
@@ -4934,11 +5055,6 @@ export type DiffPreviewPayload = {
   refs?: string
 }
 
-export enum DiffSide {
-  Deletions = 'Deletions',
-  Additions = 'Additions'
-}
-
 /** force create new cl */
 export type EditCLMode =
   | 'force_create'
@@ -4982,16 +5098,6 @@ export type EditFileResult = {
 }
 
 export type EmptyListAdditional = object
-
-/** Failure type for API */
-export enum FailureType {
-  TestFailure = 'TestFailure',
-  BuildFailure = 'BuildFailure',
-  Conflict = 'Conflict',
-  MergeFailure = 'MergeFailure',
-  SystemError = 'SystemError',
-  Timeout = 'Timeout'
-}
 
 export type FileReviewResponse = {
   file_path: string
@@ -5051,12 +5157,6 @@ export type GpgKey = {
   user_id: string
 }
 
-export enum GpgStatus {
-  Verified = 'Verified',
-  Unverified = 'Unverified',
-  NoSignature = 'NoSignature'
-}
-
 export type GroupMemberResponse = {
   /** @format int64 */
   group_id: number
@@ -5096,16 +5196,6 @@ export type InstallBotReq = {
   /** @format int64 */
   target_id: number
   target_type: InstallationTargetType
-}
-
-export enum InstallationBotStatus {
-  Disabled = 'Disabled',
-  Enabled = 'Enabled'
-}
-
-export enum InstallationTargetType {
-  Organization = 'Organization',
-  Repository = 'Repository'
 }
 
 export type IsAdminResponse = {
@@ -5181,7 +5271,7 @@ export type LatestCommitInfo = {
 /** Link information for LFS object transfer */
 export type Link = {
   expires_at: string
-  header?: Record<string, string>
+  header?: Partial<Record<string, string>>
   href: string
 }
 
@@ -5199,9 +5289,9 @@ export type ListBotTokenItem = {
 
 export type ListPayload = {
   asc: boolean
-  assignees?: any[] | null
+  assignees?: string[] | null
   author?: string | null
-  labels?: any[] | null
+  labels?: number[] | null
   sort_by?: string | null
   status: string
 }
@@ -5343,15 +5433,8 @@ export type MergeRequirements = {
   state: RequirementsState
 }
 
-export enum MergeStatus {
-  Open = 'Open',
-  Merged = 'Merged',
-  Closed = 'Closed',
-  Draft = 'Draft'
-}
-
 export type MuiTreeNode = {
-  children?: any[] | null
+  children?: MuiTreeNode[] | null
   id: string
   label: string
   path: string
@@ -5402,11 +5485,6 @@ export type ObjectError = {
   message: string
 }
 
-export enum Operation {
-  Download = 'download',
-  Upload = 'upload'
-}
-
 export type PageParamsCommitHistoryParams = {
   additional: {
     /** author: author name filter */
@@ -5427,9 +5505,9 @@ export type PageParamsEmptyListAdditional = {
 export type PageParamsListPayload = {
   additional: {
     asc: boolean
-    assignees?: any[] | null
+    assignees?: string[] | null
     author?: string | null
-    labels?: any[] | null
+    labels?: number[] | null
     sort_by?: string | null
     status: string
   }
@@ -5485,12 +5563,6 @@ export type PermissionBindingRequest = {
   permission: PermissionValue
 }
 
-export enum PermissionValue {
-  Read = 'read',
-  Write = 'write',
-  Admin = 'admin'
-}
-
 export type PositionResponse = {
   /** @format int64 */
   anchor_id: number
@@ -5502,14 +5574,6 @@ export type PositionResponse = {
   /** @format int64 */
   position_id: number
   position_status: PositionStatus
-}
-
-export enum PositionStatus {
-  Exact = 'Exact',
-  Shifted = 'Shifted',
-  PendingReanchor = 'PendingReanchor',
-  Ambiguous = 'Ambiguous',
-  NotFound = 'NotFound'
 }
 
 /** Error details for API */
@@ -5565,15 +5629,6 @@ export type QueueStatsResponse = {
   stats: QueueStats
 }
 
-/** CL queue status for API */
-export enum QueueStatus {
-  Waiting = 'Waiting',
-  Testing = 'Testing',
-  Merging = 'Merging',
-  Merged = 'Merged',
-  Failed = 'Failed'
-}
-
 /** Queue status check response */
 export type QueueStatusResponse = {
   in_queue: boolean
@@ -5621,11 +5676,6 @@ export type RequestObject = {
   user?: string
 }
 
-export enum RequirementsState {
-  UNMERGEABLE = 'UNMERGEABLE',
-  MERGEABLE = 'MERGEABLE'
-}
-
 export type ResourcePermissionResponse = {
   /** @format int64 */
   created_at: number
@@ -5640,13 +5690,9 @@ export type ResourcePermissionResponse = {
   updated_at: number
 }
 
-export enum ResourceTypeValue {
-  Note = 'note'
-}
-
 /** Response object for LFS batch operations */
 export type ResponseObject = {
-  actions?: object | null
+  actions?: Partial<Record<'download' | 'upload' | 'verify', Link>> | null
   authenticated?: boolean | null
   error?: null | ObjectError
   oid: string
@@ -5793,22 +5839,11 @@ export type ThreadReviewResponse = {
   updated_at: string
 }
 
-export enum ThreadStatus {
-  Open = 'Open',
-  Resolved = 'Resolved'
-}
-
 export type ThreadStatusResponse = {
   link: string
   status: ThreadStatus
   /** @format int64 */
   thread_id: number
-}
-
-export enum TransferMode {
-  Basic = 'basic',
-  Multipart = 'multipart',
-  STREAMING = 'STREAMING'
 }
 
 export type TreeBriefItem = {
@@ -5832,7 +5867,7 @@ export type TreeHashItem = {
 }
 
 export type TreeResponse = {
-  file_tree: Record<string, FileTreeItem>
+  file_tree: Partial<Record<string, FileTreeItem>>
   tree_items: TreeBriefItem[]
 }
 
@@ -5912,7 +5947,7 @@ export type UpdateSidebarPayload = {
 export type UpdateUserNotificationConfig = {
   delivery_mode?: string | null
   enabled?: boolean | null
-  preferences?: any[] | null
+  preferences?: UserNotificationPreferenceItem[] | null
 }
 
 export type UserApprovalListRes = {
@@ -6018,12 +6053,6 @@ export type BuildEventDTO = {
   task_id: string
 }
 
-export enum BuildStatus {
-  Running = 'Running',
-  Completed = 'Completed',
-  Failed = 'Failed'
-}
-
 export type BuildTargetDTO = {
   id: string
   latest_state: string
@@ -6048,13 +6077,6 @@ export type CommonPageOrionClientInfo = {
   total: number
 }
 
-export enum CoreWorkerStatus {
-  Idle = 'Idle',
-  Busy = 'Busy',
-  Error = 'Error',
-  Lost = 'Lost'
-}
-
 /** Error response for log-related APIs. */
 export type LogErrorResponse = {
   message: string
@@ -6065,12 +6087,6 @@ export type LogLinesResponse = {
   data: string[]
   /** @min 0 */
   len: number
-}
-
-/** Supported read modes for log APIs. */
-export enum LogReadMode {
-  Full = 'full',
-  Segment = 'segment'
 }
 
 export type MessageResponse = {
@@ -6124,7 +6140,7 @@ export type RetryBuildRequest = {
   /** @format int64 */
   cl_id: number
   cl_link: string
-  targets?: any[] | null
+  targets?: string[] | null
 }
 
 export type StatusProjectRelativePath =
@@ -6178,15 +6194,6 @@ export type TargetLogQuery = {
   type?: LogReadMode
 }
 
-export enum TargetState {
-  Pending = 'Pending',
-  Building = 'Building',
-  Completed = 'Completed',
-  Failed = 'Failed',
-  Interrupted = 'Interrupted',
-  Uninitialized = 'Uninitialized'
-}
-
 /** Target status for buck2 build */
 export type TargetStatusResponse = {
   action: string
@@ -6216,7 +6223,7 @@ export type TaskBuildRequest = {
   /** The Buck2 project path within the monorepo (for example `/jupiter/callisto`). */
   repo: string
   /** Buck2 target path (e.g. //app:server). Optional for backward compatibility. */
-  targets?: any[] | null
+  targets?: string[] | null
 }
 
 /** Query parameters for task history log APIs. */
@@ -6230,41 +6237,107 @@ export type TaskHistoryQuery = {
   task_id: string
 }
 
-/** Task phase when in buck2 build */
-export enum TaskPhase {
-  DownloadingSource = 'DownloadingSource',
-  RunningBuild = 'RunningBuild'
+export type PostActivityViewsParams = {
+  orgSlug: string
 }
 
 export type PostActivityViewsData = UserNotificationCounts
 
+export type GetAttachmentsCommentersParams = {
+  orgSlug: string
+  attachmentId: string
+}
+
 export type GetAttachmentsCommentersData = OrganizationMember[]
 
+export type PostAttachmentsParams = {
+  orgSlug: string
+}
+
 export type PostAttachmentsData = Attachment
+
+export type GetAttachmentsByIdParams = {
+  orgSlug: string
+  id: string
+}
 
 export type GetAttachmentsByIdData = Attachment
 
 export type PostBatchedPostViewsData = BatchedPostViewsPostResponse
 
+export type GetCallRecordingsTranscriptionParams = {
+  orgSlug: string
+  callRecordingId: string
+}
+
 export type GetCallRecordingsTranscriptionData = CallRecordingTranscription
+
+export type PostCallRoomsInvitationsParams = {
+  orgSlug: string
+  callRoomId: string
+}
 
 export type PostCallRoomsInvitationsData = OrganizationCallRoomInvitationsPostResponse
 
+export type GetCallRoomsByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type GetCallRoomsByIdData = CallRoom
+
+export type PostCallRoomsParams = {
+  orgSlug: string
+}
 
 export type PostCallRoomsData = CallRoom
 
+export type DeleteCallsAllRecordingsParams = {
+  orgSlug: string
+  callId: string
+}
+
 export type DeleteCallsAllRecordingsData = OrganizationCallAllRecordingsDeleteResponse
+
+export type PostCallsFavoriteParams = {
+  orgSlug: string
+  callId: string
+}
 
 export type PostCallsFavoriteData = Favorite
 
+export type DeleteCallsFavoriteParams = {
+  orgSlug: string
+  callId: string
+}
+
 export type DeleteCallsFavoriteData = OrganizationCallFavoriteDeleteResponse
+
+export type PostCallsFollowUpParams = {
+  orgSlug: string
+  callId: string
+}
 
 export type PostCallsFollowUpData = FollowUp
 
+export type PostCallsPinParams = {
+  orgSlug: string
+  callId: string
+}
+
 export type PostCallsPinData = ProjectPinCreated
 
+export type PutCallsProjectPermissionParams = {
+  orgSlug: string
+  callId: string
+}
+
 export type PutCallsProjectPermissionData = Call
+
+export type DeleteCallsProjectPermissionParams = {
+  orgSlug: string
+  callId: string
+}
 
 export type DeleteCallsProjectPermissionData = OrganizationsOrgSlugCallsCallIdProjectPermissionDeleteResponse
 
@@ -6287,35 +6360,113 @@ export type GetCallsParams = {
 
 export type GetCallsData = CallPage
 
+export type GetCallsByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type GetCallsByIdData = Call
+
+export type PutCallsByIdParams = {
+  orgSlug: string
+  id: string
+}
 
 export type PutCallsByIdData = Call
 
+export type PutCommentsAttachmentsReorderParams = {
+  orgSlug: string
+  commentId: string
+}
+
 export type PutCommentsAttachmentsReorderData = OrganizationsOrgSlugCommentsCommentIdAttachmentsReorderPutResponse
+
+export type PostCommentsFollowUpParams = {
+  orgSlug: string
+  commentId: string
+}
 
 export type PostCommentsFollowUpData = FollowUp
 
+export type PostCommentsLinearIssuesParams = {
+  orgSlug: string
+  commentId: string
+}
+
 export type PostCommentsLinearIssuesData = CreateLinearIssue
+
+export type PostCommentsReactionsParams = {
+  orgSlug: string
+  commentId: string
+}
 
 export type PostCommentsReactionsData = Reaction
 
+export type PostCommentsRepliesParams = {
+  orgSlug: string
+  commentId: string
+}
+
 export type PostCommentsRepliesData = ReplyCreated
+
+export type PostCommentsResolutionsParams = {
+  orgSlug: string
+  commentId: string
+}
 
 export type PostCommentsResolutionsData = Comment
 
+export type DeleteCommentsResolutionsParams = {
+  orgSlug: string
+  commentId: string
+}
+
 export type DeleteCommentsResolutionsData = Comment
+
+export type PutCommentsTasksParams = {
+  orgSlug: string
+  commentId: string
+}
 
 export type PutCommentsTasksData = Comment
 
+export type GetCommentsByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type GetCommentsByIdData = Comment
+
+export type PutCommentsByIdParams = {
+  orgSlug: string
+  id: string
+}
 
 export type PutCommentsByIdData = Comment
 
+export type DeleteCommentsByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type DeleteCommentsByIdData = Commenters
+
+export type GetCustomReactionsPacksParams = {
+  orgSlug: string
+}
 
 export type GetCustomReactionsPacksData = CustomReactionsPack[]
 
+export type PostCustomReactionsPacksParams = {
+  orgSlug: string
+}
+
 export type PostCustomReactionsPacksData = OrganizationsOrgSlugCustomReactionsPacksPostResponse
+
+export type DeleteCustomReactionsPacksByNameParams = {
+  orgSlug: string
+  name: string
+}
 
 export type DeleteCustomReactionsPacksByNameData = OrganizationCustomReactionsPackDeleteResponse
 
@@ -6327,19 +6478,54 @@ export type GetCustomReactionsParams = {
 
 export type GetCustomReactionsData = CustomReactionPage
 
+export type PostCustomReactionsParams = {
+  orgSlug: string
+}
+
 export type PostCustomReactionsData = CustomReaction
+
+export type DeleteCustomReactionsByIdParams = {
+  orgSlug: string
+  id: string
+}
 
 export type DeleteCustomReactionsByIdData = OrganizationCustomReactionDeleteResponse
 
+export type PostDataExportsParams = {
+  orgSlug: string
+}
+
 export type PostDataExportsData = OrganizationDataExportsPostResponse
+
+export type GetDigestsMigrationsParams = {
+  orgSlug: string
+  digestId: string
+}
 
 export type GetDigestsMigrationsData = PostDigestNoteMigration
 
+export type PutFavoritesReorderParams = {
+  orgSlug: string
+}
+
 export type PutFavoritesReorderData = ReorderOrganizationFavoritesPutResponse
+
+export type GetFavoritesParams = {
+  orgSlug: string
+}
 
 export type GetFavoritesData = Favorite[]
 
+export type DeleteFavoritesByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type DeleteFavoritesByIdData = OrganizationFavoriteDeleteResponse
+
+export type PostFeedbackParams = {
+  orgSlug: string
+}
 
 export type PostFeedbackData = OrganizationFeedbacksPostResponse
 
@@ -6350,7 +6536,15 @@ export type GetFeedbackPresignedFieldsParams = {
 
 export type GetFeedbackPresignedFieldsData = PresignedPostFields
 
+export type PostFigmaFilesParams = {
+  orgSlug: string
+}
+
 export type PostFigmaFilesData = FigmaFile
+
+export type PostFigmaFileAttachmentDetailsParams = {
+  orgSlug: string
+}
 
 export type PostFigmaFileAttachmentDetailsData = FigmaFileAttachmentDetails
 
@@ -6362,7 +6556,17 @@ export type GetFollowUpsParams = {
 
 export type GetFollowUpsData = FollowUpPage
 
+export type PutFollowUpsByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type PutFollowUpsByIdData = FollowUp
+
+export type DeleteFollowUpsByIdParams = {
+  orgSlug: string
+  id: string
+}
 
 export type DeleteFollowUpsByIdData = OrganizationsOrgSlugFollowUpsIdDeleteResponse
 
@@ -6385,13 +6589,33 @@ export type PutIntegrationsCalDotComOrganizationData = IntegrationsCalDotComOrga
 
 export type GetIntegrationsFigmaIntegrationData = FigmaIntegrationGetResponse
 
+export type GetIntegrationsLinearInstallationParams = {
+  orgSlug: string
+}
+
 export type GetIntegrationsLinearInstallationData = LinearIntegration
+
+export type DeleteIntegrationsLinearInstallationParams = {
+  orgSlug: string
+}
 
 export type DeleteIntegrationsLinearInstallationData = OrganizationsOrgSlugIntegrationsLinearInstallationDeleteResponse
 
+export type PostIntegrationsLinearTeamSyncsParams = {
+  orgSlug: string
+}
+
 export type PostIntegrationsLinearTeamSyncsData = OrganizationIntegrationsLinearTeamSyncsPostResponse
 
+export type GetIntegrationsLinearTeamsParams = {
+  orgSlug: string
+}
+
 export type GetIntegrationsLinearTeamsData = IntegrationTeam[]
+
+export type PostIntegrationsSlackChannelSyncsParams = {
+  orgSlug: string
+}
 
 export type PostIntegrationsSlackChannelSyncsData = OrganizationIntegrationsSlackChannelSyncsPostResponse
 
@@ -6403,6 +6627,11 @@ export type GetIntegrationsSlackChannelsParams = {
 }
 
 export type GetIntegrationsSlackChannelsData = SlackChannelPage
+
+export type GetIntegrationsSlackChannelsByProviderChannelIdParams = {
+  orgSlug: string
+  providerChannelId: string
+}
 
 export type GetIntegrationsSlackChannelsByProviderChannelIdData = SlackChannel
 
@@ -6418,13 +6647,37 @@ export type GetIntegrationsZapierProjectsParams = {
 
 export type GetIntegrationsZapierProjectsData = ZapierProjects
 
+export type GetInvitationUrlParams = {
+  orgSlug: string
+}
+
 export type GetInvitationUrlData = InvitationUrl
+
+export type GetThreadsDmsByUsernameParams = {
+  orgSlug: string
+  username: string
+}
 
 export type GetThreadsDmsByUsernameData = MessageThreadDmResult
 
+export type PostThreadsFavoritesParams = {
+  orgSlug: string
+  threadId: string
+}
+
 export type PostThreadsFavoritesData = Favorite
 
+export type DeleteThreadsFavoritesParams = {
+  orgSlug: string
+  threadId: string
+}
+
 export type DeleteThreadsFavoritesData = OrganizationThreadFavoritesDeleteResponse
+
+export type GetThreadsIntegrationDmsByOauthApplicationIdParams = {
+  orgSlug: string
+  oauthApplicationId: string
+}
 
 export type GetThreadsIntegrationDmsByOauthApplicationIdData = MessageThreadDmResult
 
@@ -6437,25 +6690,83 @@ export type GetThreadsMessagesParams = {
 
 export type GetThreadsMessagesData = MessagePage
 
+export type PostThreadsMessagesParams = {
+  orgSlug: string
+  threadId: string
+}
+
 export type PostThreadsMessagesData = PusherInvalidateMessage
+
+export type PutThreadsMessagesByIdParams = {
+  orgSlug: string
+  threadId: string
+  id: string
+}
 
 export type PutThreadsMessagesByIdData = OrganizationsOrgSlugThreadsThreadIdMessagesIdPutResponse
 
+export type DeleteThreadsMessagesByIdParams = {
+  orgSlug: string
+  threadId: string
+  id: string
+}
+
 export type DeleteThreadsMessagesByIdData = OrganizationsOrgSlugThreadsThreadIdMessagesIdDeleteResponse
+
+export type GetThreadsMyMembershipParams = {
+  orgSlug: string
+  threadId: string
+}
 
 export type GetThreadsMyMembershipData = MessageThreadMembership
 
+export type PutThreadsMyMembershipParams = {
+  orgSlug: string
+  threadId: string
+}
+
 export type PutThreadsMyMembershipData = MessageThreadMembership
+
+export type DeleteThreadsMyMembershipParams = {
+  orgSlug: string
+  threadId: string
+}
 
 export type DeleteThreadsMyMembershipData = OrganizationsOrgSlugThreadsThreadIdMyMembershipDeleteResponse
 
+export type PostThreadsNotificationForcesParams = {
+  orgSlug: string
+  threadId: string
+}
+
 export type PostThreadsNotificationForcesData = OrganizationThreadNotificationForcesPostResponse
+
+export type GetThreadsOauthApplicationsParams = {
+  orgSlug: string
+  threadId: string
+}
 
 export type GetThreadsOauthApplicationsData = OauthApplication[]
 
+export type PostThreadsOauthApplicationsParams = {
+  orgSlug: string
+  threadId: string
+}
+
 export type PostThreadsOauthApplicationsData = MessageThreadMembership
 
+export type DeleteThreadsOauthApplicationsByIdParams = {
+  orgSlug: string
+  threadId: string
+  id: string
+}
+
 export type DeleteThreadsOauthApplicationsByIdData = OrganizationThreadOauthApplicationDeleteResponse
+
+export type PutThreadsOtherMembershipsListParams = {
+  orgSlug: string
+  threadId: string
+}
 
 export type PutThreadsOtherMembershipsListData = MessageThread
 
@@ -6466,21 +6777,65 @@ export type GetThreadsPresignedFieldsParams = {
 
 export type GetThreadsPresignedFieldsData = PresignedPostFields
 
+export type PostThreadsReadsParams = {
+  orgSlug: string
+  threadId: string
+}
+
 export type PostThreadsReadsData = UserNotificationCounts
+
+export type DeleteThreadsReadsParams = {
+  orgSlug: string
+  threadId: string
+}
 
 export type DeleteThreadsReadsData = UserNotificationCounts
 
+export type GetThreadsParams = {
+  orgSlug: string
+}
+
 export type GetThreadsData = MessageThreadInbox
+
+export type PostThreadsParams = {
+  orgSlug: string
+}
 
 export type PostThreadsData = MessageThread
 
+export type GetThreadsByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type GetThreadsByIdData = MessageThread
+
+export type PutThreadsByIdParams = {
+  orgSlug: string
+  id: string
+}
 
 export type PutThreadsByIdData = MessageThread
 
+export type DeleteThreadsByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type DeleteThreadsByIdData = OrganizationsOrgSlugThreadsIdDeleteResponse
 
+export type DeleteMessagesAttachmentsByIdParams = {
+  orgSlug: string
+  messageId: string
+  id: string
+}
+
 export type DeleteMessagesAttachmentsByIdData = OrganizationMessageAttachmentDeleteResponse
+
+export type PostMessagesReactionsParams = {
+  orgSlug: string
+  messageId: string
+}
 
 export type PostMessagesReactionsData = Reaction
 
@@ -6494,11 +6849,33 @@ export type GetNotesAttachmentsCommentsParams = {
 
 export type GetNotesAttachmentsCommentsData = CommentPage
 
+export type PutNotesAttachmentsReorderParams = {
+  orgSlug: string
+  noteId: string
+}
+
 export type PutNotesAttachmentsReorderData = OrganizationsOrgSlugNotesNoteIdAttachmentsReorderPutResponse
+
+export type PostNotesAttachmentsParams = {
+  orgSlug: string
+  noteId: string
+}
 
 export type PostNotesAttachmentsData = Attachment
 
+export type PutNotesAttachmentsByIdParams = {
+  orgSlug: string
+  noteId: string
+  id: string
+}
+
 export type PutNotesAttachmentsByIdData = Attachment
+
+export type DeleteNotesAttachmentsByIdParams = {
+  orgSlug: string
+  noteId: string
+  id: string
+}
 
 export type DeleteNotesAttachmentsByIdData = Note
 
@@ -6511,31 +6888,103 @@ export type GetNotesCommentsParams = {
 
 export type GetNotesCommentsData = CommentPage
 
+export type PostNotesCommentsParams = {
+  orgSlug: string
+  noteId: string
+}
+
 export type PostNotesCommentsData = CommentCreated
+
+export type PostNotesFavoriteParams = {
+  orgSlug: string
+  noteId: string
+}
 
 export type PostNotesFavoriteData = Favorite
 
+export type DeleteNotesFavoriteParams = {
+  orgSlug: string
+  noteId: string
+}
+
 export type DeleteNotesFavoriteData = OrganizationNoteFavoriteDeleteResponse
+
+export type PostNotesFollowUpParams = {
+  orgSlug: string
+  noteId: string
+}
 
 export type PostNotesFollowUpData = FollowUp
 
+export type GetNotesPermissionsParams = {
+  orgSlug: string
+  noteId: string
+}
+
 export type GetNotesPermissionsData = Permission[]
+
+export type PostNotesPermissionsParams = {
+  orgSlug: string
+  noteId: string
+}
 
 export type PostNotesPermissionsData = Permission[]
 
+export type PutNotesPermissionsByIdParams = {
+  orgSlug: string
+  noteId: string
+  id: string
+}
+
 export type PutNotesPermissionsByIdData = Permission
+
+export type DeleteNotesPermissionsByIdParams = {
+  orgSlug: string
+  noteId: string
+  id: string
+}
 
 export type DeleteNotesPermissionsByIdData = OrganizationsOrgSlugNotesNoteIdPermissionsIdDeleteResponse
 
+export type PostNotesPinParams = {
+  orgSlug: string
+  noteId: string
+}
+
 export type PostNotesPinData = ProjectPinCreated
+
+export type PutNotesProjectPermissionsParams = {
+  orgSlug: string
+  noteId: string
+}
 
 export type PutNotesProjectPermissionsData = Note
 
+export type DeleteNotesProjectPermissionsParams = {
+  orgSlug: string
+  noteId: string
+}
+
 export type DeleteNotesProjectPermissionsData = OrganizationsOrgSlugNotesNoteIdProjectPermissionsDeleteResponse
+
+export type GetNotesPublicNotesParams = {
+  orgSlug: string
+  noteId: string
+}
 
 export type GetNotesPublicNotesData = PublicNote
 
+export type GetNotesSyncStateParams = {
+  orgSlug: string
+  noteId: string
+}
+
 export type GetNotesSyncStateData = NoteSync
+
+export type PutNotesSyncStateParams = {
+  orgSlug: string
+  noteId: string
+}
 
 export type PutNotesSyncStateData = OrganizationsOrgSlugNotesNoteIdSyncStatePutResponse
 
@@ -6548,9 +6997,24 @@ export type GetNotesTimelineEventsParams = {
 
 export type GetNotesTimelineEventsData = TimelineEventPage
 
+export type GetNotesViewsParams = {
+  orgSlug: string
+  noteId: string
+}
+
 export type GetNotesViewsData = NoteView[]
 
+export type PostNotesViewsParams = {
+  orgSlug: string
+  noteId: string
+}
+
 export type PostNotesViewsData = NoteViewCreated
+
+export type PutNotesVisibilityParams = {
+  orgSlug: string
+  noteId: string
+}
 
 export type PutNotesVisibilityData = OrganizationsOrgSlugNotesNoteIdVisibilityPutResponse
 
@@ -6567,21 +7031,63 @@ export type GetNotesParams = {
 
 export type GetNotesData = NotePage
 
+export type PostNotesParams = {
+  orgSlug: string
+}
+
 export type PostNotesData = Note
+
+export type GetNotesByIdParams = {
+  orgSlug: string
+  id: string
+}
 
 export type GetNotesByIdData = Note
 
+export type PutNotesByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type PutNotesByIdData = Note
+
+export type DeleteNotesByIdParams = {
+  orgSlug: string
+  id: string
+}
 
 export type DeleteNotesByIdData = OrganizationsOrgSlugNotesIdDeleteResponse
 
+export type DeleteMembersMeNotificationsArchiveParams = {
+  orgSlug: string
+  notificationId: string
+}
+
 export type DeleteMembersMeNotificationsArchiveData = OrganizationNotificationArchiveDeleteResponse
+
+export type PostMembersMeNotificationsDeleteAllParams = {
+  orgSlug: string
+}
 
 export type PostMembersMeNotificationsDeleteAllData = OrganizationNotificationDeleteAllPostResponse
 
+export type PostMembersMeNotificationsMarkAllReadParams = {
+  orgSlug: string
+}
+
 export type PostMembersMeNotificationsMarkAllReadData = OrganizationNotificationMarkAllReadPostResponse
 
+export type PostMembersMeNotificationsReadParams = {
+  orgSlug: string
+  notificationId: string
+}
+
 export type PostMembersMeNotificationsReadData = OrganizationNotificationReadPostResponse
+
+export type DeleteMembersMeNotificationsReadParams = {
+  orgSlug: string
+  notificationId: string
+}
 
 export type DeleteMembersMeNotificationsReadData =
   OrganizationsOrgSlugMembersMeNotificationsNotificationIdReadDeleteResponse
@@ -6596,6 +7102,11 @@ export type GetMembersMeNotificationsParams = {
 
 export type GetMembersMeNotificationsData = NotificationPage
 
+export type DeleteMembersMeNotificationsByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type DeleteMembersMeNotificationsByIdData = OrganizationNotificationDeleteResponse
 
 export type GetOauthApplicationsPresignedFieldsParams = {
@@ -6605,19 +7116,56 @@ export type GetOauthApplicationsPresignedFieldsParams = {
 
 export type GetOauthApplicationsPresignedFieldsData = PresignedPostFields
 
+export type PostOauthApplicationsSecretRenewalsParams = {
+  orgSlug: string
+  oauthApplicationId: string
+}
+
 export type PostOauthApplicationsSecretRenewalsData = OauthApplication
+
+export type PostOauthApplicationsTokensParams = {
+  orgSlug: string
+  oauthApplicationId: string
+}
 
 export type PostOauthApplicationsTokensData = AccessToken
 
+export type GetOauthApplicationsParams = {
+  orgSlug: string
+}
+
 export type GetOauthApplicationsData = OauthApplication[]
+
+export type PostOauthApplicationsParams = {
+  orgSlug: string
+}
 
 export type PostOauthApplicationsData = OauthApplication
 
+export type GetOauthApplicationsByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type GetOauthApplicationsByIdData = OauthApplication
+
+export type PutOauthApplicationsByIdParams = {
+  orgSlug: string
+  id: string
+}
 
 export type PutOauthApplicationsByIdData = OauthApplication
 
+export type DeleteOauthApplicationsByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type DeleteOauthApplicationsByIdData = OrganizationsOrgSlugOauthApplicationsIdDeleteResponse
+
+export type PostOnboardProjectsParams = {
+  orgSlug: string
+}
 
 export type PostOnboardProjectsData = OrganizationOnboardProjectsPostResponse
 
@@ -6636,11 +7184,29 @@ export type GetInvitationsParams = {
 
 export type GetInvitationsData = OrganizationInvitationPage
 
+export type PostInvitationsParams = {
+  orgSlug: string
+}
+
 export type PostInvitationsData = OrganizationInvitation[]
+
+export type GetInvitationsByInviteTokenParams = {
+  orgSlug: string
+  inviteToken: string
+}
 
 export type GetInvitationsByInviteTokenData = OrganizationInvitation
 
+export type PostInvitationsByTokenAcceptParams = {
+  inviteToken: string
+}
+
 export type PostInvitationsByTokenAcceptData = AcceptInvitationByTokenPostResponse
+
+export type DeleteInvitationsByIdParams = {
+  orgSlug: string
+  id: string
+}
 
 export type DeleteInvitationsByIdData = OrganizationsOrgSlugInvitationsIdDeleteResponse
 
@@ -6659,6 +7225,11 @@ export type GetMembersParams = {
 
 export type GetMembersData = OrganizationMemberPage
 
+export type GetMembersByUsernameParams = {
+  orgSlug: string
+  username: string
+}
+
 export type GetMembersByUsernameData = OrganizationMember
 
 export type GetMembersPostsParams = {
@@ -6674,9 +7245,24 @@ export type GetMembersPostsParams = {
 
 export type GetMembersPostsData = PostPage
 
+export type PutMembersByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type PutMembersByIdData = OrganizationMember
 
+export type DeleteMembersByIdParams = {
+  orgSlug: string
+  id: string
+}
+
 export type DeleteMembersByIdData = OrganizationsOrgSlugMembersIdDeleteResponse
+
+export type PutMembersReactivateParams = {
+  orgSlug: string
+  id: string
+}
 
 export type PutMembersReactivateData = OrganizationsOrgSlugMembersIdReactivatePutResponse
 
@@ -6687,11 +7273,29 @@ export type GetMembershipRequestsParams = {
 
 export type GetMembershipRequestsData = OrganizationMembershipRequestPage
 
+export type PostMembershipRequestsParams = {
+  orgSlug: string
+}
+
 export type PostMembershipRequestsData = OrganizationMembershipRequest
+
+export type GetMembershipRequestParams = {
+  orgSlug: string
+}
 
 export type GetMembershipRequestData = OrganizationMembershipRequestGetResponse
 
+export type PostMembershipRequestsApproveParams = {
+  orgSlug: string
+  id: string
+}
+
 export type PostMembershipRequestsApproveData = OrganizationApproveMembershipRequestPostResponse
+
+export type PostMembershipRequestsDeclineParams = {
+  orgSlug: string
+  id: string
+}
 
 export type PostMembershipRequestsDeclineData = OrganizationDeclineMembershipRequestPostResponse
 
@@ -6702,6 +7306,10 @@ export type GetMembersMeArchivedNotificationsParams = {
 }
 
 export type GetMembersMeArchivedNotificationsData = NotificationPage
+
+export type PostMembersMeDataExportParams = {
+  orgSlug: string
+}
 
 export type PostMembersMeDataExportData = OrganizationMembershipDataExportPostResponse
 
@@ -6732,7 +7340,15 @@ export type GetMembersMeForMePostsParams = {
 
 export type GetMembersMeForMePostsData = PostPage
 
+export type PutMembersMeIndexViewsParams = {
+  orgSlug: string
+}
+
 export type PutMembersMeIndexViewsData = PublicOrganizationMembership
+
+export type GetMembersMePersonalCallRoomParams = {
+  orgSlug: string
+}
 
 export type GetMembersMePersonalCallRoomData = CallRoom
 
@@ -6748,25 +7364,63 @@ export type GetMembersMePersonalDraftPostsParams = {
 
 export type GetMembersMePersonalDraftPostsData = PostPage
 
+export type PutMembersProjectMembershipListParams = {
+  orgSlug: string
+  memberUsername: string
+}
+
 export type PutMembersProjectMembershipListData = ProjectMembershipList
+
+export type GetMembersProjectMembershipsParams = {
+  orgSlug: string
+  memberUsername: string
+}
 
 export type GetMembersProjectMembershipsData = ProjectMembershipList
 
 export type PutOrganizationMembershipsReorderData = OrganizationMembershipsReorderPutResponse
 
+export type GetMembersMeSlackNotificationPreferenceParams = {
+  orgSlug: string
+}
+
 export type GetMembersMeSlackNotificationPreferenceData = OrganizationMembershipSlackNotificationPreferenceGetResponse
+
+export type PostMembersMeSlackNotificationPreferenceParams = {
+  orgSlug: string
+}
 
 export type PostMembersMeSlackNotificationPreferenceData =
   OrganizationsOrgSlugMembersMeSlackNotificationPreferencePostResponse
 
+export type DeleteMembersMeSlackNotificationPreferenceParams = {
+  orgSlug: string
+}
+
 export type DeleteMembersMeSlackNotificationPreferenceData =
   OrganizationsOrgSlugMembersMeSlackNotificationPreferenceDeleteResponse
 
+export type GetMembersMeStatusesParams = {
+  orgSlug: string
+}
+
 export type GetMembersMeStatusesData = OrganizationMembershipStatus[]
+
+export type PostMembersMeStatusesParams = {
+  orgSlug: string
+}
 
 export type PostMembersMeStatusesData = OrganizationMembershipStatus
 
+export type PutMembersMeStatusesParams = {
+  orgSlug: string
+}
+
 export type PutMembersMeStatusesData = OrganizationMembershipStatus
+
+export type DeleteMembersMeStatusesParams = {
+  orgSlug: string
+}
 
 export type DeleteMembersMeStatusesData = OrganizationsOrgSlugMembersMeStatusesDeleteResponse
 
@@ -6798,27 +7452,72 @@ export type GetMembersMeViewerPostsData = PostPage
 
 export type GetOrganizationMembershipsData = PublicOrganizationMembership[]
 
+export type PostBulkInvitesParams = {
+  orgSlug: string
+}
+
 export type PostBulkInvitesData = OrganizationInvitation[]
+
+export type GetFeaturesParams = {
+  orgSlug: string
+}
 
 export type GetFeaturesData = OrganizationFeaturesGetResponse
 
+export type PostSsoParams = {
+  orgSlug: string
+}
+
 export type PostSsoData = Organization
+
+export type DeleteSsoParams = {
+  orgSlug: string
+}
 
 export type DeleteSsoData = Organization
 
+export type PostVerifiedDomainMembershipsParams = {
+  orgSlug: string
+}
+
 export type PostVerifiedDomainMembershipsData = OrganizationMember
+
+export type GetByOrgSlugParams = {
+  orgSlug: string
+}
 
 export type GetByOrgSlugData = Organization
 
+export type PutByOrgSlugParams = {
+  orgSlug: string
+}
+
 export type PutByOrgSlugData = Organization
+
+export type DeleteByOrgSlugParams = {
+  orgSlug: string
+}
 
 export type DeleteByOrgSlugData = OrganizationsOrgSlugDeleteResponse
 
 export type PostOrganizationsData = Organization
 
+export type PatchResetInviteTokenParams = {
+  orgSlug: string
+}
+
 export type PatchResetInviteTokenData = Organization
 
+export type PostJoinByTokenParams = {
+  orgSlug: string
+  token: string
+}
+
 export type PostJoinByTokenData = SuggestedOrganization
+
+export type PutOnboardParams = {
+  orgSlug: string
+}
 
 export type PutOnboardData = Organization
 
@@ -6828,6 +7527,11 @@ export type GetAvatarPresignedFieldsParams = {
 }
 
 export type GetAvatarPresignedFieldsData = PresignedPostFields
+
+export type DeletePinsByIdParams = {
+  orgSlug: string
+  id: string
+}
 
 export type DeletePinsByIdData = OrganizationPinDeleteResponse
 
@@ -6841,19 +7545,61 @@ export type GetPostsAttachmentsCommentsParams = {
 
 export type GetPostsAttachmentsCommentsData = CommentPage
 
+export type PutPostsAttachmentsReorderParams = {
+  orgSlug: string
+  postId: string
+}
+
 export type PutPostsAttachmentsReorderData = OrganizationsOrgSlugPostsPostIdAttachmentsReorderPutResponse
+
+export type PostPostsAttachmentsParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type PostPostsAttachmentsData = Attachment
 
+export type PutPostsAttachmentsByIdParams = {
+  orgSlug: string
+  postId: string
+  id: string
+}
+
 export type PutPostsAttachmentsByIdData = Attachment
+
+export type DeletePostsAttachmentsByIdParams = {
+  orgSlug: string
+  postId: string
+  id: string
+}
 
 export type DeletePostsAttachmentsByIdData = Post
 
+export type PostPostsFavoriteParams = {
+  orgSlug: string
+  postId: string
+}
+
 export type PostPostsFavoriteData = Favorite
+
+export type DeletePostsFavoriteParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type DeletePostsFavoriteData = OrganizationPostFavoriteDeleteResponse
 
+export type PostPostsFeedbackDismissalsParams = {
+  orgSlug: string
+  postId: string
+}
+
 export type PostPostsFeedbackDismissalsData = FeedbackRequest
+
+export type PostPostsFollowUpParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type PostPostsFollowUpData = FollowUp
 
@@ -6865,7 +7611,17 @@ export type GetPostsGeneratedResolutionParams = {
 
 export type GetPostsGeneratedResolutionData = GeneratedHtml
 
+export type GetPostsGeneratedTldrParams = {
+  orgSlug: string
+  postId: string
+}
+
 export type GetPostsGeneratedTldrData = GeneratedHtml
+
+export type PostPostsLinearIssuesParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type PostPostsLinearIssuesData = CreateLinearIssue
 
@@ -6878,15 +7634,46 @@ export type GetPostsLinearTimelineEventsParams = {
 
 export type GetPostsLinearTimelineEventsData = TimelineEventPage
 
+export type PostPostsPinParams = {
+  orgSlug: string
+  postId: string
+}
+
 export type PostPostsPinData = ProjectPinCreated
+
+export type PostPostsPoll2OptionsVoteParams = {
+  orgSlug: string
+  postId: string
+  optionId: string
+}
 
 export type PostPostsPoll2OptionsVoteData = Post
 
+export type PostPostsPoll2Params = {
+  orgSlug: string
+  postId: string
+}
+
 export type PostPostsPoll2Data = Post
+
+export type PutPostsPoll2Params = {
+  orgSlug: string
+  postId: string
+}
 
 export type PutPostsPoll2Data = Post
 
+export type DeletePostsPoll2Params = {
+  orgSlug: string
+  postId: string
+}
+
 export type DeletePostsPoll2Data = OrganizationsOrgSlugPostsPostIdPoll2DeleteResponse
+
+export type GetPostsCanvasCommentsParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type GetPostsCanvasCommentsData = Comment[]
 
@@ -6899,19 +7686,61 @@ export type GetPostsCommentsParams = {
 
 export type GetPostsCommentsData = CommentPage
 
+export type PostPostsComments2Params = {
+  orgSlug: string
+  postId: string
+}
+
 export type PostPostsComments2Data = CommentCreated
+
+export type PostPostsFeedbackRequestsParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type PostPostsFeedbackRequestsData = FeedbackRequest
 
+export type DeletePostsFeedbackRequestsByIdParams = {
+  orgSlug: string
+  postId: string
+  id: string
+}
+
 export type DeletePostsFeedbackRequestsByIdData = OrganizationPostFeedbackRequestDeleteResponse
+
+export type PostPostsFeedbackRequestsDismissalParams = {
+  orgSlug: string
+  postId: string
+  feedbackRequestId: string
+}
 
 export type PostPostsFeedbackRequestsDismissalData = FeedbackRequest
 
+export type PostPostsLinksParams = {
+  orgSlug: string
+  postId: string
+}
+
 export type PostPostsLinksData = PostLink
+
+export type PostPostsReactionsParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type PostPostsReactionsData = Reaction
 
+export type GetPostsVersionsParams = {
+  orgSlug: string
+  postId: string
+}
+
 export type GetPostsVersionsData = PostVersion[]
+
+export type PostPostsVersionsParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type PostPostsVersionsData = Post
 
@@ -6923,19 +7752,59 @@ export type GetPostsViewsParams = {
 
 export type GetPostsViewsData = PostViewPage
 
+export type PostPostsViewsParams = {
+  orgSlug: string
+  postId: string
+}
+
 export type PostPostsViewsData = PostViewCreated
+
+export type PostPostsPublicationParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type PostPostsPublicationData = Post
 
+export type PostPostsResolutionParams = {
+  orgSlug: string
+  postId: string
+}
+
 export type PostPostsResolutionData = Post
+
+export type DeletePostsResolutionParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type DeletePostsResolutionData = Post
 
+export type GetPostsSeoInfoParams = {
+  orgSlug: string
+  postId: string
+}
+
 export type GetPostsSeoInfoData = PostSeoInfo
+
+export type PostPostsSharesParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type PostPostsSharesData = OrganizationPostSharesPostResponse
 
+export type PutPostsStatusParams = {
+  orgSlug: string
+  postId: string
+}
+
 export type PutPostsStatusData = OrganizationsOrgSlugPostsPostIdStatusPutResponse
+
+export type PutPostsTasksParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type PutPostsTasksData = Post
 
@@ -6947,6 +7816,11 @@ export type GetPostsTimelineEventsParams = {
 }
 
 export type GetPostsTimelineEventsData = TimelineEventPage
+
+export type PutPostsVisibilityParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type GetPostsPollOptionsVotersParams = {
   after?: string
@@ -6971,15 +7845,44 @@ export type GetPostsParams = {
 
 export type GetPostsData = PostPage
 
+export type PostPostsParams = {
+  orgSlug: string
+}
+
 export type PostPostsData = Post
+
+export type GetPostsByPostIdParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type GetPostsByPostIdData = Post
 
+export type PutPostsByPostIdParams = {
+  orgSlug: string
+  postId: string
+}
+
 export type PutPostsByPostIdData = Post
+
+export type DeletePostsByPostIdParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type DeletePostsByPostIdData = OrganizationsOrgSlugPostsPostIdDeleteResponse
 
+export type PostPostsSubscribeParams = {
+  orgSlug: string
+  postId: string
+}
+
 export type PostPostsSubscribeData = OrganizationPostSubscribePostResponse
+
+export type DeletePostsUnsubscribeParams = {
+  orgSlug: string
+  postId: string
+}
 
 export type DeletePostsUnsubscribeData = OrganizationPostUnsubscribeDeleteResponse
 
@@ -6992,7 +7895,15 @@ export type GetPostsPresignedFieldsData = PresignedPostFields
 
 export type PostProductLogsData = ProductLogsPostResponse
 
+export type PutProjectMembershipsReorderParams = {
+  orgSlug: string
+}
+
 export type PutProjectMembershipsReorderData = OrganizationsOrgSlugProjectMembershipsReorderPutResponse
+
+export type GetProjectMembershipsParams = {
+  orgSlug: string
+}
 
 export type GetProjectMembershipsData = ProjectMembership[]
 
@@ -7005,13 +7916,40 @@ export type GetProjectsAddableMembersParams = {
 
 export type GetProjectsAddableMembersData = OrganizationMemberPage
 
+export type GetProjectsBookmarksParams = {
+  orgSlug: string
+  projectId: string
+}
+
 export type GetProjectsBookmarksData = ProjectBookmark[]
+
+export type PostProjectsBookmarksParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type PostProjectsBookmarksData = ProjectBookmark
 
+export type PatchProjectsBookmarksByIdParams = {
+  orgSlug: string
+  projectId: string
+  id: string
+}
+
 export type PatchProjectsBookmarksByIdData = ProjectBookmark
 
+export type DeleteProjectsBookmarksByIdParams = {
+  orgSlug: string
+  projectId: string
+  id: string
+}
+
 export type DeleteProjectsBookmarksByIdData = OrganizationsOrgSlugProjectsProjectIdBookmarksIdDeleteResponse
+
+export type PutProjectsBookmarksReorderParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type PutProjectsBookmarksReorderData = ProjectBookmark[]
 
@@ -7025,17 +7963,52 @@ export type GetProjectsCallsParams = {
 
 export type GetProjectsCallsData = CallPage
 
+export type PostProjectsDataExportsParams = {
+  orgSlug: string
+  projectId: string
+}
+
 export type PostProjectsDataExportsData = OrganizationProjectDataExportsPostResponse
+
+export type PutProjectsDisplayPreferencesParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type PutProjectsDisplayPreferencesData = Project
 
+export type PostProjectsFavoritesParams = {
+  orgSlug: string
+  projectId: string
+}
+
 export type PostProjectsFavoritesData = Favorite
+
+export type DeleteProjectsFavoritesParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type DeleteProjectsFavoritesData = OrganizationProjectFavoritesDeleteResponse
 
+export type PostProjectsInvitationUrlAcceptancesParams = {
+  orgSlug: string
+  projectId: string
+}
+
 export type PostProjectsInvitationUrlAcceptancesData = OrganizationProjectInvitationUrlAcceptancesPostResponse
 
+export type PostProjectsInvitationUrlParams = {
+  orgSlug: string
+  projectId: string
+}
+
 export type PostProjectsInvitationUrlData = InvitationUrl
+
+export type GetProjectsInvitationUrlParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type GetProjectsInvitationUrlData = InvitationUrl
 
@@ -7051,7 +8024,17 @@ export type GetProjectsMembersParams = {
 
 export type GetProjectsMembersData = OrganizationMemberPage
 
+export type PostProjectsMembershipsParams = {
+  orgSlug: string
+  projectId: string
+}
+
 export type PostProjectsMembershipsData = ProjectMembership
+
+export type DeleteProjectsMembershipsParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type DeleteProjectsMembershipsData = Project
 
@@ -7069,11 +8052,32 @@ export type GetProjectsNotesParams = {
 
 export type GetProjectsNotesData = NotePage
 
+export type GetProjectsOauthApplicationsParams = {
+  orgSlug: string
+  projectId: string
+}
+
 export type GetProjectsOauthApplicationsData = OauthApplication[]
+
+export type PostProjectsOauthApplicationsParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type PostProjectsOauthApplicationsData = ProjectMembership
 
+export type DeleteProjectsOauthApplicationsByIdParams = {
+  orgSlug: string
+  projectId: string
+  id: string
+}
+
 export type DeleteProjectsOauthApplicationsByIdData = OrganizationProjectOauthApplicationDeleteResponse
+
+export type GetProjectsPinsParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type GetProjectsPinsData = ProjectPinList
 
@@ -7092,17 +8096,52 @@ export type GetProjectsPostsParams = {
 
 export type GetProjectsPostsData = PostPage
 
+export type PostProjectsReadsParams = {
+  orgSlug: string
+  projectId: string
+}
+
 export type PostProjectsReadsData = OrganizationsOrgSlugProjectsProjectIdReadsPostResponse
+
+export type DeleteProjectsReadsParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type DeleteProjectsReadsData = OrganizationProjectReadsDeleteResponse
 
+export type PostProjectsSubscriptionParams = {
+  orgSlug: string
+  projectId: string
+}
+
 export type PostProjectsSubscriptionData = Project
+
+export type DeleteProjectsSubscriptionParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type DeleteProjectsSubscriptionData = Project
 
+export type PutProjectsViewerDisplayPreferencesParams = {
+  orgSlug: string
+  projectId: string
+}
+
 export type PutProjectsViewerDisplayPreferencesData = Project
 
+export type DeleteProjectsViewerDisplayPreferencesParams = {
+  orgSlug: string
+  projectId: string
+}
+
 export type DeleteProjectsViewerDisplayPreferencesData = Project
+
+export type PostProjectsViewsParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type PostProjectsViewsData = Project
 
@@ -7116,15 +8155,44 @@ export type GetProjectsParams = {
 
 export type GetProjectsData = ProjectPage
 
+export type PostProjectsParams = {
+  orgSlug: string
+}
+
 export type PostProjectsData = Project
+
+export type GetProjectsByProjectIdParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type GetProjectsByProjectIdData = Project
 
+export type PutProjectsByProjectIdParams = {
+  orgSlug: string
+  projectId: string
+}
+
 export type PutProjectsByProjectIdData = Project
+
+export type DeleteProjectsByProjectIdParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type DeleteProjectsByProjectIdData = OrganizationsOrgSlugProjectsProjectIdDeleteResponse
 
+export type PatchProjectsArchiveParams = {
+  orgSlug: string
+  projectId: string
+}
+
 export type PatchProjectsArchiveData = Project
+
+export type PatchProjectsUnarchiveParams = {
+  orgSlug: string
+  projectId: string
+}
 
 export type PatchProjectsUnarchiveData = Project
 
@@ -7135,9 +8203,21 @@ export type GetProjectCoverPhotoPresignedFieldsParams = {
 
 export type GetProjectCoverPhotoPresignedFieldsData = PresignedPostFields
 
+export type GetOrganizationByTokenParams = {
+  token: string
+}
+
 export type GetOrganizationByTokenData = PublicOrganization
 
+export type GetPublicProjectsByTokenParams = {
+  token: string
+}
+
 export type GetPublicProjectsByTokenData = PublicProject
+
+export type DeleteReactionsParams = {
+  orgSlug: string
+}
 
 export type DeleteReactionsData = CustomReaction
 
@@ -7182,17 +8262,45 @@ export type GetSearchResourceMentionsParams = {
 
 export type GetSearchResourceMentionsData = ResourceMentionResults
 
+export type GetIntegrationsSlackParams = {
+  orgSlug: string
+}
+
 export type GetIntegrationsSlackData = SlackIntegration
+
+export type DeleteIntegrationsSlackParams = {
+  orgSlug: string
+}
 
 export type DeleteIntegrationsSlackData = OrganizationIntegrationsSlackDeleteResponse
 
+export type GetSyncCustomReactionsParams = {
+  orgSlug: string
+}
+
 export type GetSyncCustomReactionsData = SyncCustomReaction[]
+
+export type GetSyncMembersParams = {
+  orgSlug: string
+}
 
 export type GetSyncMembersData = SyncOrganizationMember[]
 
+export type GetSyncMessageThreadsParams = {
+  orgSlug: string
+}
+
 export type GetSyncMessageThreadsData = SyncMessageThreads
 
+export type GetSyncProjectsParams = {
+  orgSlug: string
+}
+
 export type GetSyncProjectsData = SyncProject[]
+
+export type GetSyncTagsParams = {
+  orgSlug: string
+}
 
 export type GetSyncTagsData = Tag[]
 
@@ -7205,11 +8313,30 @@ export type GetTagsParams = {
 
 export type GetTagsData = TagPage
 
+export type PostTagsParams = {
+  orgSlug: string
+}
+
 export type PostTagsData = Tag
+
+export type GetTagsByTagNameParams = {
+  orgSlug: string
+  tagName: string
+}
 
 export type GetTagsByTagNameData = Tag
 
+export type PatchTagsByTagNameParams = {
+  orgSlug: string
+  tagName: string
+}
+
 export type PatchTagsByTagNameData = Tag
+
+export type DeleteTagsByTagNameParams = {
+  orgSlug: string
+  tagName: string
+}
 
 export type DeleteTagsByTagNameData = OrganizationsOrgSlugTagsTagNameDeleteResponse
 
@@ -7246,7 +8373,15 @@ export type GetMeScheduledNotificationsData = ScheduledNotification[]
 
 export type PostMeScheduledNotificationsData = ScheduledNotification
 
+export type PutMeScheduledNotificationsByIdParams = {
+  id: string
+}
+
 export type PutMeScheduledNotificationsByIdData = ScheduledNotification
+
+export type DeleteMeScheduledNotificationsByIdParams = {
+  id: string
+}
 
 export type DeleteMeScheduledNotificationsByIdData = UsersMeScheduledNotificationsIdDeleteResponse
 
@@ -7284,6 +8419,10 @@ export type GetMeCoverPhotoPresignedFieldsData = PresignedPostFields
 
 export type PostPushSubscriptionsData = WebPushSubscriptionsPostResponse
 
+export type PostMembersMessagesV2Params = {
+  memberId: string
+}
+
 export type PostMembersMessagesV2Data = V2Message
 
 export type GetMembersV2Params = {
@@ -7315,9 +8454,21 @@ export type GetPostsCommentsV2Params = {
 
 export type GetPostsCommentsV2Data = V2CommentPage
 
+export type PostPostsCommentsV2Params = {
+  postId: string
+}
+
 export type PostPostsCommentsV2Data = V2Comment
 
+export type PostPostsResolutionV2Params = {
+  postId: string
+}
+
 export type PostPostsResolutionV2Data = V2Post
+
+export type DeletePostsResolutionV2Params = {
+  postId: string
+}
 
 export type DeletePostsResolutionV2Data = V2Post
 
@@ -7335,6 +8486,10 @@ export type GetPostsV2Params = {
 export type GetPostsV2Data = V2PostPage
 
 export type PostPostsV2Data = V2Post
+
+export type GetPostsByIdV2Params = {
+  id: string
+}
 
 export type GetPostsByIdV2Data = V2Post
 
@@ -7363,6 +8518,10 @@ export type GetThreadsMessagesV2Params = {
 
 export type GetThreadsMessagesV2Data = V2MessagePage
 
+export type PostThreadsMessagesV2Params = {
+  threadId: string
+}
+
 export type PostThreadsMessagesV2Data = V2Message
 
 export type PostThreadsV2Data = V2MessageThread
@@ -7375,15 +8534,65 @@ export type PostApiAdminGroupsData = CommonResultGroupResponse
 
 export type PostApiAdminGroupsListData = CommonResultCommonPageGroupResponse
 
+export type GetApiAdminGroupsByGroupIdParams = {
+  /**
+   * Group ID
+   * @format int64
+   */
+  groupId: number
+}
+
 export type GetApiAdminGroupsByGroupIdData = CommonResultGroupResponse
+
+export type PutApiAdminGroupsByGroupIdParams = {
+  /**
+   * Group ID
+   * @format int64
+   */
+  groupId: number
+}
 
 export type PutApiAdminGroupsByGroupIdData = CommonResultGroupResponse
 
+export type DeleteApiAdminGroupsByGroupIdParams = {
+  /**
+   * Group ID
+   * @format int64
+   */
+  groupId: number
+}
+
 export type DeleteApiAdminGroupsByGroupIdData = CommonResultDeleteGroupResponse
+
+export type PostApiAdminGroupsMembersParams = {
+  /**
+   * Group ID
+   * @format int64
+   */
+  groupId: number
+}
 
 export type PostApiAdminGroupsMembersData = CommonResultVecGroupMemberResponse
 
+export type PostApiAdminGroupsMembersListParams = {
+  /**
+   * Group ID
+   * @format int64
+   */
+  groupId: number
+}
+
 export type PostApiAdminGroupsMembersListData = CommonResultCommonPageGroupMemberResponse
+
+export type DeleteApiAdminGroupsMembersByUsernameParams = {
+  /**
+   * Group ID
+   * @format int64
+   */
+  groupId: number
+  /** Username */
+  username: string
+}
 
 export type DeleteApiAdminGroupsMembersByUsernameData = CommonResultRemoveMemberResponse
 
@@ -7391,11 +8600,39 @@ export type GetApiAdminListData = CommonResultAdminListResponse
 
 export type GetApiAdminMeData = CommonResultIsAdminResponse
 
+export type GetApiAdminResourcesPermissionsParams = {
+  /** Resource type, currently only `note` */
+  resourceType: string
+  /** Resource ID */
+  resourceId: string
+}
+
 export type GetApiAdminResourcesPermissionsData = CommonResultVecResourcePermissionResponse
+
+export type PutApiAdminResourcesPermissionsParams = {
+  /** Resource type, currently only `note` */
+  resourceType: string
+  /** Resource ID */
+  resourceId: string
+}
 
 export type PutApiAdminResourcesPermissionsData = CommonResultVecResourcePermissionResponse
 
+export type PostApiAdminResourcesPermissionsParams = {
+  /** Resource type, currently only `note` */
+  resourceType: string
+  /** Resource ID */
+  resourceId: string
+}
+
 export type PostApiAdminResourcesPermissionsData = CommonResultVecResourcePermissionResponse
+
+export type DeleteApiAdminResourcesPermissionsParams = {
+  /** Resource type, currently only `note` */
+  resourceType: string
+  /** Resource ID */
+  resourceId: string
+}
 
 export type DeleteApiAdminResourcesPermissionsData = CommonResultDeletePermissionsResponse
 
@@ -7412,11 +8649,35 @@ export type GetApiAdminUserApprovalsParams = {
 
 export type GetApiAdminUserApprovalsData = CommonResultUserApprovalListRes
 
+export type PostApiAdminUserApprovalsApproveParams = {
+  /** Username to approve */
+  username: string
+}
+
 export type PostApiAdminUserApprovalsApproveData = CommonResultUserApprovalStatusRes
+
+export type PostApiAdminUserApprovalsRejectParams = {
+  /** Username to reject */
+  username: string
+}
 
 export type PostApiAdminUserApprovalsRejectData = CommonResultUserApprovalStatusRes
 
+export type GetApiAdminUsersGroupsParams = {
+  /** Username */
+  username: string
+}
+
 export type GetApiAdminUsersGroupsData = CommonResultUserGroupsResponse
+
+export type GetApiAdminUsersPermissionsByResourceIdParams = {
+  /** Username */
+  username: string
+  /** Resource type, currently only `note` */
+  resourceType: string
+  /** Resource ID */
+  resourceId: string
+}
 
 export type GetApiAdminUsersPermissionsByResourceIdData = CommonResultUserEffectivePermissionResponse
 
@@ -7442,29 +8703,124 @@ export type GetApiBlobParams = {
 
 export type GetApiBlobData = CommonResultString
 
+export type GetApiBotsTokensParams = {
+  /**
+   * Bot ID
+   * @format int64
+   */
+  botId: number
+}
+
 export type GetApiBotsTokensData = CommonResultVecListBotTokenItem
+
+export type PostApiBotsTokensParams = {
+  /**
+   * Bot ID
+   * @format int64
+   */
+  botId: number
+}
 
 export type PostApiBotsTokensData = CommonResultCreateBotTokenResponse
 
+export type PostApiBotsTokensRevokeAllParams = {
+  /**
+   * Bot ID
+   * @format int64
+   */
+  botId: number
+}
+
 export type PostApiBotsTokensRevokeAllData = any
+
+export type DeleteApiBotsTokensByIdParams = {
+  /**
+   * Bot ID
+   * @format int64
+   */
+  botId: number
+  /**
+   * Token ID
+   * @format int64
+   */
+  id: number
+}
 
 export type DeleteApiBotsTokensByIdData = any
 
+export type GetApiBotsInstallationsParams = {
+  /**
+   * Bots ID
+   * @format int64
+   */
+  id: number
+}
+
 export type GetApiBotsInstallationsData = CommonResultVecBotRes
+
+export type PostApiBotsInstallationsParams = {
+  /**
+   * Bots ID
+   * @format int64
+   */
+  id: number
+}
 
 export type PostApiBotsInstallationsData = CommonResultBotRes
 
+export type DeleteApiBotsInstallationsByInstallationIdParams = {
+  /**
+   * Bot ID
+   * @format int64
+   */
+  id: number
+  /**
+   * Installation ID
+   * @format int64
+   */
+  installationId: number
+}
+
 export type DeleteApiBotsInstallationsByInstallationIdData = CommonResultString
+
+export type PatchApiBotsInstallationsByInstallationIdParams = {
+  /**
+   * Bot ID
+   * @format int64
+   */
+  id: number
+  /**
+   * Installation ID
+   * @format int64
+   */
+  installationId: number
+}
 
 export type PatchApiBotsInstallationsByInstallationIdData = CommonResultBotRes
 
 export type PostApiBuckSessionStartData = CommonResultSessionResponse
 
+/** Optional empty payload. Can be omitted or sent as {} */
 export type PostApiBuckSessionCompletePayload = null | CompletePayload
+
+export type PostApiBuckSessionCompleteParams = {
+  /** CL link (8-character alphanumeric identifier) */
+  clLink: string
+}
 
 export type PostApiBuckSessionCompleteData = CommonResultCompleteResponse
 
+export type PostApiBuckSessionFileParams = {
+  /** CL link (8-character alphanumeric identifier) */
+  clLink: string
+}
+
 export type PostApiBuckSessionFileData = CommonResultFileUploadResponse
+
+export type PostApiBuckSessionManifestParams = {
+  /** CL link (8-character alphanumeric identifier) */
+  clLink: string
+}
 
 export type PostApiBuckSessionManifestData = CommonResultManifestResponse
 
@@ -7474,61 +8830,219 @@ export type PostApiClLabelsData = CommonResultString
 
 export type PostApiClListData = CommonResultCommonPageItemRes
 
+export type PostApiClCloseParams = {
+  /** CL link */
+  link: string
+}
+
 export type PostApiClCloseData = CommonResultString
+
+export type PostApiClCommentParams = {
+  /** CL link */
+  link: string
+}
 
 export type PostApiClCommentData = CommonResultString
 
+export type GetApiClDetailParams = {
+  /** CL link */
+  link: string
+}
+
 export type GetApiClDetailData = CommonResultCLDetailRes
+
+export type PostApiClFilesChangedParams = {
+  /** CL link */
+  link: string
+}
 
 export type PostApiClFilesChangedData = CommonResultFilesChangedPage
 
+export type GetApiClFilesListParams = {
+  /** CL link */
+  link: string
+}
+
 export type GetApiClFilesListData = CommonResultVecClFilesRes
+
+export type PostApiClMergeParams = {
+  /** CL link */
+  link: string
+}
 
 export type PostApiClMergeData = CommonResultString
 
+export type GetApiClMergeBoxParams = {
+  /** CL link */
+  link: string
+}
+
 export type GetApiClMergeBoxData = CommonResultMergeBoxRes
+
+export type PostApiClMergeNoAuthParams = {
+  /** CL link */
+  link: string
+}
 
 export type PostApiClMergeNoAuthData = CommonResultString
 
+export type GetApiClMuiTreeParams = {
+  /** CL link */
+  link: string
+}
+
 export type GetApiClMuiTreeData = CommonResultVecMuiTreeNode
+
+export type PostApiClReopenParams = {
+  /** CL link */
+  link: string
+}
 
 export type PostApiClReopenData = CommonResultString
 
+export type PostApiClReviewResolveParams = {
+  /** the cl link */
+  link: string
+}
+
 export type PostApiClReviewResolveData = CommonResultString
+
+export type PostApiClReviewerApproveParams = {
+  /** the cl link */
+  link: string
+}
 
 export type PostApiClReviewerApproveData = CommonResultString
 
+export type GetApiClReviewersParams = {
+  /** the cl link */
+  link: string
+}
+
 export type GetApiClReviewersData = CommonResultReviewersResponse
+
+export type PostApiClReviewersParams = {
+  /** the cl link */
+  link: string
+}
 
 export type PostApiClReviewersData = CommonResultString
 
+export type DeleteApiClReviewersParams = {
+  /** the cl link */
+  link: string
+}
+
 export type DeleteApiClReviewersData = CommonResultString
+
+export type PostApiClStatusParams = {
+  /** CL link */
+  link: string
+}
 
 export type PostApiClStatusData = CommonResultString
 
+export type PostApiClTitleParams = {
+  /** A string ID representing a Change List */
+  link: string
+}
+
 export type PostApiClTitleData = CommonResultString
+
+export type PostApiClUpdateBranchParams = {
+  /** CL link */
+  link: string
+}
 
 export type PostApiClUpdateBranchData = CommonResultString
 
+export type GetApiClUpdateStatusParams = {
+  /** CL link */
+  link: string
+}
+
 export type GetApiClUpdateStatusData = CommonResultUpdateBranchStatusRes
+
+export type DeleteApiCodeReviewCommentByCommentIdParams = {
+  /**
+   * A numeric ID representing a code review comment
+   * @format int64
+   */
+  commentId: number
+}
 
 export type DeleteApiCodeReviewCommentByCommentIdData = CommonResultString
 
+export type DeleteApiCodeReviewThreadByThreadIdParams = {
+  /**
+   * A numeric ID representing a code review thread
+   * @format int64
+   */
+  threadId: number
+}
+
 export type DeleteApiCodeReviewThreadByThreadIdData = CommonResultString
+
+export type PostApiCodeReviewUpdateParams = {
+  /**
+   * A numeric ID representing a comment
+   * @format int64
+   */
+  commentId: number
+}
 
 export type PostApiCodeReviewUpdateData = CommonResultCommentReviewResponse
 
+export type PostApiCodeReviewCommentInitParams = {
+  /** CL link */
+  link: string
+}
+
 export type PostApiCodeReviewCommentInitData = CommonResultThreadReviewResponse
+
+export type GetApiCodeReviewCommentsParams = {
+  /** CL link */
+  link: string
+}
 
 export type GetApiCodeReviewCommentsData = CommonResultCodeReviewResponse
 
+export type PostApiCodeReviewCommentReplyParams = {
+  /**
+   * Code Review Comment Thread ID
+   * @format int64
+   */
+  threadId: number
+}
+
 export type PostApiCodeReviewCommentReplyData = CommonResultCommentReviewResponse
 
+export type PostApiCodeReviewReopenParams = {
+  /**
+   * A numeric ID representing a code review thread
+   * @format int64
+   */
+  threadId: number
+}
+
 export type PostApiCodeReviewReopenData = CommonResultThreadStatusResponse
+
+export type PostApiCodeReviewResolveParams = {
+  /**
+   * A numeric ID representing a code review thread
+   * @format int64
+   */
+  threadId: number
+}
 
 export type PostApiCodeReviewResolveData = CommonResultThreadStatusResponse
 
 export type PostApiCommitsHistoryData = CommonResultCommonPageCommitSummary
+
+export type PutApiCommitsBindingParams = {
+  /** Git commit SHA hash */
+  sha: string
+}
 
 export type PutApiCommitsBindingData = CommonResultCommitBindingResponse
 
@@ -7550,11 +9064,40 @@ export type GetApiCommitsMuiTreeParams = {
 
 export type GetApiCommitsMuiTreeData = CommonResultVecMuiTreeNode
 
+export type DeleteApiConversationReactionsByIdParams = {
+  /** viewer_reaction_id */
+  id: string
+}
+
 export type DeleteApiConversationReactionsByIdData = CommonResultString
+
+export type PostApiConversationByCommentIdParams = {
+  /**
+   * A numeric ID representing a comment
+   * @format int64
+   */
+  commentId: number
+}
 
 export type PostApiConversationByCommentIdData = CommonResultString
 
+export type DeleteApiConversationByCommentIdParams = {
+  /**
+   * A numeric ID representing a comment
+   * @format int64
+   */
+  commentId: number
+}
+
 export type DeleteApiConversationByCommentIdData = CommonResultString
+
+export type PostApiConversationReactionsParams = {
+  /**
+   * A numeric ID representing either a comment or a conversation. Specify the type in the request body.
+   * @format int64
+   */
+  commentId: number
+}
 
 export type PostApiConversationReactionsData = CommonResultString
 
@@ -7584,19 +9127,52 @@ export type PostApiIssueListData = CommonResultCommonPageItemRes
 
 export type PostApiIssueNewData = CommonResultString
 
+export type PostApiIssueCloseParams = {
+  /** Issue link */
+  link: string
+}
+
 export type PostApiIssueCloseData = CommonResultString
+
+export type PostApiIssueCommentParams = {
+  /** Issue link */
+  link: string
+}
 
 export type PostApiIssueCommentData = CommonResultString
 
+export type GetApiIssueDetailParams = {
+  /** Issue link */
+  link: string
+}
+
 export type GetApiIssueDetailData = CommonResultIssueDetailRes
 
+export type PostApiIssueReopenParams = {
+  /** Issue link */
+  link: string
+}
+
 export type PostApiIssueReopenData = CommonResultString
+
+export type PostApiIssueTitleParams = {
+  /** A string ID representing a Issue */
+  link: string
+}
 
 export type PostApiIssueTitleData = CommonResultString
 
 export type PostApiLabelListData = CommonResultCommonPageLabelItem
 
 export type PostApiLabelNewData = CommonResultString
+
+export type GetApiLabelByIdParams = {
+  /**
+   * Label's id
+   * @format int64
+   */
+  id: number
+}
 
 export type GetApiLabelByIdData = CommonResultLabelItem
 
@@ -7624,13 +9200,30 @@ export type PostApiLfsLocksData = LockResponse
 
 export type PostApiLfsLocksVerifyData = VerifiableLockList
 
+export type PostApiLfsLocksUnlockParams = {
+  /** Lock ID to unlock */
+  id: string
+}
+
 export type PostApiLfsLocksUnlockData = UnlockResponse
 
 export type PostApiLfsObjectsBatchData = BatchResponse
 
-export type GetApiLfsObjectsByObjectIdData = any
+export type GetApiLfsObjectsByObjectIdParams = {
+  /** Object ID (OID) to download */
+  objectId: string
+}
 
+/** @format byte */
+export type GetApiLfsObjectsByObjectIdData = Blob
+
+/** Object data */
 export type PutApiLfsObjectsByObjectIdPayload = number[]
+
+export type PutApiLfsObjectsByObjectIdParams = {
+  /** Object ID (OID) to upload */
+  objectId: string
+}
 
 export type PutApiLfsObjectsByObjectIdData = any
 
@@ -7640,31 +9233,90 @@ export type PostApiMergeQueueCancelAllData = CommonResultValue
 
 export type GetApiMergeQueueListData = CommonResultQueueListResponse
 
+export type DeleteApiMergeQueueRemoveByClLinkParams = {
+  /** CL link to remove */
+  clLink: string
+}
+
 export type DeleteApiMergeQueueRemoveByClLinkData = CommonResultValue
+
+export type PostApiMergeQueueRetryByClLinkParams = {
+  /** The cl_link to retry */
+  clLink: string
+}
 
 export type PostApiMergeQueueRetryByClLinkData = CommonResultValue
 
 export type GetApiMergeQueueStatsData = CommonResultQueueStatsResponse
 
+export type GetApiMergeQueueStatusByClLinkParams = {
+  /** CL link to check status */
+  clLink: string
+}
+
 export type GetApiMergeQueueStatusByClLinkData = CommonResultQueueStatusResponse
 
+export type GetApiOrganizationsNotesSyncStateParams = {
+  /** @format int32 */
+  orgSlug: number
+  id: string
+}
+
 export type GetApiOrganizationsNotesSyncStateData = NoteShowResponse
+
+export type PatchApiOrganizationsNotesSyncStateParams = {
+  /** @format int32 */
+  orgSlug: number
+  id: string
+}
 
 export type PatchApiOrganizationsNotesSyncStateData = any
 
 export type PostApiOrionRunnersData = CommonResultStartRunnerResponse
 
+export type GetApiOrionRunnersByIdParams = {
+  /** VM ID returned by start_runner */
+  id: string
+}
+
 export type GetApiOrionRunnersByIdData = CommonResultRunnerStatusResponse
 
+export type GetApiOrionRunnersLogsStreamParams = {
+  /** VM ID returned by start_runner */
+  id: string
+}
+
 export type GetApiOrionRunnersLogsStreamData = any
+
+export type GetApiPermissionsMeByResourceIdParams = {
+  /** Resource type, currently only `note` */
+  resourceType: string
+  /** Resource ID */
+  resourceId: string
+}
 
 export type GetApiPermissionsMeByResourceIdData = CommonResultUserEffectivePermissionResponse
 
 export type PostApiRepoCloneData = CommonResultString
 
+export type PostApiReposArtifactsBatchParams = {
+  /** Single URL path segment identifying the repo (use %2F for `/` inside names, e.g. `org%2Fproject`) */
+  repo: string
+}
+
 export type PostApiReposArtifactsBatchData = ArtifactBatchResponse
 
+export type PostApiReposArtifactsCommitParams = {
+  /** Single URL path segment identifying the repo (use %2F for `/` inside names, e.g. `org%2Fproject`) */
+  repo: string
+}
+
 export type PostApiReposArtifactsCommitData = ArtifactCommitResponse
+
+export type GetApiReposArtifactsDiscoveryParams = {
+  /** Single URL path segment identifying the repo (use %2F for `/` inside names, e.g. `org%2Fproject`) */
+  repo: string
+}
 
 export type GetApiReposArtifactsDiscoveryData = ArtifactDiscoveryResponse
 
@@ -7679,11 +9331,27 @@ export type GetApiReposArtifactsObjectsByOidParams = {
 
 export type GetApiReposArtifactsObjectsByOidData = ArtifactObjectReadResponse
 
+/** Object bytes */
 export type PutApiReposArtifactsObjectsByOidPayload = number[]
+
+export type PutApiReposArtifactsObjectsByOidParams = {
+  /** Single URL path segment identifying the repo (use %2F for `/` inside names, e.g. `org%2Fproject`) */
+  repo: string
+  /** Artifact object id (UUID string per RFC 4122) */
+  oid: string
+}
 
 export type PutApiReposArtifactsObjectsByOidData = any
 
-export type HeadApiReposArtifactsObjectsByOidData = any
+export type HeadApiReposArtifactsObjectsByOidParams = {
+  /** Single URL path segment identifying the repo (use %2F for `/` inside names, e.g. `org%2Fproject`) */
+  repo: string
+  /** Artifact object id (UUID string per RFC 4122) */
+  oid: string
+}
+
+/** @format byte */
+export type HeadApiReposArtifactsObjectsByOidData = Blob
 
 export type GetApiReposArtifactsResolveFileParams = {
   /** Artifact namespace */
@@ -7746,7 +9414,23 @@ export type PostApiSidebarSyncPayload = SidebarSyncPayload[]
 
 export type PostApiSidebarSyncData = CommonResultVecSidebarRes
 
+export type PostApiSidebarUpdateByIdParams = {
+  /**
+   * Sidebar ID to update
+   * @format int32
+   */
+  id: number
+}
+
 export type PostApiSidebarUpdateByIdData = CommonResultSidebarRes
+
+export type DeleteApiSidebarByIdParams = {
+  /**
+   * Sidebar ID to delete
+   * @format int32
+   */
+  id: number
+}
 
 export type DeleteApiSidebarByIdData = CommonResultSidebarRes
 
@@ -7756,9 +9440,17 @@ export type PostApiTagsData = CommonResultTagResponse
 
 export type PostApiTagsListData = CommonResultCommonPage
 
+export type GetApiTagsByNameParams = {
+  name: string
+}
+
 export type GetApiTagsByNameData = CommonResultTagResponse
 
 export type GetApiTagsByNameError = CommonResultString
+
+export type DeleteApiTagsByNameParams = {
+  name: string
+}
 
 export type DeleteApiTagsByNameData = CommonResultDeleteTagResponse
 
@@ -7803,7 +9495,23 @@ export type PostApiTriggersData = CommonResultTriggerResponse
 
 export type PostApiTriggersListData = CommonResultCommonPageTriggerResponse
 
+export type GetApiTriggersByIdParams = {
+  /**
+   * Trigger ID
+   * @format int64
+   */
+  id: number
+}
+
 export type GetApiTriggersByIdData = CommonResultTriggerResponse
+
+export type PostApiTriggersRetryParams = {
+  /**
+   * Original trigger ID to retry
+   * @format int64
+   */
+  id: number
+}
 
 export type PostApiTriggersRetryData = CommonResultTriggerResponse
 
@@ -7827,11 +9535,27 @@ export type PostApiUserSshData = CommonResultString
 
 export type GetApiUserSshListData = CommonResultVecListSSHKey
 
+export type DeleteApiUserSshByKeyIdParams = {
+  /**
+   * A numeric ID representing a SSH
+   * @format int64
+   */
+  keyId: number
+}
+
 export type DeleteApiUserSshByKeyIdData = CommonResultString
 
 export type PostApiUserTokenGenerateData = CommonResultString
 
 export type GetApiUserTokenListData = CommonResultVecListToken
+
+export type DeleteApiUserTokenByKeyIdParams = {
+  /**
+   * A numeric ID representing a User Token
+   * @format int64
+   */
+  keyId: number
+}
 
 export type DeleteApiUserTokenByKeyIdData = CommonResultString
 
@@ -7854,7 +9578,20 @@ export type GetApiWebhooksData = CommonResultCommonPageWebhookResponse
 
 export type PostApiWebhooksData = CommonResultWebhookResponse
 
+export type DeleteApiWebhooksByIdParams = {
+  /**
+   * Webhook ID
+   * @format int64
+   */
+  id: number
+}
+
 export type DeleteApiWebhooksByIdData = CommonResultString
+
+export type GetOrionClientStatusByIdParams = {
+  /** Orion client Id */
+  id: string
+}
 
 export type GetOrionClientStatusByIdData = OrionClientStatus
 
@@ -7906,17 +9643,42 @@ export type GetTaskHistoryOutputData = LogLinesResponse
 
 export type GetTaskHistoryOutputError = LogErrorResponse
 
+export type GetTaskOutputByIdParams = {
+  /** Build ID for which to stream output logs */
+  id: string
+}
+
 export type GetTaskOutputByIdData = any
 
+export type GetAllTargetStatusByTaskIdV2Params = {
+  /** Task ID whose target belong */
+  taskId: string
+}
+
 export type GetAllTargetStatusByTaskIdV2Data = any
+
+export type GetBuildEventsByTaskIdV2Params = {
+  /** Task ID */
+  taskId: string
+}
 
 export type GetBuildEventsByTaskIdV2Data = BuildEventDTO[]
 
 export type GetBuildEventsByTaskIdV2Error = MessageResponse
 
+export type GetBuildStateByBuildIdV2Params = {
+  /** Build ID */
+  buildId: string
+}
+
 export type GetBuildStateByBuildIdV2Data = BuildStatus
 
 export type GetBuildStateByBuildIdV2Error = MessageResponse
+
+export type GetBuildsLogsV2Params = {
+  /** Build event ID */
+  buildId: string
+}
 
 export type GetBuildsLogsV2Data = LogLinesResponse
 
@@ -7924,19 +9686,39 @@ export type GetBuildsLogsV2Error = LogErrorResponse
 
 export type GetHealthV2Data = any
 
+export type GetLatestBuildResultByTaskIdV2Params = {
+  /** Task ID */
+  taskId: string
+}
+
 export type GetLatestBuildResultByTaskIdV2Data = BuildStatus
 
 export type GetLatestBuildResultByTaskIdV2Error = MessageResponse
 
 export type PostRetryBuildV2Data = any
 
+export type GetTargetStatusByTargetIdV2Params = {
+  /** target_id ID */
+  targetId: string
+}
+
 export type GetTargetStatusByTargetIdV2Data = any
+
+export type GetTargetsByTaskIdV2Params = {
+  /** Task ID */
+  taskId: string
+}
 
 export type GetTargetsByTaskIdV2Data = BuildTargetDTO[]
 
 export type GetTargetsByTaskIdV2Error = MessageResponse
 
 export type PostTaskV2Data = any
+
+export type GetTaskByClV2Params = {
+  /** Change List */
+  cl: string
+}
 
 export type GetTaskByClV2Data = OrionTaskDTO[]
 
@@ -8225,56 +10007,6 @@ function dataTaggedQueryKey(key: unknown) {
  * @version 2.0.0
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
-  /**
-   * No description
-   *
-   * @tags Worker
-   * @name PostOrionClientsInfo
-   * @summary Endpoint to retrieve paginated Orion client information.
-   * @request POST:/orion-clients-info
-   */
-  postOrionClientsInfo = () => {
-    const base = 'POST:/orion-clients-info' as const
-
-    return {
-      baseKey: dataTaggedQueryKey<PostOrionClientsInfoData>([base]),
-      requestKey: () => dataTaggedQueryKey<PostOrionClientsInfoData>([base]),
-      request: (data: PageParamsOrionClientQuery, params: RequestParams = {}) =>
-        this.request<PostOrionClientsInfoData>({
-          path: `/orion-clients-info`,
-          method: 'POST',
-          body: data,
-          type: ContentType.Json,
-          ...params
-        })
-    }
-  }
-
-  /**
- * No description
- *
- * @tags Task
- * @name GetTaskHistoryOutput
- * @summary Provides the ability to read historical task logs
-supporting either retrieving the entire log at once or segmenting it by line count.
- * @request GET:/task-history-output
- */
-  getTaskHistoryOutput = () => {
-    const base = 'GET:/task-history-output' as const
-
-    return {
-      baseKey: dataTaggedQueryKey<GetTaskHistoryOutputData>([base]),
-      requestKey: (params: GetTaskHistoryOutputParams) => dataTaggedQueryKey<GetTaskHistoryOutputData>([base, params]),
-      request: (query: GetTaskHistoryOutputParams, params: RequestParams = {}) =>
-        this.request<GetTaskHistoryOutputData>({
-          path: `/task-history-output`,
-          method: 'GET',
-          query: query,
-          ...params
-        })
-    }
-  }
-
   organizations = {
     /**
      * No description
@@ -8287,13 +10019,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostActivityViewsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostActivityViewsData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationActivityViewsPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostActivityViewsParams) => dataTaggedQueryKey<PostActivityViewsData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostActivityViewsParams,
+          data: OrganizationActivityViewsPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostActivityViewsData>({
             path: `/v1/organizations/${orgSlug}/activity_views`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8310,12 +10047,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetAttachmentsCommentersData>([base]),
-        requestKey: (orgSlug: string, attachmentId: string) =>
-          dataTaggedQueryKey<GetAttachmentsCommentersData>([base, orgSlug, attachmentId]),
-        request: (orgSlug: string, attachmentId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetAttachmentsCommentersParams) =>
+          dataTaggedQueryKey<GetAttachmentsCommentersData>([base, params]),
+        request: ({ orgSlug, attachmentId, ...query }: GetAttachmentsCommentersParams, params: RequestParams = {}) =>
           this.request<GetAttachmentsCommentersData>({
             path: `/v1/organizations/${orgSlug}/attachments/${attachmentId}/commenters`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -8332,13 +10070,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostAttachmentsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostAttachmentsData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationAttachmentsPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostAttachmentsParams) => dataTaggedQueryKey<PostAttachmentsData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostAttachmentsParams,
+          data: OrganizationAttachmentsPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostAttachmentsData>({
             path: `/v1/organizations/${orgSlug}/attachments`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8355,11 +10098,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetAttachmentsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<GetAttachmentsByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: GetAttachmentsByIdParams) => dataTaggedQueryKey<GetAttachmentsByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: GetAttachmentsByIdParams, params: RequestParams = {}) =>
           this.request<GetAttachmentsByIdData>({
             path: `/v1/organizations/${orgSlug}/attachments/${id}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -8376,12 +10120,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetCallRecordingsTranscriptionData>([base]),
-        requestKey: (orgSlug: string, callRecordingId: string) =>
-          dataTaggedQueryKey<GetCallRecordingsTranscriptionData>([base, orgSlug, callRecordingId]),
-        request: (orgSlug: string, callRecordingId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetCallRecordingsTranscriptionParams) =>
+          dataTaggedQueryKey<GetCallRecordingsTranscriptionData>([base, params]),
+        request: (
+          { orgSlug, callRecordingId, ...query }: GetCallRecordingsTranscriptionParams,
+          params: RequestParams = {}
+        ) =>
           this.request<GetCallRecordingsTranscriptionData>({
             path: `/v1/organizations/${orgSlug}/call_recordings/${callRecordingId}/transcription`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -8398,11 +10146,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostCallRoomsInvitationsData>([base]),
-        requestKey: (orgSlug: string, callRoomId: string) =>
-          dataTaggedQueryKey<PostCallRoomsInvitationsData>([base, orgSlug, callRoomId]),
+        requestKey: (params: PostCallRoomsInvitationsParams) =>
+          dataTaggedQueryKey<PostCallRoomsInvitationsData>([base, params]),
         request: (
-          orgSlug: string,
-          callRoomId: string,
+          { orgSlug, callRoomId, ...query }: PostCallRoomsInvitationsParams,
           data: OrganizationCallRoomInvitationsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -8411,6 +10158,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8427,11 +10175,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetCallRoomsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<GetCallRoomsByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: GetCallRoomsByIdParams) => dataTaggedQueryKey<GetCallRoomsByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: GetCallRoomsByIdParams, params: RequestParams = {}) =>
           this.request<GetCallRoomsByIdData>({
             path: `/v1/organizations/${orgSlug}/call_rooms/${id}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -8448,13 +10197,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostCallRoomsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostCallRoomsData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationCallRoomsPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostCallRoomsParams) => dataTaggedQueryKey<PostCallRoomsData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostCallRoomsParams,
+          data: OrganizationCallRoomsPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostCallRoomsData>({
             path: `/v1/organizations/${orgSlug}/call_rooms`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8471,12 +10225,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCallsAllRecordingsData>([base]),
-        requestKey: (orgSlug: string, callId: string) =>
-          dataTaggedQueryKey<DeleteCallsAllRecordingsData>([base, orgSlug, callId]),
-        request: (orgSlug: string, callId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteCallsAllRecordingsParams) =>
+          dataTaggedQueryKey<DeleteCallsAllRecordingsData>([base, params]),
+        request: ({ orgSlug, callId, ...query }: DeleteCallsAllRecordingsParams, params: RequestParams = {}) =>
           this.request<DeleteCallsAllRecordingsData>({
             path: `/v1/organizations/${orgSlug}/calls/${callId}/all_recordings`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -8493,12 +10248,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostCallsFavoriteData>([base]),
-        requestKey: (orgSlug: string, callId: string) =>
-          dataTaggedQueryKey<PostCallsFavoriteData>([base, orgSlug, callId]),
-        request: (orgSlug: string, callId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostCallsFavoriteParams) => dataTaggedQueryKey<PostCallsFavoriteData>([base, params]),
+        request: ({ orgSlug, callId, ...query }: PostCallsFavoriteParams, params: RequestParams = {}) =>
           this.request<PostCallsFavoriteData>({
             path: `/v1/organizations/${orgSlug}/calls/${callId}/favorite`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -8515,12 +10270,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCallsFavoriteData>([base]),
-        requestKey: (orgSlug: string, callId: string) =>
-          dataTaggedQueryKey<DeleteCallsFavoriteData>([base, orgSlug, callId]),
-        request: (orgSlug: string, callId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteCallsFavoriteParams) => dataTaggedQueryKey<DeleteCallsFavoriteData>([base, params]),
+        request: ({ orgSlug, callId, ...query }: DeleteCallsFavoriteParams, params: RequestParams = {}) =>
           this.request<DeleteCallsFavoriteData>({
             path: `/v1/organizations/${orgSlug}/calls/${callId}/favorite`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -8537,11 +10292,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostCallsFollowUpData>([base]),
-        requestKey: (orgSlug: string, callId: string) =>
-          dataTaggedQueryKey<PostCallsFollowUpData>([base, orgSlug, callId]),
+        requestKey: (params: PostCallsFollowUpParams) => dataTaggedQueryKey<PostCallsFollowUpData>([base, params]),
         request: (
-          orgSlug: string,
-          callId: string,
+          { orgSlug, callId, ...query }: PostCallsFollowUpParams,
           data: OrganizationCallFollowUpPostRequest,
           params: RequestParams = {}
         ) =>
@@ -8550,6 +10303,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8566,11 +10320,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostCallsPinData>([base]),
-        requestKey: (orgSlug: string, callId: string) => dataTaggedQueryKey<PostCallsPinData>([base, orgSlug, callId]),
-        request: (orgSlug: string, callId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostCallsPinParams) => dataTaggedQueryKey<PostCallsPinData>([base, params]),
+        request: ({ orgSlug, callId, ...query }: PostCallsPinParams, params: RequestParams = {}) =>
           this.request<PostCallsPinData>({
             path: `/v1/organizations/${orgSlug}/calls/${callId}/pin`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -8587,11 +10342,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutCallsProjectPermissionData>([base]),
-        requestKey: (orgSlug: string, callId: string) =>
-          dataTaggedQueryKey<PutCallsProjectPermissionData>([base, orgSlug, callId]),
+        requestKey: (params: PutCallsProjectPermissionParams) =>
+          dataTaggedQueryKey<PutCallsProjectPermissionData>([base, params]),
         request: (
-          orgSlug: string,
-          callId: string,
+          { orgSlug, callId, ...query }: PutCallsProjectPermissionParams,
           data: OrganizationsOrgSlugCallsCallIdProjectPermissionPutRequest,
           params: RequestParams = {}
         ) =>
@@ -8600,6 +10354,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8616,12 +10371,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCallsProjectPermissionData>([base]),
-        requestKey: (orgSlug: string, callId: string) =>
-          dataTaggedQueryKey<DeleteCallsProjectPermissionData>([base, orgSlug, callId]),
-        request: (orgSlug: string, callId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteCallsProjectPermissionParams) =>
+          dataTaggedQueryKey<DeleteCallsProjectPermissionData>([base, params]),
+        request: ({ orgSlug, callId, ...query }: DeleteCallsProjectPermissionParams, params: RequestParams = {}) =>
           this.request<DeleteCallsProjectPermissionData>({
             path: `/v1/organizations/${orgSlug}/calls/${callId}/project_permission`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -8644,6 +10400,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/calls/${callId}/recordings`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -8666,6 +10423,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/calls`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -8682,11 +10440,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetCallsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<GetCallsByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: GetCallsByIdParams) => dataTaggedQueryKey<GetCallsByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: GetCallsByIdParams, params: RequestParams = {}) =>
           this.request<GetCallsByIdData>({
             path: `/v1/organizations/${orgSlug}/calls/${id}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -8703,10 +10462,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutCallsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutCallsByIdData>([base, orgSlug, id]),
+        requestKey: (params: PutCallsByIdParams) => dataTaggedQueryKey<PutCallsByIdData>([base, params]),
         request: (
-          orgSlug: string,
-          id: string,
+          { orgSlug, id, ...query }: PutCallsByIdParams,
           data: OrganizationsOrgSlugCallsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -8715,6 +10473,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8731,11 +10490,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutCommentsAttachmentsReorderData>([base]),
-        requestKey: (orgSlug: string, commentId: string) =>
-          dataTaggedQueryKey<PutCommentsAttachmentsReorderData>([base, orgSlug, commentId]),
+        requestKey: (params: PutCommentsAttachmentsReorderParams) =>
+          dataTaggedQueryKey<PutCommentsAttachmentsReorderData>([base, params]),
         request: (
-          orgSlug: string,
-          commentId: string,
+          { orgSlug, commentId, ...query }: PutCommentsAttachmentsReorderParams,
           data: OrganizationsOrgSlugCommentsCommentIdAttachmentsReorderPutRequest,
           params: RequestParams = {}
         ) =>
@@ -8744,6 +10502,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8760,11 +10519,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostCommentsFollowUpData>([base]),
-        requestKey: (orgSlug: string, commentId: string) =>
-          dataTaggedQueryKey<PostCommentsFollowUpData>([base, orgSlug, commentId]),
+        requestKey: (params: PostCommentsFollowUpParams) =>
+          dataTaggedQueryKey<PostCommentsFollowUpData>([base, params]),
         request: (
-          orgSlug: string,
-          commentId: string,
+          { orgSlug, commentId, ...query }: PostCommentsFollowUpParams,
           data: OrganizationCommentFollowUpPostRequest,
           params: RequestParams = {}
         ) =>
@@ -8773,6 +10531,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8789,11 +10548,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostCommentsLinearIssuesData>([base]),
-        requestKey: (orgSlug: string, commentId: string) =>
-          dataTaggedQueryKey<PostCommentsLinearIssuesData>([base, orgSlug, commentId]),
+        requestKey: (params: PostCommentsLinearIssuesParams) =>
+          dataTaggedQueryKey<PostCommentsLinearIssuesData>([base, params]),
         request: (
-          orgSlug: string,
-          commentId: string,
+          { orgSlug, commentId, ...query }: PostCommentsLinearIssuesParams,
           data: OrganizationCommentLinearIssuesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -8802,6 +10560,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8818,11 +10577,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostCommentsReactionsData>([base]),
-        requestKey: (orgSlug: string, commentId: string) =>
-          dataTaggedQueryKey<PostCommentsReactionsData>([base, orgSlug, commentId]),
+        requestKey: (params: PostCommentsReactionsParams) =>
+          dataTaggedQueryKey<PostCommentsReactionsData>([base, params]),
         request: (
-          orgSlug: string,
-          commentId: string,
+          { orgSlug, commentId, ...query }: PostCommentsReactionsParams,
           data: OrganizationCommentReactionsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -8831,6 +10589,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8847,11 +10606,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostCommentsRepliesData>([base]),
-        requestKey: (orgSlug: string, commentId: string) =>
-          dataTaggedQueryKey<PostCommentsRepliesData>([base, orgSlug, commentId]),
+        requestKey: (params: PostCommentsRepliesParams) => dataTaggedQueryKey<PostCommentsRepliesData>([base, params]),
         request: (
-          orgSlug: string,
-          commentId: string,
+          { orgSlug, commentId, ...query }: PostCommentsRepliesParams,
           data: OrganizationCommentRepliesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -8860,6 +10617,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8876,12 +10634,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostCommentsResolutionsData>([base]),
-        requestKey: (orgSlug: string, commentId: string) =>
-          dataTaggedQueryKey<PostCommentsResolutionsData>([base, orgSlug, commentId]),
-        request: (orgSlug: string, commentId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostCommentsResolutionsParams) =>
+          dataTaggedQueryKey<PostCommentsResolutionsData>([base, params]),
+        request: ({ orgSlug, commentId, ...query }: PostCommentsResolutionsParams, params: RequestParams = {}) =>
           this.request<PostCommentsResolutionsData>({
             path: `/v1/organizations/${orgSlug}/comments/${commentId}/resolutions`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -8898,12 +10657,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCommentsResolutionsData>([base]),
-        requestKey: (orgSlug: string, commentId: string) =>
-          dataTaggedQueryKey<DeleteCommentsResolutionsData>([base, orgSlug, commentId]),
-        request: (orgSlug: string, commentId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteCommentsResolutionsParams) =>
+          dataTaggedQueryKey<DeleteCommentsResolutionsData>([base, params]),
+        request: ({ orgSlug, commentId, ...query }: DeleteCommentsResolutionsParams, params: RequestParams = {}) =>
           this.request<DeleteCommentsResolutionsData>({
             path: `/v1/organizations/${orgSlug}/comments/${commentId}/resolutions`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -8920,11 +10680,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutCommentsTasksData>([base]),
-        requestKey: (orgSlug: string, commentId: string) =>
-          dataTaggedQueryKey<PutCommentsTasksData>([base, orgSlug, commentId]),
+        requestKey: (params: PutCommentsTasksParams) => dataTaggedQueryKey<PutCommentsTasksData>([base, params]),
         request: (
-          orgSlug: string,
-          commentId: string,
+          { orgSlug, commentId, ...query }: PutCommentsTasksParams,
           data: OrganizationsOrgSlugCommentsCommentIdTasksPutRequest,
           params: RequestParams = {}
         ) =>
@@ -8933,6 +10691,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8949,11 +10708,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetCommentsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<GetCommentsByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: GetCommentsByIdParams) => dataTaggedQueryKey<GetCommentsByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: GetCommentsByIdParams, params: RequestParams = {}) =>
           this.request<GetCommentsByIdData>({
             path: `/v1/organizations/${orgSlug}/comments/${id}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -8970,10 +10730,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutCommentsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutCommentsByIdData>([base, orgSlug, id]),
+        requestKey: (params: PutCommentsByIdParams) => dataTaggedQueryKey<PutCommentsByIdData>([base, params]),
         request: (
-          orgSlug: string,
-          id: string,
+          { orgSlug, id, ...query }: PutCommentsByIdParams,
           data: OrganizationsOrgSlugCommentsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -8982,6 +10741,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -8998,11 +10758,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCommentsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteCommentsByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteCommentsByIdParams) => dataTaggedQueryKey<DeleteCommentsByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: DeleteCommentsByIdParams, params: RequestParams = {}) =>
           this.request<DeleteCommentsByIdData>({
             path: `/v1/organizations/${orgSlug}/comments/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -9019,11 +10780,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetCustomReactionsPacksData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetCustomReactionsPacksData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetCustomReactionsPacksParams) =>
+          dataTaggedQueryKey<GetCustomReactionsPacksData>([base, params]),
+        request: ({ orgSlug, ...query }: GetCustomReactionsPacksParams, params: RequestParams = {}) =>
           this.request<GetCustomReactionsPacksData>({
             path: `/v1/organizations/${orgSlug}/custom_reactions/packs`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -9040,9 +10803,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostCustomReactionsPacksData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostCustomReactionsPacksData>([base, orgSlug]),
+        requestKey: (params: PostCustomReactionsPacksParams) =>
+          dataTaggedQueryKey<PostCustomReactionsPacksData>([base, params]),
         request: (
-          orgSlug: string,
+          { orgSlug, ...query }: PostCustomReactionsPacksParams,
           data: OrganizationsOrgSlugCustomReactionsPacksPostRequest,
           params: RequestParams = {}
         ) =>
@@ -9051,6 +10815,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -9067,12 +10832,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCustomReactionsPacksByNameData>([base]),
-        requestKey: (orgSlug: string, name: string) =>
-          dataTaggedQueryKey<DeleteCustomReactionsPacksByNameData>([base, orgSlug, name]),
-        request: (orgSlug: string, name: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteCustomReactionsPacksByNameParams) =>
+          dataTaggedQueryKey<DeleteCustomReactionsPacksByNameData>([base, params]),
+        request: ({ orgSlug, name, ...query }: DeleteCustomReactionsPacksByNameParams, params: RequestParams = {}) =>
           this.request<DeleteCustomReactionsPacksByNameData>({
             path: `/v1/organizations/${orgSlug}/custom_reactions/packs/${name}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -9095,6 +10861,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/custom_reactions`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -9111,13 +10878,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostCustomReactionsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostCustomReactionsData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationsOrgSlugCustomReactionsPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostCustomReactionsParams) => dataTaggedQueryKey<PostCustomReactionsData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostCustomReactionsParams,
+          data: OrganizationsOrgSlugCustomReactionsPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostCustomReactionsData>({
             path: `/v1/organizations/${orgSlug}/custom_reactions`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -9134,12 +10906,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCustomReactionsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) =>
-          dataTaggedQueryKey<DeleteCustomReactionsByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteCustomReactionsByIdParams) =>
+          dataTaggedQueryKey<DeleteCustomReactionsByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: DeleteCustomReactionsByIdParams, params: RequestParams = {}) =>
           this.request<DeleteCustomReactionsByIdData>({
             path: `/v1/organizations/${orgSlug}/custom_reactions/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -9156,11 +10929,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostDataExportsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostDataExportsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: PostDataExportsParams) => dataTaggedQueryKey<PostDataExportsData>([base, params]),
+        request: ({ orgSlug, ...query }: PostDataExportsParams, params: RequestParams = {}) =>
           this.request<PostDataExportsData>({
             path: `/v1/organizations/${orgSlug}/data_exports`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -9177,12 +10951,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetDigestsMigrationsData>([base]),
-        requestKey: (orgSlug: string, digestId: string) =>
-          dataTaggedQueryKey<GetDigestsMigrationsData>([base, orgSlug, digestId]),
-        request: (orgSlug: string, digestId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetDigestsMigrationsParams) =>
+          dataTaggedQueryKey<GetDigestsMigrationsData>([base, params]),
+        request: ({ orgSlug, digestId, ...query }: GetDigestsMigrationsParams, params: RequestParams = {}) =>
           this.request<GetDigestsMigrationsData>({
             path: `/v1/organizations/${orgSlug}/digests/${digestId}/migrations`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -9199,13 +10974,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutFavoritesReorderData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PutFavoritesReorderData>([base, orgSlug]),
-        request: (orgSlug: string, data: ReorderOrganizationFavoritesPutRequest, params: RequestParams = {}) =>
+        requestKey: (params: PutFavoritesReorderParams) => dataTaggedQueryKey<PutFavoritesReorderData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PutFavoritesReorderParams,
+          data: ReorderOrganizationFavoritesPutRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PutFavoritesReorderData>({
             path: `/v1/organizations/${orgSlug}/favorites/reorder`,
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -9222,11 +11002,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetFavoritesData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetFavoritesData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetFavoritesParams) => dataTaggedQueryKey<GetFavoritesData>([base, params]),
+        request: ({ orgSlug, ...query }: GetFavoritesParams, params: RequestParams = {}) =>
           this.request<GetFavoritesData>({
             path: `/v1/organizations/${orgSlug}/favorites`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -9243,11 +11024,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteFavoritesByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteFavoritesByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteFavoritesByIdParams) => dataTaggedQueryKey<DeleteFavoritesByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: DeleteFavoritesByIdParams, params: RequestParams = {}) =>
           this.request<DeleteFavoritesByIdData>({
             path: `/v1/organizations/${orgSlug}/favorites/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -9264,13 +11046,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostFeedbackData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostFeedbackData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationFeedbacksPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostFeedbackParams) => dataTaggedQueryKey<PostFeedbackData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostFeedbackParams,
+          data: OrganizationFeedbacksPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostFeedbackData>({
             path: `/v1/organizations/${orgSlug}/feedback`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -9294,6 +11081,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/feedback/presigned-fields`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -9310,13 +11098,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostFigmaFilesData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostFigmaFilesData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationFigmaFilesPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostFigmaFilesParams) => dataTaggedQueryKey<PostFigmaFilesData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostFigmaFilesParams,
+          data: OrganizationFigmaFilesPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostFigmaFilesData>({
             path: `/v1/organizations/${orgSlug}/figma/files`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -9333,9 +11126,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostFigmaFileAttachmentDetailsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostFigmaFileAttachmentDetailsData>([base, orgSlug]),
+        requestKey: (params: PostFigmaFileAttachmentDetailsParams) =>
+          dataTaggedQueryKey<PostFigmaFileAttachmentDetailsData>([base, params]),
         request: (
-          orgSlug: string,
+          { orgSlug, ...query }: PostFigmaFileAttachmentDetailsParams,
           data: OrganizationFigmaFileAttachmentDetailsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -9344,6 +11138,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -9366,6 +11161,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/follow_ups`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -9382,10 +11178,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutFollowUpsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutFollowUpsByIdData>([base, orgSlug, id]),
+        requestKey: (params: PutFollowUpsByIdParams) => dataTaggedQueryKey<PutFollowUpsByIdData>([base, params]),
         request: (
-          orgSlug: string,
-          id: string,
+          { orgSlug, id, ...query }: PutFollowUpsByIdParams,
           data: OrganizationsOrgSlugFollowUpsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -9394,6 +11189,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -9410,11 +11206,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteFollowUpsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteFollowUpsByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteFollowUpsByIdParams) => dataTaggedQueryKey<DeleteFollowUpsByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: DeleteFollowUpsByIdParams, params: RequestParams = {}) =>
           this.request<DeleteFollowUpsByIdData>({
             path: `/v1/organizations/${orgSlug}/follow_ups/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -9437,6 +11234,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/gifs`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -9453,11 +11251,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetIntegrationsLinearInstallationData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetIntegrationsLinearInstallationData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetIntegrationsLinearInstallationParams) =>
+          dataTaggedQueryKey<GetIntegrationsLinearInstallationData>([base, params]),
+        request: ({ orgSlug, ...query }: GetIntegrationsLinearInstallationParams, params: RequestParams = {}) =>
           this.request<GetIntegrationsLinearInstallationData>({
             path: `/v1/organizations/${orgSlug}/integrations/linear/installation`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -9474,11 +11274,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteIntegrationsLinearInstallationData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<DeleteIntegrationsLinearInstallationData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteIntegrationsLinearInstallationParams) =>
+          dataTaggedQueryKey<DeleteIntegrationsLinearInstallationData>([base, params]),
+        request: ({ orgSlug, ...query }: DeleteIntegrationsLinearInstallationParams, params: RequestParams = {}) =>
           this.request<DeleteIntegrationsLinearInstallationData>({
             path: `/v1/organizations/${orgSlug}/integrations/linear/installation`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -9495,11 +11297,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostIntegrationsLinearTeamSyncsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostIntegrationsLinearTeamSyncsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: PostIntegrationsLinearTeamSyncsParams) =>
+          dataTaggedQueryKey<PostIntegrationsLinearTeamSyncsData>([base, params]),
+        request: ({ orgSlug, ...query }: PostIntegrationsLinearTeamSyncsParams, params: RequestParams = {}) =>
           this.request<PostIntegrationsLinearTeamSyncsData>({
             path: `/v1/organizations/${orgSlug}/integrations/linear/team_syncs`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -9516,11 +11320,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetIntegrationsLinearTeamsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetIntegrationsLinearTeamsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetIntegrationsLinearTeamsParams) =>
+          dataTaggedQueryKey<GetIntegrationsLinearTeamsData>([base, params]),
+        request: ({ orgSlug, ...query }: GetIntegrationsLinearTeamsParams, params: RequestParams = {}) =>
           this.request<GetIntegrationsLinearTeamsData>({
             path: `/v1/organizations/${orgSlug}/integrations/linear/teams`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -9537,11 +11343,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostIntegrationsSlackChannelSyncsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostIntegrationsSlackChannelSyncsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: PostIntegrationsSlackChannelSyncsParams) =>
+          dataTaggedQueryKey<PostIntegrationsSlackChannelSyncsData>([base, params]),
+        request: ({ orgSlug, ...query }: PostIntegrationsSlackChannelSyncsParams, params: RequestParams = {}) =>
           this.request<PostIntegrationsSlackChannelSyncsData>({
             path: `/v1/organizations/${orgSlug}/integrations/slack/channel_syncs`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -9565,6 +11373,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/integrations/slack/channels`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -9581,12 +11390,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetIntegrationsSlackChannelsByProviderChannelIdData>([base]),
-        requestKey: (orgSlug: string, providerChannelId: string) =>
-          dataTaggedQueryKey<GetIntegrationsSlackChannelsByProviderChannelIdData>([base, orgSlug, providerChannelId]),
-        request: (orgSlug: string, providerChannelId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetIntegrationsSlackChannelsByProviderChannelIdParams) =>
+          dataTaggedQueryKey<GetIntegrationsSlackChannelsByProviderChannelIdData>([base, params]),
+        request: (
+          { orgSlug, providerChannelId, ...query }: GetIntegrationsSlackChannelsByProviderChannelIdParams,
+          params: RequestParams = {}
+        ) =>
           this.request<GetIntegrationsSlackChannelsByProviderChannelIdData>({
             path: `/v1/organizations/${orgSlug}/integrations/slack/channels/${providerChannelId}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -9603,11 +11416,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetInvitationUrlData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetInvitationUrlData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetInvitationUrlParams) => dataTaggedQueryKey<GetInvitationUrlData>([base, params]),
+        request: ({ orgSlug, ...query }: GetInvitationUrlParams, params: RequestParams = {}) =>
           this.request<GetInvitationUrlData>({
             path: `/v1/organizations/${orgSlug}/invitation_url`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -9624,12 +11438,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetThreadsDmsByUsernameData>([base]),
-        requestKey: (orgSlug: string, username: string) =>
-          dataTaggedQueryKey<GetThreadsDmsByUsernameData>([base, orgSlug, username]),
-        request: (orgSlug: string, username: string, params: RequestParams = {}) =>
+        requestKey: (params: GetThreadsDmsByUsernameParams) =>
+          dataTaggedQueryKey<GetThreadsDmsByUsernameData>([base, params]),
+        request: ({ orgSlug, username, ...query }: GetThreadsDmsByUsernameParams, params: RequestParams = {}) =>
           this.request<GetThreadsDmsByUsernameData>({
             path: `/v1/organizations/${orgSlug}/threads/dms/${username}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -9646,12 +11461,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsFavoritesData>([base]),
-        requestKey: (orgSlug: string, threadId: string) =>
-          dataTaggedQueryKey<PostThreadsFavoritesData>([base, orgSlug, threadId]),
-        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostThreadsFavoritesParams) =>
+          dataTaggedQueryKey<PostThreadsFavoritesData>([base, params]),
+        request: ({ orgSlug, threadId, ...query }: PostThreadsFavoritesParams, params: RequestParams = {}) =>
           this.request<PostThreadsFavoritesData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/favorites`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -9668,12 +11484,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteThreadsFavoritesData>([base]),
-        requestKey: (orgSlug: string, threadId: string) =>
-          dataTaggedQueryKey<DeleteThreadsFavoritesData>([base, orgSlug, threadId]),
-        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteThreadsFavoritesParams) =>
+          dataTaggedQueryKey<DeleteThreadsFavoritesData>([base, params]),
+        request: ({ orgSlug, threadId, ...query }: DeleteThreadsFavoritesParams, params: RequestParams = {}) =>
           this.request<DeleteThreadsFavoritesData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/favorites`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -9690,12 +11507,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetThreadsIntegrationDmsByOauthApplicationIdData>([base]),
-        requestKey: (orgSlug: string, oauthApplicationId: string) =>
-          dataTaggedQueryKey<GetThreadsIntegrationDmsByOauthApplicationIdData>([base, orgSlug, oauthApplicationId]),
-        request: (orgSlug: string, oauthApplicationId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetThreadsIntegrationDmsByOauthApplicationIdParams) =>
+          dataTaggedQueryKey<GetThreadsIntegrationDmsByOauthApplicationIdData>([base, params]),
+        request: (
+          { orgSlug, oauthApplicationId, ...query }: GetThreadsIntegrationDmsByOauthApplicationIdParams,
+          params: RequestParams = {}
+        ) =>
           this.request<GetThreadsIntegrationDmsByOauthApplicationIdData>({
             path: `/v1/organizations/${orgSlug}/threads/integration_dms/${oauthApplicationId}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -9718,6 +11539,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/messages`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -9734,11 +11556,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsMessagesData>([base]),
-        requestKey: (orgSlug: string, threadId: string) =>
-          dataTaggedQueryKey<PostThreadsMessagesData>([base, orgSlug, threadId]),
+        requestKey: (params: PostThreadsMessagesParams) => dataTaggedQueryKey<PostThreadsMessagesData>([base, params]),
         request: (
-          orgSlug: string,
-          threadId: string,
+          { orgSlug, threadId, ...query }: PostThreadsMessagesParams,
           data: OrganizationsOrgSlugThreadsThreadIdMessagesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -9747,6 +11567,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -9763,12 +11584,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutThreadsMessagesByIdData>([base]),
-        requestKey: (orgSlug: string, threadId: string, id: string) =>
-          dataTaggedQueryKey<PutThreadsMessagesByIdData>([base, orgSlug, threadId, id]),
+        requestKey: (params: PutThreadsMessagesByIdParams) =>
+          dataTaggedQueryKey<PutThreadsMessagesByIdData>([base, params]),
         request: (
-          orgSlug: string,
-          threadId: string,
-          id: string,
+          { orgSlug, threadId, id, ...query }: PutThreadsMessagesByIdParams,
           data: OrganizationsOrgSlugThreadsThreadIdMessagesIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -9777,6 +11596,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -9793,12 +11613,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteThreadsMessagesByIdData>([base]),
-        requestKey: (orgSlug: string, threadId: string, id: string) =>
-          dataTaggedQueryKey<DeleteThreadsMessagesByIdData>([base, orgSlug, threadId, id]),
-        request: (orgSlug: string, threadId: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteThreadsMessagesByIdParams) =>
+          dataTaggedQueryKey<DeleteThreadsMessagesByIdData>([base, params]),
+        request: ({ orgSlug, threadId, id, ...query }: DeleteThreadsMessagesByIdParams, params: RequestParams = {}) =>
           this.request<DeleteThreadsMessagesByIdData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/messages/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -9815,12 +11636,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetThreadsMyMembershipData>([base]),
-        requestKey: (orgSlug: string, threadId: string) =>
-          dataTaggedQueryKey<GetThreadsMyMembershipData>([base, orgSlug, threadId]),
-        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetThreadsMyMembershipParams) =>
+          dataTaggedQueryKey<GetThreadsMyMembershipData>([base, params]),
+        request: ({ orgSlug, threadId, ...query }: GetThreadsMyMembershipParams, params: RequestParams = {}) =>
           this.request<GetThreadsMyMembershipData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/my_membership`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -9837,11 +11659,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutThreadsMyMembershipData>([base]),
-        requestKey: (orgSlug: string, threadId: string) =>
-          dataTaggedQueryKey<PutThreadsMyMembershipData>([base, orgSlug, threadId]),
+        requestKey: (params: PutThreadsMyMembershipParams) =>
+          dataTaggedQueryKey<PutThreadsMyMembershipData>([base, params]),
         request: (
-          orgSlug: string,
-          threadId: string,
+          { orgSlug, threadId, ...query }: PutThreadsMyMembershipParams,
           data: OrganizationsOrgSlugThreadsThreadIdMyMembershipPutRequest,
           params: RequestParams = {}
         ) =>
@@ -9850,6 +11671,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -9866,12 +11688,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteThreadsMyMembershipData>([base]),
-        requestKey: (orgSlug: string, threadId: string) =>
-          dataTaggedQueryKey<DeleteThreadsMyMembershipData>([base, orgSlug, threadId]),
-        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteThreadsMyMembershipParams) =>
+          dataTaggedQueryKey<DeleteThreadsMyMembershipData>([base, params]),
+        request: ({ orgSlug, threadId, ...query }: DeleteThreadsMyMembershipParams, params: RequestParams = {}) =>
           this.request<DeleteThreadsMyMembershipData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/my_membership`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -9888,12 +11711,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsNotificationForcesData>([base]),
-        requestKey: (orgSlug: string, threadId: string) =>
-          dataTaggedQueryKey<PostThreadsNotificationForcesData>([base, orgSlug, threadId]),
-        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostThreadsNotificationForcesParams) =>
+          dataTaggedQueryKey<PostThreadsNotificationForcesData>([base, params]),
+        request: ({ orgSlug, threadId, ...query }: PostThreadsNotificationForcesParams, params: RequestParams = {}) =>
           this.request<PostThreadsNotificationForcesData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/notification_forces`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -9910,12 +11734,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetThreadsOauthApplicationsData>([base]),
-        requestKey: (orgSlug: string, threadId: string) =>
-          dataTaggedQueryKey<GetThreadsOauthApplicationsData>([base, orgSlug, threadId]),
-        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetThreadsOauthApplicationsParams) =>
+          dataTaggedQueryKey<GetThreadsOauthApplicationsData>([base, params]),
+        request: ({ orgSlug, threadId, ...query }: GetThreadsOauthApplicationsParams, params: RequestParams = {}) =>
           this.request<GetThreadsOauthApplicationsData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/oauth_applications`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -9932,11 +11757,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsOauthApplicationsData>([base]),
-        requestKey: (orgSlug: string, threadId: string) =>
-          dataTaggedQueryKey<PostThreadsOauthApplicationsData>([base, orgSlug, threadId]),
+        requestKey: (params: PostThreadsOauthApplicationsParams) =>
+          dataTaggedQueryKey<PostThreadsOauthApplicationsData>([base, params]),
         request: (
-          orgSlug: string,
-          threadId: string,
+          { orgSlug, threadId, ...query }: PostThreadsOauthApplicationsParams,
           data: OrganizationsOrgSlugThreadsThreadIdOauthApplicationsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -9945,6 +11769,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -9961,12 +11786,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteThreadsOauthApplicationsByIdData>([base]),
-        requestKey: (orgSlug: string, threadId: string, id: string) =>
-          dataTaggedQueryKey<DeleteThreadsOauthApplicationsByIdData>([base, orgSlug, threadId, id]),
-        request: (orgSlug: string, threadId: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteThreadsOauthApplicationsByIdParams) =>
+          dataTaggedQueryKey<DeleteThreadsOauthApplicationsByIdData>([base, params]),
+        request: (
+          { orgSlug, threadId, id, ...query }: DeleteThreadsOauthApplicationsByIdParams,
+          params: RequestParams = {}
+        ) =>
           this.request<DeleteThreadsOauthApplicationsByIdData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/oauth_applications/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -9983,11 +11812,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutThreadsOtherMembershipsListData>([base]),
-        requestKey: (orgSlug: string, threadId: string) =>
-          dataTaggedQueryKey<PutThreadsOtherMembershipsListData>([base, orgSlug, threadId]),
+        requestKey: (params: PutThreadsOtherMembershipsListParams) =>
+          dataTaggedQueryKey<PutThreadsOtherMembershipsListData>([base, params]),
         request: (
-          orgSlug: string,
-          threadId: string,
+          { orgSlug, threadId, ...query }: PutThreadsOtherMembershipsListParams,
           data: OrganizationsOrgSlugThreadsThreadIdOtherMembershipsListPutRequest,
           params: RequestParams = {}
         ) =>
@@ -9996,6 +11824,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10019,6 +11848,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/threads/presigned-fields`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -10035,12 +11865,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsReadsData>([base]),
-        requestKey: (orgSlug: string, threadId: string) =>
-          dataTaggedQueryKey<PostThreadsReadsData>([base, orgSlug, threadId]),
-        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostThreadsReadsParams) => dataTaggedQueryKey<PostThreadsReadsData>([base, params]),
+        request: ({ orgSlug, threadId, ...query }: PostThreadsReadsParams, params: RequestParams = {}) =>
           this.request<PostThreadsReadsData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/reads`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -10057,12 +11887,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteThreadsReadsData>([base]),
-        requestKey: (orgSlug: string, threadId: string) =>
-          dataTaggedQueryKey<DeleteThreadsReadsData>([base, orgSlug, threadId]),
-        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteThreadsReadsParams) => dataTaggedQueryKey<DeleteThreadsReadsData>([base, params]),
+        request: ({ orgSlug, threadId, ...query }: DeleteThreadsReadsParams, params: RequestParams = {}) =>
           this.request<DeleteThreadsReadsData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/reads`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -10079,11 +11909,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetThreadsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetThreadsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetThreadsParams) => dataTaggedQueryKey<GetThreadsData>([base, params]),
+        request: ({ orgSlug, ...query }: GetThreadsParams, params: RequestParams = {}) =>
           this.request<GetThreadsData>({
             path: `/v1/organizations/${orgSlug}/threads`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -10100,13 +11931,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostThreadsData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationsOrgSlugThreadsPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostThreadsParams) => dataTaggedQueryKey<PostThreadsData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostThreadsParams,
+          data: OrganizationsOrgSlugThreadsPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostThreadsData>({
             path: `/v1/organizations/${orgSlug}/threads`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10123,11 +11959,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetThreadsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<GetThreadsByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: GetThreadsByIdParams) => dataTaggedQueryKey<GetThreadsByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: GetThreadsByIdParams, params: RequestParams = {}) =>
           this.request<GetThreadsByIdData>({
             path: `/v1/organizations/${orgSlug}/threads/${id}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -10144,10 +11981,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutThreadsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutThreadsByIdData>([base, orgSlug, id]),
+        requestKey: (params: PutThreadsByIdParams) => dataTaggedQueryKey<PutThreadsByIdData>([base, params]),
         request: (
-          orgSlug: string,
-          id: string,
+          { orgSlug, id, ...query }: PutThreadsByIdParams,
           data: OrganizationsOrgSlugThreadsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -10156,6 +11992,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10172,11 +12009,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteThreadsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteThreadsByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteThreadsByIdParams) => dataTaggedQueryKey<DeleteThreadsByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: DeleteThreadsByIdParams, params: RequestParams = {}) =>
           this.request<DeleteThreadsByIdData>({
             path: `/v1/organizations/${orgSlug}/threads/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -10193,12 +12031,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMessagesAttachmentsByIdData>([base]),
-        requestKey: (orgSlug: string, messageId: string, id: string) =>
-          dataTaggedQueryKey<DeleteMessagesAttachmentsByIdData>([base, orgSlug, messageId, id]),
-        request: (orgSlug: string, messageId: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteMessagesAttachmentsByIdParams) =>
+          dataTaggedQueryKey<DeleteMessagesAttachmentsByIdData>([base, params]),
+        request: (
+          { orgSlug, messageId, id, ...query }: DeleteMessagesAttachmentsByIdParams,
+          params: RequestParams = {}
+        ) =>
           this.request<DeleteMessagesAttachmentsByIdData>({
             path: `/v1/organizations/${orgSlug}/messages/${messageId}/attachments/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -10215,11 +12057,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostMessagesReactionsData>([base]),
-        requestKey: (orgSlug: string, messageId: string) =>
-          dataTaggedQueryKey<PostMessagesReactionsData>([base, orgSlug, messageId]),
+        requestKey: (params: PostMessagesReactionsParams) =>
+          dataTaggedQueryKey<PostMessagesReactionsData>([base, params]),
         request: (
-          orgSlug: string,
-          messageId: string,
+          { orgSlug, messageId, ...query }: PostMessagesReactionsParams,
           data: OrganizationMessageReactionsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -10228,6 +12069,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10254,6 +12096,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/attachments/${attachmentId}/comments`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -10270,11 +12113,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesAttachmentsReorderData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<PutNotesAttachmentsReorderData>([base, orgSlug, noteId]),
+        requestKey: (params: PutNotesAttachmentsReorderParams) =>
+          dataTaggedQueryKey<PutNotesAttachmentsReorderData>([base, params]),
         request: (
-          orgSlug: string,
-          noteId: string,
+          { orgSlug, noteId, ...query }: PutNotesAttachmentsReorderParams,
           data: OrganizationsOrgSlugNotesNoteIdAttachmentsReorderPutRequest,
           params: RequestParams = {}
         ) =>
@@ -10283,6 +12125,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10299,11 +12142,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesAttachmentsData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<PostNotesAttachmentsData>([base, orgSlug, noteId]),
+        requestKey: (params: PostNotesAttachmentsParams) =>
+          dataTaggedQueryKey<PostNotesAttachmentsData>([base, params]),
         request: (
-          orgSlug: string,
-          noteId: string,
+          { orgSlug, noteId, ...query }: PostNotesAttachmentsParams,
           data: OrganizationNoteAttachmentsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -10312,6 +12154,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10328,12 +12171,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesAttachmentsByIdData>([base]),
-        requestKey: (orgSlug: string, noteId: string, id: string) =>
-          dataTaggedQueryKey<PutNotesAttachmentsByIdData>([base, orgSlug, noteId, id]),
+        requestKey: (params: PutNotesAttachmentsByIdParams) =>
+          dataTaggedQueryKey<PutNotesAttachmentsByIdData>([base, params]),
         request: (
-          orgSlug: string,
-          noteId: string,
-          id: string,
+          { orgSlug, noteId, id, ...query }: PutNotesAttachmentsByIdParams,
           data: OrganizationsOrgSlugNotesNoteIdAttachmentsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -10342,6 +12183,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10358,12 +12200,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteNotesAttachmentsByIdData>([base]),
-        requestKey: (orgSlug: string, noteId: string, id: string) =>
-          dataTaggedQueryKey<DeleteNotesAttachmentsByIdData>([base, orgSlug, noteId, id]),
-        request: (orgSlug: string, noteId: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteNotesAttachmentsByIdParams) =>
+          dataTaggedQueryKey<DeleteNotesAttachmentsByIdData>([base, params]),
+        request: ({ orgSlug, noteId, id, ...query }: DeleteNotesAttachmentsByIdParams, params: RequestParams = {}) =>
           this.request<DeleteNotesAttachmentsByIdData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/attachments/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -10386,6 +12229,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/comments`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -10402,11 +12246,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesCommentsData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<PostNotesCommentsData>([base, orgSlug, noteId]),
+        requestKey: (params: PostNotesCommentsParams) => dataTaggedQueryKey<PostNotesCommentsData>([base, params]),
         request: (
-          orgSlug: string,
-          noteId: string,
+          { orgSlug, noteId, ...query }: PostNotesCommentsParams,
           data: OrganizationsOrgSlugNotesNoteIdCommentsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -10415,6 +12257,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10431,12 +12274,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesFavoriteData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<PostNotesFavoriteData>([base, orgSlug, noteId]),
-        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostNotesFavoriteParams) => dataTaggedQueryKey<PostNotesFavoriteData>([base, params]),
+        request: ({ orgSlug, noteId, ...query }: PostNotesFavoriteParams, params: RequestParams = {}) =>
           this.request<PostNotesFavoriteData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/favorite`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -10453,12 +12296,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteNotesFavoriteData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<DeleteNotesFavoriteData>([base, orgSlug, noteId]),
-        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteNotesFavoriteParams) => dataTaggedQueryKey<DeleteNotesFavoriteData>([base, params]),
+        request: ({ orgSlug, noteId, ...query }: DeleteNotesFavoriteParams, params: RequestParams = {}) =>
           this.request<DeleteNotesFavoriteData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/favorite`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -10475,11 +12318,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesFollowUpData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<PostNotesFollowUpData>([base, orgSlug, noteId]),
+        requestKey: (params: PostNotesFollowUpParams) => dataTaggedQueryKey<PostNotesFollowUpData>([base, params]),
         request: (
-          orgSlug: string,
-          noteId: string,
+          { orgSlug, noteId, ...query }: PostNotesFollowUpParams,
           data: OrganizationNoteFollowUpPostRequest,
           params: RequestParams = {}
         ) =>
@@ -10488,6 +12329,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10504,12 +12346,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetNotesPermissionsData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<GetNotesPermissionsData>([base, orgSlug, noteId]),
-        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetNotesPermissionsParams) => dataTaggedQueryKey<GetNotesPermissionsData>([base, params]),
+        request: ({ orgSlug, noteId, ...query }: GetNotesPermissionsParams, params: RequestParams = {}) =>
           this.request<GetNotesPermissionsData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/permissions`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -10526,11 +12368,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesPermissionsData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<PostNotesPermissionsData>([base, orgSlug, noteId]),
+        requestKey: (params: PostNotesPermissionsParams) =>
+          dataTaggedQueryKey<PostNotesPermissionsData>([base, params]),
         request: (
-          orgSlug: string,
-          noteId: string,
+          { orgSlug, noteId, ...query }: PostNotesPermissionsParams,
           data: OrganizationsOrgSlugNotesNoteIdPermissionsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -10539,6 +12380,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10555,12 +12397,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesPermissionsByIdData>([base]),
-        requestKey: (orgSlug: string, noteId: string, id: string) =>
-          dataTaggedQueryKey<PutNotesPermissionsByIdData>([base, orgSlug, noteId, id]),
+        requestKey: (params: PutNotesPermissionsByIdParams) =>
+          dataTaggedQueryKey<PutNotesPermissionsByIdData>([base, params]),
         request: (
-          orgSlug: string,
-          noteId: string,
-          id: string,
+          { orgSlug, noteId, id, ...query }: PutNotesPermissionsByIdParams,
           data: OrganizationsOrgSlugNotesNoteIdPermissionsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -10569,6 +12409,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10585,12 +12426,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteNotesPermissionsByIdData>([base]),
-        requestKey: (orgSlug: string, noteId: string, id: string) =>
-          dataTaggedQueryKey<DeleteNotesPermissionsByIdData>([base, orgSlug, noteId, id]),
-        request: (orgSlug: string, noteId: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteNotesPermissionsByIdParams) =>
+          dataTaggedQueryKey<DeleteNotesPermissionsByIdData>([base, params]),
+        request: ({ orgSlug, noteId, id, ...query }: DeleteNotesPermissionsByIdParams, params: RequestParams = {}) =>
           this.request<DeleteNotesPermissionsByIdData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/permissions/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -10607,11 +12449,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesPinData>([base]),
-        requestKey: (orgSlug: string, noteId: string) => dataTaggedQueryKey<PostNotesPinData>([base, orgSlug, noteId]),
-        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostNotesPinParams) => dataTaggedQueryKey<PostNotesPinData>([base, params]),
+        request: ({ orgSlug, noteId, ...query }: PostNotesPinParams, params: RequestParams = {}) =>
           this.request<PostNotesPinData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/pin`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -10628,11 +12471,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesProjectPermissionsData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<PutNotesProjectPermissionsData>([base, orgSlug, noteId]),
+        requestKey: (params: PutNotesProjectPermissionsParams) =>
+          dataTaggedQueryKey<PutNotesProjectPermissionsData>([base, params]),
         request: (
-          orgSlug: string,
-          noteId: string,
+          { orgSlug, noteId, ...query }: PutNotesProjectPermissionsParams,
           data: OrganizationsOrgSlugNotesNoteIdProjectPermissionsPutRequest,
           params: RequestParams = {}
         ) =>
@@ -10641,6 +12483,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10657,12 +12500,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteNotesProjectPermissionsData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<DeleteNotesProjectPermissionsData>([base, orgSlug, noteId]),
-        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteNotesProjectPermissionsParams) =>
+          dataTaggedQueryKey<DeleteNotesProjectPermissionsData>([base, params]),
+        request: ({ orgSlug, noteId, ...query }: DeleteNotesProjectPermissionsParams, params: RequestParams = {}) =>
           this.request<DeleteNotesProjectPermissionsData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/project_permissions`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -10679,12 +12523,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetNotesPublicNotesData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<GetNotesPublicNotesData>([base, orgSlug, noteId]),
-        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetNotesPublicNotesParams) => dataTaggedQueryKey<GetNotesPublicNotesData>([base, params]),
+        request: ({ orgSlug, noteId, ...query }: GetNotesPublicNotesParams, params: RequestParams = {}) =>
           this.request<GetNotesPublicNotesData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/public_notes`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -10701,12 +12545,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetNotesSyncStateData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<GetNotesSyncStateData>([base, orgSlug, noteId]),
-        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetNotesSyncStateParams) => dataTaggedQueryKey<GetNotesSyncStateData>([base, params]),
+        request: ({ orgSlug, noteId, ...query }: GetNotesSyncStateParams, params: RequestParams = {}) =>
           this.request<GetNotesSyncStateData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/sync_state`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -10723,11 +12567,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesSyncStateData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<PutNotesSyncStateData>([base, orgSlug, noteId]),
+        requestKey: (params: PutNotesSyncStateParams) => dataTaggedQueryKey<PutNotesSyncStateData>([base, params]),
         request: (
-          orgSlug: string,
-          noteId: string,
+          { orgSlug, noteId, ...query }: PutNotesSyncStateParams,
           data: OrganizationsOrgSlugNotesNoteIdSyncStatePutRequest,
           params: RequestParams = {}
         ) =>
@@ -10736,6 +12578,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10759,6 +12602,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/timeline_events`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -10775,11 +12619,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetNotesViewsData>([base]),
-        requestKey: (orgSlug: string, noteId: string) => dataTaggedQueryKey<GetNotesViewsData>([base, orgSlug, noteId]),
-        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetNotesViewsParams) => dataTaggedQueryKey<GetNotesViewsData>([base, params]),
+        request: ({ orgSlug, noteId, ...query }: GetNotesViewsParams, params: RequestParams = {}) =>
           this.request<GetNotesViewsData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/views`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -10796,12 +12641,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesViewsData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<PostNotesViewsData>([base, orgSlug, noteId]),
-        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostNotesViewsParams) => dataTaggedQueryKey<PostNotesViewsData>([base, params]),
+        request: ({ orgSlug, noteId, ...query }: PostNotesViewsParams, params: RequestParams = {}) =>
           this.request<PostNotesViewsData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/views`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -10818,11 +12663,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesVisibilityData>([base]),
-        requestKey: (orgSlug: string, noteId: string) =>
-          dataTaggedQueryKey<PutNotesVisibilityData>([base, orgSlug, noteId]),
+        requestKey: (params: PutNotesVisibilityParams) => dataTaggedQueryKey<PutNotesVisibilityData>([base, params]),
         request: (
-          orgSlug: string,
-          noteId: string,
+          { orgSlug, noteId, ...query }: PutNotesVisibilityParams,
           data: OrganizationsOrgSlugNotesNoteIdVisibilityPutRequest,
           params: RequestParams = {}
         ) =>
@@ -10831,6 +12674,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10853,6 +12697,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/notes`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -10869,13 +12714,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostNotesData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationsOrgSlugNotesPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostNotesParams) => dataTaggedQueryKey<PostNotesData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostNotesParams,
+          data: OrganizationsOrgSlugNotesPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostNotesData>({
             path: `/v1/organizations/${orgSlug}/notes`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10892,11 +12742,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetNotesByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<GetNotesByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: GetNotesByIdParams) => dataTaggedQueryKey<GetNotesByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: GetNotesByIdParams, params: RequestParams = {}) =>
           this.request<GetNotesByIdData>({
             path: `/v1/organizations/${orgSlug}/notes/${id}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -10913,10 +12764,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutNotesByIdData>([base, orgSlug, id]),
+        requestKey: (params: PutNotesByIdParams) => dataTaggedQueryKey<PutNotesByIdData>([base, params]),
         request: (
-          orgSlug: string,
-          id: string,
+          { orgSlug, id, ...query }: PutNotesByIdParams,
           data: OrganizationsOrgSlugNotesIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -10925,6 +12775,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -10941,11 +12792,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteNotesByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteNotesByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteNotesByIdParams) => dataTaggedQueryKey<DeleteNotesByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: DeleteNotesByIdParams, params: RequestParams = {}) =>
           this.request<DeleteNotesByIdData>({
             path: `/v1/organizations/${orgSlug}/notes/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -10962,12 +12814,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMembersMeNotificationsArchiveData>([base]),
-        requestKey: (orgSlug: string, notificationId: string) =>
-          dataTaggedQueryKey<DeleteMembersMeNotificationsArchiveData>([base, orgSlug, notificationId]),
-        request: (orgSlug: string, notificationId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteMembersMeNotificationsArchiveParams) =>
+          dataTaggedQueryKey<DeleteMembersMeNotificationsArchiveData>([base, params]),
+        request: (
+          { orgSlug, notificationId, ...query }: DeleteMembersMeNotificationsArchiveParams,
+          params: RequestParams = {}
+        ) =>
           this.request<DeleteMembersMeNotificationsArchiveData>({
             path: `/v1/organizations/${orgSlug}/members/me/notifications/${notificationId}/archive`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -10984,13 +12840,19 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMeNotificationsDeleteAllData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostMembersMeNotificationsDeleteAllData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationNotificationDeleteAllPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostMembersMeNotificationsDeleteAllParams) =>
+          dataTaggedQueryKey<PostMembersMeNotificationsDeleteAllData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostMembersMeNotificationsDeleteAllParams,
+          data: OrganizationNotificationDeleteAllPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostMembersMeNotificationsDeleteAllData>({
             path: `/v1/organizations/${orgSlug}/members/me/notifications/delete_all`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -11007,13 +12869,19 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMeNotificationsMarkAllReadData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostMembersMeNotificationsMarkAllReadData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationNotificationMarkAllReadPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostMembersMeNotificationsMarkAllReadParams) =>
+          dataTaggedQueryKey<PostMembersMeNotificationsMarkAllReadData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostMembersMeNotificationsMarkAllReadParams,
+          data: OrganizationNotificationMarkAllReadPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostMembersMeNotificationsMarkAllReadData>({
             path: `/v1/organizations/${orgSlug}/members/me/notifications/mark_all_read`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -11030,12 +12898,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMeNotificationsReadData>([base]),
-        requestKey: (orgSlug: string, notificationId: string) =>
-          dataTaggedQueryKey<PostMembersMeNotificationsReadData>([base, orgSlug, notificationId]),
-        request: (orgSlug: string, notificationId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostMembersMeNotificationsReadParams) =>
+          dataTaggedQueryKey<PostMembersMeNotificationsReadData>([base, params]),
+        request: (
+          { orgSlug, notificationId, ...query }: PostMembersMeNotificationsReadParams,
+          params: RequestParams = {}
+        ) =>
           this.request<PostMembersMeNotificationsReadData>({
             path: `/v1/organizations/${orgSlug}/members/me/notifications/${notificationId}/read`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -11052,12 +12924,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMembersMeNotificationsReadData>([base]),
-        requestKey: (orgSlug: string, notificationId: string) =>
-          dataTaggedQueryKey<DeleteMembersMeNotificationsReadData>([base, orgSlug, notificationId]),
-        request: (orgSlug: string, notificationId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteMembersMeNotificationsReadParams) =>
+          dataTaggedQueryKey<DeleteMembersMeNotificationsReadData>([base, params]),
+        request: (
+          { orgSlug, notificationId, ...query }: DeleteMembersMeNotificationsReadParams,
+          params: RequestParams = {}
+        ) =>
           this.request<DeleteMembersMeNotificationsReadData>({
             path: `/v1/organizations/${orgSlug}/members/me/notifications/${notificationId}/read`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -11081,6 +12957,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/members/me/notifications`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -11097,11 +12974,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMembersMeNotificationsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) =>
-          dataTaggedQueryKey<DeleteMembersMeNotificationsByIdData>([base, orgSlug, id]),
+        requestKey: (params: DeleteMembersMeNotificationsByIdParams) =>
+          dataTaggedQueryKey<DeleteMembersMeNotificationsByIdData>([base, params]),
         request: (
-          orgSlug: string,
-          id: string,
+          { orgSlug, id, ...query }: DeleteMembersMeNotificationsByIdParams,
           data: OrganizationNotificationDeleteRequest,
           params: RequestParams = {}
         ) =>
@@ -11110,6 +12986,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'DELETE',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -11133,6 +13010,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/oauth_applications/presigned_fields`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -11150,12 +13028,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostOauthApplicationsSecretRenewalsData>([base]),
-        requestKey: (orgSlug: string, oauthApplicationId: string) =>
-          dataTaggedQueryKey<PostOauthApplicationsSecretRenewalsData>([base, orgSlug, oauthApplicationId]),
-        request: (orgSlug: string, oauthApplicationId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostOauthApplicationsSecretRenewalsParams) =>
+          dataTaggedQueryKey<PostOauthApplicationsSecretRenewalsData>([base, params]),
+        request: (
+          { orgSlug, oauthApplicationId, ...query }: PostOauthApplicationsSecretRenewalsParams,
+          params: RequestParams = {}
+        ) =>
           this.request<PostOauthApplicationsSecretRenewalsData>({
             path: `/v1/organizations/${orgSlug}/oauth_applications/${oauthApplicationId}/secret_renewals`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -11172,12 +13054,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostOauthApplicationsTokensData>([base]),
-        requestKey: (orgSlug: string, oauthApplicationId: string) =>
-          dataTaggedQueryKey<PostOauthApplicationsTokensData>([base, orgSlug, oauthApplicationId]),
-        request: (orgSlug: string, oauthApplicationId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostOauthApplicationsTokensParams) =>
+          dataTaggedQueryKey<PostOauthApplicationsTokensData>([base, params]),
+        request: (
+          { orgSlug, oauthApplicationId, ...query }: PostOauthApplicationsTokensParams,
+          params: RequestParams = {}
+        ) =>
           this.request<PostOauthApplicationsTokensData>({
             path: `/v1/organizations/${orgSlug}/oauth_applications/${oauthApplicationId}/tokens`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -11194,11 +13080,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetOauthApplicationsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetOauthApplicationsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetOauthApplicationsParams) =>
+          dataTaggedQueryKey<GetOauthApplicationsData>([base, params]),
+        request: ({ orgSlug, ...query }: GetOauthApplicationsParams, params: RequestParams = {}) =>
           this.request<GetOauthApplicationsData>({
             path: `/v1/organizations/${orgSlug}/oauth_applications`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -11215,9 +13103,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostOauthApplicationsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostOauthApplicationsData>([base, orgSlug]),
+        requestKey: (params: PostOauthApplicationsParams) =>
+          dataTaggedQueryKey<PostOauthApplicationsData>([base, params]),
         request: (
-          orgSlug: string,
+          { orgSlug, ...query }: PostOauthApplicationsParams,
           data: OrganizationsOrgSlugOauthApplicationsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -11226,6 +13115,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -11242,12 +13132,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetOauthApplicationsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) =>
-          dataTaggedQueryKey<GetOauthApplicationsByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: GetOauthApplicationsByIdParams) =>
+          dataTaggedQueryKey<GetOauthApplicationsByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: GetOauthApplicationsByIdParams, params: RequestParams = {}) =>
           this.request<GetOauthApplicationsByIdData>({
             path: `/v1/organizations/${orgSlug}/oauth_applications/${id}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -11264,11 +13155,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutOauthApplicationsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) =>
-          dataTaggedQueryKey<PutOauthApplicationsByIdData>([base, orgSlug, id]),
+        requestKey: (params: PutOauthApplicationsByIdParams) =>
+          dataTaggedQueryKey<PutOauthApplicationsByIdData>([base, params]),
         request: (
-          orgSlug: string,
-          id: string,
+          { orgSlug, id, ...query }: PutOauthApplicationsByIdParams,
           data: OrganizationsOrgSlugOauthApplicationsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -11277,6 +13167,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -11293,12 +13184,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteOauthApplicationsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) =>
-          dataTaggedQueryKey<DeleteOauthApplicationsByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteOauthApplicationsByIdParams) =>
+          dataTaggedQueryKey<DeleteOauthApplicationsByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: DeleteOauthApplicationsByIdParams, params: RequestParams = {}) =>
           this.request<DeleteOauthApplicationsByIdData>({
             path: `/v1/organizations/${orgSlug}/oauth_applications/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -11315,13 +13207,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostOnboardProjectsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostOnboardProjectsData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationOnboardProjectsPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostOnboardProjectsParams) => dataTaggedQueryKey<PostOnboardProjectsData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostOnboardProjectsParams,
+          data: OrganizationOnboardProjectsPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostOnboardProjectsData>({
             path: `/v1/organizations/${orgSlug}/onboard_projects`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -11344,6 +13241,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/invitations`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -11360,13 +13258,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostInvitationsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostInvitationsData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationsOrgSlugInvitationsPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostInvitationsParams) => dataTaggedQueryKey<PostInvitationsData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostInvitationsParams,
+          data: OrganizationsOrgSlugInvitationsPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostInvitationsData>({
             path: `/v1/organizations/${orgSlug}/invitations`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -11383,12 +13286,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetInvitationsByInviteTokenData>([base]),
-        requestKey: (orgSlug: string, inviteToken: string) =>
-          dataTaggedQueryKey<GetInvitationsByInviteTokenData>([base, orgSlug, inviteToken]),
-        request: (orgSlug: string, inviteToken: string, params: RequestParams = {}) =>
+        requestKey: (params: GetInvitationsByInviteTokenParams) =>
+          dataTaggedQueryKey<GetInvitationsByInviteTokenData>([base, params]),
+        request: ({ orgSlug, inviteToken, ...query }: GetInvitationsByInviteTokenParams, params: RequestParams = {}) =>
           this.request<GetInvitationsByInviteTokenData>({
             path: `/v1/organizations/${orgSlug}/invitations/${inviteToken}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -11405,11 +13309,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteInvitationsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteInvitationsByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteInvitationsByIdParams) =>
+          dataTaggedQueryKey<DeleteInvitationsByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: DeleteInvitationsByIdParams, params: RequestParams = {}) =>
           this.request<DeleteInvitationsByIdData>({
             path: `/v1/organizations/${orgSlug}/invitations/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -11432,6 +13338,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/members`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -11448,12 +13355,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetMembersByUsernameData>([base]),
-        requestKey: (orgSlug: string, username: string) =>
-          dataTaggedQueryKey<GetMembersByUsernameData>([base, orgSlug, username]),
-        request: (orgSlug: string, username: string, params: RequestParams = {}) =>
+        requestKey: (params: GetMembersByUsernameParams) =>
+          dataTaggedQueryKey<GetMembersByUsernameData>([base, params]),
+        request: ({ orgSlug, username, ...query }: GetMembersByUsernameParams, params: RequestParams = {}) =>
           this.request<GetMembersByUsernameData>({
             path: `/v1/organizations/${orgSlug}/members/${username}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -11476,6 +13384,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/members/${username}/posts`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -11492,10 +13401,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutMembersByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutMembersByIdData>([base, orgSlug, id]),
+        requestKey: (params: PutMembersByIdParams) => dataTaggedQueryKey<PutMembersByIdData>([base, params]),
         request: (
-          orgSlug: string,
-          id: string,
+          { orgSlug, id, ...query }: PutMembersByIdParams,
           data: OrganizationsOrgSlugMembersIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -11504,6 +13412,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -11520,11 +13429,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMembersByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteMembersByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteMembersByIdParams) => dataTaggedQueryKey<DeleteMembersByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: DeleteMembersByIdParams, params: RequestParams = {}) =>
           this.request<DeleteMembersByIdData>({
             path: `/v1/organizations/${orgSlug}/members/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -11541,11 +13451,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutMembersReactivateData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutMembersReactivateData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: PutMembersReactivateParams) =>
+          dataTaggedQueryKey<PutMembersReactivateData>([base, params]),
+        request: ({ orgSlug, id, ...query }: PutMembersReactivateParams, params: RequestParams = {}) =>
           this.request<PutMembersReactivateData>({
             path: `/v1/organizations/${orgSlug}/members/${id}/reactivate`,
             method: 'PUT',
+            format: 'json',
             ...params
           })
       }
@@ -11569,6 +13481,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/membership-requests`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -11585,11 +13498,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostMembershipRequestsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostMembershipRequestsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: PostMembershipRequestsParams) =>
+          dataTaggedQueryKey<PostMembershipRequestsData>([base, params]),
+        request: ({ orgSlug, ...query }: PostMembershipRequestsParams, params: RequestParams = {}) =>
           this.request<PostMembershipRequestsData>({
             path: `/v1/organizations/${orgSlug}/membership-requests`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -11606,11 +13521,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetMembershipRequestData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetMembershipRequestData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetMembershipRequestParams) =>
+          dataTaggedQueryKey<GetMembershipRequestData>([base, params]),
+        request: ({ orgSlug, ...query }: GetMembershipRequestParams, params: RequestParams = {}) =>
           this.request<GetMembershipRequestData>({
             path: `/v1/organizations/${orgSlug}/membership-request`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -11627,12 +13544,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostMembershipRequestsApproveData>([base]),
-        requestKey: (orgSlug: string, id: string) =>
-          dataTaggedQueryKey<PostMembershipRequestsApproveData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: PostMembershipRequestsApproveParams) =>
+          dataTaggedQueryKey<PostMembershipRequestsApproveData>([base, params]),
+        request: ({ orgSlug, id, ...query }: PostMembershipRequestsApproveParams, params: RequestParams = {}) =>
           this.request<PostMembershipRequestsApproveData>({
             path: `/v1/organizations/${orgSlug}/membership-requests/${id}/approve`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -11649,12 +13567,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostMembershipRequestsDeclineData>([base]),
-        requestKey: (orgSlug: string, id: string) =>
-          dataTaggedQueryKey<PostMembershipRequestsDeclineData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: PostMembershipRequestsDeclineParams) =>
+          dataTaggedQueryKey<PostMembershipRequestsDeclineData>([base, params]),
+        request: ({ orgSlug, id, ...query }: PostMembershipRequestsDeclineParams, params: RequestParams = {}) =>
           this.request<PostMembershipRequestsDeclineData>({
             path: `/v1/organizations/${orgSlug}/membership-requests/${id}/decline`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -11678,6 +13597,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/members/me/archived_notifications`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -11694,11 +13614,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMeDataExportData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostMembersMeDataExportData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: PostMembersMeDataExportParams) =>
+          dataTaggedQueryKey<PostMembersMeDataExportData>([base, params]),
+        request: ({ orgSlug, ...query }: PostMembersMeDataExportParams, params: RequestParams = {}) =>
           this.request<PostMembersMeDataExportData>({
             path: `/v1/organizations/${orgSlug}/members/me/data_export`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -11722,6 +13644,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/members/me/for_me_notes`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -11745,6 +13668,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/members/me/for_me_posts`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -11761,9 +13685,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutMembersMeIndexViewsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PutMembersMeIndexViewsData>([base, orgSlug]),
+        requestKey: (params: PutMembersMeIndexViewsParams) =>
+          dataTaggedQueryKey<PutMembersMeIndexViewsData>([base, params]),
         request: (
-          orgSlug: string,
+          { orgSlug, ...query }: PutMembersMeIndexViewsParams,
           data: OrganizationsOrgSlugMembersMeIndexViewsPutRequest,
           params: RequestParams = {}
         ) =>
@@ -11772,6 +13697,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -11788,11 +13714,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetMembersMePersonalCallRoomData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetMembersMePersonalCallRoomData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetMembersMePersonalCallRoomParams) =>
+          dataTaggedQueryKey<GetMembersMePersonalCallRoomData>([base, params]),
+        request: ({ orgSlug, ...query }: GetMembersMePersonalCallRoomParams, params: RequestParams = {}) =>
           this.request<GetMembersMePersonalCallRoomData>({
             path: `/v1/organizations/${orgSlug}/members/me/personal_call_room`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -11816,6 +13744,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/members/me/personal_draft_posts`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -11832,11 +13761,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutMembersProjectMembershipListData>([base]),
-        requestKey: (orgSlug: string, memberUsername: string) =>
-          dataTaggedQueryKey<PutMembersProjectMembershipListData>([base, orgSlug, memberUsername]),
+        requestKey: (params: PutMembersProjectMembershipListParams) =>
+          dataTaggedQueryKey<PutMembersProjectMembershipListData>([base, params]),
         request: (
-          orgSlug: string,
-          memberUsername: string,
+          { orgSlug, memberUsername, ...query }: PutMembersProjectMembershipListParams,
           data: OrganizationsOrgSlugMembersMemberUsernameProjectMembershipListPutRequest,
           params: RequestParams = {}
         ) =>
@@ -11845,6 +13773,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -11861,12 +13790,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetMembersProjectMembershipsData>([base]),
-        requestKey: (orgSlug: string, memberUsername: string) =>
-          dataTaggedQueryKey<GetMembersProjectMembershipsData>([base, orgSlug, memberUsername]),
-        request: (orgSlug: string, memberUsername: string, params: RequestParams = {}) =>
+        requestKey: (params: GetMembersProjectMembershipsParams) =>
+          dataTaggedQueryKey<GetMembersProjectMembershipsData>([base, params]),
+        request: (
+          { orgSlug, memberUsername, ...query }: GetMembersProjectMembershipsParams,
+          params: RequestParams = {}
+        ) =>
           this.request<GetMembersProjectMembershipsData>({
             path: `/v1/organizations/${orgSlug}/members/${memberUsername}/project_memberships`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -11883,12 +13816,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetMembersMeSlackNotificationPreferenceData>([base]),
-        requestKey: (orgSlug: string) =>
-          dataTaggedQueryKey<GetMembersMeSlackNotificationPreferenceData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetMembersMeSlackNotificationPreferenceParams) =>
+          dataTaggedQueryKey<GetMembersMeSlackNotificationPreferenceData>([base, params]),
+        request: ({ orgSlug, ...query }: GetMembersMeSlackNotificationPreferenceParams, params: RequestParams = {}) =>
           this.request<GetMembersMeSlackNotificationPreferenceData>({
             path: `/v1/organizations/${orgSlug}/members/me/slack_notification_preference`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -11905,12 +13839,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMeSlackNotificationPreferenceData>([base]),
-        requestKey: (orgSlug: string) =>
-          dataTaggedQueryKey<PostMembersMeSlackNotificationPreferenceData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: PostMembersMeSlackNotificationPreferenceParams) =>
+          dataTaggedQueryKey<PostMembersMeSlackNotificationPreferenceData>([base, params]),
+        request: ({ orgSlug, ...query }: PostMembersMeSlackNotificationPreferenceParams, params: RequestParams = {}) =>
           this.request<PostMembersMeSlackNotificationPreferenceData>({
             path: `/v1/organizations/${orgSlug}/members/me/slack_notification_preference`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -11927,12 +13862,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMembersMeSlackNotificationPreferenceData>([base]),
-        requestKey: (orgSlug: string) =>
-          dataTaggedQueryKey<DeleteMembersMeSlackNotificationPreferenceData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteMembersMeSlackNotificationPreferenceParams) =>
+          dataTaggedQueryKey<DeleteMembersMeSlackNotificationPreferenceData>([base, params]),
+        request: (
+          { orgSlug, ...query }: DeleteMembersMeSlackNotificationPreferenceParams,
+          params: RequestParams = {}
+        ) =>
           this.request<DeleteMembersMeSlackNotificationPreferenceData>({
             path: `/v1/organizations/${orgSlug}/members/me/slack_notification_preference`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -11949,11 +13888,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetMembersMeStatusesData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetMembersMeStatusesData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetMembersMeStatusesParams) =>
+          dataTaggedQueryKey<GetMembersMeStatusesData>([base, params]),
+        request: ({ orgSlug, ...query }: GetMembersMeStatusesParams, params: RequestParams = {}) =>
           this.request<GetMembersMeStatusesData>({
             path: `/v1/organizations/${orgSlug}/members/me/statuses`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -11970,9 +13911,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMeStatusesData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostMembersMeStatusesData>([base, orgSlug]),
+        requestKey: (params: PostMembersMeStatusesParams) =>
+          dataTaggedQueryKey<PostMembersMeStatusesData>([base, params]),
         request: (
-          orgSlug: string,
+          { orgSlug, ...query }: PostMembersMeStatusesParams,
           data: OrganizationsOrgSlugMembersMeStatusesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -11981,6 +13923,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -11997,13 +13940,19 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutMembersMeStatusesData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PutMembersMeStatusesData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationsOrgSlugMembersMeStatusesPutRequest, params: RequestParams = {}) =>
+        requestKey: (params: PutMembersMeStatusesParams) =>
+          dataTaggedQueryKey<PutMembersMeStatusesData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PutMembersMeStatusesParams,
+          data: OrganizationsOrgSlugMembersMeStatusesPutRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PutMembersMeStatusesData>({
             path: `/v1/organizations/${orgSlug}/members/me/statuses`,
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12020,11 +13969,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMembersMeStatusesData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<DeleteMembersMeStatusesData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteMembersMeStatusesParams) =>
+          dataTaggedQueryKey<DeleteMembersMeStatusesData>([base, params]),
+        request: ({ orgSlug, ...query }: DeleteMembersMeStatusesParams, params: RequestParams = {}) =>
           this.request<DeleteMembersMeStatusesData>({
             path: `/v1/organizations/${orgSlug}/members/me/statuses`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -12048,6 +13999,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/members/me/viewer_notes`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -12071,6 +14023,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/members/me/viewer_posts`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -12087,13 +14040,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostBulkInvitesData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostBulkInvitesData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationBulkInvitesPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostBulkInvitesParams) => dataTaggedQueryKey<PostBulkInvitesData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostBulkInvitesParams,
+          data: OrganizationBulkInvitesPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostBulkInvitesData>({
             path: `/v1/organizations/${orgSlug}/bulk_invites`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12110,11 +14068,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetFeaturesData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetFeaturesData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetFeaturesParams) => dataTaggedQueryKey<GetFeaturesData>([base, params]),
+        request: ({ orgSlug, ...query }: GetFeaturesParams, params: RequestParams = {}) =>
           this.request<GetFeaturesData>({
             path: `/v1/organizations/${orgSlug}/features`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -12131,13 +14090,14 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostSsoData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostSsoData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationSsoPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostSsoParams) => dataTaggedQueryKey<PostSsoData>([base, params]),
+        request: ({ orgSlug, ...query }: PostSsoParams, data: OrganizationSsoPostRequest, params: RequestParams = {}) =>
           this.request<PostSsoData>({
             path: `/v1/organizations/${orgSlug}/sso`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12154,11 +14114,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteSsoData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<DeleteSsoData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteSsoParams) => dataTaggedQueryKey<DeleteSsoData>([base, params]),
+        request: ({ orgSlug, ...query }: DeleteSsoParams, params: RequestParams = {}) =>
           this.request<DeleteSsoData>({
             path: `/v1/organizations/${orgSlug}/sso`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -12175,11 +14136,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostVerifiedDomainMembershipsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostVerifiedDomainMembershipsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: PostVerifiedDomainMembershipsParams) =>
+          dataTaggedQueryKey<PostVerifiedDomainMembershipsData>([base, params]),
+        request: ({ orgSlug, ...query }: PostVerifiedDomainMembershipsParams, params: RequestParams = {}) =>
           this.request<PostVerifiedDomainMembershipsData>({
             path: `/v1/organizations/${orgSlug}/verified_domain_memberships`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -12196,11 +14159,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetByOrgSlugData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetByOrgSlugData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetByOrgSlugParams) => dataTaggedQueryKey<GetByOrgSlugData>([base, params]),
+        request: ({ orgSlug, ...query }: GetByOrgSlugParams, params: RequestParams = {}) =>
           this.request<GetByOrgSlugData>({
             path: `/v1/organizations/${orgSlug}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -12217,13 +14181,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutByOrgSlugData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PutByOrgSlugData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationsOrgSlugPutRequest, params: RequestParams = {}) =>
+        requestKey: (params: PutByOrgSlugParams) => dataTaggedQueryKey<PutByOrgSlugData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PutByOrgSlugParams,
+          data: OrganizationsOrgSlugPutRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PutByOrgSlugData>({
             path: `/v1/organizations/${orgSlug}`,
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12240,11 +14209,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteByOrgSlugData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<DeleteByOrgSlugData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteByOrgSlugParams) => dataTaggedQueryKey<DeleteByOrgSlugData>([base, params]),
+        request: ({ orgSlug, ...query }: DeleteByOrgSlugParams, params: RequestParams = {}) =>
           this.request<DeleteByOrgSlugData>({
             path: `/v1/organizations/${orgSlug}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -12268,6 +14238,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12284,11 +14255,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PatchResetInviteTokenData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PatchResetInviteTokenData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: PatchResetInviteTokenParams) =>
+          dataTaggedQueryKey<PatchResetInviteTokenData>([base, params]),
+        request: ({ orgSlug, ...query }: PatchResetInviteTokenParams, params: RequestParams = {}) =>
           this.request<PatchResetInviteTokenData>({
             path: `/v1/organizations/${orgSlug}/reset-invite-token`,
             method: 'PATCH',
+            format: 'json',
             ...params
           })
       }
@@ -12305,11 +14278,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostJoinByTokenData>([base]),
-        requestKey: (orgSlug: string, token: string) => dataTaggedQueryKey<PostJoinByTokenData>([base, orgSlug, token]),
-        request: (orgSlug: string, token: string, params: RequestParams = {}) =>
+        requestKey: (params: PostJoinByTokenParams) => dataTaggedQueryKey<PostJoinByTokenData>([base, params]),
+        request: ({ orgSlug, token, ...query }: PostJoinByTokenParams, params: RequestParams = {}) =>
           this.request<PostJoinByTokenData>({
             path: `/v1/organizations/${orgSlug}/join/${token}`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -12326,11 +14300,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutOnboardData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PutOnboardData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: PutOnboardParams) => dataTaggedQueryKey<PutOnboardData>([base, params]),
+        request: ({ orgSlug, ...query }: PutOnboardParams, params: RequestParams = {}) =>
           this.request<PutOnboardData>({
             path: `/v1/organizations/${orgSlug}/onboard`,
             method: 'PUT',
+            format: 'json',
             ...params
           })
       }
@@ -12354,6 +14329,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/avatar/presigned-fields`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -12370,11 +14346,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeletePinsByIdData>([base]),
-        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeletePinsByIdData>([base, orgSlug, id]),
-        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeletePinsByIdParams) => dataTaggedQueryKey<DeletePinsByIdData>([base, params]),
+        request: ({ orgSlug, id, ...query }: DeletePinsByIdParams, params: RequestParams = {}) =>
           this.request<DeletePinsByIdData>({
             path: `/v1/organizations/${orgSlug}/pins/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -12401,6 +14378,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/posts/${postId}/attachments/${attachmentId}/comments`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -12417,11 +14395,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutPostsAttachmentsReorderData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PutPostsAttachmentsReorderData>([base, orgSlug, postId]),
+        requestKey: (params: PutPostsAttachmentsReorderParams) =>
+          dataTaggedQueryKey<PutPostsAttachmentsReorderData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PutPostsAttachmentsReorderParams,
           data: OrganizationsOrgSlugPostsPostIdAttachmentsReorderPutRequest,
           params: RequestParams = {}
         ) =>
@@ -12430,6 +14407,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12446,11 +14424,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsAttachmentsData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsAttachmentsData>([base, orgSlug, postId]),
+        requestKey: (params: PostPostsAttachmentsParams) =>
+          dataTaggedQueryKey<PostPostsAttachmentsData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PostPostsAttachmentsParams,
           data: OrganizationPostAttachmentsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -12459,6 +14436,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12475,12 +14453,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutPostsAttachmentsByIdData>([base]),
-        requestKey: (orgSlug: string, postId: string, id: string) =>
-          dataTaggedQueryKey<PutPostsAttachmentsByIdData>([base, orgSlug, postId, id]),
+        requestKey: (params: PutPostsAttachmentsByIdParams) =>
+          dataTaggedQueryKey<PutPostsAttachmentsByIdData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
-          id: string,
+          { orgSlug, postId, id, ...query }: PutPostsAttachmentsByIdParams,
           data: OrganizationsOrgSlugPostsPostIdAttachmentsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -12489,6 +14465,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12505,12 +14482,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsAttachmentsByIdData>([base]),
-        requestKey: (orgSlug: string, postId: string, id: string) =>
-          dataTaggedQueryKey<DeletePostsAttachmentsByIdData>([base, orgSlug, postId, id]),
-        request: (orgSlug: string, postId: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeletePostsAttachmentsByIdParams) =>
+          dataTaggedQueryKey<DeletePostsAttachmentsByIdData>([base, params]),
+        request: ({ orgSlug, postId, id, ...query }: DeletePostsAttachmentsByIdParams, params: RequestParams = {}) =>
           this.request<DeletePostsAttachmentsByIdData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/attachments/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -12527,12 +14505,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsFavoriteData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsFavoriteData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostPostsFavoriteParams) => dataTaggedQueryKey<PostPostsFavoriteData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: PostPostsFavoriteParams, params: RequestParams = {}) =>
           this.request<PostPostsFavoriteData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/favorite`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -12549,12 +14527,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsFavoriteData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<DeletePostsFavoriteData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeletePostsFavoriteParams) => dataTaggedQueryKey<DeletePostsFavoriteData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: DeletePostsFavoriteParams, params: RequestParams = {}) =>
           this.request<DeletePostsFavoriteData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/favorite`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -12571,12 +14549,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsFeedbackDismissalsData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsFeedbackDismissalsData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostPostsFeedbackDismissalsParams) =>
+          dataTaggedQueryKey<PostPostsFeedbackDismissalsData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: PostPostsFeedbackDismissalsParams, params: RequestParams = {}) =>
           this.request<PostPostsFeedbackDismissalsData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/feedback-dismissals`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -12593,11 +14572,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsFollowUpData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsFollowUpData>([base, orgSlug, postId]),
+        requestKey: (params: PostPostsFollowUpParams) => dataTaggedQueryKey<PostPostsFollowUpData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PostPostsFollowUpParams,
           data: OrganizationPostFollowUpPostRequest,
           params: RequestParams = {}
         ) =>
@@ -12606,6 +14583,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12629,6 +14607,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/posts/${postId}/generated_resolution`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -12645,12 +14624,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetPostsGeneratedTldrData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<GetPostsGeneratedTldrData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetPostsGeneratedTldrParams) =>
+          dataTaggedQueryKey<GetPostsGeneratedTldrData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: GetPostsGeneratedTldrParams, params: RequestParams = {}) =>
           this.request<GetPostsGeneratedTldrData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/generated_tldr`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -12667,11 +14647,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsLinearIssuesData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsLinearIssuesData>([base, orgSlug, postId]),
+        requestKey: (params: PostPostsLinearIssuesParams) =>
+          dataTaggedQueryKey<PostPostsLinearIssuesData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PostPostsLinearIssuesParams,
           data: OrganizationPostLinearIssuesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -12680,6 +14659,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12703,6 +14683,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/posts/${postId}/linear_timeline_events`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -12719,11 +14700,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsPinData>([base]),
-        requestKey: (orgSlug: string, postId: string) => dataTaggedQueryKey<PostPostsPinData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostPostsPinParams) => dataTaggedQueryKey<PostPostsPinData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: PostPostsPinParams, params: RequestParams = {}) =>
           this.request<PostPostsPinData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/pin`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -12740,12 +14722,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsPoll2OptionsVoteData>([base]),
-        requestKey: (orgSlug: string, postId: string, optionId: string) =>
-          dataTaggedQueryKey<PostPostsPoll2OptionsVoteData>([base, orgSlug, postId, optionId]),
-        request: (orgSlug: string, postId: string, optionId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostPostsPoll2OptionsVoteParams) =>
+          dataTaggedQueryKey<PostPostsPoll2OptionsVoteData>([base, params]),
+        request: (
+          { orgSlug, postId, optionId, ...query }: PostPostsPoll2OptionsVoteParams,
+          params: RequestParams = {}
+        ) =>
           this.request<PostPostsPoll2OptionsVoteData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/poll2/options/${optionId}/vote`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -12762,11 +14748,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsPoll2Data>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsPoll2Data>([base, orgSlug, postId]),
+        requestKey: (params: PostPostsPoll2Params) => dataTaggedQueryKey<PostPostsPoll2Data>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PostPostsPoll2Params,
           data: OrganizationsOrgSlugPostsPostIdPoll2PostRequest,
           params: RequestParams = {}
         ) =>
@@ -12775,6 +14759,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12791,10 +14776,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutPostsPoll2Data>([base]),
-        requestKey: (orgSlug: string, postId: string) => dataTaggedQueryKey<PutPostsPoll2Data>([base, orgSlug, postId]),
+        requestKey: (params: PutPostsPoll2Params) => dataTaggedQueryKey<PutPostsPoll2Data>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PutPostsPoll2Params,
           data: OrganizationsOrgSlugPostsPostIdPoll2PutRequest,
           params: RequestParams = {}
         ) =>
@@ -12803,6 +14787,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12819,12 +14804,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsPoll2Data>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<DeletePostsPoll2Data>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeletePostsPoll2Params) => dataTaggedQueryKey<DeletePostsPoll2Data>([base, params]),
+        request: ({ orgSlug, postId, ...query }: DeletePostsPoll2Params, params: RequestParams = {}) =>
           this.request<DeletePostsPoll2Data>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/poll2`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -12841,12 +14826,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetPostsCanvasCommentsData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<GetPostsCanvasCommentsData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetPostsCanvasCommentsParams) =>
+          dataTaggedQueryKey<GetPostsCanvasCommentsData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: GetPostsCanvasCommentsParams, params: RequestParams = {}) =>
           this.request<GetPostsCanvasCommentsData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/canvas_comments`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -12869,6 +14855,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/posts/${postId}/comments`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -12885,11 +14872,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsComments2Data>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsComments2Data>([base, orgSlug, postId]),
+        requestKey: (params: PostPostsComments2Params) => dataTaggedQueryKey<PostPostsComments2Data>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PostPostsComments2Params,
           data: OrganizationPostComments2PostRequest,
           params: RequestParams = {}
         ) =>
@@ -12898,6 +14883,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12914,11 +14900,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsFeedbackRequestsData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsFeedbackRequestsData>([base, orgSlug, postId]),
+        requestKey: (params: PostPostsFeedbackRequestsParams) =>
+          dataTaggedQueryKey<PostPostsFeedbackRequestsData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PostPostsFeedbackRequestsParams,
           data: OrganizationPostFeedbackRequestsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -12927,6 +14912,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -12943,12 +14929,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsFeedbackRequestsByIdData>([base]),
-        requestKey: (orgSlug: string, postId: string, id: string) =>
-          dataTaggedQueryKey<DeletePostsFeedbackRequestsByIdData>([base, orgSlug, postId, id]),
-        request: (orgSlug: string, postId: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeletePostsFeedbackRequestsByIdParams) =>
+          dataTaggedQueryKey<DeletePostsFeedbackRequestsByIdData>([base, params]),
+        request: (
+          { orgSlug, postId, id, ...query }: DeletePostsFeedbackRequestsByIdParams,
+          params: RequestParams = {}
+        ) =>
           this.request<DeletePostsFeedbackRequestsByIdData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/feedback_requests/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -12966,12 +14956,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsFeedbackRequestsDismissalData>([base]),
-        requestKey: (orgSlug: string, postId: string, feedbackRequestId: string) =>
-          dataTaggedQueryKey<PostPostsFeedbackRequestsDismissalData>([base, orgSlug, postId, feedbackRequestId]),
-        request: (orgSlug: string, postId: string, feedbackRequestId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostPostsFeedbackRequestsDismissalParams) =>
+          dataTaggedQueryKey<PostPostsFeedbackRequestsDismissalData>([base, params]),
+        request: (
+          { orgSlug, postId, feedbackRequestId, ...query }: PostPostsFeedbackRequestsDismissalParams,
+          params: RequestParams = {}
+        ) =>
           this.request<PostPostsFeedbackRequestsDismissalData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/feedback_requests/${feedbackRequestId}/dismissal`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -12988,11 +14982,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsLinksData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsLinksData>([base, orgSlug, postId]),
+        requestKey: (params: PostPostsLinksParams) => dataTaggedQueryKey<PostPostsLinksData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PostPostsLinksParams,
           data: OrganizationPostLinksPostRequest,
           params: RequestParams = {}
         ) =>
@@ -13001,6 +14993,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13017,11 +15010,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsReactionsData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsReactionsData>([base, orgSlug, postId]),
+        requestKey: (params: PostPostsReactionsParams) => dataTaggedQueryKey<PostPostsReactionsData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PostPostsReactionsParams,
           data: OrganizationPostReactionsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -13030,6 +15021,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13046,12 +15038,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetPostsVersionsData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<GetPostsVersionsData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetPostsVersionsParams) => dataTaggedQueryKey<GetPostsVersionsData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: GetPostsVersionsParams, params: RequestParams = {}) =>
           this.request<GetPostsVersionsData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/versions`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -13068,12 +15060,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsVersionsData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsVersionsData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostPostsVersionsParams) => dataTaggedQueryKey<PostPostsVersionsData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: PostPostsVersionsParams, params: RequestParams = {}) =>
           this.request<PostPostsVersionsData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/versions`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -13096,6 +15088,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/posts/${postId}/views`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -13112,11 +15105,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsViewsData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsViewsData>([base, orgSlug, postId]),
+        requestKey: (params: PostPostsViewsParams) => dataTaggedQueryKey<PostPostsViewsData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PostPostsViewsParams,
           data: OrganizationsOrgSlugPostsPostIdViewsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -13125,6 +15116,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13141,12 +15133,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsPublicationData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsPublicationData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostPostsPublicationParams) =>
+          dataTaggedQueryKey<PostPostsPublicationData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: PostPostsPublicationParams, params: RequestParams = {}) =>
           this.request<PostPostsPublicationData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/publication`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -13163,11 +15156,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsResolutionData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsResolutionData>([base, orgSlug, postId]),
+        requestKey: (params: PostPostsResolutionParams) => dataTaggedQueryKey<PostPostsResolutionData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PostPostsResolutionParams,
           data: OrganizationsOrgSlugPostsPostIdResolutionPostRequest,
           params: RequestParams = {}
         ) =>
@@ -13176,6 +15167,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13192,12 +15184,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsResolutionData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<DeletePostsResolutionData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeletePostsResolutionParams) =>
+          dataTaggedQueryKey<DeletePostsResolutionData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: DeletePostsResolutionParams, params: RequestParams = {}) =>
           this.request<DeletePostsResolutionData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/resolution`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -13214,12 +15207,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetPostsSeoInfoData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<GetPostsSeoInfoData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetPostsSeoInfoParams) => dataTaggedQueryKey<GetPostsSeoInfoData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: GetPostsSeoInfoParams, params: RequestParams = {}) =>
           this.request<GetPostsSeoInfoData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/seo_info`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -13236,11 +15229,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsSharesData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsSharesData>([base, orgSlug, postId]),
+        requestKey: (params: PostPostsSharesParams) => dataTaggedQueryKey<PostPostsSharesData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PostPostsSharesParams,
           data: OrganizationPostSharesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -13249,6 +15240,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13265,11 +15257,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutPostsStatusData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PutPostsStatusData>([base, orgSlug, postId]),
+        requestKey: (params: PutPostsStatusParams) => dataTaggedQueryKey<PutPostsStatusData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PutPostsStatusParams,
           data: OrganizationsOrgSlugPostsPostIdStatusPutRequest,
           params: RequestParams = {}
         ) =>
@@ -13278,6 +15268,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13294,10 +15285,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutPostsTasksData>([base]),
-        requestKey: (orgSlug: string, postId: string) => dataTaggedQueryKey<PutPostsTasksData>([base, orgSlug, postId]),
+        requestKey: (params: PutPostsTasksParams) => dataTaggedQueryKey<PutPostsTasksData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PutPostsTasksParams,
           data: OrganizationsOrgSlugPostsPostIdTasksPutRequest,
           params: RequestParams = {}
         ) =>
@@ -13306,6 +15296,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13329,6 +15320,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/posts/${postId}/timeline_events`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -13345,10 +15337,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<any>([base]),
-        requestKey: (orgSlug: string, postId: string) => dataTaggedQueryKey<any>([base, orgSlug, postId]),
+        requestKey: (params: PutPostsVisibilityParams) => dataTaggedQueryKey<any>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PutPostsVisibilityParams,
           data: OrganizationsOrgSlugPostsPostIdVisibilityPutRequest,
           params: RequestParams = {}
         ) =>
@@ -13383,6 +15374,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/posts/${postId}/poll_options/${pollOptionId}/voters`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -13405,6 +15397,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/posts`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -13421,13 +15414,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostPostsData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationsOrgSlugPostsPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostPostsParams) => dataTaggedQueryKey<PostPostsData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostPostsParams,
+          data: OrganizationsOrgSlugPostsPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostPostsData>({
             path: `/v1/organizations/${orgSlug}/posts`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13444,12 +15442,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetPostsByPostIdData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<GetPostsByPostIdData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetPostsByPostIdParams) => dataTaggedQueryKey<GetPostsByPostIdData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: GetPostsByPostIdParams, params: RequestParams = {}) =>
           this.request<GetPostsByPostIdData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -13466,11 +15464,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutPostsByPostIdData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PutPostsByPostIdData>([base, orgSlug, postId]),
+        requestKey: (params: PutPostsByPostIdParams) => dataTaggedQueryKey<PutPostsByPostIdData>([base, params]),
         request: (
-          orgSlug: string,
-          postId: string,
+          { orgSlug, postId, ...query }: PutPostsByPostIdParams,
           data: OrganizationsOrgSlugPostsPostIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -13479,6 +15475,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13495,12 +15492,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsByPostIdData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<DeletePostsByPostIdData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeletePostsByPostIdParams) => dataTaggedQueryKey<DeletePostsByPostIdData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: DeletePostsByPostIdParams, params: RequestParams = {}) =>
           this.request<DeletePostsByPostIdData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -13517,12 +15514,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsSubscribeData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<PostPostsSubscribeData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostPostsSubscribeParams) => dataTaggedQueryKey<PostPostsSubscribeData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: PostPostsSubscribeParams, params: RequestParams = {}) =>
           this.request<PostPostsSubscribeData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/subscribe`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -13539,12 +15536,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsUnsubscribeData>([base]),
-        requestKey: (orgSlug: string, postId: string) =>
-          dataTaggedQueryKey<DeletePostsUnsubscribeData>([base, orgSlug, postId]),
-        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeletePostsUnsubscribeParams) =>
+          dataTaggedQueryKey<DeletePostsUnsubscribeData>([base, params]),
+        request: ({ orgSlug, postId, ...query }: DeletePostsUnsubscribeParams, params: RequestParams = {}) =>
           this.request<DeletePostsUnsubscribeData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/unsubscribe`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -13568,6 +15566,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/posts/presigned-fields`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -13584,9 +15583,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutProjectMembershipsReorderData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PutProjectMembershipsReorderData>([base, orgSlug]),
+        requestKey: (params: PutProjectMembershipsReorderParams) =>
+          dataTaggedQueryKey<PutProjectMembershipsReorderData>([base, params]),
         request: (
-          orgSlug: string,
+          { orgSlug, ...query }: PutProjectMembershipsReorderParams,
           data: OrganizationsOrgSlugProjectMembershipsReorderPutRequest,
           params: RequestParams = {}
         ) =>
@@ -13595,6 +15595,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13611,11 +15612,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetProjectMembershipsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetProjectMembershipsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetProjectMembershipsParams) =>
+          dataTaggedQueryKey<GetProjectMembershipsData>([base, params]),
+        request: ({ orgSlug, ...query }: GetProjectMembershipsParams, params: RequestParams = {}) =>
           this.request<GetProjectMembershipsData>({
             path: `/v1/organizations/${orgSlug}/project_memberships`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -13639,6 +15642,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/addable_members`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -13655,12 +15659,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetProjectsBookmarksData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<GetProjectsBookmarksData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetProjectsBookmarksParams) =>
+          dataTaggedQueryKey<GetProjectsBookmarksData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: GetProjectsBookmarksParams, params: RequestParams = {}) =>
           this.request<GetProjectsBookmarksData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/bookmarks`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -13677,11 +15682,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsBookmarksData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PostProjectsBookmarksData>([base, orgSlug, projectId]),
+        requestKey: (params: PostProjectsBookmarksParams) =>
+          dataTaggedQueryKey<PostProjectsBookmarksData>([base, params]),
         request: (
-          orgSlug: string,
-          projectId: string,
+          { orgSlug, projectId, ...query }: PostProjectsBookmarksParams,
           data: OrganizationsOrgSlugProjectsProjectIdBookmarksPostRequest,
           params: RequestParams = {}
         ) =>
@@ -13690,6 +15694,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13706,12 +15711,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PatchProjectsBookmarksByIdData>([base]),
-        requestKey: (orgSlug: string, projectId: string, id: string) =>
-          dataTaggedQueryKey<PatchProjectsBookmarksByIdData>([base, orgSlug, projectId, id]),
+        requestKey: (params: PatchProjectsBookmarksByIdParams) =>
+          dataTaggedQueryKey<PatchProjectsBookmarksByIdData>([base, params]),
         request: (
-          orgSlug: string,
-          projectId: string,
-          id: string,
+          { orgSlug, projectId, id, ...query }: PatchProjectsBookmarksByIdParams,
           data: OrganizationsOrgSlugProjectsProjectIdBookmarksIdPatchRequest,
           params: RequestParams = {}
         ) =>
@@ -13720,6 +15723,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PATCH',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13736,12 +15740,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsBookmarksByIdData>([base]),
-        requestKey: (orgSlug: string, projectId: string, id: string) =>
-          dataTaggedQueryKey<DeleteProjectsBookmarksByIdData>([base, orgSlug, projectId, id]),
-        request: (orgSlug: string, projectId: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteProjectsBookmarksByIdParams) =>
+          dataTaggedQueryKey<DeleteProjectsBookmarksByIdData>([base, params]),
+        request: (
+          { orgSlug, projectId, id, ...query }: DeleteProjectsBookmarksByIdParams,
+          params: RequestParams = {}
+        ) =>
           this.request<DeleteProjectsBookmarksByIdData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/bookmarks/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -13758,11 +15766,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutProjectsBookmarksReorderData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PutProjectsBookmarksReorderData>([base, orgSlug, projectId]),
+        requestKey: (params: PutProjectsBookmarksReorderParams) =>
+          dataTaggedQueryKey<PutProjectsBookmarksReorderData>([base, params]),
         request: (
-          orgSlug: string,
-          projectId: string,
+          { orgSlug, projectId, ...query }: PutProjectsBookmarksReorderParams,
           data: OrganizationProjectBookmarksReorderPutRequest,
           params: RequestParams = {}
         ) =>
@@ -13771,6 +15778,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13793,6 +15801,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/calls`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -13809,12 +15818,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsDataExportsData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PostProjectsDataExportsData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostProjectsDataExportsParams) =>
+          dataTaggedQueryKey<PostProjectsDataExportsData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: PostProjectsDataExportsParams, params: RequestParams = {}) =>
           this.request<PostProjectsDataExportsData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/data_exports`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -13831,11 +15841,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutProjectsDisplayPreferencesData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PutProjectsDisplayPreferencesData>([base, orgSlug, projectId]),
+        requestKey: (params: PutProjectsDisplayPreferencesParams) =>
+          dataTaggedQueryKey<PutProjectsDisplayPreferencesData>([base, params]),
         request: (
-          orgSlug: string,
-          projectId: string,
+          { orgSlug, projectId, ...query }: PutProjectsDisplayPreferencesParams,
           data: OrganizationsOrgSlugProjectsProjectIdDisplayPreferencesPutRequest,
           params: RequestParams = {}
         ) =>
@@ -13844,6 +15853,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13860,12 +15870,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsFavoritesData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PostProjectsFavoritesData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostProjectsFavoritesParams) =>
+          dataTaggedQueryKey<PostProjectsFavoritesData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: PostProjectsFavoritesParams, params: RequestParams = {}) =>
           this.request<PostProjectsFavoritesData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/favorites`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -13882,12 +15893,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsFavoritesData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<DeleteProjectsFavoritesData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteProjectsFavoritesParams) =>
+          dataTaggedQueryKey<DeleteProjectsFavoritesData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: DeleteProjectsFavoritesParams, params: RequestParams = {}) =>
           this.request<DeleteProjectsFavoritesData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/favorites`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -13904,11 +15916,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsInvitationUrlAcceptancesData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PostProjectsInvitationUrlAcceptancesData>([base, orgSlug, projectId]),
+        requestKey: (params: PostProjectsInvitationUrlAcceptancesParams) =>
+          dataTaggedQueryKey<PostProjectsInvitationUrlAcceptancesData>([base, params]),
         request: (
-          orgSlug: string,
-          projectId: string,
+          { orgSlug, projectId, ...query }: PostProjectsInvitationUrlAcceptancesParams,
           data: OrganizationProjectInvitationUrlAcceptancesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -13917,6 +15928,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -13933,12 +15945,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsInvitationUrlData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PostProjectsInvitationUrlData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostProjectsInvitationUrlParams) =>
+          dataTaggedQueryKey<PostProjectsInvitationUrlData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: PostProjectsInvitationUrlParams, params: RequestParams = {}) =>
           this.request<PostProjectsInvitationUrlData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/invitation_url`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -13955,12 +15968,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetProjectsInvitationUrlData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<GetProjectsInvitationUrlData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetProjectsInvitationUrlParams) =>
+          dataTaggedQueryKey<GetProjectsInvitationUrlData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: GetProjectsInvitationUrlParams, params: RequestParams = {}) =>
           this.request<GetProjectsInvitationUrlData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/invitation_url`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -13983,6 +15997,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/members`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -13999,11 +16014,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsMembershipsData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PostProjectsMembershipsData>([base, orgSlug, projectId]),
+        requestKey: (params: PostProjectsMembershipsParams) =>
+          dataTaggedQueryKey<PostProjectsMembershipsData>([base, params]),
         request: (
-          orgSlug: string,
-          projectId: string,
+          { orgSlug, projectId, ...query }: PostProjectsMembershipsParams,
           data: OrganizationsOrgSlugProjectsProjectIdMembershipsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -14012,6 +16026,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -14028,11 +16043,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsMembershipsData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<DeleteProjectsMembershipsData>([base, orgSlug, projectId]),
+        requestKey: (params: DeleteProjectsMembershipsParams) =>
+          dataTaggedQueryKey<DeleteProjectsMembershipsData>([base, params]),
         request: (
-          orgSlug: string,
-          projectId: string,
+          { orgSlug, projectId, ...query }: DeleteProjectsMembershipsParams,
           data: OrganizationProjectProjectMembershipsDeleteRequest,
           params: RequestParams = {}
         ) =>
@@ -14041,6 +16055,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'DELETE',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -14063,6 +16078,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/notes`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -14079,12 +16095,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetProjectsOauthApplicationsData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<GetProjectsOauthApplicationsData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetProjectsOauthApplicationsParams) =>
+          dataTaggedQueryKey<GetProjectsOauthApplicationsData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: GetProjectsOauthApplicationsParams, params: RequestParams = {}) =>
           this.request<GetProjectsOauthApplicationsData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/oauth_applications`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -14101,11 +16118,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsOauthApplicationsData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PostProjectsOauthApplicationsData>([base, orgSlug, projectId]),
+        requestKey: (params: PostProjectsOauthApplicationsParams) =>
+          dataTaggedQueryKey<PostProjectsOauthApplicationsData>([base, params]),
         request: (
-          orgSlug: string,
-          projectId: string,
+          { orgSlug, projectId, ...query }: PostProjectsOauthApplicationsParams,
           data: OrganizationsOrgSlugProjectsProjectIdOauthApplicationsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -14114,6 +16130,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -14130,12 +16147,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsOauthApplicationsByIdData>([base]),
-        requestKey: (orgSlug: string, projectId: string, id: string) =>
-          dataTaggedQueryKey<DeleteProjectsOauthApplicationsByIdData>([base, orgSlug, projectId, id]),
-        request: (orgSlug: string, projectId: string, id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteProjectsOauthApplicationsByIdParams) =>
+          dataTaggedQueryKey<DeleteProjectsOauthApplicationsByIdData>([base, params]),
+        request: (
+          { orgSlug, projectId, id, ...query }: DeleteProjectsOauthApplicationsByIdParams,
+          params: RequestParams = {}
+        ) =>
           this.request<DeleteProjectsOauthApplicationsByIdData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/oauth_applications/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -14152,12 +16173,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetProjectsPinsData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<GetProjectsPinsData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetProjectsPinsParams) => dataTaggedQueryKey<GetProjectsPinsData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: GetProjectsPinsParams, params: RequestParams = {}) =>
           this.request<GetProjectsPinsData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/pins`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -14180,6 +16201,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/posts`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -14196,12 +16218,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsReadsData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PostProjectsReadsData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostProjectsReadsParams) => dataTaggedQueryKey<PostProjectsReadsData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: PostProjectsReadsParams, params: RequestParams = {}) =>
           this.request<PostProjectsReadsData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/reads`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -14218,12 +16240,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsReadsData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<DeleteProjectsReadsData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteProjectsReadsParams) => dataTaggedQueryKey<DeleteProjectsReadsData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: DeleteProjectsReadsParams, params: RequestParams = {}) =>
           this.request<DeleteProjectsReadsData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/reads`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -14240,11 +16262,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsSubscriptionData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PostProjectsSubscriptionData>([base, orgSlug, projectId]),
+        requestKey: (params: PostProjectsSubscriptionParams) =>
+          dataTaggedQueryKey<PostProjectsSubscriptionData>([base, params]),
         request: (
-          orgSlug: string,
-          projectId: string,
+          { orgSlug, projectId, ...query }: PostProjectsSubscriptionParams,
           data: OrganizationsOrgSlugProjectsProjectIdSubscriptionPostRequest,
           params: RequestParams = {}
         ) =>
@@ -14253,6 +16274,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -14269,12 +16291,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsSubscriptionData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<DeleteProjectsSubscriptionData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteProjectsSubscriptionParams) =>
+          dataTaggedQueryKey<DeleteProjectsSubscriptionData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: DeleteProjectsSubscriptionParams, params: RequestParams = {}) =>
           this.request<DeleteProjectsSubscriptionData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/subscription`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -14291,11 +16314,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutProjectsViewerDisplayPreferencesData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PutProjectsViewerDisplayPreferencesData>([base, orgSlug, projectId]),
+        requestKey: (params: PutProjectsViewerDisplayPreferencesParams) =>
+          dataTaggedQueryKey<PutProjectsViewerDisplayPreferencesData>([base, params]),
         request: (
-          orgSlug: string,
-          projectId: string,
+          { orgSlug, projectId, ...query }: PutProjectsViewerDisplayPreferencesParams,
           data: OrganizationsOrgSlugProjectsProjectIdViewerDisplayPreferencesPutRequest,
           params: RequestParams = {}
         ) =>
@@ -14304,6 +16326,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -14320,12 +16343,16 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsViewerDisplayPreferencesData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<DeleteProjectsViewerDisplayPreferencesData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteProjectsViewerDisplayPreferencesParams) =>
+          dataTaggedQueryKey<DeleteProjectsViewerDisplayPreferencesData>([base, params]),
+        request: (
+          { orgSlug, projectId, ...query }: DeleteProjectsViewerDisplayPreferencesParams,
+          params: RequestParams = {}
+        ) =>
           this.request<DeleteProjectsViewerDisplayPreferencesData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/viewer_display_preferences`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -14342,12 +16369,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsViewsData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PostProjectsViewsData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: PostProjectsViewsParams) => dataTaggedQueryKey<PostProjectsViewsData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: PostProjectsViewsParams, params: RequestParams = {}) =>
           this.request<PostProjectsViewsData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/views`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -14370,6 +16397,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/projects`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -14386,13 +16414,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostProjectsData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationsOrgSlugProjectsPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostProjectsParams) => dataTaggedQueryKey<PostProjectsData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostProjectsParams,
+          data: OrganizationsOrgSlugProjectsPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostProjectsData>({
             path: `/v1/organizations/${orgSlug}/projects`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -14409,12 +16442,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetProjectsByProjectIdData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<GetProjectsByProjectIdData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetProjectsByProjectIdParams) =>
+          dataTaggedQueryKey<GetProjectsByProjectIdData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: GetProjectsByProjectIdParams, params: RequestParams = {}) =>
           this.request<GetProjectsByProjectIdData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -14431,11 +16465,10 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutProjectsByProjectIdData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PutProjectsByProjectIdData>([base, orgSlug, projectId]),
+        requestKey: (params: PutProjectsByProjectIdParams) =>
+          dataTaggedQueryKey<PutProjectsByProjectIdData>([base, params]),
         request: (
-          orgSlug: string,
-          projectId: string,
+          { orgSlug, projectId, ...query }: PutProjectsByProjectIdParams,
           data: OrganizationsOrgSlugProjectsProjectIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -14444,6 +16477,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -14460,12 +16494,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsByProjectIdData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<DeleteProjectsByProjectIdData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteProjectsByProjectIdParams) =>
+          dataTaggedQueryKey<DeleteProjectsByProjectIdData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: DeleteProjectsByProjectIdParams, params: RequestParams = {}) =>
           this.request<DeleteProjectsByProjectIdData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -14482,12 +16517,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PatchProjectsArchiveData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PatchProjectsArchiveData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: PatchProjectsArchiveParams) =>
+          dataTaggedQueryKey<PatchProjectsArchiveData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: PatchProjectsArchiveParams, params: RequestParams = {}) =>
           this.request<PatchProjectsArchiveData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/archive`,
             method: 'PATCH',
+            format: 'json',
             ...params
           })
       }
@@ -14504,12 +16540,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PatchProjectsUnarchiveData>([base]),
-        requestKey: (orgSlug: string, projectId: string) =>
-          dataTaggedQueryKey<PatchProjectsUnarchiveData>([base, orgSlug, projectId]),
-        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
+        requestKey: (params: PatchProjectsUnarchiveParams) =>
+          dataTaggedQueryKey<PatchProjectsUnarchiveData>([base, params]),
+        request: ({ orgSlug, projectId, ...query }: PatchProjectsUnarchiveParams, params: RequestParams = {}) =>
           this.request<PatchProjectsUnarchiveData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/unarchive`,
             method: 'PATCH',
+            format: 'json',
             ...params
           })
       }
@@ -14533,6 +16570,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/project/cover-photo/presigned-fields`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -14549,13 +16587,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteReactionsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<DeleteReactionsData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationReactionsDeleteRequest, params: RequestParams = {}) =>
+        requestKey: (params: DeleteReactionsParams) => dataTaggedQueryKey<DeleteReactionsData>([base, params]),
+        request: (
+          { orgSlug, ...query }: DeleteReactionsParams,
+          data: OrganizationReactionsDeleteRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<DeleteReactionsData>({
             path: `/v1/organizations/${orgSlug}/reactions`,
             method: 'DELETE',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -14578,6 +16621,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/resource_mentions`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -14600,6 +16644,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/search/groups`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -14622,6 +16667,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/search/mixed`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -14644,6 +16690,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/search/posts`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -14667,6 +16714,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/search/resource_mentions`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -14683,11 +16731,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetIntegrationsSlackData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetIntegrationsSlackData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetIntegrationsSlackParams) =>
+          dataTaggedQueryKey<GetIntegrationsSlackData>([base, params]),
+        request: ({ orgSlug, ...query }: GetIntegrationsSlackParams, params: RequestParams = {}) =>
           this.request<GetIntegrationsSlackData>({
             path: `/v1/organizations/${orgSlug}/integrations/slack`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -14704,11 +16754,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteIntegrationsSlackData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<DeleteIntegrationsSlackData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteIntegrationsSlackParams) =>
+          dataTaggedQueryKey<DeleteIntegrationsSlackData>([base, params]),
+        request: ({ orgSlug, ...query }: DeleteIntegrationsSlackParams, params: RequestParams = {}) =>
           this.request<DeleteIntegrationsSlackData>({
             path: `/v1/organizations/${orgSlug}/integrations/slack`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -14725,11 +16777,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetSyncCustomReactionsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetSyncCustomReactionsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetSyncCustomReactionsParams) =>
+          dataTaggedQueryKey<GetSyncCustomReactionsData>([base, params]),
+        request: ({ orgSlug, ...query }: GetSyncCustomReactionsParams, params: RequestParams = {}) =>
           this.request<GetSyncCustomReactionsData>({
             path: `/v1/organizations/${orgSlug}/sync/custom_reactions`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -14746,11 +16800,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetSyncMembersData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetSyncMembersData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetSyncMembersParams) => dataTaggedQueryKey<GetSyncMembersData>([base, params]),
+        request: ({ orgSlug, ...query }: GetSyncMembersParams, params: RequestParams = {}) =>
           this.request<GetSyncMembersData>({
             path: `/v1/organizations/${orgSlug}/sync/members`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -14767,11 +16822,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetSyncMessageThreadsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetSyncMessageThreadsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetSyncMessageThreadsParams) =>
+          dataTaggedQueryKey<GetSyncMessageThreadsData>([base, params]),
+        request: ({ orgSlug, ...query }: GetSyncMessageThreadsParams, params: RequestParams = {}) =>
           this.request<GetSyncMessageThreadsData>({
             path: `/v1/organizations/${orgSlug}/sync/message_threads`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -14788,11 +16845,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetSyncProjectsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetSyncProjectsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetSyncProjectsParams) => dataTaggedQueryKey<GetSyncProjectsData>([base, params]),
+        request: ({ orgSlug, ...query }: GetSyncProjectsParams, params: RequestParams = {}) =>
           this.request<GetSyncProjectsData>({
             path: `/v1/organizations/${orgSlug}/sync/projects`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -14809,11 +16867,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetSyncTagsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetSyncTagsData>([base, orgSlug]),
-        request: (orgSlug: string, params: RequestParams = {}) =>
+        requestKey: (params: GetSyncTagsParams) => dataTaggedQueryKey<GetSyncTagsData>([base, params]),
+        request: ({ orgSlug, ...query }: GetSyncTagsParams, params: RequestParams = {}) =>
           this.request<GetSyncTagsData>({
             path: `/v1/organizations/${orgSlug}/sync/tags`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -14836,6 +16895,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/tags`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -14852,13 +16912,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostTagsData>([base]),
-        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostTagsData>([base, orgSlug]),
-        request: (orgSlug: string, data: OrganizationsOrgSlugTagsPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostTagsParams) => dataTaggedQueryKey<PostTagsData>([base, params]),
+        request: (
+          { orgSlug, ...query }: PostTagsParams,
+          data: OrganizationsOrgSlugTagsPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostTagsData>({
             path: `/v1/organizations/${orgSlug}/tags`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -14875,12 +16940,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetTagsByTagNameData>([base]),
-        requestKey: (orgSlug: string, tagName: string) =>
-          dataTaggedQueryKey<GetTagsByTagNameData>([base, orgSlug, tagName]),
-        request: (orgSlug: string, tagName: string, params: RequestParams = {}) =>
+        requestKey: (params: GetTagsByTagNameParams) => dataTaggedQueryKey<GetTagsByTagNameData>([base, params]),
+        request: ({ orgSlug, tagName, ...query }: GetTagsByTagNameParams, params: RequestParams = {}) =>
           this.request<GetTagsByTagNameData>({
             path: `/v1/organizations/${orgSlug}/tags/${tagName}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -14897,11 +16962,9 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PatchTagsByTagNameData>([base]),
-        requestKey: (orgSlug: string, tagName: string) =>
-          dataTaggedQueryKey<PatchTagsByTagNameData>([base, orgSlug, tagName]),
+        requestKey: (params: PatchTagsByTagNameParams) => dataTaggedQueryKey<PatchTagsByTagNameData>([base, params]),
         request: (
-          orgSlug: string,
-          tagName: string,
+          { orgSlug, tagName, ...query }: PatchTagsByTagNameParams,
           data: OrganizationsOrgSlugTagsTagNamePatchRequest,
           params: RequestParams = {}
         ) =>
@@ -14910,6 +16973,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PATCH',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -14926,12 +16990,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteTagsByTagNameData>([base]),
-        requestKey: (orgSlug: string, tagName: string) =>
-          dataTaggedQueryKey<DeleteTagsByTagNameData>([base, orgSlug, tagName]),
-        request: (orgSlug: string, tagName: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteTagsByTagNameParams) => dataTaggedQueryKey<DeleteTagsByTagNameData>([base, params]),
+        request: ({ orgSlug, tagName, ...query }: DeleteTagsByTagNameParams, params: RequestParams = {}) =>
           this.request<DeleteTagsByTagNameData>({
             path: `/v1/organizations/${orgSlug}/tags/${tagName}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -14954,6 +17018,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/organizations/${orgSlug}/tags/${tagName}/posts`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -14978,6 +17043,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15002,6 +17068,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15024,6 +17091,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<PostIntegrationsCalDotComCallRoomsData>({
             path: `/v1/integrations/cal_dot_com/call_rooms`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -15045,6 +17113,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<GetIntegrationsCalDotComIntegrationData>({
             path: `/v1/integrations/cal_dot_com/integration`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -15068,6 +17137,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15089,6 +17159,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<GetIntegrationsFigmaIntegrationData>({
             path: `/v1/integrations/figma_integration`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -15112,6 +17183,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15135,6 +17207,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15158,6 +17231,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15181,6 +17255,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/integrations/zapier/projects`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -15204,6 +17279,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/open_graph_links`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -15221,11 +17297,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostInvitationsByTokenAcceptData>([base]),
-        requestKey: (inviteToken: string) => dataTaggedQueryKey<PostInvitationsByTokenAcceptData>([base, inviteToken]),
-        request: (inviteToken: string, params: RequestParams = {}) =>
+        requestKey: (params: PostInvitationsByTokenAcceptParams) =>
+          dataTaggedQueryKey<PostInvitationsByTokenAcceptData>([base, params]),
+        request: ({ inviteToken, ...query }: PostInvitationsByTokenAcceptParams, params: RequestParams = {}) =>
           this.request<PostInvitationsByTokenAcceptData>({
             path: `/v1/invitations_by_token/${inviteToken}/accept`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -15250,6 +17328,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15271,6 +17350,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<GetOrganizationMembershipsData>({
             path: `/v1/organization_memberships`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -15295,6 +17375,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15312,11 +17393,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetOrganizationByTokenData>([base]),
-        requestKey: (token: string) => dataTaggedQueryKey<GetOrganizationByTokenData>([base, token]),
-        request: (token: string, params: RequestParams = {}) =>
+        requestKey: (params: GetOrganizationByTokenParams) =>
+          dataTaggedQueryKey<GetOrganizationByTokenData>([base, params]),
+        request: ({ token, ...query }: GetOrganizationByTokenParams, params: RequestParams = {}) =>
           this.request<GetOrganizationByTokenData>({
             path: `/v1/organization-by-token/${token}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -15334,11 +17417,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetPublicProjectsByTokenData>([base]),
-        requestKey: (token: string) => dataTaggedQueryKey<GetPublicProjectsByTokenData>([base, token]),
-        request: (token: string, params: RequestParams = {}) =>
+        requestKey: (params: GetPublicProjectsByTokenParams) =>
+          dataTaggedQueryKey<GetPublicProjectsByTokenData>([base, params]),
+        request: ({ token, ...query }: GetPublicProjectsByTokenParams, params: RequestParams = {}) =>
           this.request<GetPublicProjectsByTokenData>({
             path: `/v1/public_projects/${token}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -15363,6 +17448,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15385,6 +17471,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<PostMeSyncTokenData>({
             path: `/v1/users/me/sync-token`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -15408,6 +17495,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15429,6 +17517,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<DeleteMeNotificationPauseData>({
             path: `/v1/users/me/notification_pause`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -15450,6 +17539,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<GetMeNotificationScheduleData>({
             path: `/v1/users/me/notification_schedule`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -15473,6 +17563,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15494,6 +17585,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<DeleteMeNotificationScheduleData>({
             path: `/v1/users/me/notification_schedule`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -15515,6 +17607,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<GetMeNotificationsUnreadAllCountData>({
             path: `/v1/users/me/notifications/unread/all_count`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -15536,6 +17629,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<GetMeOrganizationInvitationsData>({
             path: `/v1/users/me/organization-invitations`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -15559,6 +17653,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15580,6 +17675,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<GetMeScheduledNotificationsData>({
             path: `/v1/users/me/scheduled-notifications`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -15603,6 +17699,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15619,13 +17716,19 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PutMeScheduledNotificationsByIdData>([base]),
-        requestKey: (id: string) => dataTaggedQueryKey<PutMeScheduledNotificationsByIdData>([base, id]),
-        request: (id: string, data: CurrentUserScheduledNotificationPutRequest, params: RequestParams = {}) =>
+        requestKey: (params: PutMeScheduledNotificationsByIdParams) =>
+          dataTaggedQueryKey<PutMeScheduledNotificationsByIdData>([base, params]),
+        request: (
+          { id, ...query }: PutMeScheduledNotificationsByIdParams,
+          data: CurrentUserScheduledNotificationPutRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PutMeScheduledNotificationsByIdData>({
             path: `/v1/users/me/scheduled-notifications/${id}`,
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15642,11 +17745,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMeScheduledNotificationsByIdData>([base]),
-        requestKey: (id: string) => dataTaggedQueryKey<DeleteMeScheduledNotificationsByIdData>([base, id]),
-        request: (id: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteMeScheduledNotificationsByIdParams) =>
+          dataTaggedQueryKey<DeleteMeScheduledNotificationsByIdData>([base, params]),
+        request: ({ id, ...query }: DeleteMeScheduledNotificationsByIdParams, params: RequestParams = {}) =>
           this.request<DeleteMeScheduledNotificationsByIdData>({
             path: `/v1/users/me/scheduled-notifications/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -15668,6 +17773,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<DeleteMeSignOutData>({
             path: `/v1/users/me/sign-out`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -15689,6 +17795,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<GetMeSuggestedOrganizationsData>({
             path: `/v1/users/me/suggested-organizations`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -15712,6 +17819,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15733,6 +17841,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<PostMeTwoFactorAuthenticationData>({
             path: `/v1/users/me/two-factor-authentication`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -15756,6 +17865,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15779,6 +17889,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'DELETE',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15800,6 +17911,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<GetMeData>({
             path: `/v1/users/me`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -15823,6 +17935,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'PATCH',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15844,6 +17957,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<PutMeOnboardData>({
             path: `/v1/users/me/onboard`,
             method: 'PUT',
+            format: 'json',
             ...params
           })
       }
@@ -15865,6 +17979,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<PostMeSendEmailConfirmationData>({
             path: `/v1/users/me/send-email-confirmation`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -15888,6 +18003,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/users/me/avatar/presigned-fields`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -15911,6 +18027,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v1/users/me/cover-photo/presigned-fields`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -15935,6 +18052,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15953,13 +18071,19 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMessagesV2Data>([base]),
-        requestKey: (memberId: string) => dataTaggedQueryKey<PostMembersMessagesV2Data>([base, memberId]),
-        request: (memberId: string, data: V2MemberMessagesPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostMembersMessagesV2Params) =>
+          dataTaggedQueryKey<PostMembersMessagesV2Data>([base, params]),
+        request: (
+          { memberId, ...query }: PostMembersMessagesV2Params,
+          data: V2MemberMessagesPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostMembersMessagesV2Data>({
             path: `/v2/members/${memberId}/messages`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -15983,6 +18107,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v2/members`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -16007,6 +18132,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v2/posts/${postId}/comments`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -16024,13 +18150,18 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsCommentsV2Data>([base]),
-        requestKey: (postId: string) => dataTaggedQueryKey<PostPostsCommentsV2Data>([base, postId]),
-        request: (postId: string, data: V2PostsPostIdCommentsPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostPostsCommentsV2Params) => dataTaggedQueryKey<PostPostsCommentsV2Data>([base, params]),
+        request: (
+          { postId, ...query }: PostPostsCommentsV2Params,
+          data: V2PostsPostIdCommentsPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostPostsCommentsV2Data>({
             path: `/v2/posts/${postId}/comments`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -16048,13 +18179,19 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsResolutionV2Data>([base]),
-        requestKey: (postId: string) => dataTaggedQueryKey<PostPostsResolutionV2Data>([base, postId]),
-        request: (postId: string, data: V2PostsPostIdResolutionPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostPostsResolutionV2Params) =>
+          dataTaggedQueryKey<PostPostsResolutionV2Data>([base, params]),
+        request: (
+          { postId, ...query }: PostPostsResolutionV2Params,
+          data: V2PostsPostIdResolutionPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostPostsResolutionV2Data>({
             path: `/v2/posts/${postId}/resolution`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -16072,11 +18209,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsResolutionV2Data>([base]),
-        requestKey: (postId: string) => dataTaggedQueryKey<DeletePostsResolutionV2Data>([base, postId]),
-        request: (postId: string, params: RequestParams = {}) =>
+        requestKey: (params: DeletePostsResolutionV2Params) =>
+          dataTaggedQueryKey<DeletePostsResolutionV2Data>([base, params]),
+        request: ({ postId, ...query }: DeletePostsResolutionV2Params, params: RequestParams = {}) =>
           this.request<DeletePostsResolutionV2Data>({
             path: `/v2/posts/${postId}/resolution`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -16100,6 +18239,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v2/posts`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -16124,6 +18264,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -16141,11 +18282,12 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetPostsByIdV2Data>([base]),
-        requestKey: (id: string) => dataTaggedQueryKey<GetPostsByIdV2Data>([base, id]),
-        request: (id: string, params: RequestParams = {}) =>
+        requestKey: (params: GetPostsByIdV2Params) => dataTaggedQueryKey<GetPostsByIdV2Data>([base, params]),
+        request: ({ id, ...query }: GetPostsByIdV2Params, params: RequestParams = {}) =>
           this.request<GetPostsByIdV2Data>({
             path: `/v2/posts/${id}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -16170,6 +18312,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v2/channels`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -16195,6 +18338,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/v2/threads/${threadId}/messages`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -16212,13 +18356,19 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsMessagesV2Data>([base]),
-        requestKey: (threadId: string) => dataTaggedQueryKey<PostThreadsMessagesV2Data>([base, threadId]),
-        request: (threadId: string, data: V2ThreadsThreadIdMessagesPostRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostThreadsMessagesV2Params) =>
+          dataTaggedQueryKey<PostThreadsMessagesV2Data>([base, params]),
+        request: (
+          { threadId, ...query }: PostThreadsMessagesV2Params,
+          data: V2ThreadsThreadIdMessagesPostRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostThreadsMessagesV2Data>({
             path: `/v2/threads/${threadId}/messages`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -16243,6 +18393,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -16265,12 +18416,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<PostSignInFigmaData>({
             path: `/sign-in/figma`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
     }
   }
-  v1 = {
+  userManagement = {
     /**
      * @description Generate `.mega_cedar.json` content from a list of admin GitHub logins. Only admins can access this endpoint. Does not write to the repository.
      *
@@ -16291,193 +18443,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             method: 'POST',
             body: data,
             type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PostApiAdminGroups
-     * @request POST:/api/v1/admin/groups
-     */
-    postApiAdminGroups: () => {
-      const base = 'POST:/api/v1/admin/groups' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiAdminGroupsData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiAdminGroupsData>([base]),
-        request: (data: CreateGroupRequest, params: RequestParams = {}) =>
-          this.request<PostApiAdminGroupsData>({
-            path: `/api/v1/admin/groups`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PostApiAdminGroupsList
-     * @request POST:/api/v1/admin/groups/list
-     */
-    postApiAdminGroupsList: () => {
-      const base = 'POST:/api/v1/admin/groups/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiAdminGroupsListData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiAdminGroupsListData>([base]),
-        request: (data: PageParamsEmptyListAdditional, params: RequestParams = {}) =>
-          this.request<PostApiAdminGroupsListData>({
-            path: `/api/v1/admin/groups/list`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name GetApiAdminGroupsByGroupId
-     * @request GET:/api/v1/admin/groups/{group_id}
-     */
-    getApiAdminGroupsByGroupId: () => {
-      const base = 'GET:/api/v1/admin/groups/{group_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiAdminGroupsByGroupIdData>([base]),
-        requestKey: (groupId: number) => dataTaggedQueryKey<GetApiAdminGroupsByGroupIdData>([base, groupId]),
-        request: (groupId: number, params: RequestParams = {}) =>
-          this.request<GetApiAdminGroupsByGroupIdData>({
-            path: `/api/v1/admin/groups/${groupId}`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PutApiAdminGroupsByGroupId
-     * @request PUT:/api/v1/admin/groups/{group_id}
-     */
-    putApiAdminGroupsByGroupId: () => {
-      const base = 'PUT:/api/v1/admin/groups/{group_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PutApiAdminGroupsByGroupIdData>([base]),
-        requestKey: (groupId: number) => dataTaggedQueryKey<PutApiAdminGroupsByGroupIdData>([base, groupId]),
-        request: (groupId: number, data: UpdateGroupRequest, params: RequestParams = {}) =>
-          this.request<PutApiAdminGroupsByGroupIdData>({
-            path: `/api/v1/admin/groups/${groupId}`,
-            method: 'PUT',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name DeleteApiAdminGroupsByGroupId
-     * @request DELETE:/api/v1/admin/groups/{group_id}
-     */
-    deleteApiAdminGroupsByGroupId: () => {
-      const base = 'DELETE:/api/v1/admin/groups/{group_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiAdminGroupsByGroupIdData>([base]),
-        requestKey: (groupId: number) => dataTaggedQueryKey<DeleteApiAdminGroupsByGroupIdData>([base, groupId]),
-        request: (groupId: number, params: RequestParams = {}) =>
-          this.request<DeleteApiAdminGroupsByGroupIdData>({
-            path: `/api/v1/admin/groups/${groupId}`,
-            method: 'DELETE',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PostApiAdminGroupsMembers
-     * @request POST:/api/v1/admin/groups/{group_id}/members
-     */
-    postApiAdminGroupsMembers: () => {
-      const base = 'POST:/api/v1/admin/groups/{group_id}/members' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiAdminGroupsMembersData>([base]),
-        requestKey: (groupId: number) => dataTaggedQueryKey<PostApiAdminGroupsMembersData>([base, groupId]),
-        request: (groupId: number, data: AddMembersRequest, params: RequestParams = {}) =>
-          this.request<PostApiAdminGroupsMembersData>({
-            path: `/api/v1/admin/groups/${groupId}/members`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PostApiAdminGroupsMembersList
-     * @request POST:/api/v1/admin/groups/{group_id}/members/list
-     */
-    postApiAdminGroupsMembersList: () => {
-      const base = 'POST:/api/v1/admin/groups/{group_id}/members/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiAdminGroupsMembersListData>([base]),
-        requestKey: (groupId: number) => dataTaggedQueryKey<PostApiAdminGroupsMembersListData>([base, groupId]),
-        request: (groupId: number, data: PageParamsEmptyListAdditional, params: RequestParams = {}) =>
-          this.request<PostApiAdminGroupsMembersListData>({
-            path: `/api/v1/admin/groups/${groupId}/members/list`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name DeleteApiAdminGroupsMembersByUsername
-     * @request DELETE:/api/v1/admin/groups/{group_id}/members/{username}
-     */
-    deleteApiAdminGroupsMembersByUsername: () => {
-      const base = 'DELETE:/api/v1/admin/groups/{group_id}/members/{username}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiAdminGroupsMembersByUsernameData>([base]),
-        requestKey: (groupId: number, username: string) =>
-          dataTaggedQueryKey<DeleteApiAdminGroupsMembersByUsernameData>([base, groupId, username]),
-        request: (groupId: number, username: string, params: RequestParams = {}) =>
-          this.request<DeleteApiAdminGroupsMembersByUsernameData>({
-            path: `/api/v1/admin/groups/${groupId}/members/${username}`,
-            method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -16501,6 +18467,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<GetApiAdminListData>({
             path: `/api/v1/admin/list`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -16524,102 +18491,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
           this.request<GetApiAdminMeData>({
             path: `/api/v1/admin/me`,
             method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name GetApiAdminResourcesPermissions
-     * @request GET:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
-     */
-    getApiAdminResourcesPermissions: () => {
-      const base = 'GET:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiAdminResourcesPermissionsData>([base]),
-        requestKey: (resourceType: string, resourceId: string) =>
-          dataTaggedQueryKey<GetApiAdminResourcesPermissionsData>([base, resourceType, resourceId]),
-        request: (resourceType: string, resourceId: string, params: RequestParams = {}) =>
-          this.request<GetApiAdminResourcesPermissionsData>({
-            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PutApiAdminResourcesPermissions
-     * @request PUT:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
-     */
-    putApiAdminResourcesPermissions: () => {
-      const base = 'PUT:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PutApiAdminResourcesPermissionsData>([base]),
-        requestKey: (resourceType: string, resourceId: string) =>
-          dataTaggedQueryKey<PutApiAdminResourcesPermissionsData>([base, resourceType, resourceId]),
-        request: (resourceType: string, resourceId: string, data: SetPermissionsRequest, params: RequestParams = {}) =>
-          this.request<PutApiAdminResourcesPermissionsData>({
-            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
-            method: 'PUT',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PostApiAdminResourcesPermissions
-     * @request POST:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
-     */
-    postApiAdminResourcesPermissions: () => {
-      const base = 'POST:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiAdminResourcesPermissionsData>([base]),
-        requestKey: (resourceType: string, resourceId: string) =>
-          dataTaggedQueryKey<PostApiAdminResourcesPermissionsData>([base, resourceType, resourceId]),
-        request: (resourceType: string, resourceId: string, data: SetPermissionsRequest, params: RequestParams = {}) =>
-          this.request<PostApiAdminResourcesPermissionsData>({
-            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name DeleteApiAdminResourcesPermissions
-     * @request DELETE:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
-     */
-    deleteApiAdminResourcesPermissions: () => {
-      const base = 'DELETE:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiAdminResourcesPermissionsData>([base]),
-        requestKey: (resourceType: string, resourceId: string) =>
-          dataTaggedQueryKey<DeleteApiAdminResourcesPermissionsData>([base, resourceType, resourceId]),
-        request: (resourceType: string, resourceId: string, params: RequestParams = {}) =>
-          this.request<DeleteApiAdminResourcesPermissionsData>({
-            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
-            method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -16645,6 +18517,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/api/v1/admin/user-approvals`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -16663,11 +18536,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostApiAdminUserApprovalsApproveData>([base]),
-        requestKey: (username: string) => dataTaggedQueryKey<PostApiAdminUserApprovalsApproveData>([base, username]),
-        request: (username: string, params: RequestParams = {}) =>
+        requestKey: (params: PostApiAdminUserApprovalsApproveParams) =>
+          dataTaggedQueryKey<PostApiAdminUserApprovalsApproveData>([base, params]),
+        request: ({ username, ...query }: PostApiAdminUserApprovalsApproveParams, params: RequestParams = {}) =>
           this.request<PostApiAdminUserApprovalsApproveData>({
             path: `/api/v1/admin/user-approvals/${username}/approve`,
             method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -16686,11 +18561,687 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<PostApiAdminUserApprovalsRejectData>([base]),
-        requestKey: (username: string) => dataTaggedQueryKey<PostApiAdminUserApprovalsRejectData>([base, username]),
-        request: (username: string, params: RequestParams = {}) =>
+        requestKey: (params: PostApiAdminUserApprovalsRejectParams) =>
+          dataTaggedQueryKey<PostApiAdminUserApprovalsRejectData>([base, params]),
+        request: ({ username, ...query }: PostApiAdminUserApprovalsRejectParams, params: RequestParams = {}) =>
           this.request<PostApiAdminUserApprovalsRejectData>({
             path: `/api/v1/admin/user-approvals/${username}/reject`,
             method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name GetApiUserApprovalStatus
+     * @summary Get or initialize current user's account approval status
+     * @request GET:/api/v1/user/approval-status
+     */
+    getApiUserApprovalStatus: () => {
+      const base = 'GET:/api/v1/user/approval-status' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiUserApprovalStatusData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiUserApprovalStatusData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiUserApprovalStatusData>({
+            path: `/api/v1/user/approval-status`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name PostApiUserClaChangeSignStatus
+     * @summary Change CLA sign status for current user
+     * @request POST:/api/v1/user/cla/change-sign-status
+     */
+    postApiUserClaChangeSignStatus: () => {
+      const base = 'POST:/api/v1/user/cla/change-sign-status' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiUserClaChangeSignStatusData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiUserClaChangeSignStatusData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<PostApiUserClaChangeSignStatusData>({
+            path: `/api/v1/user/cla/change-sign-status`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name GetApiUserClaContent
+     * @summary Get latest CLA text content
+     * @request GET:/api/v1/user/cla/content
+     */
+    getApiUserClaContent: () => {
+      const base = 'GET:/api/v1/user/cla/content' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiUserClaContentData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiUserClaContentData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiUserClaContentData>({
+            path: `/api/v1/user/cla/content`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name PostApiUserClaContent
+     * @summary Update latest CLA text content
+     * @request POST:/api/v1/user/cla/content
+     */
+    postApiUserClaContent: () => {
+      const base = 'POST:/api/v1/user/cla/content' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiUserClaContentData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiUserClaContentData>([base]),
+        request: (data: UpdateClaContentPayload, params: RequestParams = {}) =>
+          this.request<PostApiUserClaContentData>({
+            path: `/api/v1/user/cla/content`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name GetApiUserClaStatus
+     * @summary Get current user's CLA sign status
+     * @request GET:/api/v1/user/cla/status
+     */
+    getApiUserClaStatus: () => {
+      const base = 'GET:/api/v1/user/cla/status' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiUserClaStatusData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiUserClaStatusData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiUserClaStatusData>({
+            path: `/api/v1/user/cla/status`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name GetApiUserNotificationConfig
+     * @summary Get current user's notification config
+     * @request GET:/api/v1/user/notification/config
+     */
+    getApiUserNotificationConfig: () => {
+      const base = 'GET:/api/v1/user/notification/config' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiUserNotificationConfigData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiUserNotificationConfigData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiUserNotificationConfigData>({
+            path: `/api/v1/user/notification/config`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name PutApiUserNotificationConfig
+     * @summary Update current user's notification config
+     * @request PUT:/api/v1/user/notification/config
+     */
+    putApiUserNotificationConfig: () => {
+      const base = 'PUT:/api/v1/user/notification/config' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PutApiUserNotificationConfigData>([base]),
+        requestKey: () => dataTaggedQueryKey<PutApiUserNotificationConfigData>([base]),
+        request: (data: UpdateUserNotificationConfig, params: RequestParams = {}) =>
+          this.request<PutApiUserNotificationConfigData>({
+            path: `/api/v1/user/notification/config`,
+            method: 'PUT',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name GetApiUserNotificationTypes
+     * @summary List supported notification event types
+     * @request GET:/api/v1/user/notification/types
+     */
+    getApiUserNotificationTypes: () => {
+      const base = 'GET:/api/v1/user/notification/types' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiUserNotificationTypesData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiUserNotificationTypesData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiUserNotificationTypesData>({
+            path: `/api/v1/user/notification/types`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name PostApiUserSsh
+     * @summary Add SSH Key
+     * @request POST:/api/v1/user/ssh
+     */
+    postApiUserSsh: () => {
+      const base = 'POST:/api/v1/user/ssh' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiUserSshData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiUserSshData>([base]),
+        request: (data: AddSSHKey, params: RequestParams = {}) =>
+          this.request<PostApiUserSshData>({
+            path: `/api/v1/user/ssh`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name GetApiUserSshList
+     * @summary Get User's SSH key list
+     * @request GET:/api/v1/user/ssh/list
+     */
+    getApiUserSshList: () => {
+      const base = 'GET:/api/v1/user/ssh/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiUserSshListData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiUserSshListData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiUserSshListData>({
+            path: `/api/v1/user/ssh/list`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name DeleteApiUserSshByKeyId
+     * @summary Delete SSH Key
+     * @request DELETE:/api/v1/user/ssh/{key_id}
+     */
+    deleteApiUserSshByKeyId: () => {
+      const base = 'DELETE:/api/v1/user/ssh/{key_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiUserSshByKeyIdData>([base]),
+        requestKey: (params: DeleteApiUserSshByKeyIdParams) =>
+          dataTaggedQueryKey<DeleteApiUserSshByKeyIdData>([base, params]),
+        request: ({ keyId, ...query }: DeleteApiUserSshByKeyIdParams, params: RequestParams = {}) =>
+          this.request<DeleteApiUserSshByKeyIdData>({
+            path: `/api/v1/user/ssh/${keyId}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name PostApiUserTokenGenerate
+     * @summary Generate Token For http push
+     * @request POST:/api/v1/user/token/generate
+     */
+    postApiUserTokenGenerate: () => {
+      const base = 'POST:/api/v1/user/token/generate' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiUserTokenGenerateData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiUserTokenGenerateData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<PostApiUserTokenGenerateData>({
+            path: `/api/v1/user/token/generate`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name GetApiUserTokenList
+     * @summary Get User's push token list
+     * @request GET:/api/v1/user/token/list
+     */
+    getApiUserTokenList: () => {
+      const base = 'GET:/api/v1/user/token/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiUserTokenListData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiUserTokenListData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiUserTokenListData>({
+            path: `/api/v1/user/token/list`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags User Management
+     * @name DeleteApiUserTokenByKeyId
+     * @summary Delete User's http push token
+     * @request DELETE:/api/v1/user/token/{key_id}
+     */
+    deleteApiUserTokenByKeyId: () => {
+      const base = 'DELETE:/api/v1/user/token/{key_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiUserTokenByKeyIdData>([base]),
+        requestKey: (params: DeleteApiUserTokenByKeyIdParams) =>
+          dataTaggedQueryKey<DeleteApiUserTokenByKeyIdData>([base, params]),
+        request: ({ keyId, ...query }: DeleteApiUserTokenByKeyIdParams, params: RequestParams = {}) =>
+          this.request<DeleteApiUserTokenByKeyIdData>({
+            path: `/api/v1/user/token/${keyId}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  groupPermissionManagement = {
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PostApiAdminGroups
+     * @request POST:/api/v1/admin/groups
+     */
+    postApiAdminGroups: () => {
+      const base = 'POST:/api/v1/admin/groups' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminGroupsData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiAdminGroupsData>([base]),
+        request: (data: CreateGroupRequest, params: RequestParams = {}) =>
+          this.request<PostApiAdminGroupsData>({
+            path: `/api/v1/admin/groups`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PostApiAdminGroupsList
+     * @request POST:/api/v1/admin/groups/list
+     */
+    postApiAdminGroupsList: () => {
+      const base = 'POST:/api/v1/admin/groups/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminGroupsListData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiAdminGroupsListData>([base]),
+        request: (data: PageParamsEmptyListAdditional, params: RequestParams = {}) =>
+          this.request<PostApiAdminGroupsListData>({
+            path: `/api/v1/admin/groups/list`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name GetApiAdminGroupsByGroupId
+     * @request GET:/api/v1/admin/groups/{group_id}
+     */
+    getApiAdminGroupsByGroupId: () => {
+      const base = 'GET:/api/v1/admin/groups/{group_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiAdminGroupsByGroupIdData>([base]),
+        requestKey: (params: GetApiAdminGroupsByGroupIdParams) =>
+          dataTaggedQueryKey<GetApiAdminGroupsByGroupIdData>([base, params]),
+        request: ({ groupId, ...query }: GetApiAdminGroupsByGroupIdParams, params: RequestParams = {}) =>
+          this.request<GetApiAdminGroupsByGroupIdData>({
+            path: `/api/v1/admin/groups/${groupId}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PutApiAdminGroupsByGroupId
+     * @request PUT:/api/v1/admin/groups/{group_id}
+     */
+    putApiAdminGroupsByGroupId: () => {
+      const base = 'PUT:/api/v1/admin/groups/{group_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PutApiAdminGroupsByGroupIdData>([base]),
+        requestKey: (params: PutApiAdminGroupsByGroupIdParams) =>
+          dataTaggedQueryKey<PutApiAdminGroupsByGroupIdData>([base, params]),
+        request: (
+          { groupId, ...query }: PutApiAdminGroupsByGroupIdParams,
+          data: UpdateGroupRequest,
+          params: RequestParams = {}
+        ) =>
+          this.request<PutApiAdminGroupsByGroupIdData>({
+            path: `/api/v1/admin/groups/${groupId}`,
+            method: 'PUT',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name DeleteApiAdminGroupsByGroupId
+     * @request DELETE:/api/v1/admin/groups/{group_id}
+     */
+    deleteApiAdminGroupsByGroupId: () => {
+      const base = 'DELETE:/api/v1/admin/groups/{group_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiAdminGroupsByGroupIdData>([base]),
+        requestKey: (params: DeleteApiAdminGroupsByGroupIdParams) =>
+          dataTaggedQueryKey<DeleteApiAdminGroupsByGroupIdData>([base, params]),
+        request: ({ groupId, ...query }: DeleteApiAdminGroupsByGroupIdParams, params: RequestParams = {}) =>
+          this.request<DeleteApiAdminGroupsByGroupIdData>({
+            path: `/api/v1/admin/groups/${groupId}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PostApiAdminGroupsMembers
+     * @request POST:/api/v1/admin/groups/{group_id}/members
+     */
+    postApiAdminGroupsMembers: () => {
+      const base = 'POST:/api/v1/admin/groups/{group_id}/members' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminGroupsMembersData>([base]),
+        requestKey: (params: PostApiAdminGroupsMembersParams) =>
+          dataTaggedQueryKey<PostApiAdminGroupsMembersData>([base, params]),
+        request: (
+          { groupId, ...query }: PostApiAdminGroupsMembersParams,
+          data: AddMembersRequest,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiAdminGroupsMembersData>({
+            path: `/api/v1/admin/groups/${groupId}/members`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PostApiAdminGroupsMembersList
+     * @request POST:/api/v1/admin/groups/{group_id}/members/list
+     */
+    postApiAdminGroupsMembersList: () => {
+      const base = 'POST:/api/v1/admin/groups/{group_id}/members/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminGroupsMembersListData>([base]),
+        requestKey: (params: PostApiAdminGroupsMembersListParams) =>
+          dataTaggedQueryKey<PostApiAdminGroupsMembersListData>([base, params]),
+        request: (
+          { groupId, ...query }: PostApiAdminGroupsMembersListParams,
+          data: PageParamsEmptyListAdditional,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiAdminGroupsMembersListData>({
+            path: `/api/v1/admin/groups/${groupId}/members/list`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name DeleteApiAdminGroupsMembersByUsername
+     * @request DELETE:/api/v1/admin/groups/{group_id}/members/{username}
+     */
+    deleteApiAdminGroupsMembersByUsername: () => {
+      const base = 'DELETE:/api/v1/admin/groups/{group_id}/members/{username}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiAdminGroupsMembersByUsernameData>([base]),
+        requestKey: (params: DeleteApiAdminGroupsMembersByUsernameParams) =>
+          dataTaggedQueryKey<DeleteApiAdminGroupsMembersByUsernameData>([base, params]),
+        request: (
+          { groupId, username, ...query }: DeleteApiAdminGroupsMembersByUsernameParams,
+          params: RequestParams = {}
+        ) =>
+          this.request<DeleteApiAdminGroupsMembersByUsernameData>({
+            path: `/api/v1/admin/groups/${groupId}/members/${username}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name GetApiAdminResourcesPermissions
+     * @request GET:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
+     */
+    getApiAdminResourcesPermissions: () => {
+      const base = 'GET:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiAdminResourcesPermissionsData>([base]),
+        requestKey: (params: GetApiAdminResourcesPermissionsParams) =>
+          dataTaggedQueryKey<GetApiAdminResourcesPermissionsData>([base, params]),
+        request: (
+          { resourceType, resourceId, ...query }: GetApiAdminResourcesPermissionsParams,
+          params: RequestParams = {}
+        ) =>
+          this.request<GetApiAdminResourcesPermissionsData>({
+            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PutApiAdminResourcesPermissions
+     * @request PUT:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
+     */
+    putApiAdminResourcesPermissions: () => {
+      const base = 'PUT:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PutApiAdminResourcesPermissionsData>([base]),
+        requestKey: (params: PutApiAdminResourcesPermissionsParams) =>
+          dataTaggedQueryKey<PutApiAdminResourcesPermissionsData>([base, params]),
+        request: (
+          { resourceType, resourceId, ...query }: PutApiAdminResourcesPermissionsParams,
+          data: SetPermissionsRequest,
+          params: RequestParams = {}
+        ) =>
+          this.request<PutApiAdminResourcesPermissionsData>({
+            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
+            method: 'PUT',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PostApiAdminResourcesPermissions
+     * @request POST:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
+     */
+    postApiAdminResourcesPermissions: () => {
+      const base = 'POST:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminResourcesPermissionsData>([base]),
+        requestKey: (params: PostApiAdminResourcesPermissionsParams) =>
+          dataTaggedQueryKey<PostApiAdminResourcesPermissionsData>([base, params]),
+        request: (
+          { resourceType, resourceId, ...query }: PostApiAdminResourcesPermissionsParams,
+          data: SetPermissionsRequest,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiAdminResourcesPermissionsData>({
+            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name DeleteApiAdminResourcesPermissions
+     * @request DELETE:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
+     */
+    deleteApiAdminResourcesPermissions: () => {
+      const base = 'DELETE:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiAdminResourcesPermissionsData>([base]),
+        requestKey: (params: DeleteApiAdminResourcesPermissionsParams) =>
+          dataTaggedQueryKey<DeleteApiAdminResourcesPermissionsData>([base, params]),
+        request: (
+          { resourceType, resourceId, ...query }: DeleteApiAdminResourcesPermissionsParams,
+          params: RequestParams = {}
+        ) =>
+          this.request<DeleteApiAdminResourcesPermissionsData>({
+            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
+            method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
@@ -16708,11 +19259,13 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetApiAdminUsersGroupsData>([base]),
-        requestKey: (username: string) => dataTaggedQueryKey<GetApiAdminUsersGroupsData>([base, username]),
-        request: (username: string, params: RequestParams = {}) =>
+        requestKey: (params: GetApiAdminUsersGroupsParams) =>
+          dataTaggedQueryKey<GetApiAdminUsersGroupsData>([base, params]),
+        request: ({ username, ...query }: GetApiAdminUsersGroupsParams, params: RequestParams = {}) =>
           this.request<GetApiAdminUsersGroupsData>({
             path: `/api/v1/admin/users/${username}/groups`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -16730,17 +19283,49 @@ supporting either retrieving the entire log at once or segmenting it by line cou
 
       return {
         baseKey: dataTaggedQueryKey<GetApiAdminUsersPermissionsByResourceIdData>([base]),
-        requestKey: (username: string, resourceType: string, resourceId: string) =>
-          dataTaggedQueryKey<GetApiAdminUsersPermissionsByResourceIdData>([base, username, resourceType, resourceId]),
-        request: (username: string, resourceType: string, resourceId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetApiAdminUsersPermissionsByResourceIdParams) =>
+          dataTaggedQueryKey<GetApiAdminUsersPermissionsByResourceIdData>([base, params]),
+        request: (
+          { username, resourceType, resourceId, ...query }: GetApiAdminUsersPermissionsByResourceIdParams,
+          params: RequestParams = {}
+        ) =>
           this.request<GetApiAdminUsersPermissionsByResourceIdData>({
             path: `/api/v1/admin/users/${username}/permissions/${resourceType}/${resourceId}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
     },
 
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name GetApiPermissionsMeByResourceId
+     * @request GET:/api/v1/permissions/me/{resource_type}/{resource_id}
+     */
+    getApiPermissionsMeByResourceId: () => {
+      const base = 'GET:/api/v1/permissions/me/{resource_type}/{resource_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiPermissionsMeByResourceIdData>([base]),
+        requestKey: (params: GetApiPermissionsMeByResourceIdParams) =>
+          dataTaggedQueryKey<GetApiPermissionsMeByResourceIdData>([base, params]),
+        request: (
+          { resourceType, resourceId, ...query }: GetApiPermissionsMeByResourceIdParams,
+          params: RequestParams = {}
+        ) =>
+          this.request<GetApiPermissionsMeByResourceIdData>({
+            path: `/api/v1/permissions/me/${resourceType}/${resourceId}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  codePreview = {
     /**
      * No description
      *
@@ -16760,6 +19345,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/api/v1/blame`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -16784,1011 +19370,7 @@ supporting either retrieving the entire log at once or segmenting it by line cou
             path: `/api/v1/blob`,
             method: 'GET',
             query: query,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description List existing tokens for a bot (without plaintext).
-     *
-     * @tags Automation & Integrations
-     * @name GetApiBotsTokens
-     * @summary GET /api/v1/bots/{bot_id}/tokens
-     * @request GET:/api/v1/bots/{bot_id}/tokens
-     */
-    getApiBotsTokens: () => {
-      const base = 'GET:/api/v1/bots/{bot_id}/tokens' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiBotsTokensData>([base]),
-        requestKey: (botId: number) => dataTaggedQueryKey<GetApiBotsTokensData>([base, botId]),
-        request: (botId: number, params: RequestParams = {}) =>
-          this.request<GetApiBotsTokensData>({
-            path: `/api/v1/bots/${botId}/tokens`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Create a new bot token. Only admins can perform this operation.
-     *
-     * @tags Automation & Integrations
-     * @name PostApiBotsTokens
-     * @summary POST /api/v1/bots/{bot_id}/tokens
-     * @request POST:/api/v1/bots/{bot_id}/tokens
-     */
-    postApiBotsTokens: () => {
-      const base = 'POST:/api/v1/bots/{bot_id}/tokens' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBotsTokensData>([base]),
-        requestKey: (botId: number) => dataTaggedQueryKey<PostApiBotsTokensData>([base, botId]),
-        request: (botId: number, data: CreateBotTokenRequest, params: RequestParams = {}) =>
-          this.request<PostApiBotsTokensData>({
-            path: `/api/v1/bots/${botId}/tokens`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Revoke all tokens for a given bot. Idempotent.
-     *
-     * @tags Automation & Integrations
-     * @name PostApiBotsTokensRevokeAll
-     * @summary POST /api/v1/bots/{bot_id}/tokens/revoke_all
-     * @request POST:/api/v1/bots/{bot_id}/tokens/revoke_all
-     */
-    postApiBotsTokensRevokeAll: () => {
-      const base = 'POST:/api/v1/bots/{bot_id}/tokens/revoke_all' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBotsTokensRevokeAllData>([base]),
-        requestKey: (botId: number) => dataTaggedQueryKey<PostApiBotsTokensRevokeAllData>([base, botId]),
-        request: (botId: number, params: RequestParams = {}) =>
-          this.request<PostApiBotsTokensRevokeAllData>({
-            path: `/api/v1/bots/${botId}/tokens/revoke_all`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Revoke a single bot token. Idempotent.
-     *
-     * @tags Automation & Integrations
-     * @name DeleteApiBotsTokensById
-     * @summary DELETE /api/v1/bots/{bot_id}/tokens/{id}
-     * @request DELETE:/api/v1/bots/{bot_id}/tokens/{id}
-     */
-    deleteApiBotsTokensById: () => {
-      const base = 'DELETE:/api/v1/bots/{bot_id}/tokens/{id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiBotsTokensByIdData>([base]),
-        requestKey: (botId: number, id: number) => dataTaggedQueryKey<DeleteApiBotsTokensByIdData>([base, botId, id]),
-        request: (botId: number, id: number, params: RequestParams = {}) =>
-          this.request<DeleteApiBotsTokensByIdData>({
-            path: `/api/v1/bots/${botId}/tokens/${id}`,
-            method: 'DELETE',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name GetApiBotsInstallations
-     * @summary Get installed bot
-     * @request GET:/api/v1/bots/{id}/installations
-     */
-    getApiBotsInstallations: () => {
-      const base = 'GET:/api/v1/bots/{id}/installations' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiBotsInstallationsData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<GetApiBotsInstallationsData>([base, id]),
-        request: (id: number, params: RequestParams = {}) =>
-          this.request<GetApiBotsInstallationsData>({
-            path: `/api/v1/bots/${id}/installations`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name PostApiBotsInstallations
-     * @summary Install bot
-     * @request POST:/api/v1/bots/{id}/installations
-     */
-    postApiBotsInstallations: () => {
-      const base = 'POST:/api/v1/bots/{id}/installations' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBotsInstallationsData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<PostApiBotsInstallationsData>([base, id]),
-        request: (id: number, data: InstallBotReq, params: RequestParams = {}) =>
-          this.request<PostApiBotsInstallationsData>({
-            path: `/api/v1/bots/${id}/installations`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name DeleteApiBotsInstallationsByInstallationId
-     * @request DELETE:/api/v1/bots/{id}/installations/{installation_id}
-     */
-    deleteApiBotsInstallationsByInstallationId: () => {
-      const base = 'DELETE:/api/v1/bots/{id}/installations/{installation_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiBotsInstallationsByInstallationIdData>([base]),
-        requestKey: (id: number, installationId: number) =>
-          dataTaggedQueryKey<DeleteApiBotsInstallationsByInstallationIdData>([base, id, installationId]),
-        request: (id: number, installationId: number, data: InstallationTargetType, params: RequestParams = {}) =>
-          this.request<DeleteApiBotsInstallationsByInstallationIdData>({
-            path: `/api/v1/bots/${id}/installations/${installationId}`,
-            method: 'DELETE',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name PatchApiBotsInstallationsByInstallationId
-     * @request PATCH:/api/v1/bots/{id}/installations/{installation_id}
-     */
-    patchApiBotsInstallationsByInstallationId: () => {
-      const base = 'PATCH:/api/v1/bots/{id}/installations/{installation_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PatchApiBotsInstallationsByInstallationIdData>([base]),
-        requestKey: (id: number, installationId: number) =>
-          dataTaggedQueryKey<PatchApiBotsInstallationsByInstallationIdData>([base, id, installationId]),
-        request: (id: number, installationId: number, data: ChangeInstallationStatus, params: RequestParams = {}) =>
-          this.request<PatchApiBotsInstallationsByInstallationIdData>({
-            path: `/api/v1/bots/${id}/installations/${installationId}`,
-            method: 'PATCH',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Creates a new upload session and pre-creates a Draft CL.
-     *
-     * @tags Buck Upload API
-     * @name PostApiBuckSessionStart
-     * @summary Create upload session
-     * @request POST:/api/v1/buck/session/start
-     */
-    postApiBuckSessionStart: () => {
-      const base = 'POST:/api/v1/buck/session/start' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBuckSessionStartData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiBuckSessionStartData>([base]),
-        request: (data: CreateSessionPayload, params: RequestParams = {}) =>
-          this.request<PostApiBuckSessionStartData>({
-            path: `/api/v1/buck/session/start`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Complete the upload session, create Git commit, and activate CL. Returns immediately - CI build is triggered asynchronously. Request body is optional. Commit message is read from session.
-     *
-     * @tags Buck Upload API
-     * @name PostApiBuckSessionComplete
-     * @summary Complete upload
-     * @request POST:/api/v1/buck/session/{cl_link}/complete
-     */
-    postApiBuckSessionComplete: () => {
-      const base = 'POST:/api/v1/buck/session/{cl_link}/complete' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBuckSessionCompleteData>([base]),
-        requestKey: (clLink: string) => dataTaggedQueryKey<PostApiBuckSessionCompleteData>([base, clLink]),
-        request: (clLink: string, data: PostApiBuckSessionCompletePayload, params: RequestParams = {}) =>
-          this.request<PostApiBuckSessionCompleteData>({
-            path: `/api/v1/buck/session/${clLink}/complete`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Upload a single file content. Can be called concurrently for different files.
-     *
-     * @tags Buck Upload API
-     * @name PostApiBuckSessionFile
-     * @summary Upload file
-     * @request POST:/api/v1/buck/session/{cl_link}/file
-     */
-    postApiBuckSessionFile: () => {
-      const base = 'POST:/api/v1/buck/session/{cl_link}/file' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBuckSessionFileData>([base]),
-        requestKey: (clLink: string) => dataTaggedQueryKey<PostApiBuckSessionFileData>([base, clLink]),
-        request: (clLink: string, params: RequestParams = {}) =>
-          this.request<PostApiBuckSessionFileData>({
-            path: `/api/v1/buck/session/${clLink}/file`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Submit file manifest and get list of files that need to be uploaded.
-     *
-     * @tags Buck Upload API
-     * @name PostApiBuckSessionManifest
-     * @summary Upload file manifest
-     * @request POST:/api/v1/buck/session/{cl_link}/manifest
-     */
-    postApiBuckSessionManifest: () => {
-      const base = 'POST:/api/v1/buck/session/{cl_link}/manifest' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBuckSessionManifestData>([base]),
-        requestKey: (clLink: string) => dataTaggedQueryKey<PostApiBuckSessionManifestData>([base, clLink]),
-        request: (clLink: string, data: ManifestPayload, params: RequestParams = {}) =>
-          this.request<PostApiBuckSessionManifestData>({
-            path: `/api/v1/buck/session/${clLink}/manifest`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClAssignees
-     * @summary Update CL related assignees
-     * @request POST:/api/v1/cl/assignees
-     */
-    postApiClAssignees: () => {
-      const base = 'POST:/api/v1/cl/assignees' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClAssigneesData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiClAssigneesData>([base]),
-        request: (data: AssigneeUpdatePayload, params: RequestParams = {}) =>
-          this.request<PostApiClAssigneesData>({
-            path: `/api/v1/cl/assignees`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClLabels
-     * @summary Update cl related labels
-     * @request POST:/api/v1/cl/labels
-     */
-    postApiClLabels: () => {
-      const base = 'POST:/api/v1/cl/labels' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClLabelsData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiClLabelsData>([base]),
-        request: (data: LabelUpdatePayload, params: RequestParams = {}) =>
-          this.request<PostApiClLabelsData>({
-            path: `/api/v1/cl/labels`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClList
-     * @summary Fetch CL list
-     * @request POST:/api/v1/cl/list
-     */
-    postApiClList: () => {
-      const base = 'POST:/api/v1/cl/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClListData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiClListData>([base]),
-        request: (data: PageParamsListPayload, params: RequestParams = {}) =>
-          this.request<PostApiClListData>({
-            path: `/api/v1/cl/list`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClClose
-     * @summary Close Change List
-     * @request POST:/api/v1/cl/{link}/close
-     */
-    postApiClClose: () => {
-      const base = 'POST:/api/v1/cl/{link}/close' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClCloseData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiClCloseData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<PostApiClCloseData>({
-            path: `/api/v1/cl/${link}/close`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClComment
-     * @summary Add new comment on Change List
-     * @request POST:/api/v1/cl/{link}/comment
-     */
-    postApiClComment: () => {
-      const base = 'POST:/api/v1/cl/{link}/comment' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClCommentData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiClCommentData>([base, link]),
-        request: (link: string, data: ContentPayload, params: RequestParams = {}) =>
-          this.request<PostApiClCommentData>({
-            path: `/api/v1/cl/${link}/comment`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name GetApiClDetail
-     * @summary Get change list details
-     * @request GET:/api/v1/cl/{link}/detail
-     */
-    getApiClDetail: () => {
-      const base = 'GET:/api/v1/cl/{link}/detail' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiClDetailData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<GetApiClDetailData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<GetApiClDetailData>({
-            path: `/api/v1/cl/${link}/detail`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClFilesChanged
-     * @summary Get Change List file changed list in Pagination
-     * @request POST:/api/v1/cl/{link}/files-changed
-     */
-    postApiClFilesChanged: () => {
-      const base = 'POST:/api/v1/cl/{link}/files-changed' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClFilesChangedData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiClFilesChangedData>([base, link]),
-        request: (link: string, data: PageParamsString, params: RequestParams = {}) =>
-          this.request<PostApiClFilesChangedData>({
-            path: `/api/v1/cl/${link}/files-changed`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name GetApiClFilesList
-     * @summary Get Change List file list
-     * @request GET:/api/v1/cl/{link}/files-list
-     */
-    getApiClFilesList: () => {
-      const base = 'GET:/api/v1/cl/{link}/files-list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiClFilesListData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<GetApiClFilesListData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<GetApiClFilesListData>({
-            path: `/api/v1/cl/${link}/files-list`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClMerge
-     * @summary Approve Change List
-     * @request POST:/api/v1/cl/{link}/merge
-     */
-    postApiClMerge: () => {
-      const base = 'POST:/api/v1/cl/{link}/merge' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClMergeData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiClMergeData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<PostApiClMergeData>({
-            path: `/api/v1/cl/${link}/merge`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name GetApiClMergeBox
-     * @summary Get Merge Box to check merge status
-     * @request GET:/api/v1/cl/{link}/merge-box
-     */
-    getApiClMergeBox: () => {
-      const base = 'GET:/api/v1/cl/{link}/merge-box' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiClMergeBoxData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<GetApiClMergeBoxData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<GetApiClMergeBoxData>({
-            path: `/api/v1/cl/${link}/merge-box`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
- * No description
- *
- * @tags Change List
- * @name PostApiClMergeNoAuth
- * @summary Change List without authentication
-It's for local testing purposes.
- * @request POST:/api/v1/cl/{link}/merge-no-auth
- */
-    postApiClMergeNoAuth: () => {
-      const base = 'POST:/api/v1/cl/{link}/merge-no-auth' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClMergeNoAuthData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiClMergeNoAuthData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<PostApiClMergeNoAuthData>({
-            path: `/api/v1/cl/${link}/merge-no-auth`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name GetApiClMuiTree
-     * @request GET:/api/v1/cl/{link}/mui-tree
-     */
-    getApiClMuiTree: () => {
-      const base = 'GET:/api/v1/cl/{link}/mui-tree' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiClMuiTreeData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<GetApiClMuiTreeData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<GetApiClMuiTreeData>({
-            path: `/api/v1/cl/${link}/mui-tree`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClReopen
-     * @summary Reopen Change List
-     * @request POST:/api/v1/cl/{link}/reopen
-     */
-    postApiClReopen: () => {
-      const base = 'POST:/api/v1/cl/{link}/reopen' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClReopenData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiClReopenData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<PostApiClReopenData>({
-            path: `/api/v1/cl/${link}/reopen`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClReviewResolve
-     * @request POST:/api/v1/cl/{link}/review/resolve
-     */
-    postApiClReviewResolve: () => {
-      const base = 'POST:/api/v1/cl/{link}/review/resolve' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClReviewResolveData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiClReviewResolveData>([base, link]),
-        request: (link: string, data: ChangeReviewStatePayload, params: RequestParams = {}) =>
-          this.request<PostApiClReviewResolveData>({
-            path: `/api/v1/cl/${link}/review/resolve`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClReviewerApprove
-     * @summary Change the reviewer approval state
-     * @request POST:/api/v1/cl/{link}/reviewer/approve
-     */
-    postApiClReviewerApprove: () => {
-      const base = 'POST:/api/v1/cl/{link}/reviewer/approve' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClReviewerApproveData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiClReviewerApproveData>([base, link]),
-        request: (link: string, data: ChangeReviewerStatePayload, params: RequestParams = {}) =>
-          this.request<PostApiClReviewerApproveData>({
-            path: `/api/v1/cl/${link}/reviewer/approve`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name GetApiClReviewers
-     * @request GET:/api/v1/cl/{link}/reviewers
-     */
-    getApiClReviewers: () => {
-      const base = 'GET:/api/v1/cl/{link}/reviewers' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiClReviewersData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<GetApiClReviewersData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<GetApiClReviewersData>({
-            path: `/api/v1/cl/${link}/reviewers`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClReviewers
-     * @request POST:/api/v1/cl/{link}/reviewers
-     */
-    postApiClReviewers: () => {
-      const base = 'POST:/api/v1/cl/{link}/reviewers' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClReviewersData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiClReviewersData>([base, link]),
-        request: (link: string, data: ReviewerPayload, params: RequestParams = {}) =>
-          this.request<PostApiClReviewersData>({
-            path: `/api/v1/cl/${link}/reviewers`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name DeleteApiClReviewers
-     * @request DELETE:/api/v1/cl/{link}/reviewers
-     */
-    deleteApiClReviewers: () => {
-      const base = 'DELETE:/api/v1/cl/{link}/reviewers' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiClReviewersData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<DeleteApiClReviewersData>([base, link]),
-        request: (link: string, data: ReviewerPayload, params: RequestParams = {}) =>
-          this.request<DeleteApiClReviewersData>({
-            path: `/api/v1/cl/${link}/reviewers`,
-            method: 'DELETE',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClStatus
-     * @summary Update CL status (Draft or Open)
-     * @request POST:/api/v1/cl/{link}/status
-     */
-    postApiClStatus: () => {
-      const base = 'POST:/api/v1/cl/{link}/status' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClStatusData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiClStatusData>([base, link]),
-        request: (link: string, data: UpdateClStatusPayload, params: RequestParams = {}) =>
-          this.request<PostApiClStatusData>({
-            path: `/api/v1/cl/${link}/status`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClTitle
-     * @summary Edit CL title
-     * @request POST:/api/v1/cl/{link}/title
-     */
-    postApiClTitle: () => {
-      const base = 'POST:/api/v1/cl/{link}/title' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClTitleData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiClTitleData>([base, link]),
-        request: (link: string, data: ContentPayload, params: RequestParams = {}) =>
-          this.request<PostApiClTitleData>({
-            path: `/api/v1/cl/${link}/title`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClUpdateBranch
-     * @summary Update Branch for Change List
-     * @request POST:/api/v1/cl/{link}/update-branch
-     */
-    postApiClUpdateBranch: () => {
-      const base = 'POST:/api/v1/cl/{link}/update-branch' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClUpdateBranchData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiClUpdateBranchData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<PostApiClUpdateBranchData>({
-            path: `/api/v1/cl/${link}/update-branch`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name GetApiClUpdateStatus
-     * @summary Get Update Branch status
-     * @request GET:/api/v1/cl/{link}/update-status
-     */
-    getApiClUpdateStatus: () => {
-      const base = 'GET:/api/v1/cl/{link}/update-status' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiClUpdateStatusData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<GetApiClUpdateStatusData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<GetApiClUpdateStatusData>({
-            path: `/api/v1/cl/${link}/update-status`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name DeleteApiCodeReviewCommentByCommentId
-     * @summary Delete a code review comment
-     * @request DELETE:/api/v1/code_review/comment/{comment_id}
-     */
-    deleteApiCodeReviewCommentByCommentId: () => {
-      const base = 'DELETE:/api/v1/code_review/comment/{comment_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiCodeReviewCommentByCommentIdData>([base]),
-        requestKey: (commentId: number) =>
-          dataTaggedQueryKey<DeleteApiCodeReviewCommentByCommentIdData>([base, commentId]),
-        request: (commentId: number, params: RequestParams = {}) =>
-          this.request<DeleteApiCodeReviewCommentByCommentIdData>({
-            path: `/api/v1/code_review/comment/${commentId}`,
-            method: 'DELETE',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name DeleteApiCodeReviewThreadByThreadId
-     * @summary Delete a code review thread and its comments
-     * @request DELETE:/api/v1/code_review/thread/{thread_id}
-     */
-    deleteApiCodeReviewThreadByThreadId: () => {
-      const base = 'DELETE:/api/v1/code_review/thread/{thread_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiCodeReviewThreadByThreadIdData>([base]),
-        requestKey: (threadId: number) => dataTaggedQueryKey<DeleteApiCodeReviewThreadByThreadIdData>([base, threadId]),
-        request: (threadId: number, params: RequestParams = {}) =>
-          this.request<DeleteApiCodeReviewThreadByThreadIdData>({
-            path: `/api/v1/code_review/thread/${threadId}`,
-            method: 'DELETE',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name PostApiCodeReviewUpdate
-     * @summary Update a code review comment
-     * @request POST:/api/v1/code_review/{comment_id}/update
-     */
-    postApiCodeReviewUpdate: () => {
-      const base = 'POST:/api/v1/code_review/{comment_id}/update' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiCodeReviewUpdateData>([base]),
-        requestKey: (commentId: number) => dataTaggedQueryKey<PostApiCodeReviewUpdateData>([base, commentId]),
-        request: (commentId: number, data: UpdateCommentRequest, params: RequestParams = {}) =>
-          this.request<PostApiCodeReviewUpdateData>({
-            path: `/api/v1/code_review/${commentId}/update`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name PostApiCodeReviewCommentInit
-     * @summary Initialize a code review comment in a new thread
-     * @request POST:/api/v1/code_review/{link}/comment/init
-     */
-    postApiCodeReviewCommentInit: () => {
-      const base = 'POST:/api/v1/code_review/{link}/comment/init' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiCodeReviewCommentInitData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiCodeReviewCommentInitData>([base, link]),
-        request: (link: string, data: InitializeCommentRequest, params: RequestParams = {}) =>
-          this.request<PostApiCodeReviewCommentInitData>({
-            path: `/api/v1/code_review/${link}/comment/init`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name GetApiCodeReviewComments
-     * @summary List code review comments
-     * @request GET:/api/v1/code_review/{link}/comments
-     */
-    getApiCodeReviewComments: () => {
-      const base = 'GET:/api/v1/code_review/{link}/comments' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiCodeReviewCommentsData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<GetApiCodeReviewCommentsData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<GetApiCodeReviewCommentsData>({
-            path: `/api/v1/code_review/${link}/comments`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name PostApiCodeReviewCommentReply
-     * @summary Reply to a code review comment
-     * @request POST:/api/v1/code_review/{thread_id}/comment/reply
-     */
-    postApiCodeReviewCommentReply: () => {
-      const base = 'POST:/api/v1/code_review/{thread_id}/comment/reply' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiCodeReviewCommentReplyData>([base]),
-        requestKey: (threadId: number) => dataTaggedQueryKey<PostApiCodeReviewCommentReplyData>([base, threadId]),
-        request: (threadId: number, data: CommentReplyRequest, params: RequestParams = {}) =>
-          this.request<PostApiCodeReviewCommentReplyData>({
-            path: `/api/v1/code_review/${threadId}/comment/reply`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name PostApiCodeReviewReopen
-     * @summary Reopen a code review thread
-     * @request POST:/api/v1/code_review/{thread_id}/reopen
-     */
-    postApiCodeReviewReopen: () => {
-      const base = 'POST:/api/v1/code_review/{thread_id}/reopen' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiCodeReviewReopenData>([base]),
-        requestKey: (threadId: number) => dataTaggedQueryKey<PostApiCodeReviewReopenData>([base, threadId]),
-        request: (threadId: number, params: RequestParams = {}) =>
-          this.request<PostApiCodeReviewReopenData>({
-            path: `/api/v1/code_review/${threadId}/reopen`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name PostApiCodeReviewResolve
-     * @summary Resolve a code review thread
-     * @request POST:/api/v1/code_review/{thread_id}/resolve
-     */
-    postApiCodeReviewResolve: () => {
-      const base = 'POST:/api/v1/code_review/{thread_id}/resolve' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiCodeReviewResolveData>([base]),
-        requestKey: (threadId: number) => dataTaggedQueryKey<PostApiCodeReviewResolveData>([base, threadId]),
-        request: (threadId: number, params: RequestParams = {}) =>
-          this.request<PostApiCodeReviewResolveData>({
-            path: `/api/v1/code_review/${threadId}/resolve`,
-            method: 'POST',
+            format: 'json',
             ...params
           })
       }
@@ -17814,6 +19396,7 @@ It's for local testing purposes.
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -17832,13 +19415,19 @@ It's for local testing purposes.
 
       return {
         baseKey: dataTaggedQueryKey<PutApiCommitsBindingData>([base]),
-        requestKey: (sha: string) => dataTaggedQueryKey<PutApiCommitsBindingData>([base, sha]),
-        request: (sha: string, data: UpdateCommitBindingRequest, params: RequestParams = {}) =>
+        requestKey: (params: PutApiCommitsBindingParams) =>
+          dataTaggedQueryKey<PutApiCommitsBindingData>([base, params]),
+        request: (
+          { sha, ...query }: PutApiCommitsBindingParams,
+          data: UpdateCommitBindingRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PutApiCommitsBindingData>({
             path: `/api/v1/commits/${sha}/binding`,
             method: 'PUT',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -17866,6 +19455,7 @@ It's for local testing purposes.
             query: query,
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -17891,102 +19481,7 @@ It's for local testing purposes.
             path: `/api/v1/commits/${sha}/mui-tree`,
             method: 'GET',
             query: query,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Conversation and Comment
-     * @name DeleteApiConversationReactionsById
-     * @summary Delete conversation reactions
-     * @request DELETE:/api/v1/conversation/reactions/{id}
-     */
-    deleteApiConversationReactionsById: () => {
-      const base = 'DELETE:/api/v1/conversation/reactions/{id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiConversationReactionsByIdData>([base]),
-        requestKey: (id: string) => dataTaggedQueryKey<DeleteApiConversationReactionsByIdData>([base, id]),
-        request: (id: string, params: RequestParams = {}) =>
-          this.request<DeleteApiConversationReactionsByIdData>({
-            path: `/api/v1/conversation/reactions/${id}`,
-            method: 'DELETE',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Conversation and Comment
-     * @name PostApiConversationByCommentId
-     * @summary Edit comment
-     * @request POST:/api/v1/conversation/{comment_id}
-     */
-    postApiConversationByCommentId: () => {
-      const base = 'POST:/api/v1/conversation/{comment_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiConversationByCommentIdData>([base]),
-        requestKey: (commentId: number) => dataTaggedQueryKey<PostApiConversationByCommentIdData>([base, commentId]),
-        request: (commentId: number, data: ContentPayload, params: RequestParams = {}) =>
-          this.request<PostApiConversationByCommentIdData>({
-            path: `/api/v1/conversation/${commentId}`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Conversation and Comment
-     * @name DeleteApiConversationByCommentId
-     * @summary Delete Comment
-     * @request DELETE:/api/v1/conversation/{comment_id}
-     */
-    deleteApiConversationByCommentId: () => {
-      const base = 'DELETE:/api/v1/conversation/{comment_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiConversationByCommentIdData>([base]),
-        requestKey: (commentId: number) => dataTaggedQueryKey<DeleteApiConversationByCommentIdData>([base, commentId]),
-        request: (commentId: number, params: RequestParams = {}) =>
-          this.request<DeleteApiConversationByCommentIdData>({
-            path: `/api/v1/conversation/${commentId}`,
-            method: 'DELETE',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Conversation and Comment
-     * @name PostApiConversationReactions
-     * @summary Add comment reactions with emoji
-     * @request POST:/api/v1/conversation/{comment_id}/reactions
-     */
-    postApiConversationReactions: () => {
-      const base = 'POST:/api/v1/conversation/{comment_id}/reactions' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiConversationReactionsData>([base]),
-        requestKey: (commentId: number) => dataTaggedQueryKey<PostApiConversationReactionsData>([base, commentId]),
-        request: (commentId: number, data: ReactionRequest, params: RequestParams = {}) =>
-          this.request<PostApiConversationReactionsData>({
-            path: `/api/v1/conversation/${commentId}/reactions`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -18012,6 +19507,7 @@ It's for local testing purposes.
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -18037,6 +19533,7 @@ It's for local testing purposes.
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -18062,393 +19559,7 @@ It's for local testing purposes.
             method: 'POST',
             body: data,
             type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Gpg Key
-     * @name PostApiGpgAdd
-     * @request POST:/api/v1/gpg/add
-     */
-    postApiGpgAdd: () => {
-      const base = 'POST:/api/v1/gpg/add' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiGpgAddData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiGpgAddData>([base]),
-        request: (data: NewGpgRequest, params: RequestParams = {}) =>
-          this.request<PostApiGpgAddData>({
-            path: `/api/v1/gpg/add`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Gpg Key
-     * @name GetApiGpgList
-     * @request GET:/api/v1/gpg/list
-     */
-    getApiGpgList: () => {
-      const base = 'GET:/api/v1/gpg/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiGpgListData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiGpgListData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiGpgListData>({
-            path: `/api/v1/gpg/list`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Gpg Key
-     * @name DeleteApiGpgRemove
-     * @request DELETE:/api/v1/gpg/remove
-     */
-    deleteApiGpgRemove: () => {
-      const base = 'DELETE:/api/v1/gpg/remove' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiGpgRemoveData>([base]),
-        requestKey: () => dataTaggedQueryKey<DeleteApiGpgRemoveData>([base]),
-        request: (data: RemoveGpgRequest, params: RequestParams = {}) =>
-          this.request<DeleteApiGpgRemoveData>({
-            path: `/api/v1/gpg/remove`,
-            method: 'DELETE',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueAssignees
-     * @summary Update issue related assignees
-     * @request POST:/api/v1/issue/assignees
-     */
-    postApiIssueAssignees: () => {
-      const base = 'POST:/api/v1/issue/assignees' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueAssigneesData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiIssueAssigneesData>([base]),
-        request: (data: AssigneeUpdatePayload, params: RequestParams = {}) =>
-          this.request<PostApiIssueAssigneesData>({
-            path: `/api/v1/issue/assignees`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name GetApiIssueIssueSuggester
-     * @summary Get issue suggester in comment
-     * @request GET:/api/v1/issue/issue_suggester
-     */
-    getApiIssueIssueSuggester: () => {
-      const base = 'GET:/api/v1/issue/issue_suggester' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiIssueIssueSuggesterData>([base]),
-        requestKey: (params: GetApiIssueIssueSuggesterParams) =>
-          dataTaggedQueryKey<GetApiIssueIssueSuggesterData>([base, params]),
-        request: (query: GetApiIssueIssueSuggesterParams, params: RequestParams = {}) =>
-          this.request<GetApiIssueIssueSuggesterData>({
-            path: `/api/v1/issue/issue_suggester`,
-            method: 'GET',
-            query: query,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueLabels
-     * @summary Update issue related labels
-     * @request POST:/api/v1/issue/labels
-     */
-    postApiIssueLabels: () => {
-      const base = 'POST:/api/v1/issue/labels' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueLabelsData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiIssueLabelsData>([base]),
-        request: (data: LabelUpdatePayload, params: RequestParams = {}) =>
-          this.request<PostApiIssueLabelsData>({
-            path: `/api/v1/issue/labels`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueList
-     * @summary Fetch Issue list
-     * @request POST:/api/v1/issue/list
-     */
-    postApiIssueList: () => {
-      const base = 'POST:/api/v1/issue/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueListData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiIssueListData>([base]),
-        request: (data: PageParamsListPayload, params: RequestParams = {}) =>
-          this.request<PostApiIssueListData>({
-            path: `/api/v1/issue/list`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueNew
-     * @summary New Issue
-     * @request POST:/api/v1/issue/new
-     */
-    postApiIssueNew: () => {
-      const base = 'POST:/api/v1/issue/new' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueNewData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiIssueNewData>([base]),
-        request: (data: NewIssue, params: RequestParams = {}) =>
-          this.request<PostApiIssueNewData>({
-            path: `/api/v1/issue/new`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueClose
-     * @summary Close an issue
-     * @request POST:/api/v1/issue/{link}/close
-     */
-    postApiIssueClose: () => {
-      const base = 'POST:/api/v1/issue/{link}/close' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueCloseData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiIssueCloseData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<PostApiIssueCloseData>({
-            path: `/api/v1/issue/${link}/close`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueComment
-     * @summary Add new comment on Issue
-     * @request POST:/api/v1/issue/{link}/comment
-     */
-    postApiIssueComment: () => {
-      const base = 'POST:/api/v1/issue/{link}/comment' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueCommentData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiIssueCommentData>([base, link]),
-        request: (link: string, data: ContentPayload, params: RequestParams = {}) =>
-          this.request<PostApiIssueCommentData>({
-            path: `/api/v1/issue/${link}/comment`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name GetApiIssueDetail
-     * @summary Get issue details
-     * @request GET:/api/v1/issue/{link}/detail
-     */
-    getApiIssueDetail: () => {
-      const base = 'GET:/api/v1/issue/{link}/detail' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiIssueDetailData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<GetApiIssueDetailData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<GetApiIssueDetailData>({
-            path: `/api/v1/issue/${link}/detail`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueReopen
-     * @summary Reopen an issue
-     * @request POST:/api/v1/issue/{link}/reopen
-     */
-    postApiIssueReopen: () => {
-      const base = 'POST:/api/v1/issue/{link}/reopen' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueReopenData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiIssueReopenData>([base, link]),
-        request: (link: string, params: RequestParams = {}) =>
-          this.request<PostApiIssueReopenData>({
-            path: `/api/v1/issue/${link}/reopen`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueTitle
-     * @summary Edit issue title
-     * @request POST:/api/v1/issue/{link}/title
-     */
-    postApiIssueTitle: () => {
-      const base = 'POST:/api/v1/issue/{link}/title' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueTitleData>([base]),
-        requestKey: (link: string) => dataTaggedQueryKey<PostApiIssueTitleData>([base, link]),
-        request: (link: string, data: ContentPayload, params: RequestParams = {}) =>
-          this.request<PostApiIssueTitleData>({
-            path: `/api/v1/issue/${link}/title`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Label Management
-     * @name PostApiLabelList
-     * @summary List label in page
-     * @request POST:/api/v1/label/list
-     */
-    postApiLabelList: () => {
-      const base = 'POST:/api/v1/label/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiLabelListData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiLabelListData>([base]),
-        request: (data: PageParamsString, params: RequestParams = {}) =>
-          this.request<PostApiLabelListData>({
-            path: `/api/v1/label/list`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Label Management
-     * @name PostApiLabelNew
-     * @summary New label
-     * @request POST:/api/v1/label/new
-     */
-    postApiLabelNew: () => {
-      const base = 'POST:/api/v1/label/new' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiLabelNewData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiLabelNewData>([base]),
-        request: (data: NewLabel, params: RequestParams = {}) =>
-          this.request<PostApiLabelNewData>({
-            path: `/api/v1/label/new`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Label Management
-     * @name GetApiLabelById
-     * @summary Fetch label details
-     * @request GET:/api/v1/label/{id}
-     */
-    getApiLabelById: () => {
-      const base = 'GET:/api/v1/label/{id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiLabelByIdData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<GetApiLabelByIdData>([base, id]),
-        request: (id: number, params: RequestParams = {}) =>
-          this.request<GetApiLabelByIdData>({
-            path: `/api/v1/label/${id}`,
-            method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -18473,177 +19584,58 @@ It's for local testing purposes.
             path: `/api/v1/latest-commit`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
     },
 
     /**
-     * @description List LFS locks. This handler is also available at `/info/lfs/locks` for Git LFS client compatibility.
+     * No description
      *
-     * @tags Git LFS
-     * @name GetApiLfsLocks
-     * @summary List LFS locks
-     * @request GET:/api/v1/lfs/locks
+     * @tags Code Preview
+     * @name GetApiTree
+     * @summary Get tree brief info
+     * @request GET:/api/v1/tree
      */
-    getApiLfsLocks: () => {
-      const base = 'GET:/api/v1/lfs/locks' as const
+    getApiTree: () => {
+      const base = 'GET:/api/v1/tree' as const
 
       return {
-        baseKey: dataTaggedQueryKey<GetApiLfsLocksData>([base]),
-        requestKey: (params: GetApiLfsLocksParams) => dataTaggedQueryKey<GetApiLfsLocksData>([base, params]),
-        request: (query: GetApiLfsLocksParams, params: RequestParams = {}) =>
-          this.request<GetApiLfsLocksData>({
-            path: `/api/v1/lfs/locks`,
+        baseKey: dataTaggedQueryKey<GetApiTreeData>([base]),
+        requestKey: (params: GetApiTreeParams) => dataTaggedQueryKey<GetApiTreeData>([base, params]),
+        request: (query: GetApiTreeParams, params: RequestParams = {}) =>
+          this.request<GetApiTreeData>({
+            path: `/api/v1/tree`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
     },
 
     /**
-     * @description Create an LFS lock. This handler is also available at `/info/lfs/locks` for Git LFS client compatibility.
+     * No description
      *
-     * @tags Git LFS
-     * @name PostApiLfsLocks
-     * @summary Create an LFS lock
-     * @request POST:/api/v1/lfs/locks
+     * @tags Code Preview
+     * @name GetApiTreeCommitInfo
+     * @summary List matching trees with commit msg by query
+     * @request GET:/api/v1/tree/commit-info
      */
-    postApiLfsLocks: () => {
-      const base = 'POST:/api/v1/lfs/locks' as const
+    getApiTreeCommitInfo: () => {
+      const base = 'GET:/api/v1/tree/commit-info' as const
 
       return {
-        baseKey: dataTaggedQueryKey<PostApiLfsLocksData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiLfsLocksData>([base]),
-        request: (data: LockRequest, params: RequestParams = {}) =>
-          this.request<PostApiLfsLocksData>({
-            path: `/api/v1/lfs/locks`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Verify LFS locks. This handler is also available at `/info/lfs/locks/verify` for Git LFS client compatibility.
-     *
-     * @tags Git LFS
-     * @name PostApiLfsLocksVerify
-     * @summary Verify LFS locks
-     * @request POST:/api/v1/lfs/locks/verify
-     */
-    postApiLfsLocksVerify: () => {
-      const base = 'POST:/api/v1/lfs/locks/verify' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiLfsLocksVerifyData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiLfsLocksVerifyData>([base]),
-        request: (data: VerifiableLockRequest, params: RequestParams = {}) =>
-          this.request<PostApiLfsLocksVerifyData>({
-            path: `/api/v1/lfs/locks/verify`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Delete an LFS lock. This handler is also available at `/info/lfs/locks/{id}/unlock` for Git LFS client compatibility.
-     *
-     * @tags Git LFS
-     * @name PostApiLfsLocksUnlock
-     * @summary Delete an LFS lock
-     * @request POST:/api/v1/lfs/locks/{id}/unlock
-     */
-    postApiLfsLocksUnlock: () => {
-      const base = 'POST:/api/v1/lfs/locks/{id}/unlock' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiLfsLocksUnlockData>([base]),
-        requestKey: (id: string) => dataTaggedQueryKey<PostApiLfsLocksUnlockData>([base, id]),
-        request: (id: string, data: UnlockRequest, params: RequestParams = {}) =>
-          this.request<PostApiLfsLocksUnlockData>({
-            path: `/api/v1/lfs/locks/${id}/unlock`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Process LFS batch request. This handler is also available at `/info/lfs/objects/batch` for Git LFS client compatibility.
-     *
-     * @tags Git LFS
-     * @name PostApiLfsObjectsBatch
-     * @summary Process LFS batch request
-     * @request POST:/api/v1/lfs/objects/batch
-     */
-    postApiLfsObjectsBatch: () => {
-      const base = 'POST:/api/v1/lfs/objects/batch' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiLfsObjectsBatchData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiLfsObjectsBatchData>([base]),
-        request: (data: BatchRequest, params: RequestParams = {}) =>
-          this.request<PostApiLfsObjectsBatchData>({
-            path: `/api/v1/lfs/objects/batch`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Download an LFS object. This handler is also available at `/info/lfs/objects/{object_id}` for Git LFS client compatibility.
-     *
-     * @tags Git LFS
-     * @name GetApiLfsObjectsByObjectId
-     * @summary Download an LFS object
-     * @request GET:/api/v1/lfs/objects/{object_id}
-     */
-    getApiLfsObjectsByObjectId: () => {
-      const base = 'GET:/api/v1/lfs/objects/{object_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiLfsObjectsByObjectIdData>([base]),
-        requestKey: (objectId: string) => dataTaggedQueryKey<GetApiLfsObjectsByObjectIdData>([base, objectId]),
-        request: (objectId: string, params: RequestParams = {}) =>
-          this.request<GetApiLfsObjectsByObjectIdData>({
-            path: `/api/v1/lfs/objects/${objectId}`,
+        baseKey: dataTaggedQueryKey<GetApiTreeCommitInfoData>([base]),
+        requestKey: (params: GetApiTreeCommitInfoParams) =>
+          dataTaggedQueryKey<GetApiTreeCommitInfoData>([base, params]),
+        request: (query: GetApiTreeCommitInfoParams, params: RequestParams = {}) =>
+          this.request<GetApiTreeCommitInfoData>({
+            path: `/api/v1/tree/commit-info`,
             method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Upload an LFS object. This handler is also available at `/info/lfs/objects/{object_id}` for Git LFS client compatibility.
-     *
-     * @tags Git LFS
-     * @name PutApiLfsObjectsByObjectId
-     * @summary Upload an LFS object
-     * @request PUT:/api/v1/lfs/objects/{object_id}
-     */
-    putApiLfsObjectsByObjectId: () => {
-      const base = 'PUT:/api/v1/lfs/objects/{object_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PutApiLfsObjectsByObjectIdData>([base]),
-        requestKey: (objectId: string) => dataTaggedQueryKey<PutApiLfsObjectsByObjectIdData>([base, objectId]),
-        request: (objectId: string, data: PutApiLfsObjectsByObjectIdPayload, params: RequestParams = {}) =>
-          this.request<PutApiLfsObjectsByObjectIdData>({
-            path: `/api/v1/lfs/objects/${objectId}`,
-            method: 'PUT',
-            body: data,
+            query: query,
+            format: 'json',
             ...params
           })
       }
@@ -18652,43 +19644,153 @@ It's for local testing purposes.
     /**
      * No description
      *
-     * @tags Merge Queue Management
-     * @name PostApiMergeQueueAdd
-     * @request POST:/api/v1/merge-queue/add
+     * @tags Code Preview
+     * @name GetApiTreeContentHash
+     * @summary Get tree content hash,the dir's hash as same as old,file's hash is the content hash
+     * @request GET:/api/v1/tree/content-hash
      */
-    postApiMergeQueueAdd: () => {
-      const base = 'POST:/api/v1/merge-queue/add' as const
+    getApiTreeContentHash: () => {
+      const base = 'GET:/api/v1/tree/content-hash' as const
 
       return {
-        baseKey: dataTaggedQueryKey<PostApiMergeQueueAddData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiMergeQueueAddData>([base]),
-        request: (data: AddToQueueRequest, params: RequestParams = {}) =>
-          this.request<PostApiMergeQueueAddData>({
-            path: `/api/v1/merge-queue/add`,
+        baseKey: dataTaggedQueryKey<GetApiTreeContentHashData>([base]),
+        requestKey: (params: GetApiTreeContentHashParams) =>
+          dataTaggedQueryKey<GetApiTreeContentHashData>([base, params]),
+        request: (query: GetApiTreeContentHashParams, params: RequestParams = {}) =>
+          this.request<GetApiTreeContentHashData>({
+            path: `/api/v1/tree/content-hash`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name GetApiTreeDirHash
+     * @summary return the dir's hash
+     * @request GET:/api/v1/tree/dir-hash
+     */
+    getApiTreeDirHash: () => {
+      const base = 'GET:/api/v1/tree/dir-hash' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiTreeDirHashData>([base]),
+        requestKey: (params: GetApiTreeDirHashParams) => dataTaggedQueryKey<GetApiTreeDirHashData>([base, params]),
+        request: (query: GetApiTreeDirHashParams, params: RequestParams = {}) =>
+          this.request<GetApiTreeDirHashData>({
+            path: `/api/v1/tree/dir-hash`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name GetApiTreePathCanClone
+     * @summary Check if a path can be cloned
+     * @request GET:/api/v1/tree/path-can-clone
+     */
+    getApiTreePathCanClone: () => {
+      const base = 'GET:/api/v1/tree/path-can-clone' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiTreePathCanCloneData>([base]),
+        requestKey: (params: GetApiTreePathCanCloneParams) =>
+          dataTaggedQueryKey<GetApiTreePathCanCloneData>([base, params]),
+        request: (query: GetApiTreePathCanCloneParams, params: RequestParams = {}) =>
+          this.request<GetApiTreePathCanCloneData>({
+            path: `/api/v1/tree/path-can-clone`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  automationIntegrations = {
+    /**
+     * @description List existing tokens for a bot (without plaintext).
+     *
+     * @tags Automation & Integrations
+     * @name GetApiBotsTokens
+     * @summary GET /api/v1/bots/{bot_id}/tokens
+     * @request GET:/api/v1/bots/{bot_id}/tokens
+     */
+    getApiBotsTokens: () => {
+      const base = 'GET:/api/v1/bots/{bot_id}/tokens' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiBotsTokensData>([base]),
+        requestKey: (params: GetApiBotsTokensParams) => dataTaggedQueryKey<GetApiBotsTokensData>([base, params]),
+        request: ({ botId, ...query }: GetApiBotsTokensParams, params: RequestParams = {}) =>
+          this.request<GetApiBotsTokensData>({
+            path: `/api/v1/bots/${botId}/tokens`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Create a new bot token. Only admins can perform this operation.
+     *
+     * @tags Automation & Integrations
+     * @name PostApiBotsTokens
+     * @summary POST /api/v1/bots/{bot_id}/tokens
+     * @request POST:/api/v1/bots/{bot_id}/tokens
+     */
+    postApiBotsTokens: () => {
+      const base = 'POST:/api/v1/bots/{bot_id}/tokens' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBotsTokensData>([base]),
+        requestKey: (params: PostApiBotsTokensParams) => dataTaggedQueryKey<PostApiBotsTokensData>([base, params]),
+        request: (
+          { botId, ...query }: PostApiBotsTokensParams,
+          data: CreateBotTokenRequest,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiBotsTokensData>({
+            path: `/api/v1/bots/${botId}/tokens`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
     },
 
     /**
-     * No description
+     * @description Revoke all tokens for a given bot. Idempotent.
      *
-     * @tags Merge Queue Management
-     * @name PostApiMergeQueueCancelAll
-     * @request POST:/api/v1/merge-queue/cancel-all
+     * @tags Automation & Integrations
+     * @name PostApiBotsTokensRevokeAll
+     * @summary POST /api/v1/bots/{bot_id}/tokens/revoke_all
+     * @request POST:/api/v1/bots/{bot_id}/tokens/revoke_all
      */
-    postApiMergeQueueCancelAll: () => {
-      const base = 'POST:/api/v1/merge-queue/cancel-all' as const
+    postApiBotsTokensRevokeAll: () => {
+      const base = 'POST:/api/v1/bots/{bot_id}/tokens/revoke_all' as const
 
       return {
-        baseKey: dataTaggedQueryKey<PostApiMergeQueueCancelAllData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiMergeQueueCancelAllData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<PostApiMergeQueueCancelAllData>({
-            path: `/api/v1/merge-queue/cancel-all`,
+        baseKey: dataTaggedQueryKey<PostApiBotsTokensRevokeAllData>([base]),
+        requestKey: (params: PostApiBotsTokensRevokeAllParams) =>
+          dataTaggedQueryKey<PostApiBotsTokensRevokeAllData>([base, params]),
+        request: ({ botId, ...query }: PostApiBotsTokensRevokeAllParams, params: RequestParams = {}) =>
+          this.request<PostApiBotsTokensRevokeAllData>({
+            path: `/api/v1/bots/${botId}/tokens/revoke_all`,
             method: 'POST',
             ...params
           })
@@ -18696,43 +19798,23 @@ It's for local testing purposes.
     },
 
     /**
-     * No description
+     * @description Revoke a single bot token. Idempotent.
      *
-     * @tags Merge Queue Management
-     * @name GetApiMergeQueueList
-     * @request GET:/api/v1/merge-queue/list
+     * @tags Automation & Integrations
+     * @name DeleteApiBotsTokensById
+     * @summary DELETE /api/v1/bots/{bot_id}/tokens/{id}
+     * @request DELETE:/api/v1/bots/{bot_id}/tokens/{id}
      */
-    getApiMergeQueueList: () => {
-      const base = 'GET:/api/v1/merge-queue/list' as const
+    deleteApiBotsTokensById: () => {
+      const base = 'DELETE:/api/v1/bots/{bot_id}/tokens/{id}' as const
 
       return {
-        baseKey: dataTaggedQueryKey<GetApiMergeQueueListData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiMergeQueueListData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiMergeQueueListData>({
-            path: `/api/v1/merge-queue/list`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Merge Queue Management
-     * @name DeleteApiMergeQueueRemoveByClLink
-     * @request DELETE:/api/v1/merge-queue/remove/{cl_link}
-     */
-    deleteApiMergeQueueRemoveByClLink: () => {
-      const base = 'DELETE:/api/v1/merge-queue/remove/{cl_link}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiMergeQueueRemoveByClLinkData>([base]),
-        requestKey: (clLink: string) => dataTaggedQueryKey<DeleteApiMergeQueueRemoveByClLinkData>([base, clLink]),
-        request: (clLink: string, params: RequestParams = {}) =>
-          this.request<DeleteApiMergeQueueRemoveByClLinkData>({
-            path: `/api/v1/merge-queue/remove/${clLink}`,
+        baseKey: dataTaggedQueryKey<DeleteApiBotsTokensByIdData>([base]),
+        requestKey: (params: DeleteApiBotsTokensByIdParams) =>
+          dataTaggedQueryKey<DeleteApiBotsTokensByIdData>([base, params]),
+        request: ({ botId, id, ...query }: DeleteApiBotsTokensByIdParams, params: RequestParams = {}) =>
+          this.request<DeleteApiBotsTokensByIdData>({
+            path: `/api/v1/bots/${botId}/tokens/${id}`,
             method: 'DELETE',
             ...params
           })
@@ -18742,20 +19824,50 @@ It's for local testing purposes.
     /**
      * No description
      *
-     * @tags Merge Queue Management
-     * @name PostApiMergeQueueRetryByClLink
-     * @request POST:/api/v1/merge-queue/retry/{cl_link}
+     * @tags Automation & Integrations
+     * @name GetApiBotsInstallations
+     * @summary Get installed bot
+     * @request GET:/api/v1/bots/{id}/installations
      */
-    postApiMergeQueueRetryByClLink: () => {
-      const base = 'POST:/api/v1/merge-queue/retry/{cl_link}' as const
+    getApiBotsInstallations: () => {
+      const base = 'GET:/api/v1/bots/{id}/installations' as const
 
       return {
-        baseKey: dataTaggedQueryKey<PostApiMergeQueueRetryByClLinkData>([base]),
-        requestKey: (clLink: string) => dataTaggedQueryKey<PostApiMergeQueueRetryByClLinkData>([base, clLink]),
-        request: (clLink: string, params: RequestParams = {}) =>
-          this.request<PostApiMergeQueueRetryByClLinkData>({
-            path: `/api/v1/merge-queue/retry/${clLink}`,
+        baseKey: dataTaggedQueryKey<GetApiBotsInstallationsData>([base]),
+        requestKey: (params: GetApiBotsInstallationsParams) =>
+          dataTaggedQueryKey<GetApiBotsInstallationsData>([base, params]),
+        request: ({ id, ...query }: GetApiBotsInstallationsParams, params: RequestParams = {}) =>
+          this.request<GetApiBotsInstallationsData>({
+            path: `/api/v1/bots/${id}/installations`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name PostApiBotsInstallations
+     * @summary Install bot
+     * @request POST:/api/v1/bots/{id}/installations
+     */
+    postApiBotsInstallations: () => {
+      const base = 'POST:/api/v1/bots/{id}/installations' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBotsInstallationsData>([base]),
+        requestKey: (params: PostApiBotsInstallationsParams) =>
+          dataTaggedQueryKey<PostApiBotsInstallationsData>([base, params]),
+        request: ({ id, ...query }: PostApiBotsInstallationsParams, data: InstallBotReq, params: RequestParams = {}) =>
+          this.request<PostApiBotsInstallationsData>({
+            path: `/api/v1/bots/${id}/installations`,
             method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -18764,20 +19876,28 @@ It's for local testing purposes.
     /**
      * No description
      *
-     * @tags Merge Queue Management
-     * @name GetApiMergeQueueStats
-     * @request GET:/api/v1/merge-queue/stats
+     * @tags Automation & Integrations
+     * @name DeleteApiBotsInstallationsByInstallationId
+     * @request DELETE:/api/v1/bots/{id}/installations/{installation_id}
      */
-    getApiMergeQueueStats: () => {
-      const base = 'GET:/api/v1/merge-queue/stats' as const
+    deleteApiBotsInstallationsByInstallationId: () => {
+      const base = 'DELETE:/api/v1/bots/{id}/installations/{installation_id}' as const
 
       return {
-        baseKey: dataTaggedQueryKey<GetApiMergeQueueStatsData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiMergeQueueStatsData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiMergeQueueStatsData>({
-            path: `/api/v1/merge-queue/stats`,
-            method: 'GET',
+        baseKey: dataTaggedQueryKey<DeleteApiBotsInstallationsByInstallationIdData>([base]),
+        requestKey: (params: DeleteApiBotsInstallationsByInstallationIdParams) =>
+          dataTaggedQueryKey<DeleteApiBotsInstallationsByInstallationIdData>([base, params]),
+        request: (
+          { id, installationId, ...query }: DeleteApiBotsInstallationsByInstallationIdParams,
+          data: InstallationTargetType,
+          params: RequestParams = {}
+        ) =>
+          this.request<DeleteApiBotsInstallationsByInstallationIdData>({
+            path: `/api/v1/bots/${id}/installations/${installationId}`,
+            method: 'DELETE',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -18786,68 +19906,28 @@ It's for local testing purposes.
     /**
      * No description
      *
-     * @tags Merge Queue Management
-     * @name GetApiMergeQueueStatusByClLink
-     * @request GET:/api/v1/merge-queue/status/{cl_link}
+     * @tags Automation & Integrations
+     * @name PatchApiBotsInstallationsByInstallationId
+     * @request PATCH:/api/v1/bots/{id}/installations/{installation_id}
      */
-    getApiMergeQueueStatusByClLink: () => {
-      const base = 'GET:/api/v1/merge-queue/status/{cl_link}' as const
+    patchApiBotsInstallationsByInstallationId: () => {
+      const base = 'PATCH:/api/v1/bots/{id}/installations/{installation_id}' as const
 
       return {
-        baseKey: dataTaggedQueryKey<GetApiMergeQueueStatusByClLinkData>([base]),
-        requestKey: (clLink: string) => dataTaggedQueryKey<GetApiMergeQueueStatusByClLinkData>([base, clLink]),
-        request: (clLink: string, params: RequestParams = {}) =>
-          this.request<GetApiMergeQueueStatusByClLinkData>({
-            path: `/api/v1/merge-queue/status/${clLink}`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags sync-notes-state
-     * @name GetApiOrganizationsNotesSyncState
-     * @request GET:/api/v1/organizations/{org_slug}/notes/{id}/sync_state
-     */
-    getApiOrganizationsNotesSyncState: () => {
-      const base = 'GET:/api/v1/organizations/{org_slug}/notes/{id}/sync_state' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiOrganizationsNotesSyncStateData>([base]),
-        requestKey: (orgSlug: number, id: string) =>
-          dataTaggedQueryKey<GetApiOrganizationsNotesSyncStateData>([base, orgSlug, id]),
-        request: (orgSlug: number, id: string, params: RequestParams = {}) =>
-          this.request<GetApiOrganizationsNotesSyncStateData>({
-            path: `/api/v1/organizations/${orgSlug}/notes/${id}/sync_state`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags sync-notes-state
-     * @name PatchApiOrganizationsNotesSyncState
-     * @request PATCH:/api/v1/organizations/{org_slug}/notes/{id}/sync_state
-     */
-    patchApiOrganizationsNotesSyncState: () => {
-      const base = 'PATCH:/api/v1/organizations/{org_slug}/notes/{id}/sync_state' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PatchApiOrganizationsNotesSyncStateData>([base]),
-        requestKey: (orgSlug: number, id: string) =>
-          dataTaggedQueryKey<PatchApiOrganizationsNotesSyncStateData>([base, orgSlug, id]),
-        request: (orgSlug: number, id: string, data: NoteUpdateRequest, params: RequestParams = {}) =>
-          this.request<PatchApiOrganizationsNotesSyncStateData>({
-            path: `/api/v1/organizations/${orgSlug}/notes/${id}/sync_state`,
+        baseKey: dataTaggedQueryKey<PatchApiBotsInstallationsByInstallationIdData>([base]),
+        requestKey: (params: PatchApiBotsInstallationsByInstallationIdParams) =>
+          dataTaggedQueryKey<PatchApiBotsInstallationsByInstallationIdData>([base, params]),
+        request: (
+          { id, installationId, ...query }: PatchApiBotsInstallationsByInstallationIdParams,
+          data: ChangeInstallationStatus,
+          params: RequestParams = {}
+        ) =>
+          this.request<PatchApiBotsInstallationsByInstallationIdData>({
+            path: `/api/v1/bots/${id}/installations/${installationId}`,
             method: 'PATCH',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -18873,6 +19953,7 @@ It's for local testing purposes.
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -18891,11 +19972,13 @@ It's for local testing purposes.
 
       return {
         baseKey: dataTaggedQueryKey<GetApiOrionRunnersByIdData>([base]),
-        requestKey: (id: string) => dataTaggedQueryKey<GetApiOrionRunnersByIdData>([base, id]),
-        request: (id: string, params: RequestParams = {}) =>
+        requestKey: (params: GetApiOrionRunnersByIdParams) =>
+          dataTaggedQueryKey<GetApiOrionRunnersByIdData>([base, params]),
+        request: ({ id, ...query }: GetApiOrionRunnersByIdParams, params: RequestParams = {}) =>
           this.request<GetApiOrionRunnersByIdData>({
             path: `/api/v1/orion/runners/${id}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -18914,8 +19997,9 @@ It's for local testing purposes.
 
       return {
         baseKey: dataTaggedQueryKey<GetApiOrionRunnersLogsStreamData>([base]),
-        requestKey: (id: string) => dataTaggedQueryKey<GetApiOrionRunnersLogsStreamData>([base, id]),
-        request: (id: string, params: RequestParams = {}) =>
+        requestKey: (params: GetApiOrionRunnersLogsStreamParams) =>
+          dataTaggedQueryKey<GetApiOrionRunnersLogsStreamData>([base, params]),
+        request: ({ id, ...query }: GetApiOrionRunnersLogsStreamParams, params: RequestParams = {}) =>
           this.request<GetApiOrionRunnersLogsStreamData>({
             path: `/api/v1/orion/runners/${id}/logs/stream`,
             method: 'GET',
@@ -18925,28 +20009,2006 @@ It's for local testing purposes.
     },
 
     /**
-     * No description
+     * @description Creates a new build trigger with automatic ref resolution. Supports branch names, tag names, commit hashes, or CL links. Defaults to "main" branch if no ref is specified.
      *
-     * @tags Group Permission Management
-     * @name GetApiPermissionsMeByResourceId
-     * @request GET:/api/v1/permissions/me/{resource_type}/{resource_id}
+     * @tags Automation & Integrations
+     * @name PostApiTriggers
+     * @summary Create a new build trigger
+     * @request POST:/api/v1/triggers
      */
-    getApiPermissionsMeByResourceId: () => {
-      const base = 'GET:/api/v1/permissions/me/{resource_type}/{resource_id}' as const
+    postApiTriggers: () => {
+      const base = 'POST:/api/v1/triggers' as const
 
       return {
-        baseKey: dataTaggedQueryKey<GetApiPermissionsMeByResourceIdData>([base]),
-        requestKey: (resourceType: string, resourceId: string) =>
-          dataTaggedQueryKey<GetApiPermissionsMeByResourceIdData>([base, resourceType, resourceId]),
-        request: (resourceType: string, resourceId: string, params: RequestParams = {}) =>
-          this.request<GetApiPermissionsMeByResourceIdData>({
-            path: `/api/v1/permissions/me/${resourceType}/${resourceId}`,
+        baseKey: dataTaggedQueryKey<PostApiTriggersData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiTriggersData>([base]),
+        request: (data: CreateTriggerRequest, params: RequestParams = {}) =>
+          this.request<PostApiTriggersData>({
+            path: `/api/v1/triggers`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Returns build triggers with pagination and optional filters. Supports filtering by repository, trigger type, source, user, and time range. This endpoint follows the project's standard Google-style API pattern: - Uses POST method for complex query parameters - Accepts PageParams with pagination and filter parameters - Returns CommonPage with items and total count
+     *
+     * @tags Automation & Integrations
+     * @name PostApiTriggersList
+     * @summary List build triggers with filters
+     * @request POST:/api/v1/triggers/list
+     */
+    postApiTriggersList: () => {
+      const base = 'POST:/api/v1/triggers/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiTriggersListData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiTriggersListData>([base]),
+        request: (data: PageParamsListTriggersParams, params: RequestParams = {}) =>
+          this.request<PostApiTriggersListData>({
+            path: `/api/v1/triggers/list`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Returns complete details about a specific trigger including: - Trigger metadata (type, source, time) - Repository and commit information - Ref information (branch/tag name if applicable) - Build parameters
+     *
+     * @tags Automation & Integrations
+     * @name GetApiTriggersById
+     * @summary Get a specific build trigger by ID
+     * @request GET:/api/v1/triggers/{id}
+     */
+    getApiTriggersById: () => {
+      const base = 'GET:/api/v1/triggers/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiTriggersByIdData>([base]),
+        requestKey: (params: GetApiTriggersByIdParams) => dataTaggedQueryKey<GetApiTriggersByIdData>([base, params]),
+        request: ({ id, ...query }: GetApiTriggersByIdParams, params: RequestParams = {}) =>
+          this.request<GetApiTriggersByIdData>({
+            path: `/api/v1/triggers/${id}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Creates a new trigger that retries a previous build. The new trigger will use the same repository, commit, and parameters as the original trigger.
+     *
+     * @tags Automation & Integrations
+     * @name PostApiTriggersRetry
+     * @summary Retry a specific build trigger
+     * @request POST:/api/v1/triggers/{id}/retry
+     */
+    postApiTriggersRetry: () => {
+      const base = 'POST:/api/v1/triggers/{id}/retry' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiTriggersRetryData>([base]),
+        requestKey: (params: PostApiTriggersRetryParams) =>
+          dataTaggedQueryKey<PostApiTriggersRetryData>([base, params]),
+        request: ({ id, ...query }: PostApiTriggersRetryParams, params: RequestParams = {}) =>
+          this.request<PostApiTriggersRetryData>({
+            path: `/api/v1/triggers/${id}/retry`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name GetApiWebhooks
+     * @summary List webhooks
+     * @request GET:/api/v1/webhooks
+     */
+    getApiWebhooks: () => {
+      const base = 'GET:/api/v1/webhooks' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiWebhooksData>([base]),
+        requestKey: (params: GetApiWebhooksParams) => dataTaggedQueryKey<GetApiWebhooksData>([base, params]),
+        request: (query: GetApiWebhooksParams, params: RequestParams = {}) =>
+          this.request<GetApiWebhooksData>({
+            path: `/api/v1/webhooks`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name PostApiWebhooks
+     * @summary Create a webhook
+     * @request POST:/api/v1/webhooks
+     */
+    postApiWebhooks: () => {
+      const base = 'POST:/api/v1/webhooks' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiWebhooksData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiWebhooksData>([base]),
+        request: (data: CreateWebhookRequest, params: RequestParams = {}) =>
+          this.request<PostApiWebhooksData>({
+            path: `/api/v1/webhooks`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name DeleteApiWebhooksById
+     * @summary Delete a webhook
+     * @request DELETE:/api/v1/webhooks/{id}
+     */
+    deleteApiWebhooksById: () => {
+      const base = 'DELETE:/api/v1/webhooks/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiWebhooksByIdData>([base]),
+        requestKey: (params: DeleteApiWebhooksByIdParams) =>
+          dataTaggedQueryKey<DeleteApiWebhooksByIdData>([base, params]),
+        request: ({ id, ...query }: DeleteApiWebhooksByIdParams, params: RequestParams = {}) =>
+          this.request<DeleteApiWebhooksByIdData>({
+            path: `/api/v1/webhooks/${id}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  buckUploadApi = {
+    /**
+     * @description Creates a new upload session and pre-creates a Draft CL.
+     *
+     * @tags Buck Upload API
+     * @name PostApiBuckSessionStart
+     * @summary Create upload session
+     * @request POST:/api/v1/buck/session/start
+     */
+    postApiBuckSessionStart: () => {
+      const base = 'POST:/api/v1/buck/session/start' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBuckSessionStartData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiBuckSessionStartData>([base]),
+        request: (data: CreateSessionPayload, params: RequestParams = {}) =>
+          this.request<PostApiBuckSessionStartData>({
+            path: `/api/v1/buck/session/start`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Complete the upload session, create Git commit, and activate CL. Returns immediately - CI build is triggered asynchronously. Request body is optional. Commit message is read from session.
+     *
+     * @tags Buck Upload API
+     * @name PostApiBuckSessionComplete
+     * @summary Complete upload
+     * @request POST:/api/v1/buck/session/{cl_link}/complete
+     */
+    postApiBuckSessionComplete: () => {
+      const base = 'POST:/api/v1/buck/session/{cl_link}/complete' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBuckSessionCompleteData>([base]),
+        requestKey: (params: PostApiBuckSessionCompleteParams) =>
+          dataTaggedQueryKey<PostApiBuckSessionCompleteData>([base, params]),
+        request: (
+          { clLink, ...query }: PostApiBuckSessionCompleteParams,
+          data: PostApiBuckSessionCompletePayload,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiBuckSessionCompleteData>({
+            path: `/api/v1/buck/session/${clLink}/complete`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Upload a single file content. Can be called concurrently for different files.
+     *
+     * @tags Buck Upload API
+     * @name PostApiBuckSessionFile
+     * @summary Upload file
+     * @request POST:/api/v1/buck/session/{cl_link}/file
+     */
+    postApiBuckSessionFile: () => {
+      const base = 'POST:/api/v1/buck/session/{cl_link}/file' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBuckSessionFileData>([base]),
+        requestKey: (params: PostApiBuckSessionFileParams) =>
+          dataTaggedQueryKey<PostApiBuckSessionFileData>([base, params]),
+        request: ({ clLink, ...query }: PostApiBuckSessionFileParams, params: RequestParams = {}) =>
+          this.request<PostApiBuckSessionFileData>({
+            path: `/api/v1/buck/session/${clLink}/file`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Submit file manifest and get list of files that need to be uploaded.
+     *
+     * @tags Buck Upload API
+     * @name PostApiBuckSessionManifest
+     * @summary Upload file manifest
+     * @request POST:/api/v1/buck/session/{cl_link}/manifest
+     */
+    postApiBuckSessionManifest: () => {
+      const base = 'POST:/api/v1/buck/session/{cl_link}/manifest' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBuckSessionManifestData>([base]),
+        requestKey: (params: PostApiBuckSessionManifestParams) =>
+          dataTaggedQueryKey<PostApiBuckSessionManifestData>([base, params]),
+        request: (
+          { clLink, ...query }: PostApiBuckSessionManifestParams,
+          data: ManifestPayload,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiBuckSessionManifestData>({
+            path: `/api/v1/buck/session/${clLink}/manifest`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  changeList = {
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClAssignees
+     * @summary Update CL related assignees
+     * @request POST:/api/v1/cl/assignees
+     */
+    postApiClAssignees: () => {
+      const base = 'POST:/api/v1/cl/assignees' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClAssigneesData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiClAssigneesData>([base]),
+        request: (data: AssigneeUpdatePayload, params: RequestParams = {}) =>
+          this.request<PostApiClAssigneesData>({
+            path: `/api/v1/cl/assignees`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClLabels
+     * @summary Update cl related labels
+     * @request POST:/api/v1/cl/labels
+     */
+    postApiClLabels: () => {
+      const base = 'POST:/api/v1/cl/labels' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClLabelsData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiClLabelsData>([base]),
+        request: (data: LabelUpdatePayload, params: RequestParams = {}) =>
+          this.request<PostApiClLabelsData>({
+            path: `/api/v1/cl/labels`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClList
+     * @summary Fetch CL list
+     * @request POST:/api/v1/cl/list
+     */
+    postApiClList: () => {
+      const base = 'POST:/api/v1/cl/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClListData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiClListData>([base]),
+        request: (data: PageParamsListPayload, params: RequestParams = {}) =>
+          this.request<PostApiClListData>({
+            path: `/api/v1/cl/list`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClClose
+     * @summary Close Change List
+     * @request POST:/api/v1/cl/{link}/close
+     */
+    postApiClClose: () => {
+      const base = 'POST:/api/v1/cl/{link}/close' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClCloseData>([base]),
+        requestKey: (params: PostApiClCloseParams) => dataTaggedQueryKey<PostApiClCloseData>([base, params]),
+        request: ({ link, ...query }: PostApiClCloseParams, params: RequestParams = {}) =>
+          this.request<PostApiClCloseData>({
+            path: `/api/v1/cl/${link}/close`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClComment
+     * @summary Add new comment on Change List
+     * @request POST:/api/v1/cl/{link}/comment
+     */
+    postApiClComment: () => {
+      const base = 'POST:/api/v1/cl/{link}/comment' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClCommentData>([base]),
+        requestKey: (params: PostApiClCommentParams) => dataTaggedQueryKey<PostApiClCommentData>([base, params]),
+        request: ({ link, ...query }: PostApiClCommentParams, data: ContentPayload, params: RequestParams = {}) =>
+          this.request<PostApiClCommentData>({
+            path: `/api/v1/cl/${link}/comment`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name GetApiClDetail
+     * @summary Get change list details
+     * @request GET:/api/v1/cl/{link}/detail
+     */
+    getApiClDetail: () => {
+      const base = 'GET:/api/v1/cl/{link}/detail' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiClDetailData>([base]),
+        requestKey: (params: GetApiClDetailParams) => dataTaggedQueryKey<GetApiClDetailData>([base, params]),
+        request: ({ link, ...query }: GetApiClDetailParams, params: RequestParams = {}) =>
+          this.request<GetApiClDetailData>({
+            path: `/api/v1/cl/${link}/detail`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClFilesChanged
+     * @summary Get Change List file changed list in Pagination
+     * @request POST:/api/v1/cl/{link}/files-changed
+     */
+    postApiClFilesChanged: () => {
+      const base = 'POST:/api/v1/cl/{link}/files-changed' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClFilesChangedData>([base]),
+        requestKey: (params: PostApiClFilesChangedParams) =>
+          dataTaggedQueryKey<PostApiClFilesChangedData>([base, params]),
+        request: (
+          { link, ...query }: PostApiClFilesChangedParams,
+          data: PageParamsString,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiClFilesChangedData>({
+            path: `/api/v1/cl/${link}/files-changed`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name GetApiClFilesList
+     * @summary Get Change List file list
+     * @request GET:/api/v1/cl/{link}/files-list
+     */
+    getApiClFilesList: () => {
+      const base = 'GET:/api/v1/cl/{link}/files-list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiClFilesListData>([base]),
+        requestKey: (params: GetApiClFilesListParams) => dataTaggedQueryKey<GetApiClFilesListData>([base, params]),
+        request: ({ link, ...query }: GetApiClFilesListParams, params: RequestParams = {}) =>
+          this.request<GetApiClFilesListData>({
+            path: `/api/v1/cl/${link}/files-list`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClMerge
+     * @summary Approve Change List
+     * @request POST:/api/v1/cl/{link}/merge
+     */
+    postApiClMerge: () => {
+      const base = 'POST:/api/v1/cl/{link}/merge' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClMergeData>([base]),
+        requestKey: (params: PostApiClMergeParams) => dataTaggedQueryKey<PostApiClMergeData>([base, params]),
+        request: ({ link, ...query }: PostApiClMergeParams, params: RequestParams = {}) =>
+          this.request<PostApiClMergeData>({
+            path: `/api/v1/cl/${link}/merge`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name GetApiClMergeBox
+     * @summary Get Merge Box to check merge status
+     * @request GET:/api/v1/cl/{link}/merge-box
+     */
+    getApiClMergeBox: () => {
+      const base = 'GET:/api/v1/cl/{link}/merge-box' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiClMergeBoxData>([base]),
+        requestKey: (params: GetApiClMergeBoxParams) => dataTaggedQueryKey<GetApiClMergeBoxData>([base, params]),
+        request: ({ link, ...query }: GetApiClMergeBoxParams, params: RequestParams = {}) =>
+          this.request<GetApiClMergeBoxData>({
+            path: `/api/v1/cl/${link}/merge-box`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClMergeNoAuth
+     * @summary Change List without authentication It's for local testing purposes.
+     * @request POST:/api/v1/cl/{link}/merge-no-auth
+     */
+    postApiClMergeNoAuth: () => {
+      const base = 'POST:/api/v1/cl/{link}/merge-no-auth' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClMergeNoAuthData>([base]),
+        requestKey: (params: PostApiClMergeNoAuthParams) =>
+          dataTaggedQueryKey<PostApiClMergeNoAuthData>([base, params]),
+        request: ({ link, ...query }: PostApiClMergeNoAuthParams, params: RequestParams = {}) =>
+          this.request<PostApiClMergeNoAuthData>({
+            path: `/api/v1/cl/${link}/merge-no-auth`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name GetApiClMuiTree
+     * @request GET:/api/v1/cl/{link}/mui-tree
+     */
+    getApiClMuiTree: () => {
+      const base = 'GET:/api/v1/cl/{link}/mui-tree' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiClMuiTreeData>([base]),
+        requestKey: (params: GetApiClMuiTreeParams) => dataTaggedQueryKey<GetApiClMuiTreeData>([base, params]),
+        request: ({ link, ...query }: GetApiClMuiTreeParams, params: RequestParams = {}) =>
+          this.request<GetApiClMuiTreeData>({
+            path: `/api/v1/cl/${link}/mui-tree`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClReopen
+     * @summary Reopen Change List
+     * @request POST:/api/v1/cl/{link}/reopen
+     */
+    postApiClReopen: () => {
+      const base = 'POST:/api/v1/cl/{link}/reopen' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClReopenData>([base]),
+        requestKey: (params: PostApiClReopenParams) => dataTaggedQueryKey<PostApiClReopenData>([base, params]),
+        request: ({ link, ...query }: PostApiClReopenParams, params: RequestParams = {}) =>
+          this.request<PostApiClReopenData>({
+            path: `/api/v1/cl/${link}/reopen`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClReviewResolve
+     * @request POST:/api/v1/cl/{link}/review/resolve
+     */
+    postApiClReviewResolve: () => {
+      const base = 'POST:/api/v1/cl/{link}/review/resolve' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClReviewResolveData>([base]),
+        requestKey: (params: PostApiClReviewResolveParams) =>
+          dataTaggedQueryKey<PostApiClReviewResolveData>([base, params]),
+        request: (
+          { link, ...query }: PostApiClReviewResolveParams,
+          data: ChangeReviewStatePayload,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiClReviewResolveData>({
+            path: `/api/v1/cl/${link}/review/resolve`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClReviewerApprove
+     * @summary Change the reviewer approval state
+     * @request POST:/api/v1/cl/{link}/reviewer/approve
+     */
+    postApiClReviewerApprove: () => {
+      const base = 'POST:/api/v1/cl/{link}/reviewer/approve' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClReviewerApproveData>([base]),
+        requestKey: (params: PostApiClReviewerApproveParams) =>
+          dataTaggedQueryKey<PostApiClReviewerApproveData>([base, params]),
+        request: (
+          { link, ...query }: PostApiClReviewerApproveParams,
+          data: ChangeReviewerStatePayload,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiClReviewerApproveData>({
+            path: `/api/v1/cl/${link}/reviewer/approve`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name GetApiClReviewers
+     * @request GET:/api/v1/cl/{link}/reviewers
+     */
+    getApiClReviewers: () => {
+      const base = 'GET:/api/v1/cl/{link}/reviewers' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiClReviewersData>([base]),
+        requestKey: (params: GetApiClReviewersParams) => dataTaggedQueryKey<GetApiClReviewersData>([base, params]),
+        request: ({ link, ...query }: GetApiClReviewersParams, params: RequestParams = {}) =>
+          this.request<GetApiClReviewersData>({
+            path: `/api/v1/cl/${link}/reviewers`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClReviewers
+     * @request POST:/api/v1/cl/{link}/reviewers
+     */
+    postApiClReviewers: () => {
+      const base = 'POST:/api/v1/cl/{link}/reviewers' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClReviewersData>([base]),
+        requestKey: (params: PostApiClReviewersParams) => dataTaggedQueryKey<PostApiClReviewersData>([base, params]),
+        request: ({ link, ...query }: PostApiClReviewersParams, data: ReviewerPayload, params: RequestParams = {}) =>
+          this.request<PostApiClReviewersData>({
+            path: `/api/v1/cl/${link}/reviewers`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name DeleteApiClReviewers
+     * @request DELETE:/api/v1/cl/{link}/reviewers
+     */
+    deleteApiClReviewers: () => {
+      const base = 'DELETE:/api/v1/cl/{link}/reviewers' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiClReviewersData>([base]),
+        requestKey: (params: DeleteApiClReviewersParams) =>
+          dataTaggedQueryKey<DeleteApiClReviewersData>([base, params]),
+        request: ({ link, ...query }: DeleteApiClReviewersParams, data: ReviewerPayload, params: RequestParams = {}) =>
+          this.request<DeleteApiClReviewersData>({
+            path: `/api/v1/cl/${link}/reviewers`,
+            method: 'DELETE',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClStatus
+     * @summary Update CL status (Draft or Open)
+     * @request POST:/api/v1/cl/{link}/status
+     */
+    postApiClStatus: () => {
+      const base = 'POST:/api/v1/cl/{link}/status' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClStatusData>([base]),
+        requestKey: (params: PostApiClStatusParams) => dataTaggedQueryKey<PostApiClStatusData>([base, params]),
+        request: ({ link, ...query }: PostApiClStatusParams, data: UpdateClStatusPayload, params: RequestParams = {}) =>
+          this.request<PostApiClStatusData>({
+            path: `/api/v1/cl/${link}/status`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClTitle
+     * @summary Edit CL title
+     * @request POST:/api/v1/cl/{link}/title
+     */
+    postApiClTitle: () => {
+      const base = 'POST:/api/v1/cl/{link}/title' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClTitleData>([base]),
+        requestKey: (params: PostApiClTitleParams) => dataTaggedQueryKey<PostApiClTitleData>([base, params]),
+        request: ({ link, ...query }: PostApiClTitleParams, data: ContentPayload, params: RequestParams = {}) =>
+          this.request<PostApiClTitleData>({
+            path: `/api/v1/cl/${link}/title`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClUpdateBranch
+     * @summary Update Branch for Change List
+     * @request POST:/api/v1/cl/{link}/update-branch
+     */
+    postApiClUpdateBranch: () => {
+      const base = 'POST:/api/v1/cl/{link}/update-branch' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClUpdateBranchData>([base]),
+        requestKey: (params: PostApiClUpdateBranchParams) =>
+          dataTaggedQueryKey<PostApiClUpdateBranchData>([base, params]),
+        request: ({ link, ...query }: PostApiClUpdateBranchParams, params: RequestParams = {}) =>
+          this.request<PostApiClUpdateBranchData>({
+            path: `/api/v1/cl/${link}/update-branch`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name GetApiClUpdateStatus
+     * @summary Get Update Branch status
+     * @request GET:/api/v1/cl/{link}/update-status
+     */
+    getApiClUpdateStatus: () => {
+      const base = 'GET:/api/v1/cl/{link}/update-status' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiClUpdateStatusData>([base]),
+        requestKey: (params: GetApiClUpdateStatusParams) =>
+          dataTaggedQueryKey<GetApiClUpdateStatusData>([base, params]),
+        request: ({ link, ...query }: GetApiClUpdateStatusParams, params: RequestParams = {}) =>
+          this.request<GetApiClUpdateStatusData>({
+            path: `/api/v1/cl/${link}/update-status`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  codeReview = {
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name DeleteApiCodeReviewCommentByCommentId
+     * @summary Delete a code review comment
+     * @request DELETE:/api/v1/code_review/comment/{comment_id}
+     */
+    deleteApiCodeReviewCommentByCommentId: () => {
+      const base = 'DELETE:/api/v1/code_review/comment/{comment_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiCodeReviewCommentByCommentIdData>([base]),
+        requestKey: (params: DeleteApiCodeReviewCommentByCommentIdParams) =>
+          dataTaggedQueryKey<DeleteApiCodeReviewCommentByCommentIdData>([base, params]),
+        request: ({ commentId, ...query }: DeleteApiCodeReviewCommentByCommentIdParams, params: RequestParams = {}) =>
+          this.request<DeleteApiCodeReviewCommentByCommentIdData>({
+            path: `/api/v1/code_review/comment/${commentId}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name DeleteApiCodeReviewThreadByThreadId
+     * @summary Delete a code review thread and its comments
+     * @request DELETE:/api/v1/code_review/thread/{thread_id}
+     */
+    deleteApiCodeReviewThreadByThreadId: () => {
+      const base = 'DELETE:/api/v1/code_review/thread/{thread_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiCodeReviewThreadByThreadIdData>([base]),
+        requestKey: (params: DeleteApiCodeReviewThreadByThreadIdParams) =>
+          dataTaggedQueryKey<DeleteApiCodeReviewThreadByThreadIdData>([base, params]),
+        request: ({ threadId, ...query }: DeleteApiCodeReviewThreadByThreadIdParams, params: RequestParams = {}) =>
+          this.request<DeleteApiCodeReviewThreadByThreadIdData>({
+            path: `/api/v1/code_review/thread/${threadId}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name PostApiCodeReviewUpdate
+     * @summary Update a code review comment
+     * @request POST:/api/v1/code_review/{comment_id}/update
+     */
+    postApiCodeReviewUpdate: () => {
+      const base = 'POST:/api/v1/code_review/{comment_id}/update' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiCodeReviewUpdateData>([base]),
+        requestKey: (params: PostApiCodeReviewUpdateParams) =>
+          dataTaggedQueryKey<PostApiCodeReviewUpdateData>([base, params]),
+        request: (
+          { commentId, ...query }: PostApiCodeReviewUpdateParams,
+          data: UpdateCommentRequest,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiCodeReviewUpdateData>({
+            path: `/api/v1/code_review/${commentId}/update`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name PostApiCodeReviewCommentInit
+     * @summary Initialize a code review comment in a new thread
+     * @request POST:/api/v1/code_review/{link}/comment/init
+     */
+    postApiCodeReviewCommentInit: () => {
+      const base = 'POST:/api/v1/code_review/{link}/comment/init' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiCodeReviewCommentInitData>([base]),
+        requestKey: (params: PostApiCodeReviewCommentInitParams) =>
+          dataTaggedQueryKey<PostApiCodeReviewCommentInitData>([base, params]),
+        request: (
+          { link, ...query }: PostApiCodeReviewCommentInitParams,
+          data: InitializeCommentRequest,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiCodeReviewCommentInitData>({
+            path: `/api/v1/code_review/${link}/comment/init`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name GetApiCodeReviewComments
+     * @summary List code review comments
+     * @request GET:/api/v1/code_review/{link}/comments
+     */
+    getApiCodeReviewComments: () => {
+      const base = 'GET:/api/v1/code_review/{link}/comments' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiCodeReviewCommentsData>([base]),
+        requestKey: (params: GetApiCodeReviewCommentsParams) =>
+          dataTaggedQueryKey<GetApiCodeReviewCommentsData>([base, params]),
+        request: ({ link, ...query }: GetApiCodeReviewCommentsParams, params: RequestParams = {}) =>
+          this.request<GetApiCodeReviewCommentsData>({
+            path: `/api/v1/code_review/${link}/comments`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name PostApiCodeReviewCommentReply
+     * @summary Reply to a code review comment
+     * @request POST:/api/v1/code_review/{thread_id}/comment/reply
+     */
+    postApiCodeReviewCommentReply: () => {
+      const base = 'POST:/api/v1/code_review/{thread_id}/comment/reply' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiCodeReviewCommentReplyData>([base]),
+        requestKey: (params: PostApiCodeReviewCommentReplyParams) =>
+          dataTaggedQueryKey<PostApiCodeReviewCommentReplyData>([base, params]),
+        request: (
+          { threadId, ...query }: PostApiCodeReviewCommentReplyParams,
+          data: CommentReplyRequest,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiCodeReviewCommentReplyData>({
+            path: `/api/v1/code_review/${threadId}/comment/reply`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name PostApiCodeReviewReopen
+     * @summary Reopen a code review thread
+     * @request POST:/api/v1/code_review/{thread_id}/reopen
+     */
+    postApiCodeReviewReopen: () => {
+      const base = 'POST:/api/v1/code_review/{thread_id}/reopen' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiCodeReviewReopenData>([base]),
+        requestKey: (params: PostApiCodeReviewReopenParams) =>
+          dataTaggedQueryKey<PostApiCodeReviewReopenData>([base, params]),
+        request: ({ threadId, ...query }: PostApiCodeReviewReopenParams, params: RequestParams = {}) =>
+          this.request<PostApiCodeReviewReopenData>({
+            path: `/api/v1/code_review/${threadId}/reopen`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name PostApiCodeReviewResolve
+     * @summary Resolve a code review thread
+     * @request POST:/api/v1/code_review/{thread_id}/resolve
+     */
+    postApiCodeReviewResolve: () => {
+      const base = 'POST:/api/v1/code_review/{thread_id}/resolve' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiCodeReviewResolveData>([base]),
+        requestKey: (params: PostApiCodeReviewResolveParams) =>
+          dataTaggedQueryKey<PostApiCodeReviewResolveData>([base, params]),
+        request: ({ threadId, ...query }: PostApiCodeReviewResolveParams, params: RequestParams = {}) =>
+          this.request<PostApiCodeReviewResolveData>({
+            path: `/api/v1/code_review/${threadId}/resolve`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  conversationAndComment = {
+    /**
+     * No description
+     *
+     * @tags Conversation and Comment
+     * @name DeleteApiConversationReactionsById
+     * @summary Delete conversation reactions
+     * @request DELETE:/api/v1/conversation/reactions/{id}
+     */
+    deleteApiConversationReactionsById: () => {
+      const base = 'DELETE:/api/v1/conversation/reactions/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiConversationReactionsByIdData>([base]),
+        requestKey: (params: DeleteApiConversationReactionsByIdParams) =>
+          dataTaggedQueryKey<DeleteApiConversationReactionsByIdData>([base, params]),
+        request: ({ id, ...query }: DeleteApiConversationReactionsByIdParams, params: RequestParams = {}) =>
+          this.request<DeleteApiConversationReactionsByIdData>({
+            path: `/api/v1/conversation/reactions/${id}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Conversation and Comment
+     * @name PostApiConversationByCommentId
+     * @summary Edit comment
+     * @request POST:/api/v1/conversation/{comment_id}
+     */
+    postApiConversationByCommentId: () => {
+      const base = 'POST:/api/v1/conversation/{comment_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiConversationByCommentIdData>([base]),
+        requestKey: (params: PostApiConversationByCommentIdParams) =>
+          dataTaggedQueryKey<PostApiConversationByCommentIdData>([base, params]),
+        request: (
+          { commentId, ...query }: PostApiConversationByCommentIdParams,
+          data: ContentPayload,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiConversationByCommentIdData>({
+            path: `/api/v1/conversation/${commentId}`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Conversation and Comment
+     * @name DeleteApiConversationByCommentId
+     * @summary Delete Comment
+     * @request DELETE:/api/v1/conversation/{comment_id}
+     */
+    deleteApiConversationByCommentId: () => {
+      const base = 'DELETE:/api/v1/conversation/{comment_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiConversationByCommentIdData>([base]),
+        requestKey: (params: DeleteApiConversationByCommentIdParams) =>
+          dataTaggedQueryKey<DeleteApiConversationByCommentIdData>([base, params]),
+        request: ({ commentId, ...query }: DeleteApiConversationByCommentIdParams, params: RequestParams = {}) =>
+          this.request<DeleteApiConversationByCommentIdData>({
+            path: `/api/v1/conversation/${commentId}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Conversation and Comment
+     * @name PostApiConversationReactions
+     * @summary Add comment reactions with emoji
+     * @request POST:/api/v1/conversation/{comment_id}/reactions
+     */
+    postApiConversationReactions: () => {
+      const base = 'POST:/api/v1/conversation/{comment_id}/reactions' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiConversationReactionsData>([base]),
+        requestKey: (params: PostApiConversationReactionsParams) =>
+          dataTaggedQueryKey<PostApiConversationReactionsData>([base, params]),
+        request: (
+          { commentId, ...query }: PostApiConversationReactionsParams,
+          data: ReactionRequest,
+          params: RequestParams = {}
+        ) =>
+          this.request<PostApiConversationReactionsData>({
+            path: `/api/v1/conversation/${commentId}/reactions`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  gpgKey = {
+    /**
+     * No description
+     *
+     * @tags Gpg Key
+     * @name PostApiGpgAdd
+     * @request POST:/api/v1/gpg/add
+     */
+    postApiGpgAdd: () => {
+      const base = 'POST:/api/v1/gpg/add' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiGpgAddData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiGpgAddData>([base]),
+        request: (data: NewGpgRequest, params: RequestParams = {}) =>
+          this.request<PostApiGpgAddData>({
+            path: `/api/v1/gpg/add`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Gpg Key
+     * @name GetApiGpgList
+     * @request GET:/api/v1/gpg/list
+     */
+    getApiGpgList: () => {
+      const base = 'GET:/api/v1/gpg/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiGpgListData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiGpgListData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiGpgListData>({
+            path: `/api/v1/gpg/list`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Gpg Key
+     * @name DeleteApiGpgRemove
+     * @request DELETE:/api/v1/gpg/remove
+     */
+    deleteApiGpgRemove: () => {
+      const base = 'DELETE:/api/v1/gpg/remove' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiGpgRemoveData>([base]),
+        requestKey: () => dataTaggedQueryKey<DeleteApiGpgRemoveData>([base]),
+        request: (data: RemoveGpgRequest, params: RequestParams = {}) =>
+          this.request<DeleteApiGpgRemoveData>({
+            path: `/api/v1/gpg/remove`,
+            method: 'DELETE',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  issueManagement = {
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueAssignees
+     * @summary Update issue related assignees
+     * @request POST:/api/v1/issue/assignees
+     */
+    postApiIssueAssignees: () => {
+      const base = 'POST:/api/v1/issue/assignees' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueAssigneesData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiIssueAssigneesData>([base]),
+        request: (data: AssigneeUpdatePayload, params: RequestParams = {}) =>
+          this.request<PostApiIssueAssigneesData>({
+            path: `/api/v1/issue/assignees`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name GetApiIssueIssueSuggester
+     * @summary Get issue suggester in comment
+     * @request GET:/api/v1/issue/issue_suggester
+     */
+    getApiIssueIssueSuggester: () => {
+      const base = 'GET:/api/v1/issue/issue_suggester' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiIssueIssueSuggesterData>([base]),
+        requestKey: (params: GetApiIssueIssueSuggesterParams) =>
+          dataTaggedQueryKey<GetApiIssueIssueSuggesterData>([base, params]),
+        request: (query: GetApiIssueIssueSuggesterParams, params: RequestParams = {}) =>
+          this.request<GetApiIssueIssueSuggesterData>({
+            path: `/api/v1/issue/issue_suggester`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueLabels
+     * @summary Update issue related labels
+     * @request POST:/api/v1/issue/labels
+     */
+    postApiIssueLabels: () => {
+      const base = 'POST:/api/v1/issue/labels' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueLabelsData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiIssueLabelsData>([base]),
+        request: (data: LabelUpdatePayload, params: RequestParams = {}) =>
+          this.request<PostApiIssueLabelsData>({
+            path: `/api/v1/issue/labels`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueList
+     * @summary Fetch Issue list
+     * @request POST:/api/v1/issue/list
+     */
+    postApiIssueList: () => {
+      const base = 'POST:/api/v1/issue/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueListData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiIssueListData>([base]),
+        request: (data: PageParamsListPayload, params: RequestParams = {}) =>
+          this.request<PostApiIssueListData>({
+            path: `/api/v1/issue/list`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueNew
+     * @summary New Issue
+     * @request POST:/api/v1/issue/new
+     */
+    postApiIssueNew: () => {
+      const base = 'POST:/api/v1/issue/new' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueNewData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiIssueNewData>([base]),
+        request: (data: NewIssue, params: RequestParams = {}) =>
+          this.request<PostApiIssueNewData>({
+            path: `/api/v1/issue/new`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueClose
+     * @summary Close an issue
+     * @request POST:/api/v1/issue/{link}/close
+     */
+    postApiIssueClose: () => {
+      const base = 'POST:/api/v1/issue/{link}/close' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueCloseData>([base]),
+        requestKey: (params: PostApiIssueCloseParams) => dataTaggedQueryKey<PostApiIssueCloseData>([base, params]),
+        request: ({ link, ...query }: PostApiIssueCloseParams, params: RequestParams = {}) =>
+          this.request<PostApiIssueCloseData>({
+            path: `/api/v1/issue/${link}/close`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueComment
+     * @summary Add new comment on Issue
+     * @request POST:/api/v1/issue/{link}/comment
+     */
+    postApiIssueComment: () => {
+      const base = 'POST:/api/v1/issue/{link}/comment' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueCommentData>([base]),
+        requestKey: (params: PostApiIssueCommentParams) => dataTaggedQueryKey<PostApiIssueCommentData>([base, params]),
+        request: ({ link, ...query }: PostApiIssueCommentParams, data: ContentPayload, params: RequestParams = {}) =>
+          this.request<PostApiIssueCommentData>({
+            path: `/api/v1/issue/${link}/comment`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name GetApiIssueDetail
+     * @summary Get issue details
+     * @request GET:/api/v1/issue/{link}/detail
+     */
+    getApiIssueDetail: () => {
+      const base = 'GET:/api/v1/issue/{link}/detail' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiIssueDetailData>([base]),
+        requestKey: (params: GetApiIssueDetailParams) => dataTaggedQueryKey<GetApiIssueDetailData>([base, params]),
+        request: ({ link, ...query }: GetApiIssueDetailParams, params: RequestParams = {}) =>
+          this.request<GetApiIssueDetailData>({
+            path: `/api/v1/issue/${link}/detail`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueReopen
+     * @summary Reopen an issue
+     * @request POST:/api/v1/issue/{link}/reopen
+     */
+    postApiIssueReopen: () => {
+      const base = 'POST:/api/v1/issue/{link}/reopen' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueReopenData>([base]),
+        requestKey: (params: PostApiIssueReopenParams) => dataTaggedQueryKey<PostApiIssueReopenData>([base, params]),
+        request: ({ link, ...query }: PostApiIssueReopenParams, params: RequestParams = {}) =>
+          this.request<PostApiIssueReopenData>({
+            path: `/api/v1/issue/${link}/reopen`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueTitle
+     * @summary Edit issue title
+     * @request POST:/api/v1/issue/{link}/title
+     */
+    postApiIssueTitle: () => {
+      const base = 'POST:/api/v1/issue/{link}/title' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueTitleData>([base]),
+        requestKey: (params: PostApiIssueTitleParams) => dataTaggedQueryKey<PostApiIssueTitleData>([base, params]),
+        request: ({ link, ...query }: PostApiIssueTitleParams, data: ContentPayload, params: RequestParams = {}) =>
+          this.request<PostApiIssueTitleData>({
+            path: `/api/v1/issue/${link}/title`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  labelManagement = {
+    /**
+     * No description
+     *
+     * @tags Label Management
+     * @name PostApiLabelList
+     * @summary List label in page
+     * @request POST:/api/v1/label/list
+     */
+    postApiLabelList: () => {
+      const base = 'POST:/api/v1/label/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiLabelListData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiLabelListData>([base]),
+        request: (data: PageParamsString, params: RequestParams = {}) =>
+          this.request<PostApiLabelListData>({
+            path: `/api/v1/label/list`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Label Management
+     * @name PostApiLabelNew
+     * @summary New label
+     * @request POST:/api/v1/label/new
+     */
+    postApiLabelNew: () => {
+      const base = 'POST:/api/v1/label/new' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiLabelNewData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiLabelNewData>([base]),
+        request: (data: NewLabel, params: RequestParams = {}) =>
+          this.request<PostApiLabelNewData>({
+            path: `/api/v1/label/new`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Label Management
+     * @name GetApiLabelById
+     * @summary Fetch label details
+     * @request GET:/api/v1/label/{id}
+     */
+    getApiLabelById: () => {
+      const base = 'GET:/api/v1/label/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiLabelByIdData>([base]),
+        requestKey: (params: GetApiLabelByIdParams) => dataTaggedQueryKey<GetApiLabelByIdData>([base, params]),
+        request: ({ id, ...query }: GetApiLabelByIdParams, params: RequestParams = {}) =>
+          this.request<GetApiLabelByIdData>({
+            path: `/api/v1/label/${id}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  gitLfs = {
+    /**
+     * @description List LFS locks. This handler is also available at `/info/lfs/locks` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name GetApiLfsLocks
+     * @summary List LFS locks
+     * @request GET:/api/v1/lfs/locks
+     */
+    getApiLfsLocks: () => {
+      const base = 'GET:/api/v1/lfs/locks' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiLfsLocksData>([base]),
+        requestKey: (params: GetApiLfsLocksParams) => dataTaggedQueryKey<GetApiLfsLocksData>([base, params]),
+        request: (query: GetApiLfsLocksParams, params: RequestParams = {}) =>
+          this.request<GetApiLfsLocksData>({
+            path: `/api/v1/lfs/locks`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Create an LFS lock. This handler is also available at `/info/lfs/locks` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name PostApiLfsLocks
+     * @summary Create an LFS lock
+     * @request POST:/api/v1/lfs/locks
+     */
+    postApiLfsLocks: () => {
+      const base = 'POST:/api/v1/lfs/locks' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiLfsLocksData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiLfsLocksData>([base]),
+        request: (data: LockRequest, params: RequestParams = {}) =>
+          this.request<PostApiLfsLocksData>({
+            path: `/api/v1/lfs/locks`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Verify LFS locks. This handler is also available at `/info/lfs/locks/verify` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name PostApiLfsLocksVerify
+     * @summary Verify LFS locks
+     * @request POST:/api/v1/lfs/locks/verify
+     */
+    postApiLfsLocksVerify: () => {
+      const base = 'POST:/api/v1/lfs/locks/verify' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiLfsLocksVerifyData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiLfsLocksVerifyData>([base]),
+        request: (data: VerifiableLockRequest, params: RequestParams = {}) =>
+          this.request<PostApiLfsLocksVerifyData>({
+            path: `/api/v1/lfs/locks/verify`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Delete an LFS lock. This handler is also available at `/info/lfs/locks/{id}/unlock` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name PostApiLfsLocksUnlock
+     * @summary Delete an LFS lock
+     * @request POST:/api/v1/lfs/locks/{id}/unlock
+     */
+    postApiLfsLocksUnlock: () => {
+      const base = 'POST:/api/v1/lfs/locks/{id}/unlock' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiLfsLocksUnlockData>([base]),
+        requestKey: (params: PostApiLfsLocksUnlockParams) =>
+          dataTaggedQueryKey<PostApiLfsLocksUnlockData>([base, params]),
+        request: ({ id, ...query }: PostApiLfsLocksUnlockParams, data: UnlockRequest, params: RequestParams = {}) =>
+          this.request<PostApiLfsLocksUnlockData>({
+            path: `/api/v1/lfs/locks/${id}/unlock`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Process LFS batch request. This handler is also available at `/info/lfs/objects/batch` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name PostApiLfsObjectsBatch
+     * @summary Process LFS batch request
+     * @request POST:/api/v1/lfs/objects/batch
+     */
+    postApiLfsObjectsBatch: () => {
+      const base = 'POST:/api/v1/lfs/objects/batch' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiLfsObjectsBatchData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiLfsObjectsBatchData>([base]),
+        request: (data: BatchRequest, params: RequestParams = {}) =>
+          this.request<PostApiLfsObjectsBatchData>({
+            path: `/api/v1/lfs/objects/batch`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Download an LFS object. This handler is also available at `/info/lfs/objects/{object_id}` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name GetApiLfsObjectsByObjectId
+     * @summary Download an LFS object
+     * @request GET:/api/v1/lfs/objects/{object_id}
+     */
+    getApiLfsObjectsByObjectId: () => {
+      const base = 'GET:/api/v1/lfs/objects/{object_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<Blob>([base]),
+        requestKey: (params: GetApiLfsObjectsByObjectIdParams) => dataTaggedQueryKey<Blob>([base, params]),
+        request: ({ objectId, ...query }: GetApiLfsObjectsByObjectIdParams, params: RequestParams = {}) =>
+          this.request<Blob>({
+            path: `/api/v1/lfs/objects/${objectId}`,
             method: 'GET',
             ...params
           })
       }
     },
 
+    /**
+     * @description Upload an LFS object. This handler is also available at `/info/lfs/objects/{object_id}` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name PutApiLfsObjectsByObjectId
+     * @summary Upload an LFS object
+     * @request PUT:/api/v1/lfs/objects/{object_id}
+     */
+    putApiLfsObjectsByObjectId: () => {
+      const base = 'PUT:/api/v1/lfs/objects/{object_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PutApiLfsObjectsByObjectIdData>([base]),
+        requestKey: (params: PutApiLfsObjectsByObjectIdParams) =>
+          dataTaggedQueryKey<PutApiLfsObjectsByObjectIdData>([base, params]),
+        request: (
+          { objectId, ...query }: PutApiLfsObjectsByObjectIdParams,
+          data: PutApiLfsObjectsByObjectIdPayload,
+          params: RequestParams = {}
+        ) =>
+          this.request<PutApiLfsObjectsByObjectIdData>({
+            path: `/api/v1/lfs/objects/${objectId}`,
+            method: 'PUT',
+            body: data,
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  mergeQueueManagement = {
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name PostApiMergeQueueAdd
+     * @request POST:/api/v1/merge-queue/add
+     */
+    postApiMergeQueueAdd: () => {
+      const base = 'POST:/api/v1/merge-queue/add' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiMergeQueueAddData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiMergeQueueAddData>([base]),
+        request: (data: AddToQueueRequest, params: RequestParams = {}) =>
+          this.request<PostApiMergeQueueAddData>({
+            path: `/api/v1/merge-queue/add`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name PostApiMergeQueueCancelAll
+     * @request POST:/api/v1/merge-queue/cancel-all
+     */
+    postApiMergeQueueCancelAll: () => {
+      const base = 'POST:/api/v1/merge-queue/cancel-all' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiMergeQueueCancelAllData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiMergeQueueCancelAllData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<PostApiMergeQueueCancelAllData>({
+            path: `/api/v1/merge-queue/cancel-all`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name GetApiMergeQueueList
+     * @request GET:/api/v1/merge-queue/list
+     */
+    getApiMergeQueueList: () => {
+      const base = 'GET:/api/v1/merge-queue/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiMergeQueueListData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiMergeQueueListData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiMergeQueueListData>({
+            path: `/api/v1/merge-queue/list`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name DeleteApiMergeQueueRemoveByClLink
+     * @request DELETE:/api/v1/merge-queue/remove/{cl_link}
+     */
+    deleteApiMergeQueueRemoveByClLink: () => {
+      const base = 'DELETE:/api/v1/merge-queue/remove/{cl_link}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiMergeQueueRemoveByClLinkData>([base]),
+        requestKey: (params: DeleteApiMergeQueueRemoveByClLinkParams) =>
+          dataTaggedQueryKey<DeleteApiMergeQueueRemoveByClLinkData>([base, params]),
+        request: ({ clLink, ...query }: DeleteApiMergeQueueRemoveByClLinkParams, params: RequestParams = {}) =>
+          this.request<DeleteApiMergeQueueRemoveByClLinkData>({
+            path: `/api/v1/merge-queue/remove/${clLink}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name PostApiMergeQueueRetryByClLink
+     * @request POST:/api/v1/merge-queue/retry/{cl_link}
+     */
+    postApiMergeQueueRetryByClLink: () => {
+      const base = 'POST:/api/v1/merge-queue/retry/{cl_link}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiMergeQueueRetryByClLinkData>([base]),
+        requestKey: (params: PostApiMergeQueueRetryByClLinkParams) =>
+          dataTaggedQueryKey<PostApiMergeQueueRetryByClLinkData>([base, params]),
+        request: ({ clLink, ...query }: PostApiMergeQueueRetryByClLinkParams, params: RequestParams = {}) =>
+          this.request<PostApiMergeQueueRetryByClLinkData>({
+            path: `/api/v1/merge-queue/retry/${clLink}`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name GetApiMergeQueueStats
+     * @request GET:/api/v1/merge-queue/stats
+     */
+    getApiMergeQueueStats: () => {
+      const base = 'GET:/api/v1/merge-queue/stats' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiMergeQueueStatsData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiMergeQueueStatsData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiMergeQueueStatsData>({
+            path: `/api/v1/merge-queue/stats`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name GetApiMergeQueueStatusByClLink
+     * @request GET:/api/v1/merge-queue/status/{cl_link}
+     */
+    getApiMergeQueueStatusByClLink: () => {
+      const base = 'GET:/api/v1/merge-queue/status/{cl_link}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiMergeQueueStatusByClLinkData>([base]),
+        requestKey: (params: GetApiMergeQueueStatusByClLinkParams) =>
+          dataTaggedQueryKey<GetApiMergeQueueStatusByClLinkData>([base, params]),
+        request: ({ clLink, ...query }: GetApiMergeQueueStatusByClLinkParams, params: RequestParams = {}) =>
+          this.request<GetApiMergeQueueStatusByClLinkData>({
+            path: `/api/v1/merge-queue/status/${clLink}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  syncNotesState = {
+    /**
+     * No description
+     *
+     * @tags sync-notes-state
+     * @name GetApiOrganizationsNotesSyncState
+     * @request GET:/api/v1/organizations/{org_slug}/notes/{id}/sync_state
+     */
+    getApiOrganizationsNotesSyncState: () => {
+      const base = 'GET:/api/v1/organizations/{org_slug}/notes/{id}/sync_state' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiOrganizationsNotesSyncStateData>([base]),
+        requestKey: (params: GetApiOrganizationsNotesSyncStateParams) =>
+          dataTaggedQueryKey<GetApiOrganizationsNotesSyncStateData>([base, params]),
+        request: ({ orgSlug, id, ...query }: GetApiOrganizationsNotesSyncStateParams, params: RequestParams = {}) =>
+          this.request<GetApiOrganizationsNotesSyncStateData>({
+            path: `/api/v1/organizations/${orgSlug}/notes/${id}/sync_state`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags sync-notes-state
+     * @name PatchApiOrganizationsNotesSyncState
+     * @request PATCH:/api/v1/organizations/{org_slug}/notes/{id}/sync_state
+     */
+    patchApiOrganizationsNotesSyncState: () => {
+      const base = 'PATCH:/api/v1/organizations/{org_slug}/notes/{id}/sync_state' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PatchApiOrganizationsNotesSyncStateData>([base]),
+        requestKey: (params: PatchApiOrganizationsNotesSyncStateParams) =>
+          dataTaggedQueryKey<PatchApiOrganizationsNotesSyncStateData>([base, params]),
+        request: (
+          { orgSlug, id, ...query }: PatchApiOrganizationsNotesSyncStateParams,
+          data: NoteUpdateRequest,
+          params: RequestParams = {}
+        ) =>
+          this.request<PatchApiOrganizationsNotesSyncStateData>({
+            path: `/api/v1/organizations/${orgSlug}/notes/${id}/sync_state`,
+            method: 'PATCH',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  repoCreationAndSynchronisation = {
     /**
      * No description
      *
@@ -18966,11 +22028,13 @@ It's for local testing purposes.
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
-    },
-
+    }
+  }
+  repoArtifacts = {
     /**
      * No description
      *
@@ -18984,13 +22048,19 @@ It's for local testing purposes.
 
       return {
         baseKey: dataTaggedQueryKey<PostApiReposArtifactsBatchData>([base]),
-        requestKey: (repo: string) => dataTaggedQueryKey<PostApiReposArtifactsBatchData>([base, repo]),
-        request: (repo: string, data: ArtifactBatchRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostApiReposArtifactsBatchParams) =>
+          dataTaggedQueryKey<PostApiReposArtifactsBatchData>([base, params]),
+        request: (
+          { repo, ...query }: PostApiReposArtifactsBatchParams,
+          data: ArtifactBatchRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostApiReposArtifactsBatchData>({
             path: `/api/v1/repos/${repo}/artifacts/batch`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -19009,13 +22079,19 @@ It's for local testing purposes.
 
       return {
         baseKey: dataTaggedQueryKey<PostApiReposArtifactsCommitData>([base]),
-        requestKey: (repo: string) => dataTaggedQueryKey<PostApiReposArtifactsCommitData>([base, repo]),
-        request: (repo: string, data: ArtifactCommitRequest, params: RequestParams = {}) =>
+        requestKey: (params: PostApiReposArtifactsCommitParams) =>
+          dataTaggedQueryKey<PostApiReposArtifactsCommitData>([base, params]),
+        request: (
+          { repo, ...query }: PostApiReposArtifactsCommitParams,
+          data: ArtifactCommitRequest,
+          params: RequestParams = {}
+        ) =>
           this.request<PostApiReposArtifactsCommitData>({
             path: `/api/v1/repos/${repo}/artifacts/commit`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -19034,11 +22110,13 @@ It's for local testing purposes.
 
       return {
         baseKey: dataTaggedQueryKey<GetApiReposArtifactsDiscoveryData>([base]),
-        requestKey: (repo: string) => dataTaggedQueryKey<GetApiReposArtifactsDiscoveryData>([base, repo]),
-        request: (repo: string, params: RequestParams = {}) =>
+        requestKey: (params: GetApiReposArtifactsDiscoveryParams) =>
+          dataTaggedQueryKey<GetApiReposArtifactsDiscoveryData>([base, params]),
+        request: ({ repo, ...query }: GetApiReposArtifactsDiscoveryParams, params: RequestParams = {}) =>
           this.request<GetApiReposArtifactsDiscoveryData>({
             path: `/api/v1/repos/${repo}/artifacts/discovery`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -19064,6 +22142,7 @@ It's for local testing purposes.
             path: `/api/v1/repos/${repo}/artifacts/objects/${oid}`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -19082,11 +22161,10 @@ It's for local testing purposes.
 
       return {
         baseKey: dataTaggedQueryKey<PutApiReposArtifactsObjectsByOidData>([base]),
-        requestKey: (repo: string, oid: string) =>
-          dataTaggedQueryKey<PutApiReposArtifactsObjectsByOidData>([base, repo, oid]),
+        requestKey: (params: PutApiReposArtifactsObjectsByOidParams) =>
+          dataTaggedQueryKey<PutApiReposArtifactsObjectsByOidData>([base, params]),
         request: (
-          repo: string,
-          oid: string,
+          { repo, oid, ...query }: PutApiReposArtifactsObjectsByOidParams,
           data: PutApiReposArtifactsObjectsByOidPayload,
           params: RequestParams = {}
         ) =>
@@ -19111,11 +22189,10 @@ It's for local testing purposes.
       const base = 'HEAD:/api/v1/repos/{repo}/artifacts/objects/{oid}' as const
 
       return {
-        baseKey: dataTaggedQueryKey<HeadApiReposArtifactsObjectsByOidData>([base]),
-        requestKey: (repo: string, oid: string) =>
-          dataTaggedQueryKey<HeadApiReposArtifactsObjectsByOidData>([base, repo, oid]),
-        request: (repo: string, oid: string, params: RequestParams = {}) =>
-          this.request<HeadApiReposArtifactsObjectsByOidData>({
+        baseKey: dataTaggedQueryKey<Blob>([base]),
+        requestKey: (params: HeadApiReposArtifactsObjectsByOidParams) => dataTaggedQueryKey<Blob>([base, params]),
+        request: ({ repo, oid, ...query }: HeadApiReposArtifactsObjectsByOidParams, params: RequestParams = {}) =>
+          this.request<Blob>({
             path: `/api/v1/repos/${repo}/artifacts/objects/${oid}`,
             method: 'HEAD',
             ...params
@@ -19143,6 +22220,7 @@ It's for local testing purposes.
             path: `/api/v1/repos/${repo}/artifacts/resolve-file`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -19168,6 +22246,7 @@ It's for local testing purposes.
             path: `/api/v1/repos/${repo}/artifacts/sets`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
@@ -19196,11 +22275,13 @@ It's for local testing purposes.
             path: `/api/v1/repos/${repo}/artifacts/sets/${artifactSetId}`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
-    },
-
+    }
+  }
+  sidebarManagement = {
     /**
      * No description
      *
@@ -19219,6 +22300,7 @@ It's for local testing purposes.
           this.request<GetApiSidebarListData>({
             path: `/api/v1/sidebar/list`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -19244,6 +22326,7 @@ It's for local testing purposes.
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -19269,6 +22352,7 @@ It's for local testing purposes.
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -19287,13 +22371,19 @@ It's for local testing purposes.
 
       return {
         baseKey: dataTaggedQueryKey<PostApiSidebarUpdateByIdData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<PostApiSidebarUpdateByIdData>([base, id]),
-        request: (id: number, data: UpdateSidebarPayload, params: RequestParams = {}) =>
+        requestKey: (params: PostApiSidebarUpdateByIdParams) =>
+          dataTaggedQueryKey<PostApiSidebarUpdateByIdData>([base, params]),
+        request: (
+          { id, ...query }: PostApiSidebarUpdateByIdParams,
+          data: UpdateSidebarPayload,
+          params: RequestParams = {}
+        ) =>
           this.request<PostApiSidebarUpdateByIdData>({
             path: `/api/v1/sidebar/update/${id}`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -19312,16 +22402,19 @@ It's for local testing purposes.
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiSidebarByIdData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<DeleteApiSidebarByIdData>([base, id]),
-        request: (id: number, params: RequestParams = {}) =>
+        requestKey: (params: DeleteApiSidebarByIdParams) =>
+          dataTaggedQueryKey<DeleteApiSidebarByIdData>([base, params]),
+        request: ({ id, ...query }: DeleteApiSidebarByIdParams, params: RequestParams = {}) =>
           this.request<DeleteApiSidebarByIdData>({
             path: `/api/v1/sidebar/${id}`,
             method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
-    },
-
+    }
+  }
+  systemCommon = {
     /**
      * No description
      *
@@ -19343,8 +22436,9 @@ It's for local testing purposes.
             ...params
           })
       }
-    },
-
+    }
+  }
+  tagManagement = {
     /**
      * No description
      *
@@ -19365,6 +22459,7 @@ It's for local testing purposes.
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -19390,6 +22485,7 @@ It's for local testing purposes.
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -19408,11 +22504,12 @@ It's for local testing purposes.
 
       return {
         baseKey: dataTaggedQueryKey<GetApiTagsByNameData>([base]),
-        requestKey: (name: string) => dataTaggedQueryKey<GetApiTagsByNameData>([base, name]),
-        request: (name: string, params: RequestParams = {}) =>
+        requestKey: (params: GetApiTagsByNameParams) => dataTaggedQueryKey<GetApiTagsByNameData>([base, params]),
+        request: ({ name, ...query }: GetApiTagsByNameParams, params: RequestParams = {}) =>
           this.request<GetApiTagsByNameData>({
             path: `/api/v1/tags/${name}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
@@ -19431,636 +22528,18 @@ It's for local testing purposes.
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiTagsByNameData>([base]),
-        requestKey: (name: string) => dataTaggedQueryKey<DeleteApiTagsByNameData>([base, name]),
-        request: (name: string, params: RequestParams = {}) =>
+        requestKey: (params: DeleteApiTagsByNameParams) => dataTaggedQueryKey<DeleteApiTagsByNameData>([base, params]),
+        request: ({ name, ...query }: DeleteApiTagsByNameParams, params: RequestParams = {}) =>
           this.request<DeleteApiTagsByNameData>({
             path: `/api/v1/tags/${name}`,
             method: 'DELETE',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiTree
-     * @summary Get tree brief info
-     * @request GET:/api/v1/tree
-     */
-    getApiTree: () => {
-      const base = 'GET:/api/v1/tree' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiTreeData>([base]),
-        requestKey: (params: GetApiTreeParams) => dataTaggedQueryKey<GetApiTreeData>([base, params]),
-        request: (query: GetApiTreeParams, params: RequestParams = {}) =>
-          this.request<GetApiTreeData>({
-            path: `/api/v1/tree`,
-            method: 'GET',
-            query: query,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiTreeCommitInfo
-     * @summary List matching trees with commit msg by query
-     * @request GET:/api/v1/tree/commit-info
-     */
-    getApiTreeCommitInfo: () => {
-      const base = 'GET:/api/v1/tree/commit-info' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiTreeCommitInfoData>([base]),
-        requestKey: (params: GetApiTreeCommitInfoParams) =>
-          dataTaggedQueryKey<GetApiTreeCommitInfoData>([base, params]),
-        request: (query: GetApiTreeCommitInfoParams, params: RequestParams = {}) =>
-          this.request<GetApiTreeCommitInfoData>({
-            path: `/api/v1/tree/commit-info`,
-            method: 'GET',
-            query: query,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiTreeContentHash
-     * @summary Get tree content hash,the dir's hash as same as old,file's hash is the content hash
-     * @request GET:/api/v1/tree/content-hash
-     */
-    getApiTreeContentHash: () => {
-      const base = 'GET:/api/v1/tree/content-hash' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiTreeContentHashData>([base]),
-        requestKey: (params: GetApiTreeContentHashParams) =>
-          dataTaggedQueryKey<GetApiTreeContentHashData>([base, params]),
-        request: (query: GetApiTreeContentHashParams, params: RequestParams = {}) =>
-          this.request<GetApiTreeContentHashData>({
-            path: `/api/v1/tree/content-hash`,
-            method: 'GET',
-            query: query,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiTreeDirHash
-     * @summary return the dir's hash
-     * @request GET:/api/v1/tree/dir-hash
-     */
-    getApiTreeDirHash: () => {
-      const base = 'GET:/api/v1/tree/dir-hash' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiTreeDirHashData>([base]),
-        requestKey: (params: GetApiTreeDirHashParams) => dataTaggedQueryKey<GetApiTreeDirHashData>([base, params]),
-        request: (query: GetApiTreeDirHashParams, params: RequestParams = {}) =>
-          this.request<GetApiTreeDirHashData>({
-            path: `/api/v1/tree/dir-hash`,
-            method: 'GET',
-            query: query,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiTreePathCanClone
-     * @summary Check if a path can be cloned
-     * @request GET:/api/v1/tree/path-can-clone
-     */
-    getApiTreePathCanClone: () => {
-      const base = 'GET:/api/v1/tree/path-can-clone' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiTreePathCanCloneData>([base]),
-        requestKey: (params: GetApiTreePathCanCloneParams) =>
-          dataTaggedQueryKey<GetApiTreePathCanCloneData>([base, params]),
-        request: (query: GetApiTreePathCanCloneParams, params: RequestParams = {}) =>
-          this.request<GetApiTreePathCanCloneData>({
-            path: `/api/v1/tree/path-can-clone`,
-            method: 'GET',
-            query: query,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Creates a new build trigger with automatic ref resolution. Supports branch names, tag names, commit hashes, or CL links. Defaults to "main" branch if no ref is specified.
-     *
-     * @tags Automation & Integrations
-     * @name PostApiTriggers
-     * @summary Create a new build trigger
-     * @request POST:/api/v1/triggers
-     */
-    postApiTriggers: () => {
-      const base = 'POST:/api/v1/triggers' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiTriggersData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiTriggersData>([base]),
-        request: (data: CreateTriggerRequest, params: RequestParams = {}) =>
-          this.request<PostApiTriggersData>({
-            path: `/api/v1/triggers`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Returns build triggers with pagination and optional filters. Supports filtering by repository, trigger type, source, user, and time range. This endpoint follows the project's standard Google-style API pattern: - Uses POST method for complex query parameters - Accepts PageParams with pagination and filter parameters - Returns CommonPage with items and total count
-     *
-     * @tags Automation & Integrations
-     * @name PostApiTriggersList
-     * @summary List build triggers with filters
-     * @request POST:/api/v1/triggers/list
-     */
-    postApiTriggersList: () => {
-      const base = 'POST:/api/v1/triggers/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiTriggersListData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiTriggersListData>([base]),
-        request: (data: PageParamsListTriggersParams, params: RequestParams = {}) =>
-          this.request<PostApiTriggersListData>({
-            path: `/api/v1/triggers/list`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Returns complete details about a specific trigger including: - Trigger metadata (type, source, time) - Repository and commit information - Ref information (branch/tag name if applicable) - Build parameters
-     *
-     * @tags Automation & Integrations
-     * @name GetApiTriggersById
-     * @summary Get a specific build trigger by ID
-     * @request GET:/api/v1/triggers/{id}
-     */
-    getApiTriggersById: () => {
-      const base = 'GET:/api/v1/triggers/{id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiTriggersByIdData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<GetApiTriggersByIdData>([base, id]),
-        request: (id: number, params: RequestParams = {}) =>
-          this.request<GetApiTriggersByIdData>({
-            path: `/api/v1/triggers/${id}`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Creates a new trigger that retries a previous build. The new trigger will use the same repository, commit, and parameters as the original trigger.
-     *
-     * @tags Automation & Integrations
-     * @name PostApiTriggersRetry
-     * @summary Retry a specific build trigger
-     * @request POST:/api/v1/triggers/{id}/retry
-     */
-    postApiTriggersRetry: () => {
-      const base = 'POST:/api/v1/triggers/{id}/retry' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiTriggersRetryData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<PostApiTriggersRetryData>([base, id]),
-        request: (id: number, params: RequestParams = {}) =>
-          this.request<PostApiTriggersRetryData>({
-            path: `/api/v1/triggers/${id}/retry`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name GetApiUserApprovalStatus
-     * @summary Get or initialize current user's account approval status
-     * @request GET:/api/v1/user/approval-status
-     */
-    getApiUserApprovalStatus: () => {
-      const base = 'GET:/api/v1/user/approval-status' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiUserApprovalStatusData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiUserApprovalStatusData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiUserApprovalStatusData>({
-            path: `/api/v1/user/approval-status`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name PostApiUserClaChangeSignStatus
-     * @summary Change CLA sign status for current user
-     * @request POST:/api/v1/user/cla/change-sign-status
-     */
-    postApiUserClaChangeSignStatus: () => {
-      const base = 'POST:/api/v1/user/cla/change-sign-status' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiUserClaChangeSignStatusData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiUserClaChangeSignStatusData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<PostApiUserClaChangeSignStatusData>({
-            path: `/api/v1/user/cla/change-sign-status`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name GetApiUserClaContent
-     * @summary Get latest CLA text content
-     * @request GET:/api/v1/user/cla/content
-     */
-    getApiUserClaContent: () => {
-      const base = 'GET:/api/v1/user/cla/content' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiUserClaContentData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiUserClaContentData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiUserClaContentData>({
-            path: `/api/v1/user/cla/content`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name PostApiUserClaContent
-     * @summary Update latest CLA text content
-     * @request POST:/api/v1/user/cla/content
-     */
-    postApiUserClaContent: () => {
-      const base = 'POST:/api/v1/user/cla/content' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiUserClaContentData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiUserClaContentData>([base]),
-        request: (data: UpdateClaContentPayload, params: RequestParams = {}) =>
-          this.request<PostApiUserClaContentData>({
-            path: `/api/v1/user/cla/content`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name GetApiUserClaStatus
-     * @summary Get current user's CLA sign status
-     * @request GET:/api/v1/user/cla/status
-     */
-    getApiUserClaStatus: () => {
-      const base = 'GET:/api/v1/user/cla/status' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiUserClaStatusData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiUserClaStatusData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiUserClaStatusData>({
-            path: `/api/v1/user/cla/status`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name GetApiUserNotificationConfig
-     * @summary Get current user's notification config
-     * @request GET:/api/v1/user/notification/config
-     */
-    getApiUserNotificationConfig: () => {
-      const base = 'GET:/api/v1/user/notification/config' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiUserNotificationConfigData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiUserNotificationConfigData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiUserNotificationConfigData>({
-            path: `/api/v1/user/notification/config`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name PutApiUserNotificationConfig
-     * @summary Update current user's notification config
-     * @request PUT:/api/v1/user/notification/config
-     */
-    putApiUserNotificationConfig: () => {
-      const base = 'PUT:/api/v1/user/notification/config' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PutApiUserNotificationConfigData>([base]),
-        requestKey: () => dataTaggedQueryKey<PutApiUserNotificationConfigData>([base]),
-        request: (data: UpdateUserNotificationConfig, params: RequestParams = {}) =>
-          this.request<PutApiUserNotificationConfigData>({
-            path: `/api/v1/user/notification/config`,
-            method: 'PUT',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name GetApiUserNotificationTypes
-     * @summary List supported notification event types
-     * @request GET:/api/v1/user/notification/types
-     */
-    getApiUserNotificationTypes: () => {
-      const base = 'GET:/api/v1/user/notification/types' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiUserNotificationTypesData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiUserNotificationTypesData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiUserNotificationTypesData>({
-            path: `/api/v1/user/notification/types`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name PostApiUserSsh
-     * @summary Add SSH Key
-     * @request POST:/api/v1/user/ssh
-     */
-    postApiUserSsh: () => {
-      const base = 'POST:/api/v1/user/ssh' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiUserSshData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiUserSshData>([base]),
-        request: (data: AddSSHKey, params: RequestParams = {}) =>
-          this.request<PostApiUserSshData>({
-            path: `/api/v1/user/ssh`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name GetApiUserSshList
-     * @summary Get User's SSH key list
-     * @request GET:/api/v1/user/ssh/list
-     */
-    getApiUserSshList: () => {
-      const base = 'GET:/api/v1/user/ssh/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiUserSshListData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiUserSshListData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiUserSshListData>({
-            path: `/api/v1/user/ssh/list`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name DeleteApiUserSshByKeyId
-     * @summary Delete SSH Key
-     * @request DELETE:/api/v1/user/ssh/{key_id}
-     */
-    deleteApiUserSshByKeyId: () => {
-      const base = 'DELETE:/api/v1/user/ssh/{key_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiUserSshByKeyIdData>([base]),
-        requestKey: (keyId: number) => dataTaggedQueryKey<DeleteApiUserSshByKeyIdData>([base, keyId]),
-        request: (keyId: number, params: RequestParams = {}) =>
-          this.request<DeleteApiUserSshByKeyIdData>({
-            path: `/api/v1/user/ssh/${keyId}`,
-            method: 'DELETE',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name PostApiUserTokenGenerate
-     * @summary Generate Token For http push
-     * @request POST:/api/v1/user/token/generate
-     */
-    postApiUserTokenGenerate: () => {
-      const base = 'POST:/api/v1/user/token/generate' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiUserTokenGenerateData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiUserTokenGenerateData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<PostApiUserTokenGenerateData>({
-            path: `/api/v1/user/token/generate`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name GetApiUserTokenList
-     * @summary Get User's push token list
-     * @request GET:/api/v1/user/token/list
-     */
-    getApiUserTokenList: () => {
-      const base = 'GET:/api/v1/user/token/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiUserTokenListData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiUserTokenListData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiUserTokenListData>({
-            path: `/api/v1/user/token/list`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags User Management
-     * @name DeleteApiUserTokenByKeyId
-     * @summary Delete User's http push token
-     * @request DELETE:/api/v1/user/token/{key_id}
-     */
-    deleteApiUserTokenByKeyId: () => {
-      const base = 'DELETE:/api/v1/user/token/{key_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiUserTokenByKeyIdData>([base]),
-        requestKey: (keyId: number) => dataTaggedQueryKey<DeleteApiUserTokenByKeyIdData>([base, keyId]),
-        request: (keyId: number, params: RequestParams = {}) =>
-          this.request<DeleteApiUserTokenByKeyIdData>({
-            path: `/api/v1/user/token/${keyId}`,
-            method: 'DELETE',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name GetApiWebhooks
-     * @summary List webhooks
-     * @request GET:/api/v1/webhooks
-     */
-    getApiWebhooks: () => {
-      const base = 'GET:/api/v1/webhooks' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiWebhooksData>([base]),
-        requestKey: (params: GetApiWebhooksParams) => dataTaggedQueryKey<GetApiWebhooksData>([base, params]),
-        request: (query: GetApiWebhooksParams, params: RequestParams = {}) =>
-          this.request<GetApiWebhooksData>({
-            path: `/api/v1/webhooks`,
-            method: 'GET',
-            query: query,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name PostApiWebhooks
-     * @summary Create a webhook
-     * @request POST:/api/v1/webhooks
-     */
-    postApiWebhooks: () => {
-      const base = 'POST:/api/v1/webhooks' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiWebhooksData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiWebhooksData>([base]),
-        request: (data: CreateWebhookRequest, params: RequestParams = {}) =>
-          this.request<PostApiWebhooksData>({
-            path: `/api/v1/webhooks`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name DeleteApiWebhooksById
-     * @summary Delete a webhook
-     * @request DELETE:/api/v1/webhooks/{id}
-     */
-    deleteApiWebhooksById: () => {
-      const base = 'DELETE:/api/v1/webhooks/{id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiWebhooksByIdData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<DeleteApiWebhooksByIdData>([base, id]),
-        request: (id: number, params: RequestParams = {}) =>
-          this.request<DeleteApiWebhooksByIdData>({
-            path: `/api/v1/webhooks/${id}`,
-            method: 'DELETE',
+            format: 'json',
             ...params
           })
       }
     }
   }
-  id = {
+  worker = {
     /**
      * No description
      *
@@ -20074,41 +22553,45 @@ It's for local testing purposes.
 
       return {
         baseKey: dataTaggedQueryKey<GetOrionClientStatusByIdData>([base]),
-        requestKey: (id: string) => dataTaggedQueryKey<GetOrionClientStatusByIdData>([base, id]),
-        request: (id: string, params: RequestParams = {}) =>
+        requestKey: (params: GetOrionClientStatusByIdParams) =>
+          dataTaggedQueryKey<GetOrionClientStatusByIdData>([base, params]),
+        request: ({ id, ...query }: GetOrionClientStatusByIdParams, params: RequestParams = {}) =>
           this.request<GetOrionClientStatusByIdData>({
             path: `/orion-client-status/${id}`,
             method: 'GET',
+            format: 'json',
             ...params
           })
       }
     },
 
     /**
- * No description
- *
- * @tags Task
- * @name GetTaskOutputById
- * @summary Streams build output logs in real-time using Server-Sent Events (SSE)
-Continuously monitors the log file and streams new content as it becomes available
- * @request GET:/task-output/{id}
- */
-    getTaskOutputById: () => {
-      const base = 'GET:/task-output/{id}' as const
+     * No description
+     *
+     * @tags Worker
+     * @name PostOrionClientsInfo
+     * @summary Endpoint to retrieve paginated Orion client information.
+     * @request POST:/orion-clients-info
+     */
+    postOrionClientsInfo: () => {
+      const base = 'POST:/orion-clients-info' as const
 
       return {
-        baseKey: dataTaggedQueryKey<GetTaskOutputByIdData>([base]),
-        requestKey: (id: string) => dataTaggedQueryKey<GetTaskOutputByIdData>([base, id]),
-        request: (id: string, params: RequestParams = {}) =>
-          this.request<GetTaskOutputByIdData>({
-            path: `/task-output/${id}`,
-            method: 'GET',
+        baseKey: dataTaggedQueryKey<PostOrionClientsInfoData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostOrionClientsInfoData>([base]),
+        request: (data: PageParamsOrionClientQuery, params: RequestParams = {}) =>
+          this.request<PostOrionClientsInfoData>({
+            path: `/orion-clients-info`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
     }
   }
-  targetId = {
+  targetStatus = {
     /**
      * No description
      *
@@ -20127,12 +22610,12 @@ Continuously monitors the log file and streams new content as it becomes availab
             path: `/targets/${targetId}/logs`,
             method: 'GET',
             query: query,
+            format: 'json',
             ...params
           })
       }
-    }
-  }
-  allTargetStatus = {
+    },
+
     /**
      * No description
      *
@@ -20146,163 +22629,17 @@ Continuously monitors the log file and streams new content as it becomes availab
 
       return {
         baseKey: dataTaggedQueryKey<GetAllTargetStatusByTaskIdV2Data>([base]),
-        requestKey: (taskId: string) => dataTaggedQueryKey<GetAllTargetStatusByTaskIdV2Data>([base, taskId]),
-        request: (taskId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetAllTargetStatusByTaskIdV2Params) =>
+          dataTaggedQueryKey<GetAllTargetStatusByTaskIdV2Data>([base, params]),
+        request: ({ taskId, ...query }: GetAllTargetStatusByTaskIdV2Params, params: RequestParams = {}) =>
           this.request<GetAllTargetStatusByTaskIdV2Data>({
             path: `/v2/all-target-status/${taskId}`,
             method: 'GET',
             ...params
           })
       }
-    }
-  }
-  buildEvents = {
-    /**
-     * No description
-     *
-     * @tags Build
-     * @name GetBuildEventsByTaskIdV2
-     * @request GET:/v2/build-events/{task_id}
-     */
-    getBuildEventsByTaskIdV2: () => {
-      const base = 'GET:/v2/build-events/{task_id}' as const
+    },
 
-      return {
-        baseKey: dataTaggedQueryKey<GetBuildEventsByTaskIdV2Data>([base]),
-        requestKey: (taskId: string) => dataTaggedQueryKey<GetBuildEventsByTaskIdV2Data>([base, taskId]),
-        request: (taskId: string, params: RequestParams = {}) =>
-          this.request<GetBuildEventsByTaskIdV2Data>({
-            path: `/v2/build-events/${taskId}`,
-            method: 'GET',
-            ...params
-          })
-      }
-    }
-  }
-  buildState = {
-    /**
-     * No description
-     *
-     * @tags Build
-     * @name GetBuildStateByBuildIdV2
-     * @summary Get build state by build ID
-     * @request GET:/v2/build-state/{build_id}
-     */
-    getBuildStateByBuildIdV2: () => {
-      const base = 'GET:/v2/build-state/{build_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetBuildStateByBuildIdV2Data>([base]),
-        requestKey: (buildId: string) => dataTaggedQueryKey<GetBuildStateByBuildIdV2Data>([base, buildId]),
-        request: (buildId: string, params: RequestParams = {}) =>
-          this.request<GetBuildStateByBuildIdV2Data>({
-            path: `/v2/build-state/${buildId}`,
-            method: 'GET',
-            ...params
-          })
-      }
-    }
-  }
-  builds = {
-    /**
-     * No description
-     *
-     * @tags Build
-     * @name GetBuildsLogsV2
-     * @summary Get complete log for a specific build event
-     * @request GET:/v2/builds/{build_id}/logs
-     */
-    getBuildsLogsV2: () => {
-      const base = 'GET:/v2/builds/{build_id}/logs' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetBuildsLogsV2Data>([base]),
-        requestKey: (buildId: string) => dataTaggedQueryKey<GetBuildsLogsV2Data>([base, buildId]),
-        request: (buildId: string, params: RequestParams = {}) =>
-          this.request<GetBuildsLogsV2Data>({
-            path: `/v2/builds/${buildId}/logs`,
-            method: 'GET',
-            ...params
-          })
-      }
-    }
-  }
-  health = {
-    /**
- * No description
- *
- * @tags System
- * @name GetHealthV2
- * @summary Health check endpoint for Orion Server
-Returns simple health status based on database connectivity
- * @request GET:/v2/health
- */
-    getHealthV2: () => {
-      const base = 'GET:/v2/health' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetHealthV2Data>([base]),
-        requestKey: () => dataTaggedQueryKey<GetHealthV2Data>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetHealthV2Data>({
-            path: `/v2/health`,
-            method: 'GET',
-            ...params
-          })
-      }
-    }
-  }
-  latestBuildResult = {
-    /**
-     * No description
-     *
-     * @tags Build
-     * @name GetLatestBuildResultByTaskIdV2
-     * @summary Get latest build result by task ID
-     * @request GET:/v2/latest_build_result/{task_id}
-     */
-    getLatestBuildResultByTaskIdV2: () => {
-      const base = 'GET:/v2/latest_build_result/{task_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetLatestBuildResultByTaskIdV2Data>([base]),
-        requestKey: (taskId: string) => dataTaggedQueryKey<GetLatestBuildResultByTaskIdV2Data>([base, taskId]),
-        request: (taskId: string, params: RequestParams = {}) =>
-          this.request<GetLatestBuildResultByTaskIdV2Data>({
-            path: `/v2/latest_build_result/${taskId}`,
-            method: 'GET',
-            ...params
-          })
-      }
-    }
-  }
-  retryBuild = {
-    /**
-     * No description
-     *
-     * @tags Build
-     * @name PostRetryBuildV2
-     * @summary Retry the build
-     * @request POST:/v2/retry-build
-     */
-    postRetryBuildV2: () => {
-      const base = 'POST:/v2/retry-build' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostRetryBuildV2Data>([base]),
-        requestKey: () => dataTaggedQueryKey<PostRetryBuildV2Data>([base]),
-        request: (data: RetryBuildRequest, params: RequestParams = {}) =>
-          this.request<PostRetryBuildV2Data>({
-            path: `/v2/retry-build`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            ...params
-          })
-      }
-    }
-  }
-  targetStatus = {
     /**
      * No description
      *
@@ -20316,8 +22653,9 @@ Returns simple health status based on database connectivity
 
       return {
         baseKey: dataTaggedQueryKey<GetTargetStatusByTargetIdV2Data>([base]),
-        requestKey: (targetId: string) => dataTaggedQueryKey<GetTargetStatusByTargetIdV2Data>([base, targetId]),
-        request: (targetId: string, params: RequestParams = {}) =>
+        requestKey: (params: GetTargetStatusByTargetIdV2Params) =>
+          dataTaggedQueryKey<GetTargetStatusByTargetIdV2Data>([base, params]),
+        request: ({ targetId, ...query }: GetTargetStatusByTargetIdV2Params, params: RequestParams = {}) =>
           this.request<GetTargetStatusByTargetIdV2Data>({
             path: `/v2/target-status/${targetId}`,
             method: 'GET',
@@ -20326,30 +22664,56 @@ Returns simple health status based on database connectivity
       }
     }
   }
-  targets = {
+  task = {
     /**
      * No description
      *
-     * @tags Build
-     * @name GetTargetsByTaskIdV2
-     * @request GET:/v2/targets/{task_id}
+     * @tags Task
+     * @name GetTaskHistoryOutput
+     * @summary Provides the ability to read historical task logs supporting either retrieving the entire log at once or segmenting it by line count.
+     * @request GET:/task-history-output
      */
-    getTargetsByTaskIdV2: () => {
-      const base = 'GET:/v2/targets/{task_id}' as const
+    getTaskHistoryOutput: () => {
+      const base = 'GET:/task-history-output' as const
 
       return {
-        baseKey: dataTaggedQueryKey<GetTargetsByTaskIdV2Data>([base]),
-        requestKey: (taskId: string) => dataTaggedQueryKey<GetTargetsByTaskIdV2Data>([base, taskId]),
-        request: (taskId: string, params: RequestParams = {}) =>
-          this.request<GetTargetsByTaskIdV2Data>({
-            path: `/v2/targets/${taskId}`,
+        baseKey: dataTaggedQueryKey<GetTaskHistoryOutputData>([base]),
+        requestKey: (params: GetTaskHistoryOutputParams) =>
+          dataTaggedQueryKey<GetTaskHistoryOutputData>([base, params]),
+        request: (query: GetTaskHistoryOutputParams, params: RequestParams = {}) =>
+          this.request<GetTaskHistoryOutputData>({
+            path: `/task-history-output`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Task
+     * @name GetTaskOutputById
+     * @summary Streams build output logs in real-time using Server-Sent Events (SSE) Continuously monitors the log file and streams new content as it becomes available
+     * @request GET:/task-output/{id}
+     */
+    getTaskOutputById: () => {
+      const base = 'GET:/task-output/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetTaskOutputByIdData>([base]),
+        requestKey: (params: GetTaskOutputByIdParams) => dataTaggedQueryKey<GetTaskOutputByIdData>([base, params]),
+        request: ({ id, ...query }: GetTaskOutputByIdParams, params: RequestParams = {}) =>
+          this.request<GetTaskOutputByIdData>({
+            path: `/task-output/${id}`,
             method: 'GET',
             ...params
           })
       }
-    }
-  }
-  task = {
+    },
+
     /**
      * No description
      *
@@ -20370,6 +22734,7 @@ Returns simple health status based on database connectivity
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params
           })
       }
@@ -20387,11 +22752,186 @@ Returns simple health status based on database connectivity
 
       return {
         baseKey: dataTaggedQueryKey<GetTaskByClV2Data>([base]),
-        requestKey: (cl: string) => dataTaggedQueryKey<GetTaskByClV2Data>([base, cl]),
-        request: (cl: string, params: RequestParams = {}) =>
+        requestKey: (params: GetTaskByClV2Params) => dataTaggedQueryKey<GetTaskByClV2Data>([base, params]),
+        request: ({ cl, ...query }: GetTaskByClV2Params, params: RequestParams = {}) =>
           this.request<GetTaskByClV2Data>({
             path: `/v2/task/${cl}`,
             method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  build = {
+    /**
+     * No description
+     *
+     * @tags Build
+     * @name GetBuildEventsByTaskIdV2
+     * @request GET:/v2/build-events/{task_id}
+     */
+    getBuildEventsByTaskIdV2: () => {
+      const base = 'GET:/v2/build-events/{task_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetBuildEventsByTaskIdV2Data>([base]),
+        requestKey: (params: GetBuildEventsByTaskIdV2Params) =>
+          dataTaggedQueryKey<GetBuildEventsByTaskIdV2Data>([base, params]),
+        request: ({ taskId, ...query }: GetBuildEventsByTaskIdV2Params, params: RequestParams = {}) =>
+          this.request<GetBuildEventsByTaskIdV2Data>({
+            path: `/v2/build-events/${taskId}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Build
+     * @name GetBuildStateByBuildIdV2
+     * @summary Get build state by build ID
+     * @request GET:/v2/build-state/{build_id}
+     */
+    getBuildStateByBuildIdV2: () => {
+      const base = 'GET:/v2/build-state/{build_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetBuildStateByBuildIdV2Data>([base]),
+        requestKey: (params: GetBuildStateByBuildIdV2Params) =>
+          dataTaggedQueryKey<GetBuildStateByBuildIdV2Data>([base, params]),
+        request: ({ buildId, ...query }: GetBuildStateByBuildIdV2Params, params: RequestParams = {}) =>
+          this.request<GetBuildStateByBuildIdV2Data>({
+            path: `/v2/build-state/${buildId}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Build
+     * @name GetBuildsLogsV2
+     * @summary Get complete log for a specific build event
+     * @request GET:/v2/builds/{build_id}/logs
+     */
+    getBuildsLogsV2: () => {
+      const base = 'GET:/v2/builds/{build_id}/logs' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetBuildsLogsV2Data>([base]),
+        requestKey: (params: GetBuildsLogsV2Params) => dataTaggedQueryKey<GetBuildsLogsV2Data>([base, params]),
+        request: ({ buildId, ...query }: GetBuildsLogsV2Params, params: RequestParams = {}) =>
+          this.request<GetBuildsLogsV2Data>({
+            path: `/v2/builds/${buildId}/logs`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Build
+     * @name GetLatestBuildResultByTaskIdV2
+     * @summary Get latest build result by task ID
+     * @request GET:/v2/latest_build_result/{task_id}
+     */
+    getLatestBuildResultByTaskIdV2: () => {
+      const base = 'GET:/v2/latest_build_result/{task_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetLatestBuildResultByTaskIdV2Data>([base]),
+        requestKey: (params: GetLatestBuildResultByTaskIdV2Params) =>
+          dataTaggedQueryKey<GetLatestBuildResultByTaskIdV2Data>([base, params]),
+        request: ({ taskId, ...query }: GetLatestBuildResultByTaskIdV2Params, params: RequestParams = {}) =>
+          this.request<GetLatestBuildResultByTaskIdV2Data>({
+            path: `/v2/latest_build_result/${taskId}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Build
+     * @name PostRetryBuildV2
+     * @summary Retry the build
+     * @request POST:/v2/retry-build
+     */
+    postRetryBuildV2: () => {
+      const base = 'POST:/v2/retry-build' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostRetryBuildV2Data>([base]),
+        requestKey: () => dataTaggedQueryKey<PostRetryBuildV2Data>([base]),
+        request: (data: RetryBuildRequest, params: RequestParams = {}) =>
+          this.request<PostRetryBuildV2Data>({
+            path: `/v2/retry-build`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Build
+     * @name GetTargetsByTaskIdV2
+     * @request GET:/v2/targets/{task_id}
+     */
+    getTargetsByTaskIdV2: () => {
+      const base = 'GET:/v2/targets/{task_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetTargetsByTaskIdV2Data>([base]),
+        requestKey: (params: GetTargetsByTaskIdV2Params) =>
+          dataTaggedQueryKey<GetTargetsByTaskIdV2Data>([base, params]),
+        request: ({ taskId, ...query }: GetTargetsByTaskIdV2Params, params: RequestParams = {}) =>
+          this.request<GetTargetsByTaskIdV2Data>({
+            path: `/v2/targets/${taskId}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  system = {
+    /**
+     * No description
+     *
+     * @tags System
+     * @name GetHealthV2
+     * @summary Health check endpoint for Orion Server Returns simple health status based on database connectivity
+     * @request GET:/v2/health
+     */
+    getHealthV2: () => {
+      const base = 'GET:/v2/health' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetHealthV2Data>([base]),
+        requestKey: () => dataTaggedQueryKey<GetHealthV2Data>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetHealthV2Data>({
+            path: `/v2/health`,
+            method: 'GET',
+            format: 'json',
             ...params
           })
       }
