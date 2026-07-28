@@ -105,7 +105,7 @@ impl AdminApplicationService {
         })
     }
 
-    /// Ensure mega-init bot + fresh push token (for unauthenticated bootstrap-init).
+    /// Ensure mega-init bot + fresh push token (for secret-gated bootstrap-init).
     pub async fn ensure_init_bot_token(
         &self,
     ) -> Result<crate::model::bots::BootstrapInitBotResponse, MegaError> {
@@ -156,12 +156,16 @@ impl AdminApplicationService {
             .await
     }
 
-    /// Check whether a bot has sufficient permission on a given resource.
+    /// Check whether a bot has sufficient permission on a given resource path.
+    ///
+    /// `resource_id` is treated as a repository path (same as receive-pack).
+    /// Requires an Enabled installation covering that path and a permission
+    /// scope that satisfies `required_permission`.
     pub async fn check_bot_permission(
         &self,
         bot_id: i64,
         _resource_type: callisto::sea_orm_active_enums::ResourceTypeEnum,
-        _resource_id: &str,
+        resource_id: &str,
         required_permission: PermissionEnum,
     ) -> Result<bool, MegaError> {
         let bots_storage = self.ctx.storage().bots_storage();
@@ -175,19 +179,23 @@ impl AdminApplicationService {
             return Ok(false);
         }
 
-        let installations = bots_storage.get_installed_bot_by_id(bot_id).await?;
-        let has_enabled_installation = installations
-            .iter()
-            .any(|inst| inst.status == InstallationBotStatusEnum::Enabled);
-
-        if !has_enabled_installation {
+        if !scope_satisfies_permission(&bot.permission_scope, &required_permission) {
             return Ok(false);
         }
 
-        Ok(scope_satisfies_permission(
-            &bot.permission_scope,
-            &required_permission,
-        ))
+        // Push-level checks also enforce installation coverage on the path.
+        if matches!(
+            required_permission,
+            PermissionEnum::Write | PermissionEnum::Admin
+        ) {
+            return bots_storage.bot_may_push_to_path(&bot, resource_id).await;
+        }
+
+        // Read: any Enabled installation is enough (scope already checked).
+        let installations = bots_storage.get_installed_bot_by_id(bot_id).await?;
+        Ok(installations
+            .iter()
+            .any(|inst| inst.status == InstallationBotStatusEnum::Enabled))
     }
 }
 

@@ -3,6 +3,7 @@ use api_model::common::CommonResult;
 use axum::{
     Json,
     extract::{Path, State},
+    http::{HeaderMap, StatusCode},
 };
 use ceres::model::bots::{
     BootstrapInitBotResponse, BotRes, ChangeInstallationStatus, CreateBotTokenRequest,
@@ -21,6 +22,68 @@ use crate::api::{
 const MAX_EXPIRES_IN_SECS: i64 = 365 * 24 * 3600 * 10;
 /// Minimum allowed expires_in in seconds.
 const MIN_EXPIRES_IN_SECS: i64 = 1;
+
+/// Env var holding the shared secret that gates `POST /bots/bootstrap-init`.
+const INIT_BOOTSTRAP_SECRET_ENV: &str = "MEGA_INIT_BOOTSTRAP_SECRET";
+/// Header the mega-init Job / script must send.
+const INIT_BOOTSTRAP_SECRET_HEADER: &str = "x-mega-init-secret";
+const INIT_BOOTSTRAP_SECRET_MIN_LEN: usize = 32;
+
+fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut diff = 0u8;
+    for (x, y) in a.iter().zip(b.iter()) {
+        diff |= x ^ y;
+    }
+    diff == 0
+}
+
+/// Fail closed unless `MEGA_INIT_BOOTSTRAP_SECRET` is set and matches the request header.
+fn ensure_init_bootstrap_secret(headers: &HeaderMap) -> Result<(), ApiError> {
+    let expected = match std::env::var(INIT_BOOTSTRAP_SECRET_ENV) {
+        Ok(v) => {
+            let trimmed = v.trim().to_owned();
+            if trimmed.len() < INIT_BOOTSTRAP_SECRET_MIN_LEN {
+                tracing::error!(
+                    env = INIT_BOOTSTRAP_SECRET_ENV,
+                    min_len = INIT_BOOTSTRAP_SECRET_MIN_LEN,
+                    "init bootstrap secret is too short; refusing bootstrap-init"
+                );
+                return Err(ApiError::with_status(
+                    StatusCode::UNAUTHORIZED,
+                    anyhow!("bootstrap-init is not configured"),
+                ));
+            }
+            trimmed
+        }
+        Err(_) => {
+            tracing::error!(
+                env = INIT_BOOTSTRAP_SECRET_ENV,
+                "init bootstrap secret is unset; refusing bootstrap-init"
+            );
+            return Err(ApiError::with_status(
+                StatusCode::UNAUTHORIZED,
+                anyhow!("bootstrap-init is not configured"),
+            ));
+        }
+    };
+
+    let provided = headers
+        .get(INIT_BOOTSTRAP_SECRET_HEADER)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if !constant_time_eq(expected.as_bytes(), provided.as_bytes()) {
+        tracing::warn!("bootstrap-init rejected: missing or invalid X-Mega-Init-Secret");
+        return Err(ApiError::with_status(
+            StatusCode::UNAUTHORIZED,
+            anyhow!("Unauthorized"),
+        ));
+    }
+    Ok(())
+}
 
 async fn ensure_bot_exists(state: &MonoApiServiceState, bot_id: i64) -> Result<(), ApiError> {
     let bot = state.services().admin().get_bot_by_id(bot_id).await?;
@@ -46,21 +109,29 @@ pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
     )
 }
 
-/// Bootstrap mega-init bot + push token (no auth; same class as merge-no-auth).
+/// Bootstrap mega-init bot + push token.
 ///
+/// Gated by shared secret `MEGA_INIT_BOOTSTRAP_SECRET` via header
+/// `X-Mega-Init-Secret` (not LoginUser — for the onprem mega-init Job / CronJob).
 /// Creates the `mega-init` bot if needed and returns a fresh `bot_` token for
-/// git HTTP push. Intended for onprem mega-init Job / CronJob.
+/// git HTTP push.
 #[utoipa::path(
     post,
     path = "/bootstrap-init",
+    params(
+        ("X-Mega-Init-Secret" = String, Header, description = "Must match MEGA_INIT_BOOTSTRAP_SECRET on mono-engine")
+    ),
     responses(
-        (status = 200, body = CommonResult<BootstrapInitBotResponse>, content_type = "application/json")
+        (status = 200, body = CommonResult<BootstrapInitBotResponse>, content_type = "application/json"),
+        (status = 401, description = "Missing/invalid X-Mega-Init-Secret or secret not configured"),
     ),
     tag = BOT_TAG
 )]
 async fn bootstrap_init_bot(
     State(state): State<MonoApiServiceState>,
+    headers: HeaderMap,
 ) -> Result<Json<CommonResult<BootstrapInitBotResponse>>, ApiError> {
+    ensure_init_bootstrap_secret(&headers)?;
     let resp = state.services().admin().ensure_init_bot_token().await?;
     Ok(Json(CommonResult::success(Some(resp))))
 }

@@ -2,7 +2,7 @@ use std::{collections::HashSet, ops::Deref};
 
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use callisto::{
-    bot_installations, bot_keys, bot_tokens, bots,
+    bot_installations, bot_keys, bot_tokens, bots, git_repo,
     sea_orm_active_enums::{
         BotStatusEnum, InstallationBotStatusEnum, InstallationTargetTypeEnum, PermissionScopeEnum,
     },
@@ -32,6 +32,8 @@ use crate::{
 const BOT_TOKEN_PREFIX: &str = "bot_";
 const BOT_TOKEN_RANDOM_LEN: usize = 32;
 const BOT_TOKEN_HMAC_KEY_ENV: &str = "MEGA_BOT_TOKEN_HMAC_SECRET";
+/// Organization installation target_id for system bots (`organization_id` is null).
+const SYSTEM_ORG_INSTALL_TARGET_ID: i64 = 0;
 
 #[derive(Clone)]
 pub struct BotsStorage {
@@ -281,8 +283,10 @@ impl BotsStorage {
 
     /// Ensure the fixed mega-init bot exists and return a fresh push token.
     ///
-    /// Creates bot `mega-init` if missing, revokes any existing `mega-init-push`
-    /// tokens, then issues a new token (plaintext returned once).
+    /// Creates bot `mega-init` if missing, ensures a system Organization
+    /// installation (so receive-pack accepts its Write token), revokes any
+    /// existing `mega-init-push` tokens, then issues a new token (plaintext
+    /// returned once).
     pub async fn ensure_init_bot_token(&self) -> Result<(bots::Model, String), MegaError> {
         const INIT_BOT_NAME: &str = "mega-init";
         const INIT_TOKEN_NAME: &str = "mega-init-push";
@@ -303,12 +307,118 @@ impl BotsStorage {
             )));
         }
 
+        self.ensure_system_org_installation(bot.id).await?;
+
         self.revoke_bot_tokens_by_name(bot.id, INIT_TOKEN_NAME)
             .await?;
         let (_model, token_plain) = self
             .generate_bot_token(bot.id, INIT_TOKEN_NAME, None)
             .await?;
         Ok((bot, token_plain))
+    }
+
+    /// Ensure an Enabled Organization installation for a system bot (target_id 0).
+    pub async fn ensure_system_org_installation(&self, bot_id: i64) -> Result<(), MegaError> {
+        let existing = bot_installations::Entity::find()
+            .filter(bot_installations::Column::BotId.eq(bot_id))
+            .filter(
+                bot_installations::Column::TargetType.eq(InstallationTargetTypeEnum::Organization),
+            )
+            .filter(bot_installations::Column::TargetId.eq(SYSTEM_ORG_INSTALL_TARGET_ID))
+            .one(self.get_connection())
+            .await?;
+
+        if let Some(inst) = existing {
+            if inst.status != InstallationBotStatusEnum::Enabled {
+                let mut active: bot_installations::ActiveModel = inst.into_active_model();
+                active.status = Set(InstallationBotStatusEnum::Enabled);
+                active.update(self.get_connection()).await?;
+            }
+            return Ok(());
+        }
+
+        self.install_bot(
+            bot_id,
+            InstallationTargetTypeEnum::Organization,
+            SYSTEM_ORG_INSTALL_TARGET_ID,
+            0,
+        )
+        .await?;
+        Ok(())
+    }
+
+    /// Whether `permission_scope` is sufficient for git receive-pack (push).
+    pub fn scope_allows_push(scope: &PermissionScopeEnum) -> bool {
+        matches!(
+            scope,
+            PermissionScopeEnum::Write | PermissionScopeEnum::Admin
+        )
+    }
+
+    /// Resolve an import `git_repo.id` for `repo_path`, if registered.
+    pub async fn find_repo_id_by_path(&self, repo_path: &str) -> Result<Option<i64>, MegaError> {
+        let path = repo_path.trim_end_matches('/');
+        let path = if path.is_empty() { "/" } else { path };
+
+        if let Some(repo) = git_repo::Entity::find()
+            .filter(git_repo::Column::RepoPath.eq(path))
+            .one(self.get_connection())
+            .await?
+        {
+            return Ok(Some(repo.id));
+        }
+
+        // Longest registered prefix (same idea as find_git_repo_like_path).
+        let like = git_repo::Entity::find()
+            .filter(Expr::cust(format!("'{path}' LIKE repo_path || '%'")))
+            .order_by_desc(Expr::cust("LENGTH(repo_path)"))
+            .one(self.get_connection())
+            .await?;
+        Ok(like.map(|r| r.id))
+    }
+
+    /// True if the bot may authenticate a receive-pack push to `repo_path`.
+    ///
+    /// Requires Write/Admin scope and an Enabled installation covering the
+    /// target: Repository install for the resolved git_repo, and/or an
+    /// Organization install for the bot's org (or system target_id 0).
+    pub async fn bot_may_push_to_path(
+        &self,
+        bot: &bots::Model,
+        repo_path: &str,
+    ) -> Result<bool, MegaError> {
+        if bot.status != BotStatusEnum::Enabled {
+            return Ok(false);
+        }
+        if !Self::scope_allows_push(&bot.permission_scope) {
+            return Ok(false);
+        }
+
+        let installations = self.get_installed_bot_by_id(bot.id).await?;
+        let enabled: Vec<_> = installations
+            .into_iter()
+            .filter(|i| i.status == InstallationBotStatusEnum::Enabled)
+            .collect();
+        if enabled.is_empty() {
+            return Ok(false);
+        }
+
+        let org_target_id = bot.organization_id.unwrap_or(SYSTEM_ORG_INSTALL_TARGET_ID);
+        let has_org_install = enabled.iter().any(|i| {
+            i.target_type == InstallationTargetTypeEnum::Organization
+                && i.target_id == org_target_id
+        });
+
+        let repo_id = self.find_repo_id_by_path(repo_path).await?;
+        if let Some(repo_id) = repo_id {
+            let has_repo_install = enabled.iter().any(|i| {
+                i.target_type == InstallationTargetTypeEnum::Repository && i.target_id == repo_id
+            });
+            return Ok(has_repo_install || has_org_install);
+        }
+
+        // Monorepo / unregistered path: Organization install only.
+        Ok(has_org_install)
     }
 
     /// Generate a new bot token, persist its HMAC-SHA256 hash and return the model with plaintext.

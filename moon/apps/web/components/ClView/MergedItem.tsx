@@ -18,8 +18,11 @@ interface MergedItemProps {
 /** Keep queue href same-origin: encode scope so values like `//evil.com` cannot open-redirect. */
 function queueHref(scope: unknown): string | null {
   if (typeof scope !== 'string' || scope.length === 0) return null
+
   const path = `/${encodeURIComponent(scope)}/queue/main`
+
   if (!path.startsWith('/') || path.startsWith('//')) return null
+
   return path
 }
 

@@ -18,7 +18,7 @@ export const DeleteGroupDialog = ({ groupId, onClose }: DeleteGroupDialogProps) 
     try {
       await deleteGroupMutation.mutateAsync(groupId)
       onClose()
-    } catch (error) {
+    } catch {
       // Error already handled by apiErrorToast
     }
   }

@@ -69,7 +69,7 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
       })
 
       toast.success('Permission removed')
-    } catch (error) {
+    } catch {
       toast.error('Failed to remove permission')
     } finally {
       setDeletingResources((prev) => {
@@ -109,7 +109,7 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
       })
 
       toast.success('Permission saved!')
-    } catch (error) {
+    } catch {
       toast.error('Failed to save permission')
     } finally {
       setSavingResources((prev) => {
@@ -237,7 +237,7 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
       })
 
       onOpenChange(false)
-    } catch (error) {
+    } catch {
       toast.error('Failed to update group. Please try again.')
     }
   }

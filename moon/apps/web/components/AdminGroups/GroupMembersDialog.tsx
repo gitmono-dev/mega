@@ -34,7 +34,7 @@ export const GroupMembersDialog = ({ groupId, groupName, onClose }: GroupMembers
         groupId: groupId,
         username: username
       })
-    } catch (error) {
+    } catch {
       // Error already handled by apiErrorToast
     } finally {
       setDeletingUsername(null)

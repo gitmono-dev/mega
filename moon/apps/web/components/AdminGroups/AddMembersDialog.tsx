@@ -61,7 +61,7 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
       })
       // Close dialog and reset state
       handleClose()
-    } catch (error) {
+    } catch {
       // Error already handled by apiErrorToast
     }
   }

@@ -3,7 +3,7 @@ export function isValidHttpsUrl(str: string) {
     const url = new URL(str)
 
     return url.protocol === 'https:'
-  } catch (_) {
+  } catch {
     return false
   }
 }
@@ -12,7 +12,7 @@ export function isValidHttpUrl(str: string) {
     const url = new URL(str)
 
     return url.protocol === 'https:' || url.protocol === 'http:'
-  } catch (_) {
+  } catch {
     return false
   }
 }

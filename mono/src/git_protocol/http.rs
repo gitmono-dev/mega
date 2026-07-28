@@ -77,6 +77,8 @@ fn basic_auth_password_from_authorization_value(value: &str) -> Option<String> {
 
 /// Uses [`crate::api::oauth::login_user_from_mono_access_token`] for user access tokens,
 /// or bot tokens (`bot_` prefix) via [`jupiter::storage::bots_storage::BotsStorage::find_bot_by_token`].
+/// Bot tokens additionally require Write/Admin scope and an Enabled installation
+/// covering the receive-pack target path.
 /// Supports both Bearer tokens and Basic Auth (with token as password).
 async fn git_receive_pack_auth(
     state: &TransportRuntime,
@@ -99,15 +101,31 @@ async fn git_receive_pack_auth(
 
     // Bot tokens are prefixed with `bot_`.
     if token.starts_with("bot_") {
-        let found = state
-            .storage
-            .bots_storage()
+        let bots = state.storage.bots_storage();
+        let found = bots
             .find_bot_by_token(&token)
             .await
             .map_err(mega_to_protocol_error)?;
         let Some((bot, _)) = found else {
             return Ok(false);
         };
+
+        let repo_path = pack_protocol.repo_path.to_string_lossy();
+        let may_push = bots
+            .bot_may_push_to_path(&bot, repo_path.as_ref())
+            .await
+            .map_err(mega_to_protocol_error)?;
+        if !may_push {
+            tracing::warn!(
+                bot_id = bot.id,
+                bot_name = %bot.name,
+                repo_path = %repo_path,
+                permission_scope = ?bot.permission_scope,
+                "bot token rejected for receive-pack: insufficient scope or no enabled installation"
+            );
+            return Ok(false);
+        }
+
         let username = bot.name;
         pack_protocol.auth.username = Some(username.clone());
         pack_protocol.auth.authenticated_user = Some(PushUserInfo { username });

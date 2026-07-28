@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import tempfile
@@ -13,6 +14,9 @@ from pathlib import Path
 GIT_USER_EMAIL = "mega-bot@example.com"
 GIT_USER_NAME = "Mega Bot"
 BUCKAL_BUNDLES_REPO = "https://github.com/buck2hub/buckal-bundles.git"
+INIT_BOOTSTRAP_SECRET_ENV = "MEGA_INIT_BOOTSTRAP_SECRET"
+INIT_BOOTSTRAP_SECRET_HEADER = "X-Mega-Init-Secret"
+INIT_BOOTSTRAP_SECRET_MIN_LEN = 32
 
 def run_git(cwd, args, check=True):
     """Executes a git command in the specified directory."""
@@ -137,12 +141,34 @@ def merge_cl(base_url, link, timeout=60):
         
     raise RuntimeError(f"Failed to merge CL {link} within {timeout}s")
 
-def bootstrap_init_bot_token(base_url):
-    """Obtain a fresh mega-init bot push token (unauthenticated bootstrap)."""
+def resolve_init_bootstrap_secret(cli_secret=None):
+    """Resolve shared secret for bootstrap-init (CLI flag or env)."""
+    secret = (cli_secret or "").strip() or os.environ.get(INIT_BOOTSTRAP_SECRET_ENV, "").strip()
+    if not secret:
+        raise RuntimeError(
+            f"bootstrap-init requires {INIT_BOOTSTRAP_SECRET_ENV} "
+            "(or --init-secret); must match mono-engine"
+        )
+    if len(secret) < INIT_BOOTSTRAP_SECRET_MIN_LEN:
+        raise RuntimeError(
+            f"{INIT_BOOTSTRAP_SECRET_ENV} must be at least "
+            f"{INIT_BOOTSTRAP_SECRET_MIN_LEN} characters"
+        )
+    return secret
+
+
+def bootstrap_init_bot_token(base_url, init_secret):
+    """Obtain a fresh mega-init bot push token (shared-secret gated)."""
     url = f"{base_url.rstrip('/')}/api/v1/bots/bootstrap-init"
     print(f"Bootstrapping init bot token via {url}...")
     # RSA keygen for a new bot can take a few seconds.
-    resp = api_request("POST", url, data={}, timeout=120)
+    resp = api_request(
+        "POST",
+        url,
+        data={},
+        headers={INIT_BOOTSTRAP_SECRET_HEADER: init_secret},
+        timeout=120,
+    )
     if not resp.get("req_result"):
         raise RuntimeError(
             f"bootstrap-init failed: {resp.get('err_message') or resp}"
@@ -157,10 +183,10 @@ def bootstrap_init_bot_token(base_url):
     return token
 
 
-def run_buckal_bundles_workflow(base_url):
+def run_buckal_bundles_workflow(base_url, init_secret):
     """Syncs latest buckal-bundles into toolchains (idempotent replace + auto-merge)."""
     print("--- Starting Buckal Bundles Sync ---")
-    bot_token = bootstrap_init_bot_token(base_url)
+    bot_token = bootstrap_init_bot_token(base_url, init_secret)
     auth_header = f"Authorization: Bearer {bot_token}"
 
     with tempfile.TemporaryDirectory(prefix="mega-init-buckal-") as temp_dir:
@@ -248,6 +274,14 @@ def main():
         action="store_true",
         help="Skip buckal-bundles sync",
     )
+    parser.add_argument(
+        "--init-secret",
+        default=None,
+        help=(
+            f"Shared secret for POST /api/v1/bots/bootstrap-init "
+            f"(default: env {INIT_BOOTSTRAP_SECRET_ENV})"
+        ),
+    )
     
     args = parser.parse_args()
     
@@ -260,7 +294,8 @@ def main():
         wait_for_server(base_url)
         
         if not args.skip_buckal:
-            run_buckal_bundles_workflow(base_url)
+            init_secret = resolve_init_bootstrap_secret(args.init_secret)
+            run_buckal_bundles_workflow(base_url, init_secret)
             
         print("\nAll initialization tasks completed successfully!")
         
