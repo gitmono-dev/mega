@@ -986,16 +986,15 @@ pub async fn terminal_ws_handler(
 async fn handle_terminal_socket(socket: WebSocket, state: Arc<AppState>, id: String) {
     let (mut ws_tx, mut ws_rx) = socket.split();
 
+    let _ = ws_tx
+        .send(Message::Text("Opening interactive shell…".into()))
+        .await;
+
     let machine = match orion_deployer::resolve_machine_for_handlers(&state, Some(&id)).await {
         Ok(m) => m,
         Err(e) => {
             tracing::warn!("[terminal] resolve VM '{}': {}", id, e);
-            let _ = ws_tx
-                .send(Message::Close(Some(axum::extract::ws::CloseFrame {
-                    code: axum::extract::ws::close_code::AGAIN,
-                    reason: truncate_close_reason(format!("no VM: {e}")).into(),
-                })))
-                .await;
+            send_terminal_fatal(&mut ws_tx, format!("no VM: {e}")).await;
             return;
         }
     };
@@ -1004,17 +1003,13 @@ async fn handle_terminal_socket(socket: WebSocket, state: Arc<AppState>, id: Str
         Ok(s) => s,
         Err(e) => {
             tracing::warn!("[terminal] open shell for '{}': {}", id, e);
-            let _ = ws_tx
-                .send(Message::Close(Some(axum::extract::ws::CloseFrame {
-                    code: axum::extract::ws::close_code::ERROR,
-                    reason: truncate_close_reason(format!("shell: {e}")).into(),
-                })))
-                .await;
+            send_terminal_fatal(&mut ws_tx, format!("shell: {e}")).await;
             return;
         }
     };
 
     let (mut reader, writer) = shell.split();
+    let _ = ws_tx.send(Message::Text("Shell ready".into())).await;
     tracing::info!("[terminal] session opened for '{}'", id);
 
     loop {
@@ -1089,4 +1084,20 @@ fn truncate_close_reason(s: String) -> String {
     } else {
         format!("{}…", &s[..MAX.saturating_sub(1)])
     }
+}
+
+/// Send a fatal terminal error as text (visible through mono proxy) then close.
+async fn send_terminal_fatal(
+    ws_tx: &mut futures_util::stream::SplitSink<WebSocket, Message>,
+    message: String,
+) {
+    let _ = ws_tx
+        .send(Message::Text(format!("Error: {message}").into()))
+        .await;
+    let _ = ws_tx
+        .send(Message::Close(Some(axum::extract::ws::CloseFrame {
+            code: axum::extract::ws::close_code::ERROR,
+            reason: truncate_close_reason(message).into(),
+        })))
+        .await;
 }

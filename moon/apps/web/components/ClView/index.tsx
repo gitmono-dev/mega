@@ -16,6 +16,7 @@ import { PostApiClListData } from '@gitmono/types/generated'
 import { SearchIcon, Tooltip } from '@gitmono/ui'
 import { cn } from '@gitmono/ui/src/utils'
 
+import { BotBadge } from '@/components/BotBadge'
 import {
   List as ClList,
   ListBanner as ClListBanner,
@@ -230,6 +231,12 @@ export default function CLView() {
             <MemberHovercard username={item.author}>
               <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
             </MemberHovercard>
+            {item.author_is_bot ? (
+              <>
+                {' '}
+                <BotBadge size='sm' />
+              </>
+            ) : null}
           </>
         )
       case 'draft':
@@ -245,6 +252,12 @@ export default function CLView() {
             <MemberHovercard username={item.author}>
               <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
             </MemberHovercard>
+            {item.author_is_bot ? (
+              <>
+                {' '}
+                <BotBadge size='sm' />
+              </>
+            ) : null}
           </>
         )
       case 'merged':
@@ -255,6 +268,12 @@ export default function CLView() {
               <MemberHovercard username={item.author}>
                 <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
               </MemberHovercard>
+              {item.author_is_bot ? (
+                <>
+                  {' '}
+                  <BotBadge size='sm' />
+                </>
+              ) : null}
               {' was merged '}
               <Tooltip label={formatFullTime(item.merge_timestamp ?? 0)}>
                 <span className='cursor-default'>
@@ -273,6 +292,12 @@ export default function CLView() {
             <MemberHovercard username={item.author}>
               <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
             </MemberHovercard>
+            {item.author_is_bot ? (
+              <>
+                {' '}
+                <BotBadge size='sm' />
+              </>
+            ) : null}
             {' was closed '}
             <Tooltip label={formatFullTime(item.updated_at)}>
               <span className='cursor-default'>

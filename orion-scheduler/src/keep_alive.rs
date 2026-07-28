@@ -148,13 +148,27 @@ mod platform {
         }
 
         /// Open a dedicated interactive PTY shell (does not block management SSH).
-        pub async fn open_interactive_shell(&self, cols: u32, rows: u32) -> Result<InteractiveShell> {
-            let guard = self.machine.lock().await;
-            let machine = guard
-                .as_ref()
-                .ok_or_else(|| anyhow::anyhow!("VM has been shut down"))?;
+        ///
+        /// Temporarily takes the `Machine` out of the mutex so log `exec` is not
+        /// blocked for the whole vsock SSH handshake (can take many seconds).
+        pub async fn open_interactive_shell(
+            &self,
+            cols: u32,
+            rows: u32,
+        ) -> Result<InteractiveShell> {
+            let machine = {
+                let mut guard = self.machine.lock().await;
+                guard
+                    .take()
+                    .ok_or_else(|| anyhow::anyhow!("VM has been shut down"))?
+            };
             tracing::info!("[keep-alive] Opening interactive shell {}x{}", cols, rows);
-            machine.open_interactive_shell(cols, rows).await
+            let result = machine.open_interactive_shell(cols, rows).await;
+            {
+                let mut guard = self.machine.lock().await;
+                *guard = Some(machine);
+            }
+            result
         }
     }
 
@@ -182,22 +196,6 @@ mod platform {
     impl InteractiveShell {
         pub fn split(self) -> (InteractiveShellReader, InteractiveShellWriter) {
             (InteractiveShellReader, InteractiveShellWriter)
-        }
-
-        pub async fn write(&self, _data: &[u8]) -> Result<()> {
-            anyhow::bail!("VM operations require Linux + KVM")
-        }
-
-        pub async fn read_chunk(&mut self) -> Result<Option<Vec<u8>>> {
-            anyhow::bail!("VM operations require Linux + KVM")
-        }
-
-        pub async fn resize(&self, _cols: u32, _rows: u32) -> Result<()> {
-            anyhow::bail!("VM operations require Linux + KVM")
-        }
-
-        pub async fn close(self) -> Result<()> {
-            anyhow::bail!("VM operations require Linux + KVM")
         }
     }
 

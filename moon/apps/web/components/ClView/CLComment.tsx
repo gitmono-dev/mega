@@ -15,10 +15,11 @@ import { apiErrorToast } from '@/utils/apiErrorToast'
 import { megaUserHandle } from '@/utils/megaUser'
 import { trimHtml } from '@/utils/trimHtml'
 
+import { ActorAvatar } from '../ActorAvatar'
+import { BotBadge } from '../BotBadge'
 import { MemberHovercard } from '../InlinePost/MemberHovercard'
 import { useChange } from '../Issues/utils/sideEffect'
 import { editIdAtom, FALSE_EDIT_VAL, refreshAtom } from '../Issues/utils/store'
-import { MemberAvatar } from '../MemberAvatar'
 import { useHandleBottomScrollOffset } from '../NoteEditor/useHandleBottomScrollOffset'
 import { ComposerReactionPicker } from '../Reactions/ComposerReactionPicker'
 import { ReactionPicker } from '../Reactions/ReactionPicker'
@@ -37,9 +38,10 @@ interface CommentProps {
 }
 
 const Comment = React.memo<CommentProps>(({ conv, id, whoamI, editorRef }: CommentProps) => {
-  const { data: member } = useGetOrganizationMember({ username: conv.username })
+  const isBot = !!conv.is_bot
+  const { data: member } = useGetOrganizationMember({ username: conv.username, enabled: !isBot })
   const profileUsername = member?.user.username || conv.username
-  const displayName = megaUserHandle(member?.user, conv.username) || 'username not found'
+  const displayName = megaUserHandle(member?.user, conv.username) || conv.username
 
   const extensions = useMemo(() => getNoteExtensions({ linkUnfurl: {} }), [])
   const handleReactionSelect = useHandleExpression({ conv, id, type: whoamI })
@@ -53,7 +55,7 @@ const Comment = React.memo<CommentProps>(({ conv, id, whoamI, editorRef }: Comme
         <div className='flex items-center space-x-3'>
           <div className='cursor-pointer'>
             <ConditionalWrap
-              condition={true}
+              condition={!isBot}
               wrap={(c) => (
                 <MemberHovercard username={profileUsername}>
                   <UserLinkByName username={profileUsername} className='relative'>
@@ -62,12 +64,12 @@ const Comment = React.memo<CommentProps>(({ conv, id, whoamI, editorRef }: Comme
                 </MemberHovercard>
               )}
             >
-              {member ? <MemberAvatar member={member} size='sm' /> : 'Avatar not found'}
+              <ActorAvatar member={member} username={conv.username} isBot={isBot} size='sm' />
             </ConditionalWrap>
           </div>
-          <div className='cursor-pointer'>
+          <div className='flex items-center gap-1.5'>
             <ConditionalWrap
-              condition={true}
+              condition={!isBot}
               wrap={(children) => (
                 <MemberHovercard username={profileUsername}>
                   <UserLinkByName username={profileUsername}>{children}</UserLinkByName>
@@ -78,6 +80,7 @@ const Comment = React.memo<CommentProps>(({ conv, id, whoamI, editorRef }: Comme
                 {displayName}
               </UIText>
             </ConditionalWrap>
+            {isBot && <BotBadge size='sm' />}
           </div>
           <div className='text-tertiary hover:text-secondary text-sm'>
             <HandleTime created_at={conv.created_at} />

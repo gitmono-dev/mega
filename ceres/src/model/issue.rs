@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use callisto::{mega_cl, mega_issue, sea_orm_active_enums::MergeStatusEnum};
 use chrono::NaiveDateTime;
 use jupiter::model::{
@@ -16,6 +18,9 @@ pub struct ItemRes {
     pub title: String,
     pub status: String,
     pub author: String,
+    /// True when `author` matches a registered bot.
+    #[serde(default)]
+    pub author_is_bot: bool,
     pub open_timestamp: i64,
     pub closed_at: Option<i64>,
     pub merge_timestamp: Option<i64>,
@@ -34,6 +39,7 @@ impl From<ItemDetails> for ItemRes {
                 title: model.title,
                 status: model.status.to_string(),
                 author: model.author,
+                author_is_bot: false,
                 open_timestamp: model.created_at.and_utc().timestamp(),
                 merge_timestamp: None,
                 closed_at: model.closed_at.map(|dt| dt.and_utc().timestamp()),
@@ -48,6 +54,7 @@ impl From<ItemDetails> for ItemRes {
                 title: model.title,
                 status: format!("{:?}", model.status),
                 author: model.username,
+                author_is_bot: false,
                 open_timestamp: model.created_at.and_utc().timestamp(),
                 merge_timestamp: model.merge_date.map(|dt| dt.and_utc().timestamp()),
                 closed_at: None,
@@ -56,6 +63,14 @@ impl From<ItemDetails> for ItemRes {
                 assignees: value.assignees,
                 comment_num: value.comment_num,
             },
+        }
+    }
+}
+
+impl ItemRes {
+    pub fn apply_bot_flags(items: &mut [Self], bot_names: &HashSet<String>) {
+        for item in items {
+            item.author_is_bot = bot_names.contains(&item.author) || item.author == "system";
         }
     }
 }
@@ -72,6 +87,9 @@ pub struct IssueDetailRes {
     pub link: String,
     pub title: String,
     pub status: String,
+    pub author: String,
+    #[serde(default)]
+    pub author_is_bot: bool,
     pub open_timestamp: i64,
     pub conversations: Vec<ConversationItem>,
     pub labels: Vec<LabelItem>,
@@ -85,6 +103,8 @@ impl From<IssueDetails> for IssueDetailRes {
             link: value.issue.link,
             title: value.issue.title,
             status: value.issue.status.to_string(),
+            author: value.issue.author.clone(),
+            author_is_bot: false,
             open_timestamp: value.issue.created_at.and_utc().timestamp(),
             conversations: value
                 .conversations

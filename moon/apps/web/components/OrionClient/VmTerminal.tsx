@@ -109,7 +109,7 @@ export function VmTerminal({ streamKey, className, height = 320 }: VmTerminalPro
     if (status === 'connecting') {
       term.writeln('\r\n\x1b[90mConnecting to VM terminal…\x1b[0m')
     } else if (status === 'open') {
-      term.writeln('\r\n\x1b[32mConnected.\x1b[0m')
+      term.writeln('\r\n\x1b[32mShell ready.\x1b[0m')
       try {
         fitRef.current?.fit()
         sendResize(term.cols, term.rows)
@@ -127,9 +127,19 @@ export function VmTerminal({ streamKey, className, height = 320 }: VmTerminalPro
         <UIText weight='font-semibold' size='text-sm'>
           VM terminal
         </UIText>
-        <UIText size='text-xs' color='text-muted'>
-          {statusLabel(status)}
-        </UIText>
+        {status === 'connecting' ? (
+          <span className='text-tertiary inline-flex items-center gap-1.5 text-xs'>
+            <span
+              className='border-tertiary inline-block size-3 animate-spin rounded-full border-2 border-t-transparent'
+              aria-hidden
+            />
+            Connecting…
+          </span>
+        ) : (
+          <UIText size='text-xs' color='text-muted'>
+            {statusLabel(status)}
+          </UIText>
+        )}
       </div>
       {error && status === 'error' ? (
         <UIText size='text-sm' className='mb-1 text-red-600'>
@@ -142,7 +152,7 @@ export function VmTerminal({ streamKey, className, height = 320 }: VmTerminalPro
         className='w-full overflow-hidden rounded border border-gray-200 bg-[#0b0f14] dark:border-gray-700'
       />
       <UIText size='text-xs' color='text-muted' className='mt-1 block'>
-        Interactive shell via mono → orion-scheduler. Requires the terminal backend to be deployed.
+        Interactive shell via mono → orion-scheduler (admin only). Open after the VM is running.
       </UIText>
     </div>
   )

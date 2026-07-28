@@ -7,6 +7,7 @@ import { useRouter } from 'next/router'
 
 import { PostApiIssueListData } from '@gitmono/types/generated'
 
+import { BotBadge } from '@/components/BotBadge'
 import {
   IndexTabFilter as IssueIndexTabFilter,
   List as IssueList,
@@ -244,14 +245,25 @@ export function IssuesContent({ setFilterQuery, shouldClearFilters, setShouldCle
 
   const getIssueDescription = (item: ItemsType[number]) => {
     const normalizedStatus = item.status.toLowerCase()
+    const authorNode = (
+      <>
+        <MemberHovercard username={item.author}>
+          <span className='cursor-pointer hover:text-blue-600 hover:underline'>{item.author}</span>
+        </MemberHovercard>
+        {item.author_is_bot ? (
+          <>
+            {' '}
+            <BotBadge size='sm' />
+          </>
+        ) : null}
+      </>
+    )
 
     switch (normalizedStatus) {
       case 'open':
         return (
           <>
-            <MemberHovercard username={item.author}>
-              <span className='cursor-pointer hover:text-blue-600 hover:underline'>{item.author}</span>
-            </MemberHovercard>
+            {authorNode}
             {' opened '}
             {formatDistance(fromUnixTime(item.open_timestamp), new Date(), { addSuffix: true })}
           </>
@@ -259,10 +271,7 @@ export function IssuesContent({ setFilterQuery, shouldClearFilters, setShouldCle
       case 'closed':
         return (
           <>
-            by{' '}
-            <MemberHovercard username={item.author}>
-              <span className='cursor-pointer hover:text-blue-600 hover:underline'>{item.author}</span>
-            </MemberHovercard>
+            by {authorNode}
             {' was closed '}
             {formatDistance(fromUnixTime(item.updated_at), new Date(), { addSuffix: true })}
           </>
@@ -270,9 +279,7 @@ export function IssuesContent({ setFilterQuery, shouldClearFilters, setShouldCle
       default:
         return (
           <>
-            <MemberHovercard username={item.author}>
-              <span className='cursor-pointer hover:text-blue-600 hover:underline'>{item.author}</span>
-            </MemberHovercard>
+            {authorNode}
             {' updated '}
             {formatDistance(fromUnixTime(item.updated_at), new Date(), { addSuffix: true })}
           </>

@@ -138,6 +138,10 @@ impl ClApplicationService {
                         let child_hash = child_item.id;
                         if let Some(cached) = tree_cache.get(&cursor) {
                             cached.clone()
+                        } else if let Some(created) = new_trees.get(&child_hash) {
+                            // In-memory trees from earlier diffs in this apply are
+                            // not in storage yet; prefer them over a DB miss.
+                            created.clone()
                         } else {
                             let model = mono_storage
                                 .get_tree_by_hash(&child_hash.to_string())
@@ -178,11 +182,14 @@ impl ClApplicationService {
 
                 let parent_dir_abs = cursor.clone();
 
-                // Update parent tree with the file change
+                // Update the immediate parent tree in place. Keep it in `chain_trees` so
+                // `propagate_up` can walk ancestors with `components[parent_index]` aligned
+                // to `chain_trees[parent_index]`. Popping before propagate_up used to hoist
+                // a nested tree (e.g. `tool/`) onto the wrong parent (`buckal-bundles`).
                 let parent_tree = chain_trees
-                    .pop()
-                    .ok_or_else(|| GitError::CustomError("Parent tree missing".to_string()))?;
-                chain_paths.pop();
+                    .last()
+                    .ok_or_else(|| GitError::CustomError("Parent tree missing".to_string()))?
+                    .clone();
 
                 let mut items = parent_tree.tree_items.clone();
                 match op {
@@ -210,6 +217,9 @@ impl ClApplicationService {
                         parent_dir = %parent_dir_abs.to_string_lossy(),
                         "apply_changes: directory emptied by delete; removing from parent"
                     );
+                    // Drop the emptied directory from the ancestor chain before removal walk.
+                    chain_trees.pop();
+                    chain_paths.pop();
                     if chain_trees.is_empty() {
                         let empty = Self::empty_tree();
                         Self::record_tree(parent_dir_abs, &empty, &mut tree_cache, &mut new_trees);
@@ -258,7 +268,8 @@ impl ClApplicationService {
                     &mut new_trees,
                 );
 
-                // Propagate updated hashes up to root
+                // Propagate updated hashes up to root (chain still includes updated parent;
+                // propagate_up ignores the last chain entry and rewrites ancestors).
                 root_tree = Self::propagate_up(
                     &cl.link,
                     updated_tree,
@@ -370,14 +381,23 @@ impl ClApplicationService {
         }
 
         // Wrap leaf upward for every missing segment except the shallowest
-        // (attach_name). Must use take(n-1), not skip(1): skip(1) after rev
-        // drops the deepest name and reuses a shallower one → config/config.
+        // (attach_name).
+        //
+        // Names: `missing.rev().take(n-1)` — deepest-first child names to wrap
+        // (e.g. missing=[config,mode] → wrap as "mode"). Do NOT skip(1) on names:
+        // that yields the shallow name and creates config/config.
+        //
+        // Paths: `missing_paths.rev().skip(1).take(n-1)` — parent dirs of the
+        // leaf (e.g. …/config), so the wrapper is cached where later walks look
+        // it up. Using take(n-1) without skip(1) on paths overwrites the leaf
+        // path and never records the real parent → "Tree not found" on the next
+        // file under that directory.
         let wrap_count = missing.len().saturating_sub(1);
         for (child_name, path) in missing
             .iter()
             .rev()
             .take(wrap_count)
-            .zip(missing_paths.iter().rev().take(wrap_count))
+            .zip(missing_paths.iter().rev().skip(1).take(wrap_count))
         {
             let wrapper = Tree::from_tree_items(vec![TreeItem::new(
                 TreeItemMode::Tree,
@@ -1114,5 +1134,147 @@ mod tests {
             let mode = child_tree(config, "mode", &new_trees);
             assert_blob_at(mode, "BUCK", buck);
         }
+    }
+
+    /// Regression: FileDiff merge of `buckal-bundles/tool/<file>` must keep siblings
+    /// under `buckal-bundles/` (LICENSE, config/, …). Popping the parent before
+    /// `propagate_up` used to mount the `tool/` tree hash at `buckal-bundles`.
+    #[test]
+    fn propagate_up_nested_tool_keeps_buckal_bundles_siblings() {
+        let license = blob_item("LICENSE", 0x10);
+        let old_script = blob_item("buildscript_run.py", 0x20);
+        let new_script_hash = ObjectHash::from_bytes(&[0x21; 20]).expect("hash");
+
+        let tool = tree_with(vec![old_script]);
+        let bundles = tree_with(vec![
+            license.clone(),
+            TreeItem::new(TreeItemMode::Tree, tool.id, "tool".to_string()),
+        ]);
+        let root = tree_with(vec![TreeItem::new(
+            TreeItemMode::Tree,
+            bundles.id,
+            "buckal-bundles".to_string(),
+        )]);
+
+        let updated_tool = tree_with(vec![TreeItem::new(
+            TreeItemMode::Blob,
+            new_script_hash,
+            "buildscript_run.py".to_string(),
+        )]);
+
+        // Full ancestor chain including the updated parent (no pop) — matches apply_changes.
+        let chain_paths = vec![
+            PathBuf::from("/"),
+            PathBuf::from("/buckal-bundles"),
+            PathBuf::from("/buckal-bundles/tool"),
+        ];
+        let chain_trees = vec![root.clone(), bundles.clone(), tool.clone()];
+        let components = vec!["buckal-bundles".to_string(), "tool".to_string()];
+        let mut tree_cache = HashMap::new();
+        let mut new_trees = HashMap::new();
+        new_trees.insert(updated_tool.id, updated_tool.clone());
+
+        let updated_root = ClApplicationService::propagate_up(
+            "TEST-BUCKAL-NEST",
+            updated_tool.clone(),
+            &components,
+            &chain_paths,
+            &chain_trees,
+            &mut tree_cache,
+            &mut new_trees,
+        )
+        .expect("propagate");
+
+        let bundles_after = child_tree(&updated_root, "buckal-bundles", &new_trees);
+        assert_blob_at(bundles_after, "LICENSE", license.id);
+        assert!(
+            bundles_after
+                .tree_items
+                .iter()
+                .any(|it| it.name == "tool" && it.mode == TreeItemMode::Tree),
+            "tool/ must remain a child of buckal-bundles, not replace it"
+        );
+        assert!(
+            bundles_after
+                .tree_items
+                .iter()
+                .all(|it| it.name != "buildscript_run.py"),
+            "must not flatten tool/ files into buckal-bundles/"
+        );
+        let tool_after = child_tree(bundles_after, "tool", &new_trees);
+        assert_blob_at(tool_after, "buildscript_run.py", new_script_hash);
+        assert_eq!(tool_after.id, updated_tool.id);
+    }
+
+    /// Regression: wrap paths must use skip(1) so `/config` is cached for later
+    /// walks. Without it, merge fails with "Tree not found for path '/…/config'".
+    #[test]
+    fn apply_missing_path_two_segments_caches_parent_dir_not_leaf_path() {
+        let root = ClApplicationService::empty_tree();
+        let chain_paths = vec![PathBuf::from("/")];
+        let chain_trees = vec![root];
+        let components = vec!["config".to_string(), "mode".to_string()];
+        let mut tree_cache = HashMap::new();
+        let mut new_trees = HashMap::new();
+        let mut ctx = crate::application::api_service::mono::types::ApplyChangeContext {
+            components: &components,
+            chain_paths: &chain_paths,
+            chain_trees: &chain_trees,
+            tree_cache: &mut tree_cache,
+            new_trees: &mut new_trees,
+        };
+
+        let buck = blob_hash(0x66);
+        let updated_root = ClApplicationService::apply_missing_path_update(
+            "TESTWRAP-CACHE",
+            vec!["config".to_string(), "mode".to_string()],
+            Some(buck),
+            "BUCK",
+            &mut ctx,
+        )
+        .expect("apply")
+        .expect("root");
+        tree_cache.insert(PathBuf::from("/"), updated_root.clone());
+
+        // Wrapper {mode → leaf} must be cached at /config (where walks look it up),
+        // not only overwrite /config/mode.
+        let cached_config = tree_cache
+            .get(&PathBuf::from("/config"))
+            .expect("config tree must be cached at /config");
+        assert!(
+            cached_config
+                .tree_items
+                .iter()
+                .any(|it| it.name == "mode" && it.mode == TreeItemMode::Tree),
+            "cached /config must contain mode/"
+        );
+        assert!(
+            cached_config
+                .tree_items
+                .iter()
+                .all(|it| it.name != "config"),
+            "cached /config must not be config/config"
+        );
+
+        let cached_mode = tree_cache
+            .get(&PathBuf::from("/config/mode"))
+            .expect("mode leaf must remain cached at /config/mode");
+        assert_blob_at(cached_mode, "BUCK", buck);
+
+        // Second file under config/ must resolve via cache (simulates merge of
+        // set_cfg_constructor.bzl after mode/BUCK) without DB lookup.
+        let bundles_or_root = tree_cache.get(&PathBuf::from("/")).unwrap().clone();
+        let config_item = bundles_or_root
+            .tree_items
+            .iter()
+            .find(|it| it.name == "config")
+            .expect("config entry on root");
+        let from_cache = tree_cache
+            .get(&PathBuf::from("/config"))
+            .expect("lookup path used by apply_changes walk");
+        assert_eq!(
+            from_cache.id, config_item.id,
+            "parent entry hash must match tree cached at /config"
+        );
     }
 }

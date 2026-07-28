@@ -13,7 +13,13 @@ tools/**
 
 docs
 
-scripts
+# Exclude scripts by default (large / unused in most images), but keep the
+# paths required by scripts/init_mega/Dockerfile (mega-init image).
+scripts/*
+!scripts/init_mega/
+!scripts/init_mega/**
+!scripts/import-buck2-deps/
+!scripts/import-buck2-deps/**
 
 tests
 

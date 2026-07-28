@@ -44,7 +44,7 @@ Do **not** hand-edit `moon/api/gen/gitmono.json` or `moon/packages/types/generat
 
 ## Post-start initialization (optional)
 
-To seed Buckal bundles and third-party imports via API:
+To sync Buckal bundles into `toolchains` via API (default; no libra/buck2 deps):
 
 ```bash
 python3 scripts/init_mega/init_mega.py --base-url http://127.0.0.1:8000

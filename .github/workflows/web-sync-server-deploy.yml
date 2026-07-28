@@ -15,6 +15,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 env:
   REGISTRY_ALIAS: m8q5m4u3
   REPOSITORY: mega/web-sync-server

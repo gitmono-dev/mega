@@ -8,6 +8,9 @@ on:
       - '.github/workflows/web-deploy.yml'
       - 'moon/**'
 
+permissions:
+  contents: read
+
 env:
   TIPTAP_PRIVATE_REGISTRY_KEY: CjqFil0n7z4GGur+RPric21fBBeSB4R4FoNdRYOE1bQEz6AXLCoANCc+o9rLIg6Q
 

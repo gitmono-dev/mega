@@ -105,6 +105,23 @@ impl AdminApplicationService {
         })
     }
 
+    /// Ensure mega-init bot + fresh push token (for unauthenticated bootstrap-init).
+    pub async fn ensure_init_bot_token(
+        &self,
+    ) -> Result<crate::model::bots::BootstrapInitBotResponse, MegaError> {
+        let (bot, token_plain) = self
+            .ctx
+            .storage()
+            .bots_storage()
+            .ensure_init_bot_token()
+            .await?;
+        Ok(crate::model::bots::BootstrapInitBotResponse {
+            bot_id: bot.id,
+            bot_name: bot.name,
+            token: token_plain,
+        })
+    }
+
     pub async fn list_bot_tokens(&self, bot_id: i64) -> Result<Vec<ListBotTokenItem>, MegaError> {
         Ok(self
             .ctx

@@ -41,6 +41,29 @@ function domainFromClientHostname(hostname: string): string | null {
   }
 }
 
+/** True when the log panel is only showing a VM wait placeholder (no real log lines yet). */
+function isVmWaitingLog(logs: string): boolean {
+  const trimmed = logs.trim()
+
+  if (!trimmed) return false
+  if (!/^Waiting for VM\b/im.test(trimmed)) return false
+  // Still waiting if every non-empty line is a wait notice.
+  return trimmed
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .every((l) => /^Waiting for VM\b/i.test(l))
+}
+
+function vmWaitingLabel(logs: string): string {
+  const line = logs
+    .split('\n')
+    .map((l) => l.trim())
+    .find((l) => /^Waiting for VM\b/i.test(l))
+
+  return (line || 'Waiting for VM to become available').replace(/[.…]+$/u, '')
+}
+
 type LogPanelSource = 'runner' | 'client'
 type TerminalPanelSource = 'runner' | 'client'
 
@@ -493,15 +516,23 @@ const OrionClientPage: PageWithLayout<any> = () => {
                     {logSource === 'client' ? 'Runner logs' : 'Startup logs'}
                   </UIText>
                   <div className='flex items-center gap-2'>
-                    <UIText size='text-xs' color='text-muted'>
-                      {runnerLogsStatus === 'connecting'
-                        ? 'Connecting…'
-                        : runnerLogsStatus === 'streaming'
+                    {runnerLogsStatus === 'connecting' || /Waiting for VM\b/i.test(runnerLogs) ? (
+                      <span className='text-tertiary inline-flex items-center gap-1.5 text-xs'>
+                        <span
+                          className='border-tertiary inline-block size-3 animate-spin rounded-full border-2 border-t-transparent'
+                          aria-hidden
+                        />
+                        Waiting…
+                      </span>
+                    ) : (
+                      <UIText size='text-xs' color='text-muted'>
+                        {runnerLogsStatus === 'streaming'
                           ? 'Live'
                           : runnerLogsStatus === 'error'
                             ? 'Disconnected'
                             : 'Idle'}
-                    </UIText>
+                      </UIText>
+                    )}
                     {runnerLogs ? (
                       <Button
                         variant='plain'
@@ -541,15 +572,30 @@ const OrionClientPage: PageWithLayout<any> = () => {
                   style={{ height: 320, maxHeight: 320, overflowY: 'auto', overflowX: 'auto' }}
                   className='w-full cursor-text rounded border border-gray-200 bg-black/90 outline-hidden select-text focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700'
                 >
-                  <pre
-                    ref={logsPreRef}
-                    className='m-0 block w-full min-w-0 p-3 font-mono text-xs leading-5 break-words whitespace-pre-wrap text-green-100 select-text'
-                  >
-                    {runnerLogs ||
-                      (runnerLogsStatus === 'connecting'
-                        ? 'Waiting for log stream…'
-                        : 'No log lines yet. Logs appear while the runner is running.')}
-                  </pre>
+                  {isVmWaitingLog(runnerLogs) ? (
+                    <div className='flex h-full min-h-[280px] flex-col items-center justify-center gap-3 p-6 text-green-100'>
+                      <span
+                        className='inline-block size-8 animate-spin rounded-full border-2 border-green-400/30 border-t-green-300'
+                        aria-hidden
+                      />
+                      <p className='flex items-center gap-0 font-mono text-xs tracking-wide'>
+                        <span>{vmWaitingLabel(runnerLogs)}</span>
+                        <span className='inline-flex w-4 justify-start' aria-hidden>
+                          <span className='animate-pulse'>…</span>
+                        </span>
+                      </p>
+                    </div>
+                  ) : (
+                    <pre
+                      ref={logsPreRef}
+                      className='m-0 block w-full min-w-0 p-3 font-mono text-xs leading-5 break-words whitespace-pre-wrap text-green-100 select-text'
+                    >
+                      {runnerLogs ||
+                        (runnerLogsStatus === 'connecting'
+                          ? 'Waiting for log stream…'
+                          : 'No log lines yet. Logs appear while the runner is running.')}
+                    </pre>
+                  )}
                 </div>
                 <UIText size='text-xs' color='text-muted' className='mt-1 block'>
                   Scroll inside the box to browse. ⌘/Ctrl+A select all, ⌘/Ctrl+C copy. Scroll to bottom to resume live

@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{collections::HashSet, ops::Deref};
 
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use callisto::{
@@ -231,6 +231,86 @@ impl BotsStorage {
             .await?)
     }
 
+    /// Find a bot by unique name with no organization (system / init bots).
+    pub async fn find_bot_by_name(&self, name: &str) -> Result<Option<bots::Model>, MegaError> {
+        Ok(bots::Entity::find()
+            .filter(bots::Column::Name.eq(name))
+            .filter(bots::Column::OrganizationId.is_null())
+            .one(self.get_connection())
+            .await?)
+    }
+
+    /// Return the subset of `names` that match an existing bot row (any org).
+    pub async fn bot_names_among(
+        &self,
+        names: impl IntoIterator<Item = impl AsRef<str>>,
+    ) -> Result<HashSet<String>, MegaError> {
+        let names: Vec<String> = names
+            .into_iter()
+            .map(|n| n.as_ref().to_string())
+            .filter(|n| !n.is_empty())
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect();
+        if names.is_empty() {
+            return Ok(HashSet::new());
+        }
+        let rows = bots::Entity::find()
+            .filter(bots::Column::Name.is_in(names))
+            .all(self.get_connection())
+            .await?;
+        Ok(rows.into_iter().map(|b| b.name).collect())
+    }
+
+    /// Revoke all non-revoked tokens for a bot that share `token_name`. Idempotent.
+    pub async fn revoke_bot_tokens_by_name(
+        &self,
+        bot_id: i64,
+        token_name: &str,
+    ) -> Result<(), MegaError> {
+        let conn = self.get_connection();
+        bot_tokens::Entity::update_many()
+            .col_expr(bot_tokens::Column::Revoked, Expr::value(true))
+            .filter(bot_tokens::Column::BotId.eq(bot_id))
+            .filter(bot_tokens::Column::TokenName.eq(token_name))
+            .filter(bot_tokens::Column::Revoked.eq(false))
+            .exec(conn)
+            .await?;
+        Ok(())
+    }
+
+    /// Ensure the fixed mega-init bot exists and return a fresh push token.
+    ///
+    /// Creates bot `mega-init` if missing, revokes any existing `mega-init-push`
+    /// tokens, then issues a new token (plaintext returned once).
+    pub async fn ensure_init_bot_token(&self) -> Result<(bots::Model, String), MegaError> {
+        const INIT_BOT_NAME: &str = "mega-init";
+        const INIT_TOKEN_NAME: &str = "mega-init-push";
+
+        let bot = match self.find_bot_by_name(INIT_BOT_NAME).await? {
+            Some(existing) => existing,
+            None => {
+                let (bot, _private_pem) = self
+                    .register_bot(INIT_BOT_NAME, None, 0, PermissionScopeEnum::Write)
+                    .await?;
+                bot
+            }
+        };
+
+        if bot.status != BotStatusEnum::Enabled {
+            return Err(MegaError::Other(format!(
+                "init bot '{INIT_BOT_NAME}' exists but is disabled"
+            )));
+        }
+
+        self.revoke_bot_tokens_by_name(bot.id, INIT_TOKEN_NAME)
+            .await?;
+        let (_model, token_plain) = self
+            .generate_bot_token(bot.id, INIT_TOKEN_NAME, None)
+            .await?;
+        Ok((bot, token_plain))
+    }
+
     /// Generate a new bot token, persist its HMAC-SHA256 hash and return the model with plaintext.
     pub async fn generate_bot_token(
         &self,
@@ -347,6 +427,10 @@ impl BotsStorage {
         let Some(bot) = bot else {
             return Ok(None);
         };
+
+        if bot.status != BotStatusEnum::Enabled {
+            return Ok(None);
+        }
 
         Ok(Some((bot, token)))
     }

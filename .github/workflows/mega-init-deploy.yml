@@ -1,0 +1,53 @@
+name: Mega Init deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/mega-init-deploy.yml"
+      - "scripts/init_mega/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  REPOSITORY: mega/mega-init
+  IMAGE_TAG: latest
+  HARBOR_REGISTRY: registry.xuanwu.openatom.cn
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.HARBOR_REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - name: Build, tag, and push docker image to Harbor
+        run: |
+          set -euo pipefail
+
+          HARBOR_IMAGE_BASE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}"
+          IMAGE_TAG="${{ env.IMAGE_TAG }}"
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+
+          docker build \
+            -f scripts/init_mega/Dockerfile \
+            -t "$HARBOR_IMAGE_BASE:$IMAGE_TAG" \
+            -t "$HARBOR_IMAGE_BASE:$SHORT_SHA" \
+            .
+
+          docker push "$HARBOR_IMAGE_BASE:$IMAGE_TAG"
+          docker push "$HARBOR_IMAGE_BASE:$SHORT_SHA"

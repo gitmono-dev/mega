@@ -62,7 +62,8 @@ Example 3: Specify the scan root and import concurrently:
 ```bash
 python3 scripts/import-buck2-deps/import-buck2-deps.py \
   --scan-root /Users/Yetianxing/workspace/rk8s/third-party \
-  --jobs 8
+  --jobs 8 \
+  --git-base-url https://git.rk8s.xuanwu.openatom.cn
 ```
 
 Example 4: Preview planned imports (no git operations):

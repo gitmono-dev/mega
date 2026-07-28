@@ -1,11 +1,9 @@
 use std::time::Duration;
 
-use crate::{SchedulerStatusResponse, StartRunnerPayload, StartRunnerSchedulerResponse};
 use http::header::AUTHORIZATION;
-use tokio_tungstenite::{
-    MaybeTlsStream, WebSocketStream,
-    tungstenite::client::IntoClientRequest,
-};
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, tungstenite::client::IntoClientRequest};
+
+use crate::{SchedulerStatusResponse, StartRunnerPayload, StartRunnerSchedulerResponse};
 
 pub type TerminalWebSocket = WebSocketStream<MaybeTlsStream<tokio::net::TcpStream>>;
 

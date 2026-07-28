@@ -13,9 +13,16 @@ function terminalWsUrl(streamKey: string): string {
   return `${wsBase}/api/v1/orion/runners/${encodeURIComponent(streamKey)}/terminal`
 }
 
+function isFatalTerminalText(text: string): boolean {
+  return text.startsWith('Failed to open') || text.startsWith('Error:')
+}
+
 /**
  * Browser WebSocket client for the mono-proxied VM terminal endpoint.
  * `streamKey` is a scheduler VM id or domain host (same as log stream keys).
+ *
+ * Status stays `connecting` until the scheduler sends `Shell ready` (or PTY binary),
+ * so a bare TCP upgrade is not shown as Connected while SSH is still opening.
  */
 export function useVmTerminalWebSocket(streamKey: string | null) {
   const [status, setStatus] = useState<VmTerminalStatus>('idle')
@@ -65,6 +72,8 @@ export function useVmTerminalWebSocket(streamKey: string | null) {
     setError(null)
 
     let closedByEffect = false
+    let sawOpen = false
+    let shellReady = false
     let ws: WebSocket
 
     try {
@@ -82,6 +91,15 @@ export function useVmTerminalWebSocket(streamKey: string | null) {
 
     ws.onopen = () => {
       if (closedByEffect) return
+      sawOpen = true
+      // Stay in connecting until Shell ready / first PTY bytes.
+      setStatus('connecting')
+      setError(null)
+    }
+
+    const markReady = () => {
+      if (shellReady || closedByEffect) return
+      shellReady = true
       setStatus('open')
       setError(null)
     }
@@ -93,16 +111,28 @@ export function useVmTerminalWebSocket(streamKey: string | null) {
 
       if (event.data instanceof ArrayBuffer) {
         bytes = new Uint8Array(event.data)
+        if (bytes.length > 0) markReady()
       } else if (typeof Blob !== 'undefined' && event.data instanceof Blob) {
         void event.data.arrayBuffer().then((buf) => {
           if (closedByEffect) return
           const chunk = new Uint8Array(buf)
 
+          if (chunk.length > 0) markReady()
           listenersRef.current.forEach((listener) => listener(chunk))
         })
         return
       } else if (typeof event.data === 'string') {
-        bytes = new TextEncoder().encode(event.data)
+        if (isFatalTerminalText(event.data)) {
+          setStatus('error')
+          setError(event.data)
+          return
+        }
+        if (event.data === 'Shell ready') {
+          markReady()
+          return
+        }
+        // Status text from proxy/scheduler (e.g. Opening interactive shell…)
+        bytes = new TextEncoder().encode(`${event.data}\r\n`)
       }
 
       if (!bytes || bytes.length === 0) return
@@ -112,16 +142,24 @@ export function useVmTerminalWebSocket(streamKey: string | null) {
     ws.onerror = () => {
       if (closedByEffect) return
       setStatus('error')
-      setError('Terminal connection failed (endpoint may be unavailable)')
+      setError((prev) => prev ?? 'Terminal connection failed (check mono ↔ scheduler and admin auth)')
     }
 
-    ws.onclose = () => {
+    ws.onclose = (ev) => {
       if (closedByEffect) return
       if (wsRef.current === ws) {
         wsRef.current = null
       }
-      setStatus((prev) => (prev === 'error' ? prev : 'error'))
-      setError((prev) => prev ?? 'Terminal disconnected')
+      const reason = (ev.reason || '').trim()
+
+      setStatus('error')
+      setError((prev) => {
+        if (prev) return prev
+        if (reason) return reason
+        if (!sawOpen) return 'Terminal handshake failed (unauthorized, missing scheduler, or route unavailable)'
+        if (!shellReady) return 'Terminal closed before shell was ready'
+        return 'Terminal disconnected'
+      })
     }
 
     return () => {

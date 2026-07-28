@@ -75,7 +75,8 @@ fn basic_auth_password_from_authorization_value(value: &str) -> Option<String> {
     Some(decoded_str.split(':').nth(1)?.to_owned())
 }
 
-/// Uses [`crate::api::oauth::login_user_from_mono_access_token`] (same as [`crate::api::oauth::AccessTokenUser`]).
+/// Uses [`crate::api::oauth::login_user_from_mono_access_token`] for user access tokens,
+/// or bot tokens (`bot_` prefix) via [`jupiter::storage::bots_storage::BotsStorage::find_bot_by_token`].
 /// Supports both Bearer tokens and Basic Auth (with token as password).
 async fn git_receive_pack_auth(
     state: &TransportRuntime,
@@ -95,6 +96,23 @@ async fn git_receive_pack_auth(
     let Some(token) = token else {
         return Ok(false);
     };
+
+    // Bot tokens are prefixed with `bot_`.
+    if token.starts_with("bot_") {
+        let found = state
+            .storage
+            .bots_storage()
+            .find_bot_by_token(&token)
+            .await
+            .map_err(mega_to_protocol_error)?;
+        let Some((bot, _)) = found else {
+            return Ok(false);
+        };
+        let username = bot.name;
+        pack_protocol.auth.username = Some(username.clone());
+        pack_protocol.auth.authenticated_user = Some(PushUserInfo { username });
+        return Ok(true);
+    }
 
     let user = login_user_from_mono_access_token(&state.storage.user_storage(), &token)
         .await

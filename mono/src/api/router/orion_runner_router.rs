@@ -3,10 +3,7 @@ use api_model::common::CommonResult;
 use axum::{
     Json,
     body::Body,
-    extract::{
-        Path, State, WebSocketUpgrade,
-        ws::{Message as AxumMessage, WebSocket},
-    },
+    extract::{Path, State, WebSocketUpgrade, ws::Message as AxumMessage},
     http::{HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
     routing::get,
@@ -14,7 +11,7 @@ use axum::{
 use ceres::model::orion_runner::{RunnerStatusResponse, StartRunnerRequest, StartRunnerResponse};
 use common::config::BuildConfig;
 use futures::{SinkExt, StreamExt, TryStreamExt};
-use orion_scheduler_client::{OrionSchedulerClient, StartRunnerPayload, TerminalWebSocket};
+use orion_scheduler_client::{OrionSchedulerClient, StartRunnerPayload};
 use tokio_tungstenite::tungstenite::Message as TungsteniteMessage;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -314,7 +311,8 @@ async fn stream_runner_logs(
 
 /// Proxy interactive VM terminal WebSocket to orion-scheduler.
 ///
-/// Protocol (passthrough): binary stdin/stdout; text JSON resize.
+/// Upgrade the browser socket first, then dial the scheduler so slow PTY setup
+/// does not fail the HTTP Upgrade handshake. Errors are sent as text frames.
 async fn proxy_runner_terminal(
     user: LoginUser,
     State(state): State<MonoApiServiceState>,
@@ -322,100 +320,121 @@ async fn proxy_runner_terminal(
     ws: WebSocketUpgrade,
 ) -> Result<impl IntoResponse, ApiError> {
     ensure_admin(&state, &user).await?;
-    let client = scheduler_client(&state)?;
+    let client = scheduler_client(&state)?.clone();
 
-    let upstream = client.connect_terminal(&id).await.map_err(|e| {
-        ApiError::with_status(
-            StatusCode::BAD_GATEWAY,
-            anyhow!("Scheduler terminal connect failed: {}", e),
-        )
-    })?;
+    Ok(ws.on_upgrade(move |socket| async move {
+        let (mut browser_tx, mut browser_rx) = socket.split();
 
-    Ok(ws.on_upgrade(move |socket| bridge_terminal_sockets(socket, upstream)))
-}
+        let upstream = match client.connect_terminal(&id).await {
+            Ok(ws) => ws,
+            Err(e) => {
+                tracing::warn!("[terminal-proxy] upstream connect failed for '{id}': {e}");
+                let _ = browser_tx
+                    .send(AxumMessage::Text(
+                        format!("Failed to open VM terminal: {e}").into(),
+                    ))
+                    .await;
+                let _ = browser_tx.send(AxumMessage::Close(None)).await;
+                return;
+            }
+        };
 
-async fn bridge_terminal_sockets(browser: WebSocket, upstream: TerminalWebSocket) {
-    let (mut browser_tx, mut browser_rx) = browser.split();
-    let (mut upstream_tx, mut upstream_rx) = upstream.split();
+        let (mut upstream_tx, mut upstream_rx) = upstream.split();
 
-    loop {
-        tokio::select! {
-            msg = browser_rx.next() => {
-                match msg {
-                    Some(Ok(AxumMessage::Binary(data))) => {
-                        if upstream_tx
-                            .send(TungsteniteMessage::Binary(data))
-                            .await
-                            .is_err()
-                        {
+        loop {
+            tokio::select! {
+                msg = browser_rx.next() => {
+                    match msg {
+                        Some(Ok(AxumMessage::Binary(data))) => {
+                            if upstream_tx
+                                .send(TungsteniteMessage::Binary(data))
+                                .await
+                                .is_err()
+                            {
+                                break;
+                            }
+                        }
+                        Some(Ok(AxumMessage::Text(text))) => {
+                            if upstream_tx
+                                .send(TungsteniteMessage::Text(text.to_string().into()))
+                                .await
+                                .is_err()
+                            {
+                                break;
+                            }
+                        }
+                        Some(Ok(AxumMessage::Ping(payload))) => {
+                            let _ = upstream_tx
+                                .send(TungsteniteMessage::Ping(payload))
+                                .await;
+                        }
+                        Some(Ok(AxumMessage::Pong(payload))) => {
+                            let _ = upstream_tx
+                                .send(TungsteniteMessage::Pong(payload))
+                                .await;
+                        }
+                        Some(Ok(AxumMessage::Close(_))) | None => break,
+                        Some(Err(e)) => {
+                            tracing::warn!("[terminal-proxy] browser ws error: {}", e);
                             break;
                         }
-                    }
-                    Some(Ok(AxumMessage::Text(text))) => {
-                        if upstream_tx
-                            .send(TungsteniteMessage::Text(text.to_string().into()))
-                            .await
-                            .is_err()
-                        {
-                            break;
-                        }
-                    }
-                    Some(Ok(AxumMessage::Ping(payload))) => {
-                        let _ = upstream_tx
-                            .send(TungsteniteMessage::Ping(payload))
-                            .await;
-                    }
-                    Some(Ok(AxumMessage::Pong(payload))) => {
-                        let _ = upstream_tx
-                            .send(TungsteniteMessage::Pong(payload))
-                            .await;
-                    }
-                    Some(Ok(AxumMessage::Close(_))) | None => break,
-                    Some(Err(e)) => {
-                        tracing::warn!("[terminal-proxy] browser ws error: {}", e);
-                        break;
                     }
                 }
-            }
-            msg = upstream_rx.next() => {
-                match msg {
-                    Some(Ok(TungsteniteMessage::Binary(data))) => {
-                        if browser_tx
-                            .send(AxumMessage::Binary(data))
-                            .await
-                            .is_err()
-                        {
+                msg = upstream_rx.next() => {
+                    match msg {
+                        Some(Ok(TungsteniteMessage::Binary(data))) => {
+                            if browser_tx
+                                .send(AxumMessage::Binary(data))
+                                .await
+                                .is_err()
+                            {
+                                break;
+                            }
+                        }
+                        Some(Ok(TungsteniteMessage::Text(text))) => {
+                            if browser_tx
+                                .send(AxumMessage::Text(text.to_string().into()))
+                                .await
+                                .is_err()
+                            {
+                                break;
+                            }
+                        }
+                        Some(Ok(TungsteniteMessage::Ping(payload))) => {
+                            let _ = browser_tx.send(AxumMessage::Ping(payload)).await;
+                        }
+                        Some(Ok(TungsteniteMessage::Pong(payload))) => {
+                            let _ = browser_tx.send(AxumMessage::Pong(payload)).await;
+                        }
+                        Some(Ok(TungsteniteMessage::Close(frame))) => {
+                            // Surface scheduler close reasons as text so the browser UI
+                            // can show them (Close reasons are often stripped by proxies).
+                            if let Some(frame) = frame {
+                                let reason = frame.reason.to_string();
+                                if !reason.is_empty() {
+                                    let _ = browser_tx
+                                        .send(AxumMessage::Text(
+                                            format!("Error: {reason}").into(),
+                                        ))
+                                        .await;
+                                }
+                            }
                             break;
                         }
-                    }
-                    Some(Ok(TungsteniteMessage::Text(text))) => {
-                        if browser_tx
-                            .send(AxumMessage::Text(text.to_string().into()))
-                            .await
-                            .is_err()
-                        {
+                        None => break,
+                        Some(Ok(TungsteniteMessage::Frame(_))) => {}
+                        Some(Err(e)) => {
+                            tracing::warn!("[terminal-proxy] upstream ws error: {}", e);
                             break;
                         }
-                    }
-                    Some(Ok(TungsteniteMessage::Ping(payload))) => {
-                        let _ = browser_tx.send(AxumMessage::Ping(payload)).await;
-                    }
-                    Some(Ok(TungsteniteMessage::Pong(payload))) => {
-                        let _ = browser_tx.send(AxumMessage::Pong(payload)).await;
-                    }
-                    Some(Ok(TungsteniteMessage::Close(_))) | None => break,
-                    Some(Ok(TungsteniteMessage::Frame(_))) => {}
-                    Some(Err(e)) => {
-                        tracing::warn!("[terminal-proxy] upstream ws error: {}", e);
-                        break;
                     }
                 }
             }
         }
-    }
 
-    let _ = browser_tx.send(AxumMessage::Close(None)).await;
-    let _ = upstream_tx.close().await;
+        let _ = browser_tx.send(AxumMessage::Close(None)).await;
+        let _ = upstream_tx.close().await;
+    }))
 }
 
 #[cfg(test)]

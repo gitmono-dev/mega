@@ -37,14 +37,33 @@ impl ClApplicationService {
             .await?
             .unwrap_or((cl.clone(), vec![]));
 
-        Ok(CLDetails {
+        let mut detail: CLDetailRes = CLDetails {
             cl,
             labels,
             conversations,
             assignees,
             username,
         }
-        .into())
+        .into();
+
+        let mut names: Vec<String> = detail
+            .conversations
+            .iter()
+            .map(|c| c.username.clone())
+            .collect();
+        names.push(detail.author.clone());
+        let bot_names = self
+            .storage()
+            .bots_storage()
+            .bot_names_among(&names)
+            .await?;
+        detail.author_is_bot = bot_names.contains(&detail.author) || detail.author == "system";
+        crate::model::conversation::ConversationItem::apply_bot_flags(
+            &mut detail.conversations,
+            &bot_names,
+        );
+
+        Ok(detail)
     }
 
     pub async fn reopen_cl(&self, link: &str, username: &str) -> Result<(), MegaError> {
@@ -141,7 +160,10 @@ impl ClApplicationService {
             )));
         }
 
-        self.merge_cl("system", model.clone()).await?;
+        // Attribute the merge to the CL author (e.g. mega-init bot), not a
+        // synthetic "system" user — so the timeline can show a bot badge/avatar.
+        let merge_actor = model.username.clone();
+        self.merge_cl(&merge_actor, model.clone()).await?;
         if let Some(updated_model) = cl_storage.get_cl(link).await? {
             dispatch_cl_webhook(self.storage(), WebhookEvent::ClMerged, &updated_model);
         }

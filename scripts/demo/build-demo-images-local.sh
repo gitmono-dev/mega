@@ -82,12 +82,13 @@ else
 fi
 
 # Image configurations (ordered for consistent build order)
-declare -a IMAGE_ORDER=("mono-engine" "orion-server" "mega-ui")
+declare -a IMAGE_ORDER=("mono-engine" "orion-server" "mega-ui" "mega-init")
 get_image_config() {
     case "$1" in
         "mono-engine") echo "mono/Dockerfile:." ;;
         "mega-ui") echo "moon/apps/web/Dockerfile:moon" ;;
         "orion-server") echo "orion-server/Dockerfile:." ;;
+        "mega-init") echo "scripts/init_mega/Dockerfile:." ;;
     esac
 }
 
@@ -96,12 +97,13 @@ get_image_tag() {
         "mono-engine") echo "latest" ;;
         "mega-ui") echo "latest" ;;
         "orion-server") echo "latest" ;;
+        "mega-init") echo "latest" ;;
     esac
 }
 
 is_valid_image() {
     case "$1" in
-        "mono-engine"|"mega-ui"|"orion-server") return 0 ;;
+        "mono-engine"|"mega-ui"|"orion-server"|"mega-init") return 0 ;;
         *) return 1 ;;
     esac
 }

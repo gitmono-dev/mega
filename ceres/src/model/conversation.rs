@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use callisto::{mega_conversation, reactions, sea_orm_active_enums::ConvTypeEnum};
 use serde::{Deserialize, Serialize};
@@ -8,6 +8,9 @@ use utoipa::ToSchema;
 pub struct ConversationItem {
     pub id: i64,
     pub username: String,
+    /// True when `username` matches a registered bot (or legacy `"system"` actor).
+    #[serde(default)]
+    pub is_bot: bool,
     pub conv_type: ConvType,
     pub comment: Option<String>,
     pub resolved: Option<bool>,
@@ -25,6 +28,7 @@ impl ConversationItem {
         let mut item = Self {
             id: conversation.id,
             username: conversation.username,
+            is_bot: false,
             conv_type: conversation.conv_type.into(),
             comment: conversation.comment,
             resolved: conversation.resolved,
@@ -34,6 +38,13 @@ impl ConversationItem {
         };
         item.grouped_emoji(viewer, reactions);
         item
+    }
+
+    /// Mark conversation actors that are bots (or the legacy `"system"` merge actor).
+    pub fn apply_bot_flags(items: &mut [Self], bot_names: &HashSet<String>) {
+        for item in items {
+            item.is_bot = bot_names.contains(&item.username) || item.username == "system";
+        }
     }
 
     pub fn grouped_emoji(&mut self, username: &str, reactions: Vec<reactions::Model>) {

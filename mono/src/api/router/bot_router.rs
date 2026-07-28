@@ -5,8 +5,8 @@ use axum::{
     extract::{Path, State},
 };
 use ceres::model::bots::{
-    BotRes, ChangeInstallationStatus, CreateBotTokenRequest, CreateBotTokenResponse, InstallBotReq,
-    InstallationTargetType, ListBotTokenItem,
+    BootstrapInitBotResponse, BotRes, ChangeInstallationStatus, CreateBotTokenRequest,
+    CreateBotTokenResponse, InstallBotReq, InstallationTargetType, ListBotTokenItem,
 };
 use chrono::{Duration, Utc};
 use jupiter::sea_orm::prelude::DateTimeWithTimeZone;
@@ -34,6 +34,7 @@ pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
     OpenApiRouter::new().nest(
         "/bots",
         OpenApiRouter::new()
+            .routes(routes!(bootstrap_init_bot))
             .routes(routes!(install_bot))
             .routes(routes!(list_installed_bot))
             .routes(routes!(change_installation_status))
@@ -43,6 +44,25 @@ pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
             .routes(routes!(revoke_bot_token))
             .routes(routes!(revoke_all_bot_tokens)),
     )
+}
+
+/// Bootstrap mega-init bot + push token (no auth; same class as merge-no-auth).
+///
+/// Creates the `mega-init` bot if needed and returns a fresh `bot_` token for
+/// git HTTP push. Intended for onprem mega-init Job / CronJob.
+#[utoipa::path(
+    post,
+    path = "/bootstrap-init",
+    responses(
+        (status = 200, body = CommonResult<BootstrapInitBotResponse>, content_type = "application/json")
+    ),
+    tag = BOT_TAG
+)]
+async fn bootstrap_init_bot(
+    State(state): State<MonoApiServiceState>,
+) -> Result<Json<CommonResult<BootstrapInitBotResponse>>, ApiError> {
+    let resp = state.services().admin().ensure_init_bot_token().await?;
+    Ok(Json(CommonResult::success(Some(resp))))
 }
 
 /// Install bot

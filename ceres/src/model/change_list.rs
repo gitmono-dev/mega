@@ -49,6 +49,11 @@ pub struct CLDetailRes {
     pub link: String,
     pub title: String,
     pub status: MergeStatus,
+    /// CL author username (human or bot name).
+    pub author: String,
+    /// True when `author` matches a registered bot.
+    #[serde(default)]
+    pub author_is_bot: bool,
     pub open_timestamp: i64,
     pub merge_timestamp: Option<i64>,
     pub conversations: Vec<ConversationItem>,
@@ -64,6 +69,8 @@ impl From<CLDetails> for CLDetailRes {
             link: value.cl.link,
             title: value.cl.title,
             status: value.cl.status.into(),
+            author: value.cl.username.clone(),
+            author_is_bot: false,
             open_timestamp: value.cl.created_at.and_utc().timestamp(),
             merge_timestamp: value.cl.merge_date.map(|dt| dt.and_utc().timestamp()),
             conversations: value

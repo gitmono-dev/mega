@@ -3535,6 +3535,18 @@ export type BlameResult = {
   total_lines: number
 }
 
+/**
+ * Response for unauthenticated mega-init bot bootstrap.
+ *
+ * `token` is a `bot_` push token returned once; use as Bearer (or Basic password).
+ */
+export type BootstrapInitBotResponse = {
+  /** @format int64 */
+  bot_id: number
+  bot_name: string
+  token: string
+}
+
 export type BotRes = {
   /** @format int64 */
   bot_id: number
@@ -3557,6 +3569,10 @@ export type BuildParams = {
 
 export type CLDetailRes = {
   assignees: string[]
+  /** CL author username (human or bot name). */
+  author: string
+  /** True when `author` matches a registered bot. */
+  author_is_bot?: boolean
   conversations: ConversationItem[]
   /** @format int64 */
   id: number
@@ -3743,6 +3759,22 @@ export type CommonResultBlameResult = {
   req_result: boolean
 }
 
+export type CommonResultBootstrapInitBotResponse = {
+  /**
+   * Response for unauthenticated mega-init bot bootstrap.
+   *
+   * `token` is a `bot_` push token returned once; use as Bearer (or Basic password).
+   */
+  data?: {
+    /** @format int64 */
+    bot_id: number
+    bot_name: string
+    token: string
+  }
+  err_message: string
+  req_result: boolean
+}
+
 export type CommonResultBotRes = {
   data?: {
     /** @format int64 */
@@ -3763,6 +3795,10 @@ export type CommonResultBotRes = {
 export type CommonResultCLDetailRes = {
   data?: {
     assignees: string[]
+    /** CL author username (human or bot name). */
+    author: string
+    /** True when `author` matches a registered bot. */
+    author_is_bot?: boolean
     conversations: ConversationItem[]
     /** @format int64 */
     id: number
@@ -3923,6 +3959,8 @@ export type CommonResultCommonPageItemRes = {
     items: {
       assignees: string[]
       author: string
+      /** True when `author` matches a registered bot. */
+      author_is_bot?: boolean
       /** @format int64 */
       closed_at?: number | null
       /** @min 0 */
@@ -4229,6 +4267,8 @@ export type CommonResultIsAdminResponse = {
 export type CommonResultIssueDetailRes = {
   data?: {
     assignees: string[]
+    author: string
+    author_is_bot?: boolean
     conversations: ConversationItem[]
     /** @format int64 */
     id: number
@@ -4891,6 +4931,8 @@ export type ConversationItem = {
   grouped_reactions: ReactionItem[]
   /** @format int64 */
   id: number
+  /** True when `username` matches a registered bot (or legacy `"system"` actor). */
+  is_bot?: boolean
   resolved?: boolean | null
   /** @format int64 */
   updated_at: number
@@ -5204,6 +5246,8 @@ export type IsAdminResponse = {
 
 export type IssueDetailRes = {
   assignees: string[]
+  author: string
+  author_is_bot?: boolean
   conversations: ConversationItem[]
   /** @format int64 */
   id: number
@@ -5226,6 +5270,8 @@ export type IssueSuggestions = {
 export type ItemRes = {
   assignees: string[]
   author: string
+  /** True when `author` matches a registered bot. */
+  author_is_bot?: boolean
   /** @format int64 */
   closed_at?: number | null
   /** @min 0 */
@@ -5801,6 +5847,11 @@ export type StartRunnerRequest = {
   image_url?: string | null
   /** Force recreate when a Running VM already exists for this mono's domain. */
   replace?: boolean
+  /**
+   * When set, write `ORION_RETAIN_ANTARES_MOUNTS` into the guest `.env`
+   * (`true`→`1`, `false`→`0`). Omitted → leave `.env.prod` unchanged.
+   */
+  retain_antares_mounts?: boolean | null
   target?: string | null
 }
 
@@ -8702,6 +8753,8 @@ export type GetApiBlobParams = {
 }
 
 export type GetApiBlobData = CommonResultString
+
+export type PostApiBotsBootstrapInitData = CommonResultBootstrapInitBotResponse
 
 export type GetApiBotsTokensParams = {
   /**
@@ -18927,6 +18980,30 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
             path: `/api/v1/blob`,
             method: 'GET',
             query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Creates the `mega-init` bot if needed and returns a fresh `bot_` token for git HTTP push. Intended for onprem mega-init Job / CronJob.
+     *
+     * @tags Automation & Integrations
+     * @name PostApiBotsBootstrapInit
+     * @summary Bootstrap mega-init bot + push token (no auth; same class as merge-no-auth).
+     * @request POST:/api/v1/bots/bootstrap-init
+     */
+    postApiBotsBootstrapInit: () => {
+      const base = 'POST:/api/v1/bots/bootstrap-init' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBotsBootstrapInitData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiBotsBootstrapInitData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<PostApiBotsBootstrapInitData>({
+            path: `/api/v1/bots/bootstrap-init`,
+            method: 'POST',
             format: 'json',
             ...params
           })
