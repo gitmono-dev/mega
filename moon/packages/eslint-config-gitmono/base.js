@@ -1,13 +1,10 @@
-const { resolve } = require('node:path')
-
-const project = resolve(process.cwd(), 'tsconfig.json')
-
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
   extends: ['eslint:recommended', 'turbo'],
   plugins: ['@typescript-eslint', 'unused-imports'],
   parser: '@typescript-eslint/parser',
-  parserOptions: { project: true },
+  // No parserOptions.project: shared packages exclude *.stories from tsconfig, and
+  // none of the enabled @typescript-eslint rules require type-aware linting.
   env: {
     es2022: true,
     node: true

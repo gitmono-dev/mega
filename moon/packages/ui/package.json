@@ -21,7 +21,6 @@
     "@radix-ui/react-toggle-group": "catalog:",
     "@radix-ui/react-tooltip": "catalog:",
     "@radix-ui/react-visually-hidden": "catalog:",
-    "@shopify/react-shortcuts": "catalog:",
     "@todesktop/client-core": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",

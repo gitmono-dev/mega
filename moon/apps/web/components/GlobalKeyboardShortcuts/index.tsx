@@ -1,7 +1,7 @@
 import { useSetAtom } from 'jotai'
 import Router from 'next/router'
 
-import { useOrderedLayeredHotkeys } from '@gitmono/ui/DismissibleLayer/useLayeredHotkeys'
+import { useOrderedLayeredHotkeys } from '@gitmono/ui/DismissibleLayer'
 
 import { defaultInboxView } from '@/components/InboxItems/InboxSplitView'
 import { activityOpenAtom } from '@/components/Sidebar/SidebarActivity'

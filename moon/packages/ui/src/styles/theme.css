@@ -6,24 +6,7 @@
 @plugin '@tailwindcss/typography';
 @plugin 'tailwindcss-animate';
 
-/* Replaces tailwind-scrollbar-hide @plugin (CJS; breaks under TW4 ESM loader). */
-@utility scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-@utility scrollbar-default {
-  -ms-overflow-style: auto;
-  scrollbar-width: auto;
-
-  &::-webkit-scrollbar {
-    display: block;
-  }
-}
+@import 'tailwind-scrollbar-hide/v4';
 
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant initial (html :where(&));

@@ -1,5 +1,4 @@
 import { DependencyList } from 'react'
-import { useShortcut } from '@shopify/react-shortcuts'
 // eslint-disable-next-line no-restricted-imports
 import { useHotkeys, type HotkeyCallback, type Keys, type Options } from 'react-hotkeys-hook'
 
@@ -61,22 +60,25 @@ export function useLayeredHotkeys({
   )
 }
 
+/**
+ * Sequential (ordered) hotkeys, e.g. press `g` then `i`.
+ * Built on react-hotkeys-hook sequences (`g>i`) instead of @shopify/react-shortcuts.
+ */
 export function useOrderedLayeredHotkeys({
   keys,
   callback,
-  options = {}
+  options,
+  dependencies
 }: {
-  keys: Parameters<typeof useShortcut>[0]
-  callback: Parameters<typeof useShortcut>[1]
-  options?: Parameters<typeof useShortcut>[2]
+  keys: string[]
+  callback: HotkeyCallback
+  options?: Options & { repeat?: boolean; skipEscapeWhenDisabled?: boolean }
+  dependencies?: DependencyList
 }) {
-  const isTopLayer = useIsTopLayer()
-
-  // shortcut will always be disabled if the layer is not top layer,
-  // regardless of the enabled option passed into this hook
-  if (!isTopLayer) {
-    options.ignoreInput = false
-  }
-
-  useShortcut(keys, callback, options)
+  useLayeredHotkeys({
+    keys: keys.join('>'),
+    callback,
+    options,
+    dependencies
+  })
 }

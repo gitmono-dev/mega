@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { ShortcutProvider } from '@shopify/react-shortcuts'
 import { QueryClientProvider } from '@tanstack/react-query'
 import AccountApprovalGuard from 'components/AccountApprovalGuard'
 import ConfirmEmailGuard from 'components/ConfirmEmailGuard'
@@ -57,28 +56,26 @@ export const AuthAppProviders: PageWithProviders<any> = ({ children, allowLogged
                     <WebPushProvider>
                       <PusherProvider>
                         <DesktopRedirectProvider>
-                          <ShortcutProvider>
-                            <DisableZoom />
-                            <ToasterProvider />
-                            <StaffDevTools />
-                            <FeedbackDialog />
-                            <LocalCommandMenu />
-                            <BackgroundAppRefresh />
-                            <GlobalKeyboardShortcuts />
-                            <DesktopProtocolUrlHandler />
-                            <PostComposer />
-                            <AutoTimezoneSwitcher />
-                            <ActiveModalityProvider />
+                          <DisableZoom />
+                          <ToasterProvider />
+                          <StaffDevTools />
+                          <FeedbackDialog />
+                          <LocalCommandMenu />
+                          <BackgroundAppRefresh />
+                          <GlobalKeyboardShortcuts />
+                          <DesktopProtocolUrlHandler />
+                          <PostComposer />
+                          <AutoTimezoneSwitcher />
+                          <ActiveModalityProvider />
 
-                            <ConfirmEmailGuard allowLoggedOut={allowLoggedOut}>
-                              <AccountApprovalGuard allowLoggedOut={allowLoggedOut}>
-                                {children}
+                          <ConfirmEmailGuard allowLoggedOut={allowLoggedOut}>
+                            <AccountApprovalGuard allowLoggedOut={allowLoggedOut}>
+                              {children}
 
-                                <GithubLoginRequiredDialog />
-                                <OrganizationUserPresenceSubscription />
-                              </AccountApprovalGuard>
-                            </ConfirmEmailGuard>
-                          </ShortcutProvider>
+                              <GithubLoginRequiredDialog />
+                              <OrganizationUserPresenceSubscription />
+                            </AccountApprovalGuard>
+                          </ConfirmEmailGuard>
                         </DesktopRedirectProvider>
                       </PusherProvider>
                     </WebPushProvider>
