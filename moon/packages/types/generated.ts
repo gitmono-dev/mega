@@ -10007,6 +10007,57 @@ function dataTaggedQueryKey(key: unknown) {
  * @version 2.0.0
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
+  /**
+   * No description
+   *
+   * @tags Worker
+   * @name PostOrionClientsInfo
+   * @summary Endpoint to retrieve paginated Orion client information.
+   * @request POST:/orion-clients-info
+   */
+  postOrionClientsInfo = () => {
+    const base = 'POST:/orion-clients-info' as const
+
+    return {
+      baseKey: dataTaggedQueryKey<PostOrionClientsInfoData>([base]),
+      requestKey: () => dataTaggedQueryKey<PostOrionClientsInfoData>([base]),
+      request: (data: PageParamsOrionClientQuery, params: RequestParams = {}) =>
+        this.request<PostOrionClientsInfoData>({
+          path: `/orion-clients-info`,
+          method: 'POST',
+          body: data,
+          type: ContentType.Json,
+          format: 'json',
+          ...params
+        })
+    }
+  }
+
+  /**
+   * No description
+   *
+   * @tags Task
+   * @name GetTaskHistoryOutput
+   * @summary Provides the ability to read historical task logs supporting either retrieving the entire log at once or segmenting it by line count.
+   * @request GET:/task-history-output
+   */
+  getTaskHistoryOutput = () => {
+    const base = 'GET:/task-history-output' as const
+
+    return {
+      baseKey: dataTaggedQueryKey<GetTaskHistoryOutputData>([base]),
+      requestKey: (params: GetTaskHistoryOutputParams) => dataTaggedQueryKey<GetTaskHistoryOutputData>([base, params]),
+      request: (query: GetTaskHistoryOutputParams, params: RequestParams = {}) =>
+        this.request<GetTaskHistoryOutputData>({
+          path: `/task-history-output`,
+          method: 'GET',
+          query: query,
+          format: 'json',
+          ...params
+        })
+    }
+  }
+
   organizations = {
     /**
      * No description
@@ -10019,12 +10070,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostActivityViewsData>([base]),
-        requestKey: (params: PostActivityViewsParams) => dataTaggedQueryKey<PostActivityViewsData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostActivityViewsParams,
-          data: OrganizationActivityViewsPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostActivityViewsData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationActivityViewsPostRequest, params: RequestParams = {}) =>
           this.request<PostActivityViewsData>({
             path: `/v1/organizations/${orgSlug}/activity_views`,
             method: 'POST',
@@ -10047,9 +10094,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetAttachmentsCommentersData>([base]),
-        requestKey: (params: GetAttachmentsCommentersParams) =>
-          dataTaggedQueryKey<GetAttachmentsCommentersData>([base, params]),
-        request: ({ orgSlug, attachmentId, ...query }: GetAttachmentsCommentersParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, attachmentId: string) =>
+          dataTaggedQueryKey<GetAttachmentsCommentersData>([base, orgSlug, attachmentId]),
+        request: (orgSlug: string, attachmentId: string, params: RequestParams = {}) =>
           this.request<GetAttachmentsCommentersData>({
             path: `/v1/organizations/${orgSlug}/attachments/${attachmentId}/commenters`,
             method: 'GET',
@@ -10070,12 +10117,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostAttachmentsData>([base]),
-        requestKey: (params: PostAttachmentsParams) => dataTaggedQueryKey<PostAttachmentsData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostAttachmentsParams,
-          data: OrganizationAttachmentsPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostAttachmentsData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationAttachmentsPostRequest, params: RequestParams = {}) =>
           this.request<PostAttachmentsData>({
             path: `/v1/organizations/${orgSlug}/attachments`,
             method: 'POST',
@@ -10098,8 +10141,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetAttachmentsByIdData>([base]),
-        requestKey: (params: GetAttachmentsByIdParams) => dataTaggedQueryKey<GetAttachmentsByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: GetAttachmentsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<GetAttachmentsByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<GetAttachmentsByIdData>({
             path: `/v1/organizations/${orgSlug}/attachments/${id}`,
             method: 'GET',
@@ -10120,12 +10163,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetCallRecordingsTranscriptionData>([base]),
-        requestKey: (params: GetCallRecordingsTranscriptionParams) =>
-          dataTaggedQueryKey<GetCallRecordingsTranscriptionData>([base, params]),
-        request: (
-          { orgSlug, callRecordingId, ...query }: GetCallRecordingsTranscriptionParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, callRecordingId: string) =>
+          dataTaggedQueryKey<GetCallRecordingsTranscriptionData>([base, orgSlug, callRecordingId]),
+        request: (orgSlug: string, callRecordingId: string, params: RequestParams = {}) =>
           this.request<GetCallRecordingsTranscriptionData>({
             path: `/v1/organizations/${orgSlug}/call_recordings/${callRecordingId}/transcription`,
             method: 'GET',
@@ -10146,10 +10186,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostCallRoomsInvitationsData>([base]),
-        requestKey: (params: PostCallRoomsInvitationsParams) =>
-          dataTaggedQueryKey<PostCallRoomsInvitationsData>([base, params]),
+        requestKey: (orgSlug: string, callRoomId: string) =>
+          dataTaggedQueryKey<PostCallRoomsInvitationsData>([base, orgSlug, callRoomId]),
         request: (
-          { orgSlug, callRoomId, ...query }: PostCallRoomsInvitationsParams,
+          orgSlug: string,
+          callRoomId: string,
           data: OrganizationCallRoomInvitationsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -10175,8 +10216,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetCallRoomsByIdData>([base]),
-        requestKey: (params: GetCallRoomsByIdParams) => dataTaggedQueryKey<GetCallRoomsByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: GetCallRoomsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<GetCallRoomsByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<GetCallRoomsByIdData>({
             path: `/v1/organizations/${orgSlug}/call_rooms/${id}`,
             method: 'GET',
@@ -10197,12 +10238,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostCallRoomsData>([base]),
-        requestKey: (params: PostCallRoomsParams) => dataTaggedQueryKey<PostCallRoomsData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostCallRoomsParams,
-          data: OrganizationCallRoomsPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostCallRoomsData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationCallRoomsPostRequest, params: RequestParams = {}) =>
           this.request<PostCallRoomsData>({
             path: `/v1/organizations/${orgSlug}/call_rooms`,
             method: 'POST',
@@ -10225,9 +10262,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCallsAllRecordingsData>([base]),
-        requestKey: (params: DeleteCallsAllRecordingsParams) =>
-          dataTaggedQueryKey<DeleteCallsAllRecordingsData>([base, params]),
-        request: ({ orgSlug, callId, ...query }: DeleteCallsAllRecordingsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, callId: string) =>
+          dataTaggedQueryKey<DeleteCallsAllRecordingsData>([base, orgSlug, callId]),
+        request: (orgSlug: string, callId: string, params: RequestParams = {}) =>
           this.request<DeleteCallsAllRecordingsData>({
             path: `/v1/organizations/${orgSlug}/calls/${callId}/all_recordings`,
             method: 'DELETE',
@@ -10248,8 +10285,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostCallsFavoriteData>([base]),
-        requestKey: (params: PostCallsFavoriteParams) => dataTaggedQueryKey<PostCallsFavoriteData>([base, params]),
-        request: ({ orgSlug, callId, ...query }: PostCallsFavoriteParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, callId: string) =>
+          dataTaggedQueryKey<PostCallsFavoriteData>([base, orgSlug, callId]),
+        request: (orgSlug: string, callId: string, params: RequestParams = {}) =>
           this.request<PostCallsFavoriteData>({
             path: `/v1/organizations/${orgSlug}/calls/${callId}/favorite`,
             method: 'POST',
@@ -10270,8 +10308,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCallsFavoriteData>([base]),
-        requestKey: (params: DeleteCallsFavoriteParams) => dataTaggedQueryKey<DeleteCallsFavoriteData>([base, params]),
-        request: ({ orgSlug, callId, ...query }: DeleteCallsFavoriteParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, callId: string) =>
+          dataTaggedQueryKey<DeleteCallsFavoriteData>([base, orgSlug, callId]),
+        request: (orgSlug: string, callId: string, params: RequestParams = {}) =>
           this.request<DeleteCallsFavoriteData>({
             path: `/v1/organizations/${orgSlug}/calls/${callId}/favorite`,
             method: 'DELETE',
@@ -10292,9 +10331,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostCallsFollowUpData>([base]),
-        requestKey: (params: PostCallsFollowUpParams) => dataTaggedQueryKey<PostCallsFollowUpData>([base, params]),
+        requestKey: (orgSlug: string, callId: string) =>
+          dataTaggedQueryKey<PostCallsFollowUpData>([base, orgSlug, callId]),
         request: (
-          { orgSlug, callId, ...query }: PostCallsFollowUpParams,
+          orgSlug: string,
+          callId: string,
           data: OrganizationCallFollowUpPostRequest,
           params: RequestParams = {}
         ) =>
@@ -10320,8 +10361,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostCallsPinData>([base]),
-        requestKey: (params: PostCallsPinParams) => dataTaggedQueryKey<PostCallsPinData>([base, params]),
-        request: ({ orgSlug, callId, ...query }: PostCallsPinParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, callId: string) => dataTaggedQueryKey<PostCallsPinData>([base, orgSlug, callId]),
+        request: (orgSlug: string, callId: string, params: RequestParams = {}) =>
           this.request<PostCallsPinData>({
             path: `/v1/organizations/${orgSlug}/calls/${callId}/pin`,
             method: 'POST',
@@ -10342,10 +10383,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutCallsProjectPermissionData>([base]),
-        requestKey: (params: PutCallsProjectPermissionParams) =>
-          dataTaggedQueryKey<PutCallsProjectPermissionData>([base, params]),
+        requestKey: (orgSlug: string, callId: string) =>
+          dataTaggedQueryKey<PutCallsProjectPermissionData>([base, orgSlug, callId]),
         request: (
-          { orgSlug, callId, ...query }: PutCallsProjectPermissionParams,
+          orgSlug: string,
+          callId: string,
           data: OrganizationsOrgSlugCallsCallIdProjectPermissionPutRequest,
           params: RequestParams = {}
         ) =>
@@ -10371,9 +10413,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCallsProjectPermissionData>([base]),
-        requestKey: (params: DeleteCallsProjectPermissionParams) =>
-          dataTaggedQueryKey<DeleteCallsProjectPermissionData>([base, params]),
-        request: ({ orgSlug, callId, ...query }: DeleteCallsProjectPermissionParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, callId: string) =>
+          dataTaggedQueryKey<DeleteCallsProjectPermissionData>([base, orgSlug, callId]),
+        request: (orgSlug: string, callId: string, params: RequestParams = {}) =>
           this.request<DeleteCallsProjectPermissionData>({
             path: `/v1/organizations/${orgSlug}/calls/${callId}/project_permission`,
             method: 'DELETE',
@@ -10440,8 +10482,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetCallsByIdData>([base]),
-        requestKey: (params: GetCallsByIdParams) => dataTaggedQueryKey<GetCallsByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: GetCallsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<GetCallsByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<GetCallsByIdData>({
             path: `/v1/organizations/${orgSlug}/calls/${id}`,
             method: 'GET',
@@ -10462,9 +10504,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutCallsByIdData>([base]),
-        requestKey: (params: PutCallsByIdParams) => dataTaggedQueryKey<PutCallsByIdData>([base, params]),
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutCallsByIdData>([base, orgSlug, id]),
         request: (
-          { orgSlug, id, ...query }: PutCallsByIdParams,
+          orgSlug: string,
+          id: string,
           data: OrganizationsOrgSlugCallsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -10490,10 +10533,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutCommentsAttachmentsReorderData>([base]),
-        requestKey: (params: PutCommentsAttachmentsReorderParams) =>
-          dataTaggedQueryKey<PutCommentsAttachmentsReorderData>([base, params]),
+        requestKey: (orgSlug: string, commentId: string) =>
+          dataTaggedQueryKey<PutCommentsAttachmentsReorderData>([base, orgSlug, commentId]),
         request: (
-          { orgSlug, commentId, ...query }: PutCommentsAttachmentsReorderParams,
+          orgSlug: string,
+          commentId: string,
           data: OrganizationsOrgSlugCommentsCommentIdAttachmentsReorderPutRequest,
           params: RequestParams = {}
         ) =>
@@ -10519,10 +10563,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostCommentsFollowUpData>([base]),
-        requestKey: (params: PostCommentsFollowUpParams) =>
-          dataTaggedQueryKey<PostCommentsFollowUpData>([base, params]),
+        requestKey: (orgSlug: string, commentId: string) =>
+          dataTaggedQueryKey<PostCommentsFollowUpData>([base, orgSlug, commentId]),
         request: (
-          { orgSlug, commentId, ...query }: PostCommentsFollowUpParams,
+          orgSlug: string,
+          commentId: string,
           data: OrganizationCommentFollowUpPostRequest,
           params: RequestParams = {}
         ) =>
@@ -10548,10 +10593,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostCommentsLinearIssuesData>([base]),
-        requestKey: (params: PostCommentsLinearIssuesParams) =>
-          dataTaggedQueryKey<PostCommentsLinearIssuesData>([base, params]),
+        requestKey: (orgSlug: string, commentId: string) =>
+          dataTaggedQueryKey<PostCommentsLinearIssuesData>([base, orgSlug, commentId]),
         request: (
-          { orgSlug, commentId, ...query }: PostCommentsLinearIssuesParams,
+          orgSlug: string,
+          commentId: string,
           data: OrganizationCommentLinearIssuesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -10577,10 +10623,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostCommentsReactionsData>([base]),
-        requestKey: (params: PostCommentsReactionsParams) =>
-          dataTaggedQueryKey<PostCommentsReactionsData>([base, params]),
+        requestKey: (orgSlug: string, commentId: string) =>
+          dataTaggedQueryKey<PostCommentsReactionsData>([base, orgSlug, commentId]),
         request: (
-          { orgSlug, commentId, ...query }: PostCommentsReactionsParams,
+          orgSlug: string,
+          commentId: string,
           data: OrganizationCommentReactionsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -10606,9 +10653,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostCommentsRepliesData>([base]),
-        requestKey: (params: PostCommentsRepliesParams) => dataTaggedQueryKey<PostCommentsRepliesData>([base, params]),
+        requestKey: (orgSlug: string, commentId: string) =>
+          dataTaggedQueryKey<PostCommentsRepliesData>([base, orgSlug, commentId]),
         request: (
-          { orgSlug, commentId, ...query }: PostCommentsRepliesParams,
+          orgSlug: string,
+          commentId: string,
           data: OrganizationCommentRepliesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -10634,9 +10683,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostCommentsResolutionsData>([base]),
-        requestKey: (params: PostCommentsResolutionsParams) =>
-          dataTaggedQueryKey<PostCommentsResolutionsData>([base, params]),
-        request: ({ orgSlug, commentId, ...query }: PostCommentsResolutionsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, commentId: string) =>
+          dataTaggedQueryKey<PostCommentsResolutionsData>([base, orgSlug, commentId]),
+        request: (orgSlug: string, commentId: string, params: RequestParams = {}) =>
           this.request<PostCommentsResolutionsData>({
             path: `/v1/organizations/${orgSlug}/comments/${commentId}/resolutions`,
             method: 'POST',
@@ -10657,9 +10706,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCommentsResolutionsData>([base]),
-        requestKey: (params: DeleteCommentsResolutionsParams) =>
-          dataTaggedQueryKey<DeleteCommentsResolutionsData>([base, params]),
-        request: ({ orgSlug, commentId, ...query }: DeleteCommentsResolutionsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, commentId: string) =>
+          dataTaggedQueryKey<DeleteCommentsResolutionsData>([base, orgSlug, commentId]),
+        request: (orgSlug: string, commentId: string, params: RequestParams = {}) =>
           this.request<DeleteCommentsResolutionsData>({
             path: `/v1/organizations/${orgSlug}/comments/${commentId}/resolutions`,
             method: 'DELETE',
@@ -10680,9 +10729,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutCommentsTasksData>([base]),
-        requestKey: (params: PutCommentsTasksParams) => dataTaggedQueryKey<PutCommentsTasksData>([base, params]),
+        requestKey: (orgSlug: string, commentId: string) =>
+          dataTaggedQueryKey<PutCommentsTasksData>([base, orgSlug, commentId]),
         request: (
-          { orgSlug, commentId, ...query }: PutCommentsTasksParams,
+          orgSlug: string,
+          commentId: string,
           data: OrganizationsOrgSlugCommentsCommentIdTasksPutRequest,
           params: RequestParams = {}
         ) =>
@@ -10708,8 +10759,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetCommentsByIdData>([base]),
-        requestKey: (params: GetCommentsByIdParams) => dataTaggedQueryKey<GetCommentsByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: GetCommentsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<GetCommentsByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<GetCommentsByIdData>({
             path: `/v1/organizations/${orgSlug}/comments/${id}`,
             method: 'GET',
@@ -10730,9 +10781,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutCommentsByIdData>([base]),
-        requestKey: (params: PutCommentsByIdParams) => dataTaggedQueryKey<PutCommentsByIdData>([base, params]),
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutCommentsByIdData>([base, orgSlug, id]),
         request: (
-          { orgSlug, id, ...query }: PutCommentsByIdParams,
+          orgSlug: string,
+          id: string,
           data: OrganizationsOrgSlugCommentsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -10758,8 +10810,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCommentsByIdData>([base]),
-        requestKey: (params: DeleteCommentsByIdParams) => dataTaggedQueryKey<DeleteCommentsByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: DeleteCommentsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteCommentsByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteCommentsByIdData>({
             path: `/v1/organizations/${orgSlug}/comments/${id}`,
             method: 'DELETE',
@@ -10780,9 +10832,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetCustomReactionsPacksData>([base]),
-        requestKey: (params: GetCustomReactionsPacksParams) =>
-          dataTaggedQueryKey<GetCustomReactionsPacksData>([base, params]),
-        request: ({ orgSlug, ...query }: GetCustomReactionsPacksParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetCustomReactionsPacksData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetCustomReactionsPacksData>({
             path: `/v1/organizations/${orgSlug}/custom_reactions/packs`,
             method: 'GET',
@@ -10803,10 +10854,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostCustomReactionsPacksData>([base]),
-        requestKey: (params: PostCustomReactionsPacksParams) =>
-          dataTaggedQueryKey<PostCustomReactionsPacksData>([base, params]),
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostCustomReactionsPacksData>([base, orgSlug]),
         request: (
-          { orgSlug, ...query }: PostCustomReactionsPacksParams,
+          orgSlug: string,
           data: OrganizationsOrgSlugCustomReactionsPacksPostRequest,
           params: RequestParams = {}
         ) =>
@@ -10832,9 +10882,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCustomReactionsPacksByNameData>([base]),
-        requestKey: (params: DeleteCustomReactionsPacksByNameParams) =>
-          dataTaggedQueryKey<DeleteCustomReactionsPacksByNameData>([base, params]),
-        request: ({ orgSlug, name, ...query }: DeleteCustomReactionsPacksByNameParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, name: string) =>
+          dataTaggedQueryKey<DeleteCustomReactionsPacksByNameData>([base, orgSlug, name]),
+        request: (orgSlug: string, name: string, params: RequestParams = {}) =>
           this.request<DeleteCustomReactionsPacksByNameData>({
             path: `/v1/organizations/${orgSlug}/custom_reactions/packs/${name}`,
             method: 'DELETE',
@@ -10878,12 +10928,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostCustomReactionsData>([base]),
-        requestKey: (params: PostCustomReactionsParams) => dataTaggedQueryKey<PostCustomReactionsData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostCustomReactionsParams,
-          data: OrganizationsOrgSlugCustomReactionsPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostCustomReactionsData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationsOrgSlugCustomReactionsPostRequest, params: RequestParams = {}) =>
           this.request<PostCustomReactionsData>({
             path: `/v1/organizations/${orgSlug}/custom_reactions`,
             method: 'POST',
@@ -10906,9 +10952,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteCustomReactionsByIdData>([base]),
-        requestKey: (params: DeleteCustomReactionsByIdParams) =>
-          dataTaggedQueryKey<DeleteCustomReactionsByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: DeleteCustomReactionsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) =>
+          dataTaggedQueryKey<DeleteCustomReactionsByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteCustomReactionsByIdData>({
             path: `/v1/organizations/${orgSlug}/custom_reactions/${id}`,
             method: 'DELETE',
@@ -10929,8 +10975,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostDataExportsData>([base]),
-        requestKey: (params: PostDataExportsParams) => dataTaggedQueryKey<PostDataExportsData>([base, params]),
-        request: ({ orgSlug, ...query }: PostDataExportsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostDataExportsData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<PostDataExportsData>({
             path: `/v1/organizations/${orgSlug}/data_exports`,
             method: 'POST',
@@ -10951,9 +10997,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetDigestsMigrationsData>([base]),
-        requestKey: (params: GetDigestsMigrationsParams) =>
-          dataTaggedQueryKey<GetDigestsMigrationsData>([base, params]),
-        request: ({ orgSlug, digestId, ...query }: GetDigestsMigrationsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, digestId: string) =>
+          dataTaggedQueryKey<GetDigestsMigrationsData>([base, orgSlug, digestId]),
+        request: (orgSlug: string, digestId: string, params: RequestParams = {}) =>
           this.request<GetDigestsMigrationsData>({
             path: `/v1/organizations/${orgSlug}/digests/${digestId}/migrations`,
             method: 'GET',
@@ -10974,12 +11020,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutFavoritesReorderData>([base]),
-        requestKey: (params: PutFavoritesReorderParams) => dataTaggedQueryKey<PutFavoritesReorderData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PutFavoritesReorderParams,
-          data: ReorderOrganizationFavoritesPutRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PutFavoritesReorderData>([base, orgSlug]),
+        request: (orgSlug: string, data: ReorderOrganizationFavoritesPutRequest, params: RequestParams = {}) =>
           this.request<PutFavoritesReorderData>({
             path: `/v1/organizations/${orgSlug}/favorites/reorder`,
             method: 'PUT',
@@ -11002,8 +11044,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetFavoritesData>([base]),
-        requestKey: (params: GetFavoritesParams) => dataTaggedQueryKey<GetFavoritesData>([base, params]),
-        request: ({ orgSlug, ...query }: GetFavoritesParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetFavoritesData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetFavoritesData>({
             path: `/v1/organizations/${orgSlug}/favorites`,
             method: 'GET',
@@ -11024,8 +11066,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteFavoritesByIdData>([base]),
-        requestKey: (params: DeleteFavoritesByIdParams) => dataTaggedQueryKey<DeleteFavoritesByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: DeleteFavoritesByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteFavoritesByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteFavoritesByIdData>({
             path: `/v1/organizations/${orgSlug}/favorites/${id}`,
             method: 'DELETE',
@@ -11046,12 +11088,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostFeedbackData>([base]),
-        requestKey: (params: PostFeedbackParams) => dataTaggedQueryKey<PostFeedbackData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostFeedbackParams,
-          data: OrganizationFeedbacksPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostFeedbackData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationFeedbacksPostRequest, params: RequestParams = {}) =>
           this.request<PostFeedbackData>({
             path: `/v1/organizations/${orgSlug}/feedback`,
             method: 'POST',
@@ -11098,12 +11136,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostFigmaFilesData>([base]),
-        requestKey: (params: PostFigmaFilesParams) => dataTaggedQueryKey<PostFigmaFilesData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostFigmaFilesParams,
-          data: OrganizationFigmaFilesPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostFigmaFilesData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationFigmaFilesPostRequest, params: RequestParams = {}) =>
           this.request<PostFigmaFilesData>({
             path: `/v1/organizations/${orgSlug}/figma/files`,
             method: 'POST',
@@ -11126,10 +11160,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostFigmaFileAttachmentDetailsData>([base]),
-        requestKey: (params: PostFigmaFileAttachmentDetailsParams) =>
-          dataTaggedQueryKey<PostFigmaFileAttachmentDetailsData>([base, params]),
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostFigmaFileAttachmentDetailsData>([base, orgSlug]),
         request: (
-          { orgSlug, ...query }: PostFigmaFileAttachmentDetailsParams,
+          orgSlug: string,
           data: OrganizationFigmaFileAttachmentDetailsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -11178,9 +11211,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutFollowUpsByIdData>([base]),
-        requestKey: (params: PutFollowUpsByIdParams) => dataTaggedQueryKey<PutFollowUpsByIdData>([base, params]),
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutFollowUpsByIdData>([base, orgSlug, id]),
         request: (
-          { orgSlug, id, ...query }: PutFollowUpsByIdParams,
+          orgSlug: string,
+          id: string,
           data: OrganizationsOrgSlugFollowUpsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -11206,8 +11240,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteFollowUpsByIdData>([base]),
-        requestKey: (params: DeleteFollowUpsByIdParams) => dataTaggedQueryKey<DeleteFollowUpsByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: DeleteFollowUpsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteFollowUpsByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteFollowUpsByIdData>({
             path: `/v1/organizations/${orgSlug}/follow_ups/${id}`,
             method: 'DELETE',
@@ -11251,9 +11285,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetIntegrationsLinearInstallationData>([base]),
-        requestKey: (params: GetIntegrationsLinearInstallationParams) =>
-          dataTaggedQueryKey<GetIntegrationsLinearInstallationData>([base, params]),
-        request: ({ orgSlug, ...query }: GetIntegrationsLinearInstallationParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetIntegrationsLinearInstallationData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetIntegrationsLinearInstallationData>({
             path: `/v1/organizations/${orgSlug}/integrations/linear/installation`,
             method: 'GET',
@@ -11274,9 +11307,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteIntegrationsLinearInstallationData>([base]),
-        requestKey: (params: DeleteIntegrationsLinearInstallationParams) =>
-          dataTaggedQueryKey<DeleteIntegrationsLinearInstallationData>([base, params]),
-        request: ({ orgSlug, ...query }: DeleteIntegrationsLinearInstallationParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<DeleteIntegrationsLinearInstallationData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<DeleteIntegrationsLinearInstallationData>({
             path: `/v1/organizations/${orgSlug}/integrations/linear/installation`,
             method: 'DELETE',
@@ -11297,9 +11329,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostIntegrationsLinearTeamSyncsData>([base]),
-        requestKey: (params: PostIntegrationsLinearTeamSyncsParams) =>
-          dataTaggedQueryKey<PostIntegrationsLinearTeamSyncsData>([base, params]),
-        request: ({ orgSlug, ...query }: PostIntegrationsLinearTeamSyncsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostIntegrationsLinearTeamSyncsData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<PostIntegrationsLinearTeamSyncsData>({
             path: `/v1/organizations/${orgSlug}/integrations/linear/team_syncs`,
             method: 'POST',
@@ -11320,9 +11351,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetIntegrationsLinearTeamsData>([base]),
-        requestKey: (params: GetIntegrationsLinearTeamsParams) =>
-          dataTaggedQueryKey<GetIntegrationsLinearTeamsData>([base, params]),
-        request: ({ orgSlug, ...query }: GetIntegrationsLinearTeamsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetIntegrationsLinearTeamsData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetIntegrationsLinearTeamsData>({
             path: `/v1/organizations/${orgSlug}/integrations/linear/teams`,
             method: 'GET',
@@ -11343,9 +11373,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostIntegrationsSlackChannelSyncsData>([base]),
-        requestKey: (params: PostIntegrationsSlackChannelSyncsParams) =>
-          dataTaggedQueryKey<PostIntegrationsSlackChannelSyncsData>([base, params]),
-        request: ({ orgSlug, ...query }: PostIntegrationsSlackChannelSyncsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostIntegrationsSlackChannelSyncsData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<PostIntegrationsSlackChannelSyncsData>({
             path: `/v1/organizations/${orgSlug}/integrations/slack/channel_syncs`,
             method: 'POST',
@@ -11390,12 +11419,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetIntegrationsSlackChannelsByProviderChannelIdData>([base]),
-        requestKey: (params: GetIntegrationsSlackChannelsByProviderChannelIdParams) =>
-          dataTaggedQueryKey<GetIntegrationsSlackChannelsByProviderChannelIdData>([base, params]),
-        request: (
-          { orgSlug, providerChannelId, ...query }: GetIntegrationsSlackChannelsByProviderChannelIdParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, providerChannelId: string) =>
+          dataTaggedQueryKey<GetIntegrationsSlackChannelsByProviderChannelIdData>([base, orgSlug, providerChannelId]),
+        request: (orgSlug: string, providerChannelId: string, params: RequestParams = {}) =>
           this.request<GetIntegrationsSlackChannelsByProviderChannelIdData>({
             path: `/v1/organizations/${orgSlug}/integrations/slack/channels/${providerChannelId}`,
             method: 'GET',
@@ -11416,8 +11442,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetInvitationUrlData>([base]),
-        requestKey: (params: GetInvitationUrlParams) => dataTaggedQueryKey<GetInvitationUrlData>([base, params]),
-        request: ({ orgSlug, ...query }: GetInvitationUrlParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetInvitationUrlData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetInvitationUrlData>({
             path: `/v1/organizations/${orgSlug}/invitation_url`,
             method: 'GET',
@@ -11438,9 +11464,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetThreadsDmsByUsernameData>([base]),
-        requestKey: (params: GetThreadsDmsByUsernameParams) =>
-          dataTaggedQueryKey<GetThreadsDmsByUsernameData>([base, params]),
-        request: ({ orgSlug, username, ...query }: GetThreadsDmsByUsernameParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, username: string) =>
+          dataTaggedQueryKey<GetThreadsDmsByUsernameData>([base, orgSlug, username]),
+        request: (orgSlug: string, username: string, params: RequestParams = {}) =>
           this.request<GetThreadsDmsByUsernameData>({
             path: `/v1/organizations/${orgSlug}/threads/dms/${username}`,
             method: 'GET',
@@ -11461,9 +11487,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsFavoritesData>([base]),
-        requestKey: (params: PostThreadsFavoritesParams) =>
-          dataTaggedQueryKey<PostThreadsFavoritesData>([base, params]),
-        request: ({ orgSlug, threadId, ...query }: PostThreadsFavoritesParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, threadId: string) =>
+          dataTaggedQueryKey<PostThreadsFavoritesData>([base, orgSlug, threadId]),
+        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
           this.request<PostThreadsFavoritesData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/favorites`,
             method: 'POST',
@@ -11484,9 +11510,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteThreadsFavoritesData>([base]),
-        requestKey: (params: DeleteThreadsFavoritesParams) =>
-          dataTaggedQueryKey<DeleteThreadsFavoritesData>([base, params]),
-        request: ({ orgSlug, threadId, ...query }: DeleteThreadsFavoritesParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, threadId: string) =>
+          dataTaggedQueryKey<DeleteThreadsFavoritesData>([base, orgSlug, threadId]),
+        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
           this.request<DeleteThreadsFavoritesData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/favorites`,
             method: 'DELETE',
@@ -11507,12 +11533,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetThreadsIntegrationDmsByOauthApplicationIdData>([base]),
-        requestKey: (params: GetThreadsIntegrationDmsByOauthApplicationIdParams) =>
-          dataTaggedQueryKey<GetThreadsIntegrationDmsByOauthApplicationIdData>([base, params]),
-        request: (
-          { orgSlug, oauthApplicationId, ...query }: GetThreadsIntegrationDmsByOauthApplicationIdParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, oauthApplicationId: string) =>
+          dataTaggedQueryKey<GetThreadsIntegrationDmsByOauthApplicationIdData>([base, orgSlug, oauthApplicationId]),
+        request: (orgSlug: string, oauthApplicationId: string, params: RequestParams = {}) =>
           this.request<GetThreadsIntegrationDmsByOauthApplicationIdData>({
             path: `/v1/organizations/${orgSlug}/threads/integration_dms/${oauthApplicationId}`,
             method: 'GET',
@@ -11556,9 +11579,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsMessagesData>([base]),
-        requestKey: (params: PostThreadsMessagesParams) => dataTaggedQueryKey<PostThreadsMessagesData>([base, params]),
+        requestKey: (orgSlug: string, threadId: string) =>
+          dataTaggedQueryKey<PostThreadsMessagesData>([base, orgSlug, threadId]),
         request: (
-          { orgSlug, threadId, ...query }: PostThreadsMessagesParams,
+          orgSlug: string,
+          threadId: string,
           data: OrganizationsOrgSlugThreadsThreadIdMessagesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -11584,10 +11609,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutThreadsMessagesByIdData>([base]),
-        requestKey: (params: PutThreadsMessagesByIdParams) =>
-          dataTaggedQueryKey<PutThreadsMessagesByIdData>([base, params]),
+        requestKey: (orgSlug: string, threadId: string, id: string) =>
+          dataTaggedQueryKey<PutThreadsMessagesByIdData>([base, orgSlug, threadId, id]),
         request: (
-          { orgSlug, threadId, id, ...query }: PutThreadsMessagesByIdParams,
+          orgSlug: string,
+          threadId: string,
+          id: string,
           data: OrganizationsOrgSlugThreadsThreadIdMessagesIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -11613,9 +11640,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteThreadsMessagesByIdData>([base]),
-        requestKey: (params: DeleteThreadsMessagesByIdParams) =>
-          dataTaggedQueryKey<DeleteThreadsMessagesByIdData>([base, params]),
-        request: ({ orgSlug, threadId, id, ...query }: DeleteThreadsMessagesByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, threadId: string, id: string) =>
+          dataTaggedQueryKey<DeleteThreadsMessagesByIdData>([base, orgSlug, threadId, id]),
+        request: (orgSlug: string, threadId: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteThreadsMessagesByIdData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/messages/${id}`,
             method: 'DELETE',
@@ -11636,9 +11663,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetThreadsMyMembershipData>([base]),
-        requestKey: (params: GetThreadsMyMembershipParams) =>
-          dataTaggedQueryKey<GetThreadsMyMembershipData>([base, params]),
-        request: ({ orgSlug, threadId, ...query }: GetThreadsMyMembershipParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, threadId: string) =>
+          dataTaggedQueryKey<GetThreadsMyMembershipData>([base, orgSlug, threadId]),
+        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
           this.request<GetThreadsMyMembershipData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/my_membership`,
             method: 'GET',
@@ -11659,10 +11686,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutThreadsMyMembershipData>([base]),
-        requestKey: (params: PutThreadsMyMembershipParams) =>
-          dataTaggedQueryKey<PutThreadsMyMembershipData>([base, params]),
+        requestKey: (orgSlug: string, threadId: string) =>
+          dataTaggedQueryKey<PutThreadsMyMembershipData>([base, orgSlug, threadId]),
         request: (
-          { orgSlug, threadId, ...query }: PutThreadsMyMembershipParams,
+          orgSlug: string,
+          threadId: string,
           data: OrganizationsOrgSlugThreadsThreadIdMyMembershipPutRequest,
           params: RequestParams = {}
         ) =>
@@ -11688,9 +11716,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteThreadsMyMembershipData>([base]),
-        requestKey: (params: DeleteThreadsMyMembershipParams) =>
-          dataTaggedQueryKey<DeleteThreadsMyMembershipData>([base, params]),
-        request: ({ orgSlug, threadId, ...query }: DeleteThreadsMyMembershipParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, threadId: string) =>
+          dataTaggedQueryKey<DeleteThreadsMyMembershipData>([base, orgSlug, threadId]),
+        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
           this.request<DeleteThreadsMyMembershipData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/my_membership`,
             method: 'DELETE',
@@ -11711,9 +11739,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsNotificationForcesData>([base]),
-        requestKey: (params: PostThreadsNotificationForcesParams) =>
-          dataTaggedQueryKey<PostThreadsNotificationForcesData>([base, params]),
-        request: ({ orgSlug, threadId, ...query }: PostThreadsNotificationForcesParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, threadId: string) =>
+          dataTaggedQueryKey<PostThreadsNotificationForcesData>([base, orgSlug, threadId]),
+        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
           this.request<PostThreadsNotificationForcesData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/notification_forces`,
             method: 'POST',
@@ -11734,9 +11762,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetThreadsOauthApplicationsData>([base]),
-        requestKey: (params: GetThreadsOauthApplicationsParams) =>
-          dataTaggedQueryKey<GetThreadsOauthApplicationsData>([base, params]),
-        request: ({ orgSlug, threadId, ...query }: GetThreadsOauthApplicationsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, threadId: string) =>
+          dataTaggedQueryKey<GetThreadsOauthApplicationsData>([base, orgSlug, threadId]),
+        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
           this.request<GetThreadsOauthApplicationsData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/oauth_applications`,
             method: 'GET',
@@ -11757,10 +11785,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsOauthApplicationsData>([base]),
-        requestKey: (params: PostThreadsOauthApplicationsParams) =>
-          dataTaggedQueryKey<PostThreadsOauthApplicationsData>([base, params]),
+        requestKey: (orgSlug: string, threadId: string) =>
+          dataTaggedQueryKey<PostThreadsOauthApplicationsData>([base, orgSlug, threadId]),
         request: (
-          { orgSlug, threadId, ...query }: PostThreadsOauthApplicationsParams,
+          orgSlug: string,
+          threadId: string,
           data: OrganizationsOrgSlugThreadsThreadIdOauthApplicationsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -11786,12 +11815,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteThreadsOauthApplicationsByIdData>([base]),
-        requestKey: (params: DeleteThreadsOauthApplicationsByIdParams) =>
-          dataTaggedQueryKey<DeleteThreadsOauthApplicationsByIdData>([base, params]),
-        request: (
-          { orgSlug, threadId, id, ...query }: DeleteThreadsOauthApplicationsByIdParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, threadId: string, id: string) =>
+          dataTaggedQueryKey<DeleteThreadsOauthApplicationsByIdData>([base, orgSlug, threadId, id]),
+        request: (orgSlug: string, threadId: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteThreadsOauthApplicationsByIdData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/oauth_applications/${id}`,
             method: 'DELETE',
@@ -11812,10 +11838,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutThreadsOtherMembershipsListData>([base]),
-        requestKey: (params: PutThreadsOtherMembershipsListParams) =>
-          dataTaggedQueryKey<PutThreadsOtherMembershipsListData>([base, params]),
+        requestKey: (orgSlug: string, threadId: string) =>
+          dataTaggedQueryKey<PutThreadsOtherMembershipsListData>([base, orgSlug, threadId]),
         request: (
-          { orgSlug, threadId, ...query }: PutThreadsOtherMembershipsListParams,
+          orgSlug: string,
+          threadId: string,
           data: OrganizationsOrgSlugThreadsThreadIdOtherMembershipsListPutRequest,
           params: RequestParams = {}
         ) =>
@@ -11865,8 +11892,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsReadsData>([base]),
-        requestKey: (params: PostThreadsReadsParams) => dataTaggedQueryKey<PostThreadsReadsData>([base, params]),
-        request: ({ orgSlug, threadId, ...query }: PostThreadsReadsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, threadId: string) =>
+          dataTaggedQueryKey<PostThreadsReadsData>([base, orgSlug, threadId]),
+        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
           this.request<PostThreadsReadsData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/reads`,
             method: 'POST',
@@ -11887,8 +11915,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteThreadsReadsData>([base]),
-        requestKey: (params: DeleteThreadsReadsParams) => dataTaggedQueryKey<DeleteThreadsReadsData>([base, params]),
-        request: ({ orgSlug, threadId, ...query }: DeleteThreadsReadsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, threadId: string) =>
+          dataTaggedQueryKey<DeleteThreadsReadsData>([base, orgSlug, threadId]),
+        request: (orgSlug: string, threadId: string, params: RequestParams = {}) =>
           this.request<DeleteThreadsReadsData>({
             path: `/v1/organizations/${orgSlug}/threads/${threadId}/reads`,
             method: 'DELETE',
@@ -11909,8 +11938,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetThreadsData>([base]),
-        requestKey: (params: GetThreadsParams) => dataTaggedQueryKey<GetThreadsData>([base, params]),
-        request: ({ orgSlug, ...query }: GetThreadsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetThreadsData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetThreadsData>({
             path: `/v1/organizations/${orgSlug}/threads`,
             method: 'GET',
@@ -11931,12 +11960,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsData>([base]),
-        requestKey: (params: PostThreadsParams) => dataTaggedQueryKey<PostThreadsData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostThreadsParams,
-          data: OrganizationsOrgSlugThreadsPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostThreadsData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationsOrgSlugThreadsPostRequest, params: RequestParams = {}) =>
           this.request<PostThreadsData>({
             path: `/v1/organizations/${orgSlug}/threads`,
             method: 'POST',
@@ -11959,8 +11984,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetThreadsByIdData>([base]),
-        requestKey: (params: GetThreadsByIdParams) => dataTaggedQueryKey<GetThreadsByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: GetThreadsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<GetThreadsByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<GetThreadsByIdData>({
             path: `/v1/organizations/${orgSlug}/threads/${id}`,
             method: 'GET',
@@ -11981,9 +12006,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutThreadsByIdData>([base]),
-        requestKey: (params: PutThreadsByIdParams) => dataTaggedQueryKey<PutThreadsByIdData>([base, params]),
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutThreadsByIdData>([base, orgSlug, id]),
         request: (
-          { orgSlug, id, ...query }: PutThreadsByIdParams,
+          orgSlug: string,
+          id: string,
           data: OrganizationsOrgSlugThreadsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -12009,8 +12035,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteThreadsByIdData>([base]),
-        requestKey: (params: DeleteThreadsByIdParams) => dataTaggedQueryKey<DeleteThreadsByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: DeleteThreadsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteThreadsByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteThreadsByIdData>({
             path: `/v1/organizations/${orgSlug}/threads/${id}`,
             method: 'DELETE',
@@ -12031,12 +12057,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMessagesAttachmentsByIdData>([base]),
-        requestKey: (params: DeleteMessagesAttachmentsByIdParams) =>
-          dataTaggedQueryKey<DeleteMessagesAttachmentsByIdData>([base, params]),
-        request: (
-          { orgSlug, messageId, id, ...query }: DeleteMessagesAttachmentsByIdParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, messageId: string, id: string) =>
+          dataTaggedQueryKey<DeleteMessagesAttachmentsByIdData>([base, orgSlug, messageId, id]),
+        request: (orgSlug: string, messageId: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteMessagesAttachmentsByIdData>({
             path: `/v1/organizations/${orgSlug}/messages/${messageId}/attachments/${id}`,
             method: 'DELETE',
@@ -12057,10 +12080,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostMessagesReactionsData>([base]),
-        requestKey: (params: PostMessagesReactionsParams) =>
-          dataTaggedQueryKey<PostMessagesReactionsData>([base, params]),
+        requestKey: (orgSlug: string, messageId: string) =>
+          dataTaggedQueryKey<PostMessagesReactionsData>([base, orgSlug, messageId]),
         request: (
-          { orgSlug, messageId, ...query }: PostMessagesReactionsParams,
+          orgSlug: string,
+          messageId: string,
           data: OrganizationMessageReactionsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -12113,10 +12137,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesAttachmentsReorderData>([base]),
-        requestKey: (params: PutNotesAttachmentsReorderParams) =>
-          dataTaggedQueryKey<PutNotesAttachmentsReorderData>([base, params]),
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<PutNotesAttachmentsReorderData>([base, orgSlug, noteId]),
         request: (
-          { orgSlug, noteId, ...query }: PutNotesAttachmentsReorderParams,
+          orgSlug: string,
+          noteId: string,
           data: OrganizationsOrgSlugNotesNoteIdAttachmentsReorderPutRequest,
           params: RequestParams = {}
         ) =>
@@ -12142,10 +12167,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesAttachmentsData>([base]),
-        requestKey: (params: PostNotesAttachmentsParams) =>
-          dataTaggedQueryKey<PostNotesAttachmentsData>([base, params]),
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<PostNotesAttachmentsData>([base, orgSlug, noteId]),
         request: (
-          { orgSlug, noteId, ...query }: PostNotesAttachmentsParams,
+          orgSlug: string,
+          noteId: string,
           data: OrganizationNoteAttachmentsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -12171,10 +12197,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesAttachmentsByIdData>([base]),
-        requestKey: (params: PutNotesAttachmentsByIdParams) =>
-          dataTaggedQueryKey<PutNotesAttachmentsByIdData>([base, params]),
+        requestKey: (orgSlug: string, noteId: string, id: string) =>
+          dataTaggedQueryKey<PutNotesAttachmentsByIdData>([base, orgSlug, noteId, id]),
         request: (
-          { orgSlug, noteId, id, ...query }: PutNotesAttachmentsByIdParams,
+          orgSlug: string,
+          noteId: string,
+          id: string,
           data: OrganizationsOrgSlugNotesNoteIdAttachmentsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -12200,9 +12228,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteNotesAttachmentsByIdData>([base]),
-        requestKey: (params: DeleteNotesAttachmentsByIdParams) =>
-          dataTaggedQueryKey<DeleteNotesAttachmentsByIdData>([base, params]),
-        request: ({ orgSlug, noteId, id, ...query }: DeleteNotesAttachmentsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, noteId: string, id: string) =>
+          dataTaggedQueryKey<DeleteNotesAttachmentsByIdData>([base, orgSlug, noteId, id]),
+        request: (orgSlug: string, noteId: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteNotesAttachmentsByIdData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/attachments/${id}`,
             method: 'DELETE',
@@ -12246,9 +12274,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesCommentsData>([base]),
-        requestKey: (params: PostNotesCommentsParams) => dataTaggedQueryKey<PostNotesCommentsData>([base, params]),
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<PostNotesCommentsData>([base, orgSlug, noteId]),
         request: (
-          { orgSlug, noteId, ...query }: PostNotesCommentsParams,
+          orgSlug: string,
+          noteId: string,
           data: OrganizationsOrgSlugNotesNoteIdCommentsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -12274,8 +12304,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesFavoriteData>([base]),
-        requestKey: (params: PostNotesFavoriteParams) => dataTaggedQueryKey<PostNotesFavoriteData>([base, params]),
-        request: ({ orgSlug, noteId, ...query }: PostNotesFavoriteParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<PostNotesFavoriteData>([base, orgSlug, noteId]),
+        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
           this.request<PostNotesFavoriteData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/favorite`,
             method: 'POST',
@@ -12296,8 +12327,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteNotesFavoriteData>([base]),
-        requestKey: (params: DeleteNotesFavoriteParams) => dataTaggedQueryKey<DeleteNotesFavoriteData>([base, params]),
-        request: ({ orgSlug, noteId, ...query }: DeleteNotesFavoriteParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<DeleteNotesFavoriteData>([base, orgSlug, noteId]),
+        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
           this.request<DeleteNotesFavoriteData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/favorite`,
             method: 'DELETE',
@@ -12318,9 +12350,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesFollowUpData>([base]),
-        requestKey: (params: PostNotesFollowUpParams) => dataTaggedQueryKey<PostNotesFollowUpData>([base, params]),
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<PostNotesFollowUpData>([base, orgSlug, noteId]),
         request: (
-          { orgSlug, noteId, ...query }: PostNotesFollowUpParams,
+          orgSlug: string,
+          noteId: string,
           data: OrganizationNoteFollowUpPostRequest,
           params: RequestParams = {}
         ) =>
@@ -12346,8 +12380,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetNotesPermissionsData>([base]),
-        requestKey: (params: GetNotesPermissionsParams) => dataTaggedQueryKey<GetNotesPermissionsData>([base, params]),
-        request: ({ orgSlug, noteId, ...query }: GetNotesPermissionsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<GetNotesPermissionsData>([base, orgSlug, noteId]),
+        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
           this.request<GetNotesPermissionsData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/permissions`,
             method: 'GET',
@@ -12368,10 +12403,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesPermissionsData>([base]),
-        requestKey: (params: PostNotesPermissionsParams) =>
-          dataTaggedQueryKey<PostNotesPermissionsData>([base, params]),
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<PostNotesPermissionsData>([base, orgSlug, noteId]),
         request: (
-          { orgSlug, noteId, ...query }: PostNotesPermissionsParams,
+          orgSlug: string,
+          noteId: string,
           data: OrganizationsOrgSlugNotesNoteIdPermissionsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -12397,10 +12433,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesPermissionsByIdData>([base]),
-        requestKey: (params: PutNotesPermissionsByIdParams) =>
-          dataTaggedQueryKey<PutNotesPermissionsByIdData>([base, params]),
+        requestKey: (orgSlug: string, noteId: string, id: string) =>
+          dataTaggedQueryKey<PutNotesPermissionsByIdData>([base, orgSlug, noteId, id]),
         request: (
-          { orgSlug, noteId, id, ...query }: PutNotesPermissionsByIdParams,
+          orgSlug: string,
+          noteId: string,
+          id: string,
           data: OrganizationsOrgSlugNotesNoteIdPermissionsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -12426,9 +12464,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteNotesPermissionsByIdData>([base]),
-        requestKey: (params: DeleteNotesPermissionsByIdParams) =>
-          dataTaggedQueryKey<DeleteNotesPermissionsByIdData>([base, params]),
-        request: ({ orgSlug, noteId, id, ...query }: DeleteNotesPermissionsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, noteId: string, id: string) =>
+          dataTaggedQueryKey<DeleteNotesPermissionsByIdData>([base, orgSlug, noteId, id]),
+        request: (orgSlug: string, noteId: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteNotesPermissionsByIdData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/permissions/${id}`,
             method: 'DELETE',
@@ -12449,8 +12487,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesPinData>([base]),
-        requestKey: (params: PostNotesPinParams) => dataTaggedQueryKey<PostNotesPinData>([base, params]),
-        request: ({ orgSlug, noteId, ...query }: PostNotesPinParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, noteId: string) => dataTaggedQueryKey<PostNotesPinData>([base, orgSlug, noteId]),
+        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
           this.request<PostNotesPinData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/pin`,
             method: 'POST',
@@ -12471,10 +12509,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesProjectPermissionsData>([base]),
-        requestKey: (params: PutNotesProjectPermissionsParams) =>
-          dataTaggedQueryKey<PutNotesProjectPermissionsData>([base, params]),
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<PutNotesProjectPermissionsData>([base, orgSlug, noteId]),
         request: (
-          { orgSlug, noteId, ...query }: PutNotesProjectPermissionsParams,
+          orgSlug: string,
+          noteId: string,
           data: OrganizationsOrgSlugNotesNoteIdProjectPermissionsPutRequest,
           params: RequestParams = {}
         ) =>
@@ -12500,9 +12539,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteNotesProjectPermissionsData>([base]),
-        requestKey: (params: DeleteNotesProjectPermissionsParams) =>
-          dataTaggedQueryKey<DeleteNotesProjectPermissionsData>([base, params]),
-        request: ({ orgSlug, noteId, ...query }: DeleteNotesProjectPermissionsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<DeleteNotesProjectPermissionsData>([base, orgSlug, noteId]),
+        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
           this.request<DeleteNotesProjectPermissionsData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/project_permissions`,
             method: 'DELETE',
@@ -12523,8 +12562,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetNotesPublicNotesData>([base]),
-        requestKey: (params: GetNotesPublicNotesParams) => dataTaggedQueryKey<GetNotesPublicNotesData>([base, params]),
-        request: ({ orgSlug, noteId, ...query }: GetNotesPublicNotesParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<GetNotesPublicNotesData>([base, orgSlug, noteId]),
+        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
           this.request<GetNotesPublicNotesData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/public_notes`,
             method: 'GET',
@@ -12545,8 +12585,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetNotesSyncStateData>([base]),
-        requestKey: (params: GetNotesSyncStateParams) => dataTaggedQueryKey<GetNotesSyncStateData>([base, params]),
-        request: ({ orgSlug, noteId, ...query }: GetNotesSyncStateParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<GetNotesSyncStateData>([base, orgSlug, noteId]),
+        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
           this.request<GetNotesSyncStateData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/sync_state`,
             method: 'GET',
@@ -12567,9 +12608,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesSyncStateData>([base]),
-        requestKey: (params: PutNotesSyncStateParams) => dataTaggedQueryKey<PutNotesSyncStateData>([base, params]),
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<PutNotesSyncStateData>([base, orgSlug, noteId]),
         request: (
-          { orgSlug, noteId, ...query }: PutNotesSyncStateParams,
+          orgSlug: string,
+          noteId: string,
           data: OrganizationsOrgSlugNotesNoteIdSyncStatePutRequest,
           params: RequestParams = {}
         ) =>
@@ -12619,8 +12662,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetNotesViewsData>([base]),
-        requestKey: (params: GetNotesViewsParams) => dataTaggedQueryKey<GetNotesViewsData>([base, params]),
-        request: ({ orgSlug, noteId, ...query }: GetNotesViewsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, noteId: string) => dataTaggedQueryKey<GetNotesViewsData>([base, orgSlug, noteId]),
+        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
           this.request<GetNotesViewsData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/views`,
             method: 'GET',
@@ -12641,8 +12684,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesViewsData>([base]),
-        requestKey: (params: PostNotesViewsParams) => dataTaggedQueryKey<PostNotesViewsData>([base, params]),
-        request: ({ orgSlug, noteId, ...query }: PostNotesViewsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<PostNotesViewsData>([base, orgSlug, noteId]),
+        request: (orgSlug: string, noteId: string, params: RequestParams = {}) =>
           this.request<PostNotesViewsData>({
             path: `/v1/organizations/${orgSlug}/notes/${noteId}/views`,
             method: 'POST',
@@ -12663,9 +12707,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesVisibilityData>([base]),
-        requestKey: (params: PutNotesVisibilityParams) => dataTaggedQueryKey<PutNotesVisibilityData>([base, params]),
+        requestKey: (orgSlug: string, noteId: string) =>
+          dataTaggedQueryKey<PutNotesVisibilityData>([base, orgSlug, noteId]),
         request: (
-          { orgSlug, noteId, ...query }: PutNotesVisibilityParams,
+          orgSlug: string,
+          noteId: string,
           data: OrganizationsOrgSlugNotesNoteIdVisibilityPutRequest,
           params: RequestParams = {}
         ) =>
@@ -12714,12 +12760,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostNotesData>([base]),
-        requestKey: (params: PostNotesParams) => dataTaggedQueryKey<PostNotesData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostNotesParams,
-          data: OrganizationsOrgSlugNotesPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostNotesData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationsOrgSlugNotesPostRequest, params: RequestParams = {}) =>
           this.request<PostNotesData>({
             path: `/v1/organizations/${orgSlug}/notes`,
             method: 'POST',
@@ -12742,8 +12784,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetNotesByIdData>([base]),
-        requestKey: (params: GetNotesByIdParams) => dataTaggedQueryKey<GetNotesByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: GetNotesByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<GetNotesByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<GetNotesByIdData>({
             path: `/v1/organizations/${orgSlug}/notes/${id}`,
             method: 'GET',
@@ -12764,9 +12806,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutNotesByIdData>([base]),
-        requestKey: (params: PutNotesByIdParams) => dataTaggedQueryKey<PutNotesByIdData>([base, params]),
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutNotesByIdData>([base, orgSlug, id]),
         request: (
-          { orgSlug, id, ...query }: PutNotesByIdParams,
+          orgSlug: string,
+          id: string,
           data: OrganizationsOrgSlugNotesIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -12792,8 +12835,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteNotesByIdData>([base]),
-        requestKey: (params: DeleteNotesByIdParams) => dataTaggedQueryKey<DeleteNotesByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: DeleteNotesByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteNotesByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteNotesByIdData>({
             path: `/v1/organizations/${orgSlug}/notes/${id}`,
             method: 'DELETE',
@@ -12814,12 +12857,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMembersMeNotificationsArchiveData>([base]),
-        requestKey: (params: DeleteMembersMeNotificationsArchiveParams) =>
-          dataTaggedQueryKey<DeleteMembersMeNotificationsArchiveData>([base, params]),
-        request: (
-          { orgSlug, notificationId, ...query }: DeleteMembersMeNotificationsArchiveParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, notificationId: string) =>
+          dataTaggedQueryKey<DeleteMembersMeNotificationsArchiveData>([base, orgSlug, notificationId]),
+        request: (orgSlug: string, notificationId: string, params: RequestParams = {}) =>
           this.request<DeleteMembersMeNotificationsArchiveData>({
             path: `/v1/organizations/${orgSlug}/members/me/notifications/${notificationId}/archive`,
             method: 'DELETE',
@@ -12840,13 +12880,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMeNotificationsDeleteAllData>([base]),
-        requestKey: (params: PostMembersMeNotificationsDeleteAllParams) =>
-          dataTaggedQueryKey<PostMembersMeNotificationsDeleteAllData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostMembersMeNotificationsDeleteAllParams,
-          data: OrganizationNotificationDeleteAllPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostMembersMeNotificationsDeleteAllData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationNotificationDeleteAllPostRequest, params: RequestParams = {}) =>
           this.request<PostMembersMeNotificationsDeleteAllData>({
             path: `/v1/organizations/${orgSlug}/members/me/notifications/delete_all`,
             method: 'POST',
@@ -12869,13 +12904,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMeNotificationsMarkAllReadData>([base]),
-        requestKey: (params: PostMembersMeNotificationsMarkAllReadParams) =>
-          dataTaggedQueryKey<PostMembersMeNotificationsMarkAllReadData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostMembersMeNotificationsMarkAllReadParams,
-          data: OrganizationNotificationMarkAllReadPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostMembersMeNotificationsMarkAllReadData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationNotificationMarkAllReadPostRequest, params: RequestParams = {}) =>
           this.request<PostMembersMeNotificationsMarkAllReadData>({
             path: `/v1/organizations/${orgSlug}/members/me/notifications/mark_all_read`,
             method: 'POST',
@@ -12898,12 +12928,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMeNotificationsReadData>([base]),
-        requestKey: (params: PostMembersMeNotificationsReadParams) =>
-          dataTaggedQueryKey<PostMembersMeNotificationsReadData>([base, params]),
-        request: (
-          { orgSlug, notificationId, ...query }: PostMembersMeNotificationsReadParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, notificationId: string) =>
+          dataTaggedQueryKey<PostMembersMeNotificationsReadData>([base, orgSlug, notificationId]),
+        request: (orgSlug: string, notificationId: string, params: RequestParams = {}) =>
           this.request<PostMembersMeNotificationsReadData>({
             path: `/v1/organizations/${orgSlug}/members/me/notifications/${notificationId}/read`,
             method: 'POST',
@@ -12924,12 +12951,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMembersMeNotificationsReadData>([base]),
-        requestKey: (params: DeleteMembersMeNotificationsReadParams) =>
-          dataTaggedQueryKey<DeleteMembersMeNotificationsReadData>([base, params]),
-        request: (
-          { orgSlug, notificationId, ...query }: DeleteMembersMeNotificationsReadParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, notificationId: string) =>
+          dataTaggedQueryKey<DeleteMembersMeNotificationsReadData>([base, orgSlug, notificationId]),
+        request: (orgSlug: string, notificationId: string, params: RequestParams = {}) =>
           this.request<DeleteMembersMeNotificationsReadData>({
             path: `/v1/organizations/${orgSlug}/members/me/notifications/${notificationId}/read`,
             method: 'DELETE',
@@ -12974,10 +12998,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMembersMeNotificationsByIdData>([base]),
-        requestKey: (params: DeleteMembersMeNotificationsByIdParams) =>
-          dataTaggedQueryKey<DeleteMembersMeNotificationsByIdData>([base, params]),
+        requestKey: (orgSlug: string, id: string) =>
+          dataTaggedQueryKey<DeleteMembersMeNotificationsByIdData>([base, orgSlug, id]),
         request: (
-          { orgSlug, id, ...query }: DeleteMembersMeNotificationsByIdParams,
+          orgSlug: string,
+          id: string,
           data: OrganizationNotificationDeleteRequest,
           params: RequestParams = {}
         ) =>
@@ -13028,12 +13053,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostOauthApplicationsSecretRenewalsData>([base]),
-        requestKey: (params: PostOauthApplicationsSecretRenewalsParams) =>
-          dataTaggedQueryKey<PostOauthApplicationsSecretRenewalsData>([base, params]),
-        request: (
-          { orgSlug, oauthApplicationId, ...query }: PostOauthApplicationsSecretRenewalsParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, oauthApplicationId: string) =>
+          dataTaggedQueryKey<PostOauthApplicationsSecretRenewalsData>([base, orgSlug, oauthApplicationId]),
+        request: (orgSlug: string, oauthApplicationId: string, params: RequestParams = {}) =>
           this.request<PostOauthApplicationsSecretRenewalsData>({
             path: `/v1/organizations/${orgSlug}/oauth_applications/${oauthApplicationId}/secret_renewals`,
             method: 'POST',
@@ -13054,12 +13076,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostOauthApplicationsTokensData>([base]),
-        requestKey: (params: PostOauthApplicationsTokensParams) =>
-          dataTaggedQueryKey<PostOauthApplicationsTokensData>([base, params]),
-        request: (
-          { orgSlug, oauthApplicationId, ...query }: PostOauthApplicationsTokensParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, oauthApplicationId: string) =>
+          dataTaggedQueryKey<PostOauthApplicationsTokensData>([base, orgSlug, oauthApplicationId]),
+        request: (orgSlug: string, oauthApplicationId: string, params: RequestParams = {}) =>
           this.request<PostOauthApplicationsTokensData>({
             path: `/v1/organizations/${orgSlug}/oauth_applications/${oauthApplicationId}/tokens`,
             method: 'POST',
@@ -13080,9 +13099,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetOauthApplicationsData>([base]),
-        requestKey: (params: GetOauthApplicationsParams) =>
-          dataTaggedQueryKey<GetOauthApplicationsData>([base, params]),
-        request: ({ orgSlug, ...query }: GetOauthApplicationsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetOauthApplicationsData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetOauthApplicationsData>({
             path: `/v1/organizations/${orgSlug}/oauth_applications`,
             method: 'GET',
@@ -13103,10 +13121,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostOauthApplicationsData>([base]),
-        requestKey: (params: PostOauthApplicationsParams) =>
-          dataTaggedQueryKey<PostOauthApplicationsData>([base, params]),
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostOauthApplicationsData>([base, orgSlug]),
         request: (
-          { orgSlug, ...query }: PostOauthApplicationsParams,
+          orgSlug: string,
           data: OrganizationsOrgSlugOauthApplicationsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -13132,9 +13149,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetOauthApplicationsByIdData>([base]),
-        requestKey: (params: GetOauthApplicationsByIdParams) =>
-          dataTaggedQueryKey<GetOauthApplicationsByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: GetOauthApplicationsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) =>
+          dataTaggedQueryKey<GetOauthApplicationsByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<GetOauthApplicationsByIdData>({
             path: `/v1/organizations/${orgSlug}/oauth_applications/${id}`,
             method: 'GET',
@@ -13155,10 +13172,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutOauthApplicationsByIdData>([base]),
-        requestKey: (params: PutOauthApplicationsByIdParams) =>
-          dataTaggedQueryKey<PutOauthApplicationsByIdData>([base, params]),
+        requestKey: (orgSlug: string, id: string) =>
+          dataTaggedQueryKey<PutOauthApplicationsByIdData>([base, orgSlug, id]),
         request: (
-          { orgSlug, id, ...query }: PutOauthApplicationsByIdParams,
+          orgSlug: string,
+          id: string,
           data: OrganizationsOrgSlugOauthApplicationsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -13184,9 +13202,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteOauthApplicationsByIdData>([base]),
-        requestKey: (params: DeleteOauthApplicationsByIdParams) =>
-          dataTaggedQueryKey<DeleteOauthApplicationsByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: DeleteOauthApplicationsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) =>
+          dataTaggedQueryKey<DeleteOauthApplicationsByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteOauthApplicationsByIdData>({
             path: `/v1/organizations/${orgSlug}/oauth_applications/${id}`,
             method: 'DELETE',
@@ -13207,12 +13225,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostOnboardProjectsData>([base]),
-        requestKey: (params: PostOnboardProjectsParams) => dataTaggedQueryKey<PostOnboardProjectsData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostOnboardProjectsParams,
-          data: OrganizationOnboardProjectsPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostOnboardProjectsData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationOnboardProjectsPostRequest, params: RequestParams = {}) =>
           this.request<PostOnboardProjectsData>({
             path: `/v1/organizations/${orgSlug}/onboard_projects`,
             method: 'POST',
@@ -13258,12 +13272,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostInvitationsData>([base]),
-        requestKey: (params: PostInvitationsParams) => dataTaggedQueryKey<PostInvitationsData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostInvitationsParams,
-          data: OrganizationsOrgSlugInvitationsPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostInvitationsData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationsOrgSlugInvitationsPostRequest, params: RequestParams = {}) =>
           this.request<PostInvitationsData>({
             path: `/v1/organizations/${orgSlug}/invitations`,
             method: 'POST',
@@ -13286,9 +13296,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetInvitationsByInviteTokenData>([base]),
-        requestKey: (params: GetInvitationsByInviteTokenParams) =>
-          dataTaggedQueryKey<GetInvitationsByInviteTokenData>([base, params]),
-        request: ({ orgSlug, inviteToken, ...query }: GetInvitationsByInviteTokenParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, inviteToken: string) =>
+          dataTaggedQueryKey<GetInvitationsByInviteTokenData>([base, orgSlug, inviteToken]),
+        request: (orgSlug: string, inviteToken: string, params: RequestParams = {}) =>
           this.request<GetInvitationsByInviteTokenData>({
             path: `/v1/organizations/${orgSlug}/invitations/${inviteToken}`,
             method: 'GET',
@@ -13309,9 +13319,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteInvitationsByIdData>([base]),
-        requestKey: (params: DeleteInvitationsByIdParams) =>
-          dataTaggedQueryKey<DeleteInvitationsByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: DeleteInvitationsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteInvitationsByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteInvitationsByIdData>({
             path: `/v1/organizations/${orgSlug}/invitations/${id}`,
             method: 'DELETE',
@@ -13355,9 +13364,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetMembersByUsernameData>([base]),
-        requestKey: (params: GetMembersByUsernameParams) =>
-          dataTaggedQueryKey<GetMembersByUsernameData>([base, params]),
-        request: ({ orgSlug, username, ...query }: GetMembersByUsernameParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, username: string) =>
+          dataTaggedQueryKey<GetMembersByUsernameData>([base, orgSlug, username]),
+        request: (orgSlug: string, username: string, params: RequestParams = {}) =>
           this.request<GetMembersByUsernameData>({
             path: `/v1/organizations/${orgSlug}/members/${username}`,
             method: 'GET',
@@ -13401,9 +13410,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutMembersByIdData>([base]),
-        requestKey: (params: PutMembersByIdParams) => dataTaggedQueryKey<PutMembersByIdData>([base, params]),
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutMembersByIdData>([base, orgSlug, id]),
         request: (
-          { orgSlug, id, ...query }: PutMembersByIdParams,
+          orgSlug: string,
+          id: string,
           data: OrganizationsOrgSlugMembersIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -13429,8 +13439,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMembersByIdData>([base]),
-        requestKey: (params: DeleteMembersByIdParams) => dataTaggedQueryKey<DeleteMembersByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: DeleteMembersByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeleteMembersByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteMembersByIdData>({
             path: `/v1/organizations/${orgSlug}/members/${id}`,
             method: 'DELETE',
@@ -13451,9 +13461,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutMembersReactivateData>([base]),
-        requestKey: (params: PutMembersReactivateParams) =>
-          dataTaggedQueryKey<PutMembersReactivateData>([base, params]),
-        request: ({ orgSlug, id, ...query }: PutMembersReactivateParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<PutMembersReactivateData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<PutMembersReactivateData>({
             path: `/v1/organizations/${orgSlug}/members/${id}/reactivate`,
             method: 'PUT',
@@ -13498,9 +13507,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostMembershipRequestsData>([base]),
-        requestKey: (params: PostMembershipRequestsParams) =>
-          dataTaggedQueryKey<PostMembershipRequestsData>([base, params]),
-        request: ({ orgSlug, ...query }: PostMembershipRequestsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostMembershipRequestsData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<PostMembershipRequestsData>({
             path: `/v1/organizations/${orgSlug}/membership-requests`,
             method: 'POST',
@@ -13521,9 +13529,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetMembershipRequestData>([base]),
-        requestKey: (params: GetMembershipRequestParams) =>
-          dataTaggedQueryKey<GetMembershipRequestData>([base, params]),
-        request: ({ orgSlug, ...query }: GetMembershipRequestParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetMembershipRequestData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetMembershipRequestData>({
             path: `/v1/organizations/${orgSlug}/membership-request`,
             method: 'GET',
@@ -13544,9 +13551,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostMembershipRequestsApproveData>([base]),
-        requestKey: (params: PostMembershipRequestsApproveParams) =>
-          dataTaggedQueryKey<PostMembershipRequestsApproveData>([base, params]),
-        request: ({ orgSlug, id, ...query }: PostMembershipRequestsApproveParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) =>
+          dataTaggedQueryKey<PostMembershipRequestsApproveData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<PostMembershipRequestsApproveData>({
             path: `/v1/organizations/${orgSlug}/membership-requests/${id}/approve`,
             method: 'POST',
@@ -13567,9 +13574,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostMembershipRequestsDeclineData>([base]),
-        requestKey: (params: PostMembershipRequestsDeclineParams) =>
-          dataTaggedQueryKey<PostMembershipRequestsDeclineData>([base, params]),
-        request: ({ orgSlug, id, ...query }: PostMembershipRequestsDeclineParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) =>
+          dataTaggedQueryKey<PostMembershipRequestsDeclineData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<PostMembershipRequestsDeclineData>({
             path: `/v1/organizations/${orgSlug}/membership-requests/${id}/decline`,
             method: 'POST',
@@ -13614,9 +13621,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMeDataExportData>([base]),
-        requestKey: (params: PostMembersMeDataExportParams) =>
-          dataTaggedQueryKey<PostMembersMeDataExportData>([base, params]),
-        request: ({ orgSlug, ...query }: PostMembersMeDataExportParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostMembersMeDataExportData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<PostMembersMeDataExportData>({
             path: `/v1/organizations/${orgSlug}/members/me/data_export`,
             method: 'POST',
@@ -13685,10 +13691,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutMembersMeIndexViewsData>([base]),
-        requestKey: (params: PutMembersMeIndexViewsParams) =>
-          dataTaggedQueryKey<PutMembersMeIndexViewsData>([base, params]),
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PutMembersMeIndexViewsData>([base, orgSlug]),
         request: (
-          { orgSlug, ...query }: PutMembersMeIndexViewsParams,
+          orgSlug: string,
           data: OrganizationsOrgSlugMembersMeIndexViewsPutRequest,
           params: RequestParams = {}
         ) =>
@@ -13714,9 +13719,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetMembersMePersonalCallRoomData>([base]),
-        requestKey: (params: GetMembersMePersonalCallRoomParams) =>
-          dataTaggedQueryKey<GetMembersMePersonalCallRoomData>([base, params]),
-        request: ({ orgSlug, ...query }: GetMembersMePersonalCallRoomParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetMembersMePersonalCallRoomData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetMembersMePersonalCallRoomData>({
             path: `/v1/organizations/${orgSlug}/members/me/personal_call_room`,
             method: 'GET',
@@ -13761,10 +13765,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutMembersProjectMembershipListData>([base]),
-        requestKey: (params: PutMembersProjectMembershipListParams) =>
-          dataTaggedQueryKey<PutMembersProjectMembershipListData>([base, params]),
+        requestKey: (orgSlug: string, memberUsername: string) =>
+          dataTaggedQueryKey<PutMembersProjectMembershipListData>([base, orgSlug, memberUsername]),
         request: (
-          { orgSlug, memberUsername, ...query }: PutMembersProjectMembershipListParams,
+          orgSlug: string,
+          memberUsername: string,
           data: OrganizationsOrgSlugMembersMemberUsernameProjectMembershipListPutRequest,
           params: RequestParams = {}
         ) =>
@@ -13790,12 +13795,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetMembersProjectMembershipsData>([base]),
-        requestKey: (params: GetMembersProjectMembershipsParams) =>
-          dataTaggedQueryKey<GetMembersProjectMembershipsData>([base, params]),
-        request: (
-          { orgSlug, memberUsername, ...query }: GetMembersProjectMembershipsParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, memberUsername: string) =>
+          dataTaggedQueryKey<GetMembersProjectMembershipsData>([base, orgSlug, memberUsername]),
+        request: (orgSlug: string, memberUsername: string, params: RequestParams = {}) =>
           this.request<GetMembersProjectMembershipsData>({
             path: `/v1/organizations/${orgSlug}/members/${memberUsername}/project_memberships`,
             method: 'GET',
@@ -13816,9 +13818,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetMembersMeSlackNotificationPreferenceData>([base]),
-        requestKey: (params: GetMembersMeSlackNotificationPreferenceParams) =>
-          dataTaggedQueryKey<GetMembersMeSlackNotificationPreferenceData>([base, params]),
-        request: ({ orgSlug, ...query }: GetMembersMeSlackNotificationPreferenceParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) =>
+          dataTaggedQueryKey<GetMembersMeSlackNotificationPreferenceData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetMembersMeSlackNotificationPreferenceData>({
             path: `/v1/organizations/${orgSlug}/members/me/slack_notification_preference`,
             method: 'GET',
@@ -13839,9 +13841,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMeSlackNotificationPreferenceData>([base]),
-        requestKey: (params: PostMembersMeSlackNotificationPreferenceParams) =>
-          dataTaggedQueryKey<PostMembersMeSlackNotificationPreferenceData>([base, params]),
-        request: ({ orgSlug, ...query }: PostMembersMeSlackNotificationPreferenceParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) =>
+          dataTaggedQueryKey<PostMembersMeSlackNotificationPreferenceData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<PostMembersMeSlackNotificationPreferenceData>({
             path: `/v1/organizations/${orgSlug}/members/me/slack_notification_preference`,
             method: 'POST',
@@ -13862,12 +13864,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMembersMeSlackNotificationPreferenceData>([base]),
-        requestKey: (params: DeleteMembersMeSlackNotificationPreferenceParams) =>
-          dataTaggedQueryKey<DeleteMembersMeSlackNotificationPreferenceData>([base, params]),
-        request: (
-          { orgSlug, ...query }: DeleteMembersMeSlackNotificationPreferenceParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) =>
+          dataTaggedQueryKey<DeleteMembersMeSlackNotificationPreferenceData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<DeleteMembersMeSlackNotificationPreferenceData>({
             path: `/v1/organizations/${orgSlug}/members/me/slack_notification_preference`,
             method: 'DELETE',
@@ -13888,9 +13887,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetMembersMeStatusesData>([base]),
-        requestKey: (params: GetMembersMeStatusesParams) =>
-          dataTaggedQueryKey<GetMembersMeStatusesData>([base, params]),
-        request: ({ orgSlug, ...query }: GetMembersMeStatusesParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetMembersMeStatusesData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetMembersMeStatusesData>({
             path: `/v1/organizations/${orgSlug}/members/me/statuses`,
             method: 'GET',
@@ -13911,10 +13909,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMeStatusesData>([base]),
-        requestKey: (params: PostMembersMeStatusesParams) =>
-          dataTaggedQueryKey<PostMembersMeStatusesData>([base, params]),
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostMembersMeStatusesData>([base, orgSlug]),
         request: (
-          { orgSlug, ...query }: PostMembersMeStatusesParams,
+          orgSlug: string,
           data: OrganizationsOrgSlugMembersMeStatusesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -13940,13 +13937,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutMembersMeStatusesData>([base]),
-        requestKey: (params: PutMembersMeStatusesParams) =>
-          dataTaggedQueryKey<PutMembersMeStatusesData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PutMembersMeStatusesParams,
-          data: OrganizationsOrgSlugMembersMeStatusesPutRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PutMembersMeStatusesData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationsOrgSlugMembersMeStatusesPutRequest, params: RequestParams = {}) =>
           this.request<PutMembersMeStatusesData>({
             path: `/v1/organizations/${orgSlug}/members/me/statuses`,
             method: 'PUT',
@@ -13969,9 +13961,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMembersMeStatusesData>([base]),
-        requestKey: (params: DeleteMembersMeStatusesParams) =>
-          dataTaggedQueryKey<DeleteMembersMeStatusesData>([base, params]),
-        request: ({ orgSlug, ...query }: DeleteMembersMeStatusesParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<DeleteMembersMeStatusesData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<DeleteMembersMeStatusesData>({
             path: `/v1/organizations/${orgSlug}/members/me/statuses`,
             method: 'DELETE',
@@ -14040,12 +14031,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostBulkInvitesData>([base]),
-        requestKey: (params: PostBulkInvitesParams) => dataTaggedQueryKey<PostBulkInvitesData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostBulkInvitesParams,
-          data: OrganizationBulkInvitesPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostBulkInvitesData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationBulkInvitesPostRequest, params: RequestParams = {}) =>
           this.request<PostBulkInvitesData>({
             path: `/v1/organizations/${orgSlug}/bulk_invites`,
             method: 'POST',
@@ -14068,8 +14055,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetFeaturesData>([base]),
-        requestKey: (params: GetFeaturesParams) => dataTaggedQueryKey<GetFeaturesData>([base, params]),
-        request: ({ orgSlug, ...query }: GetFeaturesParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetFeaturesData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetFeaturesData>({
             path: `/v1/organizations/${orgSlug}/features`,
             method: 'GET',
@@ -14090,8 +14077,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostSsoData>([base]),
-        requestKey: (params: PostSsoParams) => dataTaggedQueryKey<PostSsoData>([base, params]),
-        request: ({ orgSlug, ...query }: PostSsoParams, data: OrganizationSsoPostRequest, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostSsoData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationSsoPostRequest, params: RequestParams = {}) =>
           this.request<PostSsoData>({
             path: `/v1/organizations/${orgSlug}/sso`,
             method: 'POST',
@@ -14114,8 +14101,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteSsoData>([base]),
-        requestKey: (params: DeleteSsoParams) => dataTaggedQueryKey<DeleteSsoData>([base, params]),
-        request: ({ orgSlug, ...query }: DeleteSsoParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<DeleteSsoData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<DeleteSsoData>({
             path: `/v1/organizations/${orgSlug}/sso`,
             method: 'DELETE',
@@ -14136,9 +14123,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostVerifiedDomainMembershipsData>([base]),
-        requestKey: (params: PostVerifiedDomainMembershipsParams) =>
-          dataTaggedQueryKey<PostVerifiedDomainMembershipsData>([base, params]),
-        request: ({ orgSlug, ...query }: PostVerifiedDomainMembershipsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostVerifiedDomainMembershipsData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<PostVerifiedDomainMembershipsData>({
             path: `/v1/organizations/${orgSlug}/verified_domain_memberships`,
             method: 'POST',
@@ -14159,8 +14145,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetByOrgSlugData>([base]),
-        requestKey: (params: GetByOrgSlugParams) => dataTaggedQueryKey<GetByOrgSlugData>([base, params]),
-        request: ({ orgSlug, ...query }: GetByOrgSlugParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetByOrgSlugData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetByOrgSlugData>({
             path: `/v1/organizations/${orgSlug}`,
             method: 'GET',
@@ -14181,12 +14167,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutByOrgSlugData>([base]),
-        requestKey: (params: PutByOrgSlugParams) => dataTaggedQueryKey<PutByOrgSlugData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PutByOrgSlugParams,
-          data: OrganizationsOrgSlugPutRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PutByOrgSlugData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationsOrgSlugPutRequest, params: RequestParams = {}) =>
           this.request<PutByOrgSlugData>({
             path: `/v1/organizations/${orgSlug}`,
             method: 'PUT',
@@ -14209,8 +14191,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteByOrgSlugData>([base]),
-        requestKey: (params: DeleteByOrgSlugParams) => dataTaggedQueryKey<DeleteByOrgSlugData>([base, params]),
-        request: ({ orgSlug, ...query }: DeleteByOrgSlugParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<DeleteByOrgSlugData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<DeleteByOrgSlugData>({
             path: `/v1/organizations/${orgSlug}`,
             method: 'DELETE',
@@ -14255,9 +14237,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PatchResetInviteTokenData>([base]),
-        requestKey: (params: PatchResetInviteTokenParams) =>
-          dataTaggedQueryKey<PatchResetInviteTokenData>([base, params]),
-        request: ({ orgSlug, ...query }: PatchResetInviteTokenParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PatchResetInviteTokenData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<PatchResetInviteTokenData>({
             path: `/v1/organizations/${orgSlug}/reset-invite-token`,
             method: 'PATCH',
@@ -14278,8 +14259,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostJoinByTokenData>([base]),
-        requestKey: (params: PostJoinByTokenParams) => dataTaggedQueryKey<PostJoinByTokenData>([base, params]),
-        request: ({ orgSlug, token, ...query }: PostJoinByTokenParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, token: string) => dataTaggedQueryKey<PostJoinByTokenData>([base, orgSlug, token]),
+        request: (orgSlug: string, token: string, params: RequestParams = {}) =>
           this.request<PostJoinByTokenData>({
             path: `/v1/organizations/${orgSlug}/join/${token}`,
             method: 'POST',
@@ -14300,8 +14281,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutOnboardData>([base]),
-        requestKey: (params: PutOnboardParams) => dataTaggedQueryKey<PutOnboardData>([base, params]),
-        request: ({ orgSlug, ...query }: PutOnboardParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PutOnboardData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<PutOnboardData>({
             path: `/v1/organizations/${orgSlug}/onboard`,
             method: 'PUT',
@@ -14346,8 +14327,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeletePinsByIdData>([base]),
-        requestKey: (params: DeletePinsByIdParams) => dataTaggedQueryKey<DeletePinsByIdData>([base, params]),
-        request: ({ orgSlug, id, ...query }: DeletePinsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, id: string) => dataTaggedQueryKey<DeletePinsByIdData>([base, orgSlug, id]),
+        request: (orgSlug: string, id: string, params: RequestParams = {}) =>
           this.request<DeletePinsByIdData>({
             path: `/v1/organizations/${orgSlug}/pins/${id}`,
             method: 'DELETE',
@@ -14395,10 +14376,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutPostsAttachmentsReorderData>([base]),
-        requestKey: (params: PutPostsAttachmentsReorderParams) =>
-          dataTaggedQueryKey<PutPostsAttachmentsReorderData>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PutPostsAttachmentsReorderData>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PutPostsAttachmentsReorderParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationsOrgSlugPostsPostIdAttachmentsReorderPutRequest,
           params: RequestParams = {}
         ) =>
@@ -14424,10 +14406,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsAttachmentsData>([base]),
-        requestKey: (params: PostPostsAttachmentsParams) =>
-          dataTaggedQueryKey<PostPostsAttachmentsData>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsAttachmentsData>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PostPostsAttachmentsParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationPostAttachmentsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -14453,10 +14436,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutPostsAttachmentsByIdData>([base]),
-        requestKey: (params: PutPostsAttachmentsByIdParams) =>
-          dataTaggedQueryKey<PutPostsAttachmentsByIdData>([base, params]),
+        requestKey: (orgSlug: string, postId: string, id: string) =>
+          dataTaggedQueryKey<PutPostsAttachmentsByIdData>([base, orgSlug, postId, id]),
         request: (
-          { orgSlug, postId, id, ...query }: PutPostsAttachmentsByIdParams,
+          orgSlug: string,
+          postId: string,
+          id: string,
           data: OrganizationsOrgSlugPostsPostIdAttachmentsIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -14482,9 +14467,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsAttachmentsByIdData>([base]),
-        requestKey: (params: DeletePostsAttachmentsByIdParams) =>
-          dataTaggedQueryKey<DeletePostsAttachmentsByIdData>([base, params]),
-        request: ({ orgSlug, postId, id, ...query }: DeletePostsAttachmentsByIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string, id: string) =>
+          dataTaggedQueryKey<DeletePostsAttachmentsByIdData>([base, orgSlug, postId, id]),
+        request: (orgSlug: string, postId: string, id: string, params: RequestParams = {}) =>
           this.request<DeletePostsAttachmentsByIdData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/attachments/${id}`,
             method: 'DELETE',
@@ -14505,8 +14490,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsFavoriteData>([base]),
-        requestKey: (params: PostPostsFavoriteParams) => dataTaggedQueryKey<PostPostsFavoriteData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: PostPostsFavoriteParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsFavoriteData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<PostPostsFavoriteData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/favorite`,
             method: 'POST',
@@ -14527,8 +14513,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsFavoriteData>([base]),
-        requestKey: (params: DeletePostsFavoriteParams) => dataTaggedQueryKey<DeletePostsFavoriteData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: DeletePostsFavoriteParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<DeletePostsFavoriteData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<DeletePostsFavoriteData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/favorite`,
             method: 'DELETE',
@@ -14549,9 +14536,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsFeedbackDismissalsData>([base]),
-        requestKey: (params: PostPostsFeedbackDismissalsParams) =>
-          dataTaggedQueryKey<PostPostsFeedbackDismissalsData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: PostPostsFeedbackDismissalsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsFeedbackDismissalsData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<PostPostsFeedbackDismissalsData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/feedback-dismissals`,
             method: 'POST',
@@ -14572,9 +14559,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsFollowUpData>([base]),
-        requestKey: (params: PostPostsFollowUpParams) => dataTaggedQueryKey<PostPostsFollowUpData>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsFollowUpData>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PostPostsFollowUpParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationPostFollowUpPostRequest,
           params: RequestParams = {}
         ) =>
@@ -14624,9 +14613,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetPostsGeneratedTldrData>([base]),
-        requestKey: (params: GetPostsGeneratedTldrParams) =>
-          dataTaggedQueryKey<GetPostsGeneratedTldrData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: GetPostsGeneratedTldrParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<GetPostsGeneratedTldrData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<GetPostsGeneratedTldrData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/generated_tldr`,
             method: 'GET',
@@ -14647,10 +14636,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsLinearIssuesData>([base]),
-        requestKey: (params: PostPostsLinearIssuesParams) =>
-          dataTaggedQueryKey<PostPostsLinearIssuesData>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsLinearIssuesData>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PostPostsLinearIssuesParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationPostLinearIssuesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -14700,8 +14690,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsPinData>([base]),
-        requestKey: (params: PostPostsPinParams) => dataTaggedQueryKey<PostPostsPinData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: PostPostsPinParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) => dataTaggedQueryKey<PostPostsPinData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<PostPostsPinData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/pin`,
             method: 'POST',
@@ -14722,12 +14712,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsPoll2OptionsVoteData>([base]),
-        requestKey: (params: PostPostsPoll2OptionsVoteParams) =>
-          dataTaggedQueryKey<PostPostsPoll2OptionsVoteData>([base, params]),
-        request: (
-          { orgSlug, postId, optionId, ...query }: PostPostsPoll2OptionsVoteParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, postId: string, optionId: string) =>
+          dataTaggedQueryKey<PostPostsPoll2OptionsVoteData>([base, orgSlug, postId, optionId]),
+        request: (orgSlug: string, postId: string, optionId: string, params: RequestParams = {}) =>
           this.request<PostPostsPoll2OptionsVoteData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/poll2/options/${optionId}/vote`,
             method: 'POST',
@@ -14748,9 +14735,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsPoll2Data>([base]),
-        requestKey: (params: PostPostsPoll2Params) => dataTaggedQueryKey<PostPostsPoll2Data>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsPoll2Data>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PostPostsPoll2Params,
+          orgSlug: string,
+          postId: string,
           data: OrganizationsOrgSlugPostsPostIdPoll2PostRequest,
           params: RequestParams = {}
         ) =>
@@ -14776,9 +14765,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutPostsPoll2Data>([base]),
-        requestKey: (params: PutPostsPoll2Params) => dataTaggedQueryKey<PutPostsPoll2Data>([base, params]),
+        requestKey: (orgSlug: string, postId: string) => dataTaggedQueryKey<PutPostsPoll2Data>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PutPostsPoll2Params,
+          orgSlug: string,
+          postId: string,
           data: OrganizationsOrgSlugPostsPostIdPoll2PutRequest,
           params: RequestParams = {}
         ) =>
@@ -14804,8 +14794,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsPoll2Data>([base]),
-        requestKey: (params: DeletePostsPoll2Params) => dataTaggedQueryKey<DeletePostsPoll2Data>([base, params]),
-        request: ({ orgSlug, postId, ...query }: DeletePostsPoll2Params, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<DeletePostsPoll2Data>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<DeletePostsPoll2Data>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/poll2`,
             method: 'DELETE',
@@ -14826,9 +14817,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetPostsCanvasCommentsData>([base]),
-        requestKey: (params: GetPostsCanvasCommentsParams) =>
-          dataTaggedQueryKey<GetPostsCanvasCommentsData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: GetPostsCanvasCommentsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<GetPostsCanvasCommentsData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<GetPostsCanvasCommentsData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/canvas_comments`,
             method: 'GET',
@@ -14872,9 +14863,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsComments2Data>([base]),
-        requestKey: (params: PostPostsComments2Params) => dataTaggedQueryKey<PostPostsComments2Data>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsComments2Data>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PostPostsComments2Params,
+          orgSlug: string,
+          postId: string,
           data: OrganizationPostComments2PostRequest,
           params: RequestParams = {}
         ) =>
@@ -14900,10 +14893,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsFeedbackRequestsData>([base]),
-        requestKey: (params: PostPostsFeedbackRequestsParams) =>
-          dataTaggedQueryKey<PostPostsFeedbackRequestsData>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsFeedbackRequestsData>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PostPostsFeedbackRequestsParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationPostFeedbackRequestsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -14929,12 +14923,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsFeedbackRequestsByIdData>([base]),
-        requestKey: (params: DeletePostsFeedbackRequestsByIdParams) =>
-          dataTaggedQueryKey<DeletePostsFeedbackRequestsByIdData>([base, params]),
-        request: (
-          { orgSlug, postId, id, ...query }: DeletePostsFeedbackRequestsByIdParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, postId: string, id: string) =>
+          dataTaggedQueryKey<DeletePostsFeedbackRequestsByIdData>([base, orgSlug, postId, id]),
+        request: (orgSlug: string, postId: string, id: string, params: RequestParams = {}) =>
           this.request<DeletePostsFeedbackRequestsByIdData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/feedback_requests/${id}`,
             method: 'DELETE',
@@ -14956,12 +14947,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsFeedbackRequestsDismissalData>([base]),
-        requestKey: (params: PostPostsFeedbackRequestsDismissalParams) =>
-          dataTaggedQueryKey<PostPostsFeedbackRequestsDismissalData>([base, params]),
-        request: (
-          { orgSlug, postId, feedbackRequestId, ...query }: PostPostsFeedbackRequestsDismissalParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, postId: string, feedbackRequestId: string) =>
+          dataTaggedQueryKey<PostPostsFeedbackRequestsDismissalData>([base, orgSlug, postId, feedbackRequestId]),
+        request: (orgSlug: string, postId: string, feedbackRequestId: string, params: RequestParams = {}) =>
           this.request<PostPostsFeedbackRequestsDismissalData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/feedback_requests/${feedbackRequestId}/dismissal`,
             method: 'POST',
@@ -14982,9 +14970,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsLinksData>([base]),
-        requestKey: (params: PostPostsLinksParams) => dataTaggedQueryKey<PostPostsLinksData>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsLinksData>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PostPostsLinksParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationPostLinksPostRequest,
           params: RequestParams = {}
         ) =>
@@ -15010,9 +15000,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsReactionsData>([base]),
-        requestKey: (params: PostPostsReactionsParams) => dataTaggedQueryKey<PostPostsReactionsData>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsReactionsData>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PostPostsReactionsParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationPostReactionsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -15038,8 +15030,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetPostsVersionsData>([base]),
-        requestKey: (params: GetPostsVersionsParams) => dataTaggedQueryKey<GetPostsVersionsData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: GetPostsVersionsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<GetPostsVersionsData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<GetPostsVersionsData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/versions`,
             method: 'GET',
@@ -15060,8 +15053,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsVersionsData>([base]),
-        requestKey: (params: PostPostsVersionsParams) => dataTaggedQueryKey<PostPostsVersionsData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: PostPostsVersionsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsVersionsData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<PostPostsVersionsData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/versions`,
             method: 'POST',
@@ -15105,9 +15099,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsViewsData>([base]),
-        requestKey: (params: PostPostsViewsParams) => dataTaggedQueryKey<PostPostsViewsData>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsViewsData>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PostPostsViewsParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationsOrgSlugPostsPostIdViewsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -15133,9 +15129,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsPublicationData>([base]),
-        requestKey: (params: PostPostsPublicationParams) =>
-          dataTaggedQueryKey<PostPostsPublicationData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: PostPostsPublicationParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsPublicationData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<PostPostsPublicationData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/publication`,
             method: 'POST',
@@ -15156,9 +15152,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsResolutionData>([base]),
-        requestKey: (params: PostPostsResolutionParams) => dataTaggedQueryKey<PostPostsResolutionData>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsResolutionData>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PostPostsResolutionParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationsOrgSlugPostsPostIdResolutionPostRequest,
           params: RequestParams = {}
         ) =>
@@ -15184,9 +15182,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsResolutionData>([base]),
-        requestKey: (params: DeletePostsResolutionParams) =>
-          dataTaggedQueryKey<DeletePostsResolutionData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: DeletePostsResolutionParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<DeletePostsResolutionData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<DeletePostsResolutionData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/resolution`,
             method: 'DELETE',
@@ -15207,8 +15205,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetPostsSeoInfoData>([base]),
-        requestKey: (params: GetPostsSeoInfoParams) => dataTaggedQueryKey<GetPostsSeoInfoData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: GetPostsSeoInfoParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<GetPostsSeoInfoData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<GetPostsSeoInfoData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/seo_info`,
             method: 'GET',
@@ -15229,9 +15228,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsSharesData>([base]),
-        requestKey: (params: PostPostsSharesParams) => dataTaggedQueryKey<PostPostsSharesData>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsSharesData>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PostPostsSharesParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationPostSharesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -15257,9 +15258,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutPostsStatusData>([base]),
-        requestKey: (params: PutPostsStatusParams) => dataTaggedQueryKey<PutPostsStatusData>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PutPostsStatusData>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PutPostsStatusParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationsOrgSlugPostsPostIdStatusPutRequest,
           params: RequestParams = {}
         ) =>
@@ -15285,9 +15288,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutPostsTasksData>([base]),
-        requestKey: (params: PutPostsTasksParams) => dataTaggedQueryKey<PutPostsTasksData>([base, params]),
+        requestKey: (orgSlug: string, postId: string) => dataTaggedQueryKey<PutPostsTasksData>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PutPostsTasksParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationsOrgSlugPostsPostIdTasksPutRequest,
           params: RequestParams = {}
         ) =>
@@ -15337,9 +15341,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<any>([base]),
-        requestKey: (params: PutPostsVisibilityParams) => dataTaggedQueryKey<any>([base, params]),
+        requestKey: (orgSlug: string, postId: string) => dataTaggedQueryKey<any>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PutPostsVisibilityParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationsOrgSlugPostsPostIdVisibilityPutRequest,
           params: RequestParams = {}
         ) =>
@@ -15414,12 +15419,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsData>([base]),
-        requestKey: (params: PostPostsParams) => dataTaggedQueryKey<PostPostsData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostPostsParams,
-          data: OrganizationsOrgSlugPostsPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostPostsData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationsOrgSlugPostsPostRequest, params: RequestParams = {}) =>
           this.request<PostPostsData>({
             path: `/v1/organizations/${orgSlug}/posts`,
             method: 'POST',
@@ -15442,8 +15443,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetPostsByPostIdData>([base]),
-        requestKey: (params: GetPostsByPostIdParams) => dataTaggedQueryKey<GetPostsByPostIdData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: GetPostsByPostIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<GetPostsByPostIdData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<GetPostsByPostIdData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}`,
             method: 'GET',
@@ -15464,9 +15466,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutPostsByPostIdData>([base]),
-        requestKey: (params: PutPostsByPostIdParams) => dataTaggedQueryKey<PutPostsByPostIdData>([base, params]),
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PutPostsByPostIdData>([base, orgSlug, postId]),
         request: (
-          { orgSlug, postId, ...query }: PutPostsByPostIdParams,
+          orgSlug: string,
+          postId: string,
           data: OrganizationsOrgSlugPostsPostIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -15492,8 +15496,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsByPostIdData>([base]),
-        requestKey: (params: DeletePostsByPostIdParams) => dataTaggedQueryKey<DeletePostsByPostIdData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: DeletePostsByPostIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<DeletePostsByPostIdData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<DeletePostsByPostIdData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}`,
             method: 'DELETE',
@@ -15514,8 +15519,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsSubscribeData>([base]),
-        requestKey: (params: PostPostsSubscribeParams) => dataTaggedQueryKey<PostPostsSubscribeData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: PostPostsSubscribeParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<PostPostsSubscribeData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<PostPostsSubscribeData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/subscribe`,
             method: 'POST',
@@ -15536,9 +15542,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsUnsubscribeData>([base]),
-        requestKey: (params: DeletePostsUnsubscribeParams) =>
-          dataTaggedQueryKey<DeletePostsUnsubscribeData>([base, params]),
-        request: ({ orgSlug, postId, ...query }: DeletePostsUnsubscribeParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, postId: string) =>
+          dataTaggedQueryKey<DeletePostsUnsubscribeData>([base, orgSlug, postId]),
+        request: (orgSlug: string, postId: string, params: RequestParams = {}) =>
           this.request<DeletePostsUnsubscribeData>({
             path: `/v1/organizations/${orgSlug}/posts/${postId}/unsubscribe`,
             method: 'DELETE',
@@ -15583,10 +15589,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutProjectMembershipsReorderData>([base]),
-        requestKey: (params: PutProjectMembershipsReorderParams) =>
-          dataTaggedQueryKey<PutProjectMembershipsReorderData>([base, params]),
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PutProjectMembershipsReorderData>([base, orgSlug]),
         request: (
-          { orgSlug, ...query }: PutProjectMembershipsReorderParams,
+          orgSlug: string,
           data: OrganizationsOrgSlugProjectMembershipsReorderPutRequest,
           params: RequestParams = {}
         ) =>
@@ -15612,9 +15617,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetProjectMembershipsData>([base]),
-        requestKey: (params: GetProjectMembershipsParams) =>
-          dataTaggedQueryKey<GetProjectMembershipsData>([base, params]),
-        request: ({ orgSlug, ...query }: GetProjectMembershipsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetProjectMembershipsData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetProjectMembershipsData>({
             path: `/v1/organizations/${orgSlug}/project_memberships`,
             method: 'GET',
@@ -15659,9 +15663,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetProjectsBookmarksData>([base]),
-        requestKey: (params: GetProjectsBookmarksParams) =>
-          dataTaggedQueryKey<GetProjectsBookmarksData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: GetProjectsBookmarksParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<GetProjectsBookmarksData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<GetProjectsBookmarksData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/bookmarks`,
             method: 'GET',
@@ -15682,10 +15686,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsBookmarksData>([base]),
-        requestKey: (params: PostProjectsBookmarksParams) =>
-          dataTaggedQueryKey<PostProjectsBookmarksData>([base, params]),
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PostProjectsBookmarksData>([base, orgSlug, projectId]),
         request: (
-          { orgSlug, projectId, ...query }: PostProjectsBookmarksParams,
+          orgSlug: string,
+          projectId: string,
           data: OrganizationsOrgSlugProjectsProjectIdBookmarksPostRequest,
           params: RequestParams = {}
         ) =>
@@ -15711,10 +15716,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PatchProjectsBookmarksByIdData>([base]),
-        requestKey: (params: PatchProjectsBookmarksByIdParams) =>
-          dataTaggedQueryKey<PatchProjectsBookmarksByIdData>([base, params]),
+        requestKey: (orgSlug: string, projectId: string, id: string) =>
+          dataTaggedQueryKey<PatchProjectsBookmarksByIdData>([base, orgSlug, projectId, id]),
         request: (
-          { orgSlug, projectId, id, ...query }: PatchProjectsBookmarksByIdParams,
+          orgSlug: string,
+          projectId: string,
+          id: string,
           data: OrganizationsOrgSlugProjectsProjectIdBookmarksIdPatchRequest,
           params: RequestParams = {}
         ) =>
@@ -15740,12 +15747,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsBookmarksByIdData>([base]),
-        requestKey: (params: DeleteProjectsBookmarksByIdParams) =>
-          dataTaggedQueryKey<DeleteProjectsBookmarksByIdData>([base, params]),
-        request: (
-          { orgSlug, projectId, id, ...query }: DeleteProjectsBookmarksByIdParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, projectId: string, id: string) =>
+          dataTaggedQueryKey<DeleteProjectsBookmarksByIdData>([base, orgSlug, projectId, id]),
+        request: (orgSlug: string, projectId: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteProjectsBookmarksByIdData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/bookmarks/${id}`,
             method: 'DELETE',
@@ -15766,10 +15770,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutProjectsBookmarksReorderData>([base]),
-        requestKey: (params: PutProjectsBookmarksReorderParams) =>
-          dataTaggedQueryKey<PutProjectsBookmarksReorderData>([base, params]),
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PutProjectsBookmarksReorderData>([base, orgSlug, projectId]),
         request: (
-          { orgSlug, projectId, ...query }: PutProjectsBookmarksReorderParams,
+          orgSlug: string,
+          projectId: string,
           data: OrganizationProjectBookmarksReorderPutRequest,
           params: RequestParams = {}
         ) =>
@@ -15818,9 +15823,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsDataExportsData>([base]),
-        requestKey: (params: PostProjectsDataExportsParams) =>
-          dataTaggedQueryKey<PostProjectsDataExportsData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: PostProjectsDataExportsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PostProjectsDataExportsData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<PostProjectsDataExportsData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/data_exports`,
             method: 'POST',
@@ -15841,10 +15846,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutProjectsDisplayPreferencesData>([base]),
-        requestKey: (params: PutProjectsDisplayPreferencesParams) =>
-          dataTaggedQueryKey<PutProjectsDisplayPreferencesData>([base, params]),
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PutProjectsDisplayPreferencesData>([base, orgSlug, projectId]),
         request: (
-          { orgSlug, projectId, ...query }: PutProjectsDisplayPreferencesParams,
+          orgSlug: string,
+          projectId: string,
           data: OrganizationsOrgSlugProjectsProjectIdDisplayPreferencesPutRequest,
           params: RequestParams = {}
         ) =>
@@ -15870,9 +15876,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsFavoritesData>([base]),
-        requestKey: (params: PostProjectsFavoritesParams) =>
-          dataTaggedQueryKey<PostProjectsFavoritesData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: PostProjectsFavoritesParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PostProjectsFavoritesData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<PostProjectsFavoritesData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/favorites`,
             method: 'POST',
@@ -15893,9 +15899,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsFavoritesData>([base]),
-        requestKey: (params: DeleteProjectsFavoritesParams) =>
-          dataTaggedQueryKey<DeleteProjectsFavoritesData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: DeleteProjectsFavoritesParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<DeleteProjectsFavoritesData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<DeleteProjectsFavoritesData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/favorites`,
             method: 'DELETE',
@@ -15916,10 +15922,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsInvitationUrlAcceptancesData>([base]),
-        requestKey: (params: PostProjectsInvitationUrlAcceptancesParams) =>
-          dataTaggedQueryKey<PostProjectsInvitationUrlAcceptancesData>([base, params]),
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PostProjectsInvitationUrlAcceptancesData>([base, orgSlug, projectId]),
         request: (
-          { orgSlug, projectId, ...query }: PostProjectsInvitationUrlAcceptancesParams,
+          orgSlug: string,
+          projectId: string,
           data: OrganizationProjectInvitationUrlAcceptancesPostRequest,
           params: RequestParams = {}
         ) =>
@@ -15945,9 +15952,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsInvitationUrlData>([base]),
-        requestKey: (params: PostProjectsInvitationUrlParams) =>
-          dataTaggedQueryKey<PostProjectsInvitationUrlData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: PostProjectsInvitationUrlParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PostProjectsInvitationUrlData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<PostProjectsInvitationUrlData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/invitation_url`,
             method: 'POST',
@@ -15968,9 +15975,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetProjectsInvitationUrlData>([base]),
-        requestKey: (params: GetProjectsInvitationUrlParams) =>
-          dataTaggedQueryKey<GetProjectsInvitationUrlData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: GetProjectsInvitationUrlParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<GetProjectsInvitationUrlData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<GetProjectsInvitationUrlData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/invitation_url`,
             method: 'GET',
@@ -16014,10 +16021,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsMembershipsData>([base]),
-        requestKey: (params: PostProjectsMembershipsParams) =>
-          dataTaggedQueryKey<PostProjectsMembershipsData>([base, params]),
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PostProjectsMembershipsData>([base, orgSlug, projectId]),
         request: (
-          { orgSlug, projectId, ...query }: PostProjectsMembershipsParams,
+          orgSlug: string,
+          projectId: string,
           data: OrganizationsOrgSlugProjectsProjectIdMembershipsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -16043,10 +16051,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsMembershipsData>([base]),
-        requestKey: (params: DeleteProjectsMembershipsParams) =>
-          dataTaggedQueryKey<DeleteProjectsMembershipsData>([base, params]),
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<DeleteProjectsMembershipsData>([base, orgSlug, projectId]),
         request: (
-          { orgSlug, projectId, ...query }: DeleteProjectsMembershipsParams,
+          orgSlug: string,
+          projectId: string,
           data: OrganizationProjectProjectMembershipsDeleteRequest,
           params: RequestParams = {}
         ) =>
@@ -16095,9 +16104,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetProjectsOauthApplicationsData>([base]),
-        requestKey: (params: GetProjectsOauthApplicationsParams) =>
-          dataTaggedQueryKey<GetProjectsOauthApplicationsData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: GetProjectsOauthApplicationsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<GetProjectsOauthApplicationsData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<GetProjectsOauthApplicationsData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/oauth_applications`,
             method: 'GET',
@@ -16118,10 +16127,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsOauthApplicationsData>([base]),
-        requestKey: (params: PostProjectsOauthApplicationsParams) =>
-          dataTaggedQueryKey<PostProjectsOauthApplicationsData>([base, params]),
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PostProjectsOauthApplicationsData>([base, orgSlug, projectId]),
         request: (
-          { orgSlug, projectId, ...query }: PostProjectsOauthApplicationsParams,
+          orgSlug: string,
+          projectId: string,
           data: OrganizationsOrgSlugProjectsProjectIdOauthApplicationsPostRequest,
           params: RequestParams = {}
         ) =>
@@ -16147,12 +16157,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsOauthApplicationsByIdData>([base]),
-        requestKey: (params: DeleteProjectsOauthApplicationsByIdParams) =>
-          dataTaggedQueryKey<DeleteProjectsOauthApplicationsByIdData>([base, params]),
-        request: (
-          { orgSlug, projectId, id, ...query }: DeleteProjectsOauthApplicationsByIdParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, projectId: string, id: string) =>
+          dataTaggedQueryKey<DeleteProjectsOauthApplicationsByIdData>([base, orgSlug, projectId, id]),
+        request: (orgSlug: string, projectId: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteProjectsOauthApplicationsByIdData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/oauth_applications/${id}`,
             method: 'DELETE',
@@ -16173,8 +16180,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetProjectsPinsData>([base]),
-        requestKey: (params: GetProjectsPinsParams) => dataTaggedQueryKey<GetProjectsPinsData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: GetProjectsPinsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<GetProjectsPinsData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<GetProjectsPinsData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/pins`,
             method: 'GET',
@@ -16218,8 +16226,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsReadsData>([base]),
-        requestKey: (params: PostProjectsReadsParams) => dataTaggedQueryKey<PostProjectsReadsData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: PostProjectsReadsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PostProjectsReadsData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<PostProjectsReadsData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/reads`,
             method: 'POST',
@@ -16240,8 +16249,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsReadsData>([base]),
-        requestKey: (params: DeleteProjectsReadsParams) => dataTaggedQueryKey<DeleteProjectsReadsData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: DeleteProjectsReadsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<DeleteProjectsReadsData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<DeleteProjectsReadsData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/reads`,
             method: 'DELETE',
@@ -16262,10 +16272,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsSubscriptionData>([base]),
-        requestKey: (params: PostProjectsSubscriptionParams) =>
-          dataTaggedQueryKey<PostProjectsSubscriptionData>([base, params]),
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PostProjectsSubscriptionData>([base, orgSlug, projectId]),
         request: (
-          { orgSlug, projectId, ...query }: PostProjectsSubscriptionParams,
+          orgSlug: string,
+          projectId: string,
           data: OrganizationsOrgSlugProjectsProjectIdSubscriptionPostRequest,
           params: RequestParams = {}
         ) =>
@@ -16291,9 +16302,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsSubscriptionData>([base]),
-        requestKey: (params: DeleteProjectsSubscriptionParams) =>
-          dataTaggedQueryKey<DeleteProjectsSubscriptionData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: DeleteProjectsSubscriptionParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<DeleteProjectsSubscriptionData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<DeleteProjectsSubscriptionData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/subscription`,
             method: 'DELETE',
@@ -16314,10 +16325,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutProjectsViewerDisplayPreferencesData>([base]),
-        requestKey: (params: PutProjectsViewerDisplayPreferencesParams) =>
-          dataTaggedQueryKey<PutProjectsViewerDisplayPreferencesData>([base, params]),
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PutProjectsViewerDisplayPreferencesData>([base, orgSlug, projectId]),
         request: (
-          { orgSlug, projectId, ...query }: PutProjectsViewerDisplayPreferencesParams,
+          orgSlug: string,
+          projectId: string,
           data: OrganizationsOrgSlugProjectsProjectIdViewerDisplayPreferencesPutRequest,
           params: RequestParams = {}
         ) =>
@@ -16343,12 +16355,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsViewerDisplayPreferencesData>([base]),
-        requestKey: (params: DeleteProjectsViewerDisplayPreferencesParams) =>
-          dataTaggedQueryKey<DeleteProjectsViewerDisplayPreferencesData>([base, params]),
-        request: (
-          { orgSlug, projectId, ...query }: DeleteProjectsViewerDisplayPreferencesParams,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<DeleteProjectsViewerDisplayPreferencesData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<DeleteProjectsViewerDisplayPreferencesData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/viewer_display_preferences`,
             method: 'DELETE',
@@ -16369,8 +16378,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsViewsData>([base]),
-        requestKey: (params: PostProjectsViewsParams) => dataTaggedQueryKey<PostProjectsViewsData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: PostProjectsViewsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PostProjectsViewsData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<PostProjectsViewsData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/views`,
             method: 'POST',
@@ -16414,12 +16424,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostProjectsData>([base]),
-        requestKey: (params: PostProjectsParams) => dataTaggedQueryKey<PostProjectsData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostProjectsParams,
-          data: OrganizationsOrgSlugProjectsPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostProjectsData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationsOrgSlugProjectsPostRequest, params: RequestParams = {}) =>
           this.request<PostProjectsData>({
             path: `/v1/organizations/${orgSlug}/projects`,
             method: 'POST',
@@ -16442,9 +16448,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetProjectsByProjectIdData>([base]),
-        requestKey: (params: GetProjectsByProjectIdParams) =>
-          dataTaggedQueryKey<GetProjectsByProjectIdData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: GetProjectsByProjectIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<GetProjectsByProjectIdData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<GetProjectsByProjectIdData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}`,
             method: 'GET',
@@ -16465,10 +16471,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutProjectsByProjectIdData>([base]),
-        requestKey: (params: PutProjectsByProjectIdParams) =>
-          dataTaggedQueryKey<PutProjectsByProjectIdData>([base, params]),
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PutProjectsByProjectIdData>([base, orgSlug, projectId]),
         request: (
-          { orgSlug, projectId, ...query }: PutProjectsByProjectIdParams,
+          orgSlug: string,
+          projectId: string,
           data: OrganizationsOrgSlugProjectsProjectIdPutRequest,
           params: RequestParams = {}
         ) =>
@@ -16494,9 +16501,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteProjectsByProjectIdData>([base]),
-        requestKey: (params: DeleteProjectsByProjectIdParams) =>
-          dataTaggedQueryKey<DeleteProjectsByProjectIdData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: DeleteProjectsByProjectIdParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<DeleteProjectsByProjectIdData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<DeleteProjectsByProjectIdData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}`,
             method: 'DELETE',
@@ -16517,9 +16524,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PatchProjectsArchiveData>([base]),
-        requestKey: (params: PatchProjectsArchiveParams) =>
-          dataTaggedQueryKey<PatchProjectsArchiveData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: PatchProjectsArchiveParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PatchProjectsArchiveData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<PatchProjectsArchiveData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/archive`,
             method: 'PATCH',
@@ -16540,9 +16547,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PatchProjectsUnarchiveData>([base]),
-        requestKey: (params: PatchProjectsUnarchiveParams) =>
-          dataTaggedQueryKey<PatchProjectsUnarchiveData>([base, params]),
-        request: ({ orgSlug, projectId, ...query }: PatchProjectsUnarchiveParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, projectId: string) =>
+          dataTaggedQueryKey<PatchProjectsUnarchiveData>([base, orgSlug, projectId]),
+        request: (orgSlug: string, projectId: string, params: RequestParams = {}) =>
           this.request<PatchProjectsUnarchiveData>({
             path: `/v1/organizations/${orgSlug}/projects/${projectId}/unarchive`,
             method: 'PATCH',
@@ -16587,12 +16594,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteReactionsData>([base]),
-        requestKey: (params: DeleteReactionsParams) => dataTaggedQueryKey<DeleteReactionsData>([base, params]),
-        request: (
-          { orgSlug, ...query }: DeleteReactionsParams,
-          data: OrganizationReactionsDeleteRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<DeleteReactionsData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationReactionsDeleteRequest, params: RequestParams = {}) =>
           this.request<DeleteReactionsData>({
             path: `/v1/organizations/${orgSlug}/reactions`,
             method: 'DELETE',
@@ -16731,9 +16734,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetIntegrationsSlackData>([base]),
-        requestKey: (params: GetIntegrationsSlackParams) =>
-          dataTaggedQueryKey<GetIntegrationsSlackData>([base, params]),
-        request: ({ orgSlug, ...query }: GetIntegrationsSlackParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetIntegrationsSlackData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetIntegrationsSlackData>({
             path: `/v1/organizations/${orgSlug}/integrations/slack`,
             method: 'GET',
@@ -16754,9 +16756,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteIntegrationsSlackData>([base]),
-        requestKey: (params: DeleteIntegrationsSlackParams) =>
-          dataTaggedQueryKey<DeleteIntegrationsSlackData>([base, params]),
-        request: ({ orgSlug, ...query }: DeleteIntegrationsSlackParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<DeleteIntegrationsSlackData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<DeleteIntegrationsSlackData>({
             path: `/v1/organizations/${orgSlug}/integrations/slack`,
             method: 'DELETE',
@@ -16777,9 +16778,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetSyncCustomReactionsData>([base]),
-        requestKey: (params: GetSyncCustomReactionsParams) =>
-          dataTaggedQueryKey<GetSyncCustomReactionsData>([base, params]),
-        request: ({ orgSlug, ...query }: GetSyncCustomReactionsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetSyncCustomReactionsData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetSyncCustomReactionsData>({
             path: `/v1/organizations/${orgSlug}/sync/custom_reactions`,
             method: 'GET',
@@ -16800,8 +16800,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetSyncMembersData>([base]),
-        requestKey: (params: GetSyncMembersParams) => dataTaggedQueryKey<GetSyncMembersData>([base, params]),
-        request: ({ orgSlug, ...query }: GetSyncMembersParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetSyncMembersData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetSyncMembersData>({
             path: `/v1/organizations/${orgSlug}/sync/members`,
             method: 'GET',
@@ -16822,9 +16822,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetSyncMessageThreadsData>([base]),
-        requestKey: (params: GetSyncMessageThreadsParams) =>
-          dataTaggedQueryKey<GetSyncMessageThreadsData>([base, params]),
-        request: ({ orgSlug, ...query }: GetSyncMessageThreadsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetSyncMessageThreadsData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetSyncMessageThreadsData>({
             path: `/v1/organizations/${orgSlug}/sync/message_threads`,
             method: 'GET',
@@ -16845,8 +16844,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetSyncProjectsData>([base]),
-        requestKey: (params: GetSyncProjectsParams) => dataTaggedQueryKey<GetSyncProjectsData>([base, params]),
-        request: ({ orgSlug, ...query }: GetSyncProjectsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetSyncProjectsData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetSyncProjectsData>({
             path: `/v1/organizations/${orgSlug}/sync/projects`,
             method: 'GET',
@@ -16867,8 +16866,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetSyncTagsData>([base]),
-        requestKey: (params: GetSyncTagsParams) => dataTaggedQueryKey<GetSyncTagsData>([base, params]),
-        request: ({ orgSlug, ...query }: GetSyncTagsParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<GetSyncTagsData>([base, orgSlug]),
+        request: (orgSlug: string, params: RequestParams = {}) =>
           this.request<GetSyncTagsData>({
             path: `/v1/organizations/${orgSlug}/sync/tags`,
             method: 'GET',
@@ -16912,12 +16911,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostTagsData>([base]),
-        requestKey: (params: PostTagsParams) => dataTaggedQueryKey<PostTagsData>([base, params]),
-        request: (
-          { orgSlug, ...query }: PostTagsParams,
-          data: OrganizationsOrgSlugTagsPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (orgSlug: string) => dataTaggedQueryKey<PostTagsData>([base, orgSlug]),
+        request: (orgSlug: string, data: OrganizationsOrgSlugTagsPostRequest, params: RequestParams = {}) =>
           this.request<PostTagsData>({
             path: `/v1/organizations/${orgSlug}/tags`,
             method: 'POST',
@@ -16940,8 +16935,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetTagsByTagNameData>([base]),
-        requestKey: (params: GetTagsByTagNameParams) => dataTaggedQueryKey<GetTagsByTagNameData>([base, params]),
-        request: ({ orgSlug, tagName, ...query }: GetTagsByTagNameParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, tagName: string) =>
+          dataTaggedQueryKey<GetTagsByTagNameData>([base, orgSlug, tagName]),
+        request: (orgSlug: string, tagName: string, params: RequestParams = {}) =>
           this.request<GetTagsByTagNameData>({
             path: `/v1/organizations/${orgSlug}/tags/${tagName}`,
             method: 'GET',
@@ -16962,9 +16958,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PatchTagsByTagNameData>([base]),
-        requestKey: (params: PatchTagsByTagNameParams) => dataTaggedQueryKey<PatchTagsByTagNameData>([base, params]),
+        requestKey: (orgSlug: string, tagName: string) =>
+          dataTaggedQueryKey<PatchTagsByTagNameData>([base, orgSlug, tagName]),
         request: (
-          { orgSlug, tagName, ...query }: PatchTagsByTagNameParams,
+          orgSlug: string,
+          tagName: string,
           data: OrganizationsOrgSlugTagsTagNamePatchRequest,
           params: RequestParams = {}
         ) =>
@@ -16990,8 +16988,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteTagsByTagNameData>([base]),
-        requestKey: (params: DeleteTagsByTagNameParams) => dataTaggedQueryKey<DeleteTagsByTagNameData>([base, params]),
-        request: ({ orgSlug, tagName, ...query }: DeleteTagsByTagNameParams, params: RequestParams = {}) =>
+        requestKey: (orgSlug: string, tagName: string) =>
+          dataTaggedQueryKey<DeleteTagsByTagNameData>([base, orgSlug, tagName]),
+        request: (orgSlug: string, tagName: string, params: RequestParams = {}) =>
           this.request<DeleteTagsByTagNameData>({
             path: `/v1/organizations/${orgSlug}/tags/${tagName}`,
             method: 'DELETE',
@@ -17297,9 +17296,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostInvitationsByTokenAcceptData>([base]),
-        requestKey: (params: PostInvitationsByTokenAcceptParams) =>
-          dataTaggedQueryKey<PostInvitationsByTokenAcceptData>([base, params]),
-        request: ({ inviteToken, ...query }: PostInvitationsByTokenAcceptParams, params: RequestParams = {}) =>
+        requestKey: (inviteToken: string) => dataTaggedQueryKey<PostInvitationsByTokenAcceptData>([base, inviteToken]),
+        request: (inviteToken: string, params: RequestParams = {}) =>
           this.request<PostInvitationsByTokenAcceptData>({
             path: `/v1/invitations_by_token/${inviteToken}/accept`,
             method: 'POST',
@@ -17393,9 +17391,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetOrganizationByTokenData>([base]),
-        requestKey: (params: GetOrganizationByTokenParams) =>
-          dataTaggedQueryKey<GetOrganizationByTokenData>([base, params]),
-        request: ({ token, ...query }: GetOrganizationByTokenParams, params: RequestParams = {}) =>
+        requestKey: (token: string) => dataTaggedQueryKey<GetOrganizationByTokenData>([base, token]),
+        request: (token: string, params: RequestParams = {}) =>
           this.request<GetOrganizationByTokenData>({
             path: `/v1/organization-by-token/${token}`,
             method: 'GET',
@@ -17417,9 +17414,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetPublicProjectsByTokenData>([base]),
-        requestKey: (params: GetPublicProjectsByTokenParams) =>
-          dataTaggedQueryKey<GetPublicProjectsByTokenData>([base, params]),
-        request: ({ token, ...query }: GetPublicProjectsByTokenParams, params: RequestParams = {}) =>
+        requestKey: (token: string) => dataTaggedQueryKey<GetPublicProjectsByTokenData>([base, token]),
+        request: (token: string, params: RequestParams = {}) =>
           this.request<GetPublicProjectsByTokenData>({
             path: `/v1/public_projects/${token}`,
             method: 'GET',
@@ -17716,13 +17712,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutMeScheduledNotificationsByIdData>([base]),
-        requestKey: (params: PutMeScheduledNotificationsByIdParams) =>
-          dataTaggedQueryKey<PutMeScheduledNotificationsByIdData>([base, params]),
-        request: (
-          { id, ...query }: PutMeScheduledNotificationsByIdParams,
-          data: CurrentUserScheduledNotificationPutRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (id: string) => dataTaggedQueryKey<PutMeScheduledNotificationsByIdData>([base, id]),
+        request: (id: string, data: CurrentUserScheduledNotificationPutRequest, params: RequestParams = {}) =>
           this.request<PutMeScheduledNotificationsByIdData>({
             path: `/v1/users/me/scheduled-notifications/${id}`,
             method: 'PUT',
@@ -17745,9 +17736,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteMeScheduledNotificationsByIdData>([base]),
-        requestKey: (params: DeleteMeScheduledNotificationsByIdParams) =>
-          dataTaggedQueryKey<DeleteMeScheduledNotificationsByIdData>([base, params]),
-        request: ({ id, ...query }: DeleteMeScheduledNotificationsByIdParams, params: RequestParams = {}) =>
+        requestKey: (id: string) => dataTaggedQueryKey<DeleteMeScheduledNotificationsByIdData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
           this.request<DeleteMeScheduledNotificationsByIdData>({
             path: `/v1/users/me/scheduled-notifications/${id}`,
             method: 'DELETE',
@@ -18071,13 +18061,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostMembersMessagesV2Data>([base]),
-        requestKey: (params: PostMembersMessagesV2Params) =>
-          dataTaggedQueryKey<PostMembersMessagesV2Data>([base, params]),
-        request: (
-          { memberId, ...query }: PostMembersMessagesV2Params,
-          data: V2MemberMessagesPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (memberId: string) => dataTaggedQueryKey<PostMembersMessagesV2Data>([base, memberId]),
+        request: (memberId: string, data: V2MemberMessagesPostRequest, params: RequestParams = {}) =>
           this.request<PostMembersMessagesV2Data>({
             path: `/v2/members/${memberId}/messages`,
             method: 'POST',
@@ -18150,12 +18135,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsCommentsV2Data>([base]),
-        requestKey: (params: PostPostsCommentsV2Params) => dataTaggedQueryKey<PostPostsCommentsV2Data>([base, params]),
-        request: (
-          { postId, ...query }: PostPostsCommentsV2Params,
-          data: V2PostsPostIdCommentsPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (postId: string) => dataTaggedQueryKey<PostPostsCommentsV2Data>([base, postId]),
+        request: (postId: string, data: V2PostsPostIdCommentsPostRequest, params: RequestParams = {}) =>
           this.request<PostPostsCommentsV2Data>({
             path: `/v2/posts/${postId}/comments`,
             method: 'POST',
@@ -18179,13 +18160,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostPostsResolutionV2Data>([base]),
-        requestKey: (params: PostPostsResolutionV2Params) =>
-          dataTaggedQueryKey<PostPostsResolutionV2Data>([base, params]),
-        request: (
-          { postId, ...query }: PostPostsResolutionV2Params,
-          data: V2PostsPostIdResolutionPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (postId: string) => dataTaggedQueryKey<PostPostsResolutionV2Data>([base, postId]),
+        request: (postId: string, data: V2PostsPostIdResolutionPostRequest, params: RequestParams = {}) =>
           this.request<PostPostsResolutionV2Data>({
             path: `/v2/posts/${postId}/resolution`,
             method: 'POST',
@@ -18209,9 +18185,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeletePostsResolutionV2Data>([base]),
-        requestKey: (params: DeletePostsResolutionV2Params) =>
-          dataTaggedQueryKey<DeletePostsResolutionV2Data>([base, params]),
-        request: ({ postId, ...query }: DeletePostsResolutionV2Params, params: RequestParams = {}) =>
+        requestKey: (postId: string) => dataTaggedQueryKey<DeletePostsResolutionV2Data>([base, postId]),
+        request: (postId: string, params: RequestParams = {}) =>
           this.request<DeletePostsResolutionV2Data>({
             path: `/v2/posts/${postId}/resolution`,
             method: 'DELETE',
@@ -18282,8 +18257,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetPostsByIdV2Data>([base]),
-        requestKey: (params: GetPostsByIdV2Params) => dataTaggedQueryKey<GetPostsByIdV2Data>([base, params]),
-        request: ({ id, ...query }: GetPostsByIdV2Params, params: RequestParams = {}) =>
+        requestKey: (id: string) => dataTaggedQueryKey<GetPostsByIdV2Data>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
           this.request<GetPostsByIdV2Data>({
             path: `/v2/posts/${id}`,
             method: 'GET',
@@ -18356,13 +18331,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostThreadsMessagesV2Data>([base]),
-        requestKey: (params: PostThreadsMessagesV2Params) =>
-          dataTaggedQueryKey<PostThreadsMessagesV2Data>([base, params]),
-        request: (
-          { threadId, ...query }: PostThreadsMessagesV2Params,
-          data: V2ThreadsThreadIdMessagesPostRequest,
-          params: RequestParams = {}
-        ) =>
+        requestKey: (threadId: string) => dataTaggedQueryKey<PostThreadsMessagesV2Data>([base, threadId]),
+        request: (threadId: string, data: V2ThreadsThreadIdMessagesPostRequest, params: RequestParams = {}) =>
           this.request<PostThreadsMessagesV2Data>({
             path: `/v2/threads/${threadId}/messages`,
             method: 'POST',
@@ -18422,7 +18392,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }
     }
   }
-  userManagement = {
+  v1 = {
     /**
      * @description Generate `.mega_cedar.json` content from a list of admin GitHub logins. Only admins can access this endpoint. Does not write to the repository.
      *
@@ -18443,6 +18413,201 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PostApiAdminGroups
+     * @request POST:/api/v1/admin/groups
+     */
+    postApiAdminGroups: () => {
+      const base = 'POST:/api/v1/admin/groups' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminGroupsData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiAdminGroupsData>([base]),
+        request: (data: CreateGroupRequest, params: RequestParams = {}) =>
+          this.request<PostApiAdminGroupsData>({
+            path: `/api/v1/admin/groups`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PostApiAdminGroupsList
+     * @request POST:/api/v1/admin/groups/list
+     */
+    postApiAdminGroupsList: () => {
+      const base = 'POST:/api/v1/admin/groups/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminGroupsListData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiAdminGroupsListData>([base]),
+        request: (data: PageParamsEmptyListAdditional, params: RequestParams = {}) =>
+          this.request<PostApiAdminGroupsListData>({
+            path: `/api/v1/admin/groups/list`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name GetApiAdminGroupsByGroupId
+     * @request GET:/api/v1/admin/groups/{group_id}
+     */
+    getApiAdminGroupsByGroupId: () => {
+      const base = 'GET:/api/v1/admin/groups/{group_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiAdminGroupsByGroupIdData>([base]),
+        requestKey: (groupId: number) => dataTaggedQueryKey<GetApiAdminGroupsByGroupIdData>([base, groupId]),
+        request: (groupId: number, params: RequestParams = {}) =>
+          this.request<GetApiAdminGroupsByGroupIdData>({
+            path: `/api/v1/admin/groups/${groupId}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PutApiAdminGroupsByGroupId
+     * @request PUT:/api/v1/admin/groups/{group_id}
+     */
+    putApiAdminGroupsByGroupId: () => {
+      const base = 'PUT:/api/v1/admin/groups/{group_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PutApiAdminGroupsByGroupIdData>([base]),
+        requestKey: (groupId: number) => dataTaggedQueryKey<PutApiAdminGroupsByGroupIdData>([base, groupId]),
+        request: (groupId: number, data: UpdateGroupRequest, params: RequestParams = {}) =>
+          this.request<PutApiAdminGroupsByGroupIdData>({
+            path: `/api/v1/admin/groups/${groupId}`,
+            method: 'PUT',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name DeleteApiAdminGroupsByGroupId
+     * @request DELETE:/api/v1/admin/groups/{group_id}
+     */
+    deleteApiAdminGroupsByGroupId: () => {
+      const base = 'DELETE:/api/v1/admin/groups/{group_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiAdminGroupsByGroupIdData>([base]),
+        requestKey: (groupId: number) => dataTaggedQueryKey<DeleteApiAdminGroupsByGroupIdData>([base, groupId]),
+        request: (groupId: number, params: RequestParams = {}) =>
+          this.request<DeleteApiAdminGroupsByGroupIdData>({
+            path: `/api/v1/admin/groups/${groupId}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PostApiAdminGroupsMembers
+     * @request POST:/api/v1/admin/groups/{group_id}/members
+     */
+    postApiAdminGroupsMembers: () => {
+      const base = 'POST:/api/v1/admin/groups/{group_id}/members' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminGroupsMembersData>([base]),
+        requestKey: (groupId: number) => dataTaggedQueryKey<PostApiAdminGroupsMembersData>([base, groupId]),
+        request: (groupId: number, data: AddMembersRequest, params: RequestParams = {}) =>
+          this.request<PostApiAdminGroupsMembersData>({
+            path: `/api/v1/admin/groups/${groupId}/members`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PostApiAdminGroupsMembersList
+     * @request POST:/api/v1/admin/groups/{group_id}/members/list
+     */
+    postApiAdminGroupsMembersList: () => {
+      const base = 'POST:/api/v1/admin/groups/{group_id}/members/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminGroupsMembersListData>([base]),
+        requestKey: (groupId: number) => dataTaggedQueryKey<PostApiAdminGroupsMembersListData>([base, groupId]),
+        request: (groupId: number, data: PageParamsEmptyListAdditional, params: RequestParams = {}) =>
+          this.request<PostApiAdminGroupsMembersListData>({
+            path: `/api/v1/admin/groups/${groupId}/members/list`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name DeleteApiAdminGroupsMembersByUsername
+     * @request DELETE:/api/v1/admin/groups/{group_id}/members/{username}
+     */
+    deleteApiAdminGroupsMembersByUsername: () => {
+      const base = 'DELETE:/api/v1/admin/groups/{group_id}/members/{username}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiAdminGroupsMembersByUsernameData>([base]),
+        requestKey: (groupId: number, username: string) =>
+          dataTaggedQueryKey<DeleteApiAdminGroupsMembersByUsernameData>([base, groupId, username]),
+        request: (groupId: number, username: string, params: RequestParams = {}) =>
+          this.request<DeleteApiAdminGroupsMembersByUsernameData>({
+            path: `/api/v1/admin/groups/${groupId}/members/${username}`,
+            method: 'DELETE',
             format: 'json',
             ...params
           })
@@ -18498,6 +18663,106 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     },
 
     /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name GetApiAdminResourcesPermissions
+     * @request GET:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
+     */
+    getApiAdminResourcesPermissions: () => {
+      const base = 'GET:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiAdminResourcesPermissionsData>([base]),
+        requestKey: (resourceType: string, resourceId: string) =>
+          dataTaggedQueryKey<GetApiAdminResourcesPermissionsData>([base, resourceType, resourceId]),
+        request: (resourceType: string, resourceId: string, params: RequestParams = {}) =>
+          this.request<GetApiAdminResourcesPermissionsData>({
+            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PutApiAdminResourcesPermissions
+     * @request PUT:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
+     */
+    putApiAdminResourcesPermissions: () => {
+      const base = 'PUT:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PutApiAdminResourcesPermissionsData>([base]),
+        requestKey: (resourceType: string, resourceId: string) =>
+          dataTaggedQueryKey<PutApiAdminResourcesPermissionsData>([base, resourceType, resourceId]),
+        request: (resourceType: string, resourceId: string, data: SetPermissionsRequest, params: RequestParams = {}) =>
+          this.request<PutApiAdminResourcesPermissionsData>({
+            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
+            method: 'PUT',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name PostApiAdminResourcesPermissions
+     * @request POST:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
+     */
+    postApiAdminResourcesPermissions: () => {
+      const base = 'POST:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiAdminResourcesPermissionsData>([base]),
+        requestKey: (resourceType: string, resourceId: string) =>
+          dataTaggedQueryKey<PostApiAdminResourcesPermissionsData>([base, resourceType, resourceId]),
+        request: (resourceType: string, resourceId: string, data: SetPermissionsRequest, params: RequestParams = {}) =>
+          this.request<PostApiAdminResourcesPermissionsData>({
+            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name DeleteApiAdminResourcesPermissions
+     * @request DELETE:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
+     */
+    deleteApiAdminResourcesPermissions: () => {
+      const base = 'DELETE:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiAdminResourcesPermissionsData>([base]),
+        requestKey: (resourceType: string, resourceId: string) =>
+          dataTaggedQueryKey<DeleteApiAdminResourcesPermissionsData>([base, resourceType, resourceId]),
+        request: (resourceType: string, resourceId: string, params: RequestParams = {}) =>
+          this.request<DeleteApiAdminResourcesPermissionsData>({
+            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
      * @description List user account approval records. Defaults to pending.
      *
      * @tags User Management
@@ -18536,9 +18801,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiAdminUserApprovalsApproveData>([base]),
-        requestKey: (params: PostApiAdminUserApprovalsApproveParams) =>
-          dataTaggedQueryKey<PostApiAdminUserApprovalsApproveData>([base, params]),
-        request: ({ username, ...query }: PostApiAdminUserApprovalsApproveParams, params: RequestParams = {}) =>
+        requestKey: (username: string) => dataTaggedQueryKey<PostApiAdminUserApprovalsApproveData>([base, username]),
+        request: (username: string, params: RequestParams = {}) =>
           this.request<PostApiAdminUserApprovalsApproveData>({
             path: `/api/v1/admin/user-approvals/${username}/approve`,
             method: 'POST',
@@ -18561,11 +18825,3088 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiAdminUserApprovalsRejectData>([base]),
-        requestKey: (params: PostApiAdminUserApprovalsRejectParams) =>
-          dataTaggedQueryKey<PostApiAdminUserApprovalsRejectData>([base, params]),
-        request: ({ username, ...query }: PostApiAdminUserApprovalsRejectParams, params: RequestParams = {}) =>
+        requestKey: (username: string) => dataTaggedQueryKey<PostApiAdminUserApprovalsRejectData>([base, username]),
+        request: (username: string, params: RequestParams = {}) =>
           this.request<PostApiAdminUserApprovalsRejectData>({
             path: `/api/v1/admin/user-approvals/${username}/reject`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name GetApiAdminUsersGroups
+     * @request GET:/api/v1/admin/users/{username}/groups
+     */
+    getApiAdminUsersGroups: () => {
+      const base = 'GET:/api/v1/admin/users/{username}/groups' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiAdminUsersGroupsData>([base]),
+        requestKey: (username: string) => dataTaggedQueryKey<GetApiAdminUsersGroupsData>([base, username]),
+        request: (username: string, params: RequestParams = {}) =>
+          this.request<GetApiAdminUsersGroupsData>({
+            path: `/api/v1/admin/users/${username}/groups`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name GetApiAdminUsersPermissionsByResourceId
+     * @request GET:/api/v1/admin/users/{username}/permissions/{resource_type}/{resource_id}
+     */
+    getApiAdminUsersPermissionsByResourceId: () => {
+      const base = 'GET:/api/v1/admin/users/{username}/permissions/{resource_type}/{resource_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiAdminUsersPermissionsByResourceIdData>([base]),
+        requestKey: (username: string, resourceType: string, resourceId: string) =>
+          dataTaggedQueryKey<GetApiAdminUsersPermissionsByResourceIdData>([base, username, resourceType, resourceId]),
+        request: (username: string, resourceType: string, resourceId: string, params: RequestParams = {}) =>
+          this.request<GetApiAdminUsersPermissionsByResourceIdData>({
+            path: `/api/v1/admin/users/${username}/permissions/${resourceType}/${resourceId}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name GetApiBlame
+     * @summary Get blame information for a file
+     * @request GET:/api/v1/blame
+     */
+    getApiBlame: () => {
+      const base = 'GET:/api/v1/blame' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiBlameData>([base]),
+        requestKey: (params: GetApiBlameParams) => dataTaggedQueryKey<GetApiBlameData>([base, params]),
+        request: (query: GetApiBlameParams, params: RequestParams = {}) =>
+          this.request<GetApiBlameData>({
+            path: `/api/v1/blame`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name GetApiBlob
+     * @summary Get blob file as string
+     * @request GET:/api/v1/blob
+     */
+    getApiBlob: () => {
+      const base = 'GET:/api/v1/blob' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiBlobData>([base]),
+        requestKey: (params: GetApiBlobParams) => dataTaggedQueryKey<GetApiBlobData>([base, params]),
+        request: (query: GetApiBlobParams, params: RequestParams = {}) =>
+          this.request<GetApiBlobData>({
+            path: `/api/v1/blob`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description List existing tokens for a bot (without plaintext).
+     *
+     * @tags Automation & Integrations
+     * @name GetApiBotsTokens
+     * @summary GET /api/v1/bots/{bot_id}/tokens
+     * @request GET:/api/v1/bots/{bot_id}/tokens
+     */
+    getApiBotsTokens: () => {
+      const base = 'GET:/api/v1/bots/{bot_id}/tokens' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiBotsTokensData>([base]),
+        requestKey: (botId: number) => dataTaggedQueryKey<GetApiBotsTokensData>([base, botId]),
+        request: (botId: number, params: RequestParams = {}) =>
+          this.request<GetApiBotsTokensData>({
+            path: `/api/v1/bots/${botId}/tokens`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Create a new bot token. Only admins can perform this operation.
+     *
+     * @tags Automation & Integrations
+     * @name PostApiBotsTokens
+     * @summary POST /api/v1/bots/{bot_id}/tokens
+     * @request POST:/api/v1/bots/{bot_id}/tokens
+     */
+    postApiBotsTokens: () => {
+      const base = 'POST:/api/v1/bots/{bot_id}/tokens' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBotsTokensData>([base]),
+        requestKey: (botId: number) => dataTaggedQueryKey<PostApiBotsTokensData>([base, botId]),
+        request: (botId: number, data: CreateBotTokenRequest, params: RequestParams = {}) =>
+          this.request<PostApiBotsTokensData>({
+            path: `/api/v1/bots/${botId}/tokens`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Revoke all tokens for a given bot. Idempotent.
+     *
+     * @tags Automation & Integrations
+     * @name PostApiBotsTokensRevokeAll
+     * @summary POST /api/v1/bots/{bot_id}/tokens/revoke_all
+     * @request POST:/api/v1/bots/{bot_id}/tokens/revoke_all
+     */
+    postApiBotsTokensRevokeAll: () => {
+      const base = 'POST:/api/v1/bots/{bot_id}/tokens/revoke_all' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBotsTokensRevokeAllData>([base]),
+        requestKey: (botId: number) => dataTaggedQueryKey<PostApiBotsTokensRevokeAllData>([base, botId]),
+        request: (botId: number, params: RequestParams = {}) =>
+          this.request<PostApiBotsTokensRevokeAllData>({
+            path: `/api/v1/bots/${botId}/tokens/revoke_all`,
+            method: 'POST',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Revoke a single bot token. Idempotent.
+     *
+     * @tags Automation & Integrations
+     * @name DeleteApiBotsTokensById
+     * @summary DELETE /api/v1/bots/{bot_id}/tokens/{id}
+     * @request DELETE:/api/v1/bots/{bot_id}/tokens/{id}
+     */
+    deleteApiBotsTokensById: () => {
+      const base = 'DELETE:/api/v1/bots/{bot_id}/tokens/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiBotsTokensByIdData>([base]),
+        requestKey: (botId: number, id: number) => dataTaggedQueryKey<DeleteApiBotsTokensByIdData>([base, botId, id]),
+        request: (botId: number, id: number, params: RequestParams = {}) =>
+          this.request<DeleteApiBotsTokensByIdData>({
+            path: `/api/v1/bots/${botId}/tokens/${id}`,
+            method: 'DELETE',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name GetApiBotsInstallations
+     * @summary Get installed bot
+     * @request GET:/api/v1/bots/{id}/installations
+     */
+    getApiBotsInstallations: () => {
+      const base = 'GET:/api/v1/bots/{id}/installations' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiBotsInstallationsData>([base]),
+        requestKey: (id: number) => dataTaggedQueryKey<GetApiBotsInstallationsData>([base, id]),
+        request: (id: number, params: RequestParams = {}) =>
+          this.request<GetApiBotsInstallationsData>({
+            path: `/api/v1/bots/${id}/installations`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name PostApiBotsInstallations
+     * @summary Install bot
+     * @request POST:/api/v1/bots/{id}/installations
+     */
+    postApiBotsInstallations: () => {
+      const base = 'POST:/api/v1/bots/{id}/installations' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBotsInstallationsData>([base]),
+        requestKey: (id: number) => dataTaggedQueryKey<PostApiBotsInstallationsData>([base, id]),
+        request: (id: number, data: InstallBotReq, params: RequestParams = {}) =>
+          this.request<PostApiBotsInstallationsData>({
+            path: `/api/v1/bots/${id}/installations`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name DeleteApiBotsInstallationsByInstallationId
+     * @request DELETE:/api/v1/bots/{id}/installations/{installation_id}
+     */
+    deleteApiBotsInstallationsByInstallationId: () => {
+      const base = 'DELETE:/api/v1/bots/{id}/installations/{installation_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiBotsInstallationsByInstallationIdData>([base]),
+        requestKey: (id: number, installationId: number) =>
+          dataTaggedQueryKey<DeleteApiBotsInstallationsByInstallationIdData>([base, id, installationId]),
+        request: (id: number, installationId: number, data: InstallationTargetType, params: RequestParams = {}) =>
+          this.request<DeleteApiBotsInstallationsByInstallationIdData>({
+            path: `/api/v1/bots/${id}/installations/${installationId}`,
+            method: 'DELETE',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name PatchApiBotsInstallationsByInstallationId
+     * @request PATCH:/api/v1/bots/{id}/installations/{installation_id}
+     */
+    patchApiBotsInstallationsByInstallationId: () => {
+      const base = 'PATCH:/api/v1/bots/{id}/installations/{installation_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PatchApiBotsInstallationsByInstallationIdData>([base]),
+        requestKey: (id: number, installationId: number) =>
+          dataTaggedQueryKey<PatchApiBotsInstallationsByInstallationIdData>([base, id, installationId]),
+        request: (id: number, installationId: number, data: ChangeInstallationStatus, params: RequestParams = {}) =>
+          this.request<PatchApiBotsInstallationsByInstallationIdData>({
+            path: `/api/v1/bots/${id}/installations/${installationId}`,
+            method: 'PATCH',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Creates a new upload session and pre-creates a Draft CL.
+     *
+     * @tags Buck Upload API
+     * @name PostApiBuckSessionStart
+     * @summary Create upload session
+     * @request POST:/api/v1/buck/session/start
+     */
+    postApiBuckSessionStart: () => {
+      const base = 'POST:/api/v1/buck/session/start' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBuckSessionStartData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiBuckSessionStartData>([base]),
+        request: (data: CreateSessionPayload, params: RequestParams = {}) =>
+          this.request<PostApiBuckSessionStartData>({
+            path: `/api/v1/buck/session/start`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Complete the upload session, create Git commit, and activate CL. Returns immediately - CI build is triggered asynchronously. Request body is optional. Commit message is read from session.
+     *
+     * @tags Buck Upload API
+     * @name PostApiBuckSessionComplete
+     * @summary Complete upload
+     * @request POST:/api/v1/buck/session/{cl_link}/complete
+     */
+    postApiBuckSessionComplete: () => {
+      const base = 'POST:/api/v1/buck/session/{cl_link}/complete' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBuckSessionCompleteData>([base]),
+        requestKey: (clLink: string) => dataTaggedQueryKey<PostApiBuckSessionCompleteData>([base, clLink]),
+        request: (clLink: string, data: PostApiBuckSessionCompletePayload, params: RequestParams = {}) =>
+          this.request<PostApiBuckSessionCompleteData>({
+            path: `/api/v1/buck/session/${clLink}/complete`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Upload a single file content. Can be called concurrently for different files.
+     *
+     * @tags Buck Upload API
+     * @name PostApiBuckSessionFile
+     * @summary Upload file
+     * @request POST:/api/v1/buck/session/{cl_link}/file
+     */
+    postApiBuckSessionFile: () => {
+      const base = 'POST:/api/v1/buck/session/{cl_link}/file' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBuckSessionFileData>([base]),
+        requestKey: (clLink: string) => dataTaggedQueryKey<PostApiBuckSessionFileData>([base, clLink]),
+        request: (clLink: string, params: RequestParams = {}) =>
+          this.request<PostApiBuckSessionFileData>({
+            path: `/api/v1/buck/session/${clLink}/file`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Submit file manifest and get list of files that need to be uploaded.
+     *
+     * @tags Buck Upload API
+     * @name PostApiBuckSessionManifest
+     * @summary Upload file manifest
+     * @request POST:/api/v1/buck/session/{cl_link}/manifest
+     */
+    postApiBuckSessionManifest: () => {
+      const base = 'POST:/api/v1/buck/session/{cl_link}/manifest' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiBuckSessionManifestData>([base]),
+        requestKey: (clLink: string) => dataTaggedQueryKey<PostApiBuckSessionManifestData>([base, clLink]),
+        request: (clLink: string, data: ManifestPayload, params: RequestParams = {}) =>
+          this.request<PostApiBuckSessionManifestData>({
+            path: `/api/v1/buck/session/${clLink}/manifest`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClAssignees
+     * @summary Update CL related assignees
+     * @request POST:/api/v1/cl/assignees
+     */
+    postApiClAssignees: () => {
+      const base = 'POST:/api/v1/cl/assignees' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClAssigneesData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiClAssigneesData>([base]),
+        request: (data: AssigneeUpdatePayload, params: RequestParams = {}) =>
+          this.request<PostApiClAssigneesData>({
+            path: `/api/v1/cl/assignees`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClLabels
+     * @summary Update cl related labels
+     * @request POST:/api/v1/cl/labels
+     */
+    postApiClLabels: () => {
+      const base = 'POST:/api/v1/cl/labels' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClLabelsData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiClLabelsData>([base]),
+        request: (data: LabelUpdatePayload, params: RequestParams = {}) =>
+          this.request<PostApiClLabelsData>({
+            path: `/api/v1/cl/labels`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClList
+     * @summary Fetch CL list
+     * @request POST:/api/v1/cl/list
+     */
+    postApiClList: () => {
+      const base = 'POST:/api/v1/cl/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClListData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiClListData>([base]),
+        request: (data: PageParamsListPayload, params: RequestParams = {}) =>
+          this.request<PostApiClListData>({
+            path: `/api/v1/cl/list`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClClose
+     * @summary Close Change List
+     * @request POST:/api/v1/cl/{link}/close
+     */
+    postApiClClose: () => {
+      const base = 'POST:/api/v1/cl/{link}/close' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClCloseData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiClCloseData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<PostApiClCloseData>({
+            path: `/api/v1/cl/${link}/close`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClComment
+     * @summary Add new comment on Change List
+     * @request POST:/api/v1/cl/{link}/comment
+     */
+    postApiClComment: () => {
+      const base = 'POST:/api/v1/cl/{link}/comment' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClCommentData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiClCommentData>([base, link]),
+        request: (link: string, data: ContentPayload, params: RequestParams = {}) =>
+          this.request<PostApiClCommentData>({
+            path: `/api/v1/cl/${link}/comment`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name GetApiClDetail
+     * @summary Get change list details
+     * @request GET:/api/v1/cl/{link}/detail
+     */
+    getApiClDetail: () => {
+      const base = 'GET:/api/v1/cl/{link}/detail' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiClDetailData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<GetApiClDetailData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<GetApiClDetailData>({
+            path: `/api/v1/cl/${link}/detail`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClFilesChanged
+     * @summary Get Change List file changed list in Pagination
+     * @request POST:/api/v1/cl/{link}/files-changed
+     */
+    postApiClFilesChanged: () => {
+      const base = 'POST:/api/v1/cl/{link}/files-changed' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClFilesChangedData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiClFilesChangedData>([base, link]),
+        request: (link: string, data: PageParamsString, params: RequestParams = {}) =>
+          this.request<PostApiClFilesChangedData>({
+            path: `/api/v1/cl/${link}/files-changed`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name GetApiClFilesList
+     * @summary Get Change List file list
+     * @request GET:/api/v1/cl/{link}/files-list
+     */
+    getApiClFilesList: () => {
+      const base = 'GET:/api/v1/cl/{link}/files-list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiClFilesListData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<GetApiClFilesListData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<GetApiClFilesListData>({
+            path: `/api/v1/cl/${link}/files-list`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClMerge
+     * @summary Approve Change List
+     * @request POST:/api/v1/cl/{link}/merge
+     */
+    postApiClMerge: () => {
+      const base = 'POST:/api/v1/cl/{link}/merge' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClMergeData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiClMergeData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<PostApiClMergeData>({
+            path: `/api/v1/cl/${link}/merge`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name GetApiClMergeBox
+     * @summary Get Merge Box to check merge status
+     * @request GET:/api/v1/cl/{link}/merge-box
+     */
+    getApiClMergeBox: () => {
+      const base = 'GET:/api/v1/cl/{link}/merge-box' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiClMergeBoxData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<GetApiClMergeBoxData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<GetApiClMergeBoxData>({
+            path: `/api/v1/cl/${link}/merge-box`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClMergeNoAuth
+     * @summary Change List without authentication It's for local testing purposes.
+     * @request POST:/api/v1/cl/{link}/merge-no-auth
+     */
+    postApiClMergeNoAuth: () => {
+      const base = 'POST:/api/v1/cl/{link}/merge-no-auth' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClMergeNoAuthData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiClMergeNoAuthData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<PostApiClMergeNoAuthData>({
+            path: `/api/v1/cl/${link}/merge-no-auth`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name GetApiClMuiTree
+     * @request GET:/api/v1/cl/{link}/mui-tree
+     */
+    getApiClMuiTree: () => {
+      const base = 'GET:/api/v1/cl/{link}/mui-tree' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiClMuiTreeData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<GetApiClMuiTreeData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<GetApiClMuiTreeData>({
+            path: `/api/v1/cl/${link}/mui-tree`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClReopen
+     * @summary Reopen Change List
+     * @request POST:/api/v1/cl/{link}/reopen
+     */
+    postApiClReopen: () => {
+      const base = 'POST:/api/v1/cl/{link}/reopen' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClReopenData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiClReopenData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<PostApiClReopenData>({
+            path: `/api/v1/cl/${link}/reopen`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClReviewResolve
+     * @request POST:/api/v1/cl/{link}/review/resolve
+     */
+    postApiClReviewResolve: () => {
+      const base = 'POST:/api/v1/cl/{link}/review/resolve' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClReviewResolveData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiClReviewResolveData>([base, link]),
+        request: (link: string, data: ChangeReviewStatePayload, params: RequestParams = {}) =>
+          this.request<PostApiClReviewResolveData>({
+            path: `/api/v1/cl/${link}/review/resolve`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClReviewerApprove
+     * @summary Change the reviewer approval state
+     * @request POST:/api/v1/cl/{link}/reviewer/approve
+     */
+    postApiClReviewerApprove: () => {
+      const base = 'POST:/api/v1/cl/{link}/reviewer/approve' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClReviewerApproveData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiClReviewerApproveData>([base, link]),
+        request: (link: string, data: ChangeReviewerStatePayload, params: RequestParams = {}) =>
+          this.request<PostApiClReviewerApproveData>({
+            path: `/api/v1/cl/${link}/reviewer/approve`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name GetApiClReviewers
+     * @request GET:/api/v1/cl/{link}/reviewers
+     */
+    getApiClReviewers: () => {
+      const base = 'GET:/api/v1/cl/{link}/reviewers' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiClReviewersData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<GetApiClReviewersData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<GetApiClReviewersData>({
+            path: `/api/v1/cl/${link}/reviewers`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClReviewers
+     * @request POST:/api/v1/cl/{link}/reviewers
+     */
+    postApiClReviewers: () => {
+      const base = 'POST:/api/v1/cl/{link}/reviewers' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClReviewersData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiClReviewersData>([base, link]),
+        request: (link: string, data: ReviewerPayload, params: RequestParams = {}) =>
+          this.request<PostApiClReviewersData>({
+            path: `/api/v1/cl/${link}/reviewers`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name DeleteApiClReviewers
+     * @request DELETE:/api/v1/cl/{link}/reviewers
+     */
+    deleteApiClReviewers: () => {
+      const base = 'DELETE:/api/v1/cl/{link}/reviewers' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiClReviewersData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<DeleteApiClReviewersData>([base, link]),
+        request: (link: string, data: ReviewerPayload, params: RequestParams = {}) =>
+          this.request<DeleteApiClReviewersData>({
+            path: `/api/v1/cl/${link}/reviewers`,
+            method: 'DELETE',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClStatus
+     * @summary Update CL status (Draft or Open)
+     * @request POST:/api/v1/cl/{link}/status
+     */
+    postApiClStatus: () => {
+      const base = 'POST:/api/v1/cl/{link}/status' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClStatusData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiClStatusData>([base, link]),
+        request: (link: string, data: UpdateClStatusPayload, params: RequestParams = {}) =>
+          this.request<PostApiClStatusData>({
+            path: `/api/v1/cl/${link}/status`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClTitle
+     * @summary Edit CL title
+     * @request POST:/api/v1/cl/{link}/title
+     */
+    postApiClTitle: () => {
+      const base = 'POST:/api/v1/cl/{link}/title' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClTitleData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiClTitleData>([base, link]),
+        request: (link: string, data: ContentPayload, params: RequestParams = {}) =>
+          this.request<PostApiClTitleData>({
+            path: `/api/v1/cl/${link}/title`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name PostApiClUpdateBranch
+     * @summary Update Branch for Change List
+     * @request POST:/api/v1/cl/{link}/update-branch
+     */
+    postApiClUpdateBranch: () => {
+      const base = 'POST:/api/v1/cl/{link}/update-branch' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiClUpdateBranchData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiClUpdateBranchData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<PostApiClUpdateBranchData>({
+            path: `/api/v1/cl/${link}/update-branch`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Change List
+     * @name GetApiClUpdateStatus
+     * @summary Get Update Branch status
+     * @request GET:/api/v1/cl/{link}/update-status
+     */
+    getApiClUpdateStatus: () => {
+      const base = 'GET:/api/v1/cl/{link}/update-status' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiClUpdateStatusData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<GetApiClUpdateStatusData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<GetApiClUpdateStatusData>({
+            path: `/api/v1/cl/${link}/update-status`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name DeleteApiCodeReviewCommentByCommentId
+     * @summary Delete a code review comment
+     * @request DELETE:/api/v1/code_review/comment/{comment_id}
+     */
+    deleteApiCodeReviewCommentByCommentId: () => {
+      const base = 'DELETE:/api/v1/code_review/comment/{comment_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiCodeReviewCommentByCommentIdData>([base]),
+        requestKey: (commentId: number) =>
+          dataTaggedQueryKey<DeleteApiCodeReviewCommentByCommentIdData>([base, commentId]),
+        request: (commentId: number, params: RequestParams = {}) =>
+          this.request<DeleteApiCodeReviewCommentByCommentIdData>({
+            path: `/api/v1/code_review/comment/${commentId}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name DeleteApiCodeReviewThreadByThreadId
+     * @summary Delete a code review thread and its comments
+     * @request DELETE:/api/v1/code_review/thread/{thread_id}
+     */
+    deleteApiCodeReviewThreadByThreadId: () => {
+      const base = 'DELETE:/api/v1/code_review/thread/{thread_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiCodeReviewThreadByThreadIdData>([base]),
+        requestKey: (threadId: number) => dataTaggedQueryKey<DeleteApiCodeReviewThreadByThreadIdData>([base, threadId]),
+        request: (threadId: number, params: RequestParams = {}) =>
+          this.request<DeleteApiCodeReviewThreadByThreadIdData>({
+            path: `/api/v1/code_review/thread/${threadId}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name PostApiCodeReviewUpdate
+     * @summary Update a code review comment
+     * @request POST:/api/v1/code_review/{comment_id}/update
+     */
+    postApiCodeReviewUpdate: () => {
+      const base = 'POST:/api/v1/code_review/{comment_id}/update' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiCodeReviewUpdateData>([base]),
+        requestKey: (commentId: number) => dataTaggedQueryKey<PostApiCodeReviewUpdateData>([base, commentId]),
+        request: (commentId: number, data: UpdateCommentRequest, params: RequestParams = {}) =>
+          this.request<PostApiCodeReviewUpdateData>({
+            path: `/api/v1/code_review/${commentId}/update`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name PostApiCodeReviewCommentInit
+     * @summary Initialize a code review comment in a new thread
+     * @request POST:/api/v1/code_review/{link}/comment/init
+     */
+    postApiCodeReviewCommentInit: () => {
+      const base = 'POST:/api/v1/code_review/{link}/comment/init' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiCodeReviewCommentInitData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiCodeReviewCommentInitData>([base, link]),
+        request: (link: string, data: InitializeCommentRequest, params: RequestParams = {}) =>
+          this.request<PostApiCodeReviewCommentInitData>({
+            path: `/api/v1/code_review/${link}/comment/init`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name GetApiCodeReviewComments
+     * @summary List code review comments
+     * @request GET:/api/v1/code_review/{link}/comments
+     */
+    getApiCodeReviewComments: () => {
+      const base = 'GET:/api/v1/code_review/{link}/comments' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiCodeReviewCommentsData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<GetApiCodeReviewCommentsData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<GetApiCodeReviewCommentsData>({
+            path: `/api/v1/code_review/${link}/comments`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name PostApiCodeReviewCommentReply
+     * @summary Reply to a code review comment
+     * @request POST:/api/v1/code_review/{thread_id}/comment/reply
+     */
+    postApiCodeReviewCommentReply: () => {
+      const base = 'POST:/api/v1/code_review/{thread_id}/comment/reply' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiCodeReviewCommentReplyData>([base]),
+        requestKey: (threadId: number) => dataTaggedQueryKey<PostApiCodeReviewCommentReplyData>([base, threadId]),
+        request: (threadId: number, data: CommentReplyRequest, params: RequestParams = {}) =>
+          this.request<PostApiCodeReviewCommentReplyData>({
+            path: `/api/v1/code_review/${threadId}/comment/reply`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name PostApiCodeReviewReopen
+     * @summary Reopen a code review thread
+     * @request POST:/api/v1/code_review/{thread_id}/reopen
+     */
+    postApiCodeReviewReopen: () => {
+      const base = 'POST:/api/v1/code_review/{thread_id}/reopen' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiCodeReviewReopenData>([base]),
+        requestKey: (threadId: number) => dataTaggedQueryKey<PostApiCodeReviewReopenData>([base, threadId]),
+        request: (threadId: number, params: RequestParams = {}) =>
+          this.request<PostApiCodeReviewReopenData>({
+            path: `/api/v1/code_review/${threadId}/reopen`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Review
+     * @name PostApiCodeReviewResolve
+     * @summary Resolve a code review thread
+     * @request POST:/api/v1/code_review/{thread_id}/resolve
+     */
+    postApiCodeReviewResolve: () => {
+      const base = 'POST:/api/v1/code_review/{thread_id}/resolve' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiCodeReviewResolveData>([base]),
+        requestKey: (threadId: number) => dataTaggedQueryKey<PostApiCodeReviewResolveData>([base, threadId]),
+        request: (threadId: number, params: RequestParams = {}) =>
+          this.request<PostApiCodeReviewResolveData>({
+            path: `/api/v1/code_review/${threadId}/resolve`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name PostApiCommitsHistory
+     * @summary List commit history with optional refs, path filter, author filter, and pagination.
+     * @request POST:/api/v1/commits/history
+     */
+    postApiCommitsHistory: () => {
+      const base = 'POST:/api/v1/commits/history' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiCommitsHistoryData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiCommitsHistoryData>([base]),
+        request: (data: PageParamsCommitHistoryParams, params: RequestParams = {}) =>
+          this.request<PostApiCommitsHistoryData>({
+            path: `/api/v1/commits/history`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name PutApiCommitsBinding
+     * @summary Update commit binding information
+     * @request PUT:/api/v1/commits/{sha}/binding
+     */
+    putApiCommitsBinding: () => {
+      const base = 'PUT:/api/v1/commits/{sha}/binding' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PutApiCommitsBindingData>([base]),
+        requestKey: (sha: string) => dataTaggedQueryKey<PutApiCommitsBindingData>([base, sha]),
+        request: (sha: string, data: UpdateCommitBindingRequest, params: RequestParams = {}) =>
+          this.request<PutApiCommitsBindingData>({
+            path: `/api/v1/commits/${sha}/binding`,
+            method: 'PUT',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name PostApiCommitsFilesChanged
+     * @summary Get paginated list of files changed in a commit, scoped by repository/subrepo selector
+     * @request POST:/api/v1/commits/{sha}/files-changed
+     */
+    postApiCommitsFilesChanged: () => {
+      const base = 'POST:/api/v1/commits/{sha}/files-changed' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiCommitsFilesChangedData>([base]),
+        requestKey: (params: PostApiCommitsFilesChangedParams) =>
+          dataTaggedQueryKey<PostApiCommitsFilesChangedData>([base, params]),
+        request: ({ sha, ...query }: PostApiCommitsFilesChangedParams, data: Pagination, params: RequestParams = {}) =>
+          this.request<PostApiCommitsFilesChangedData>({
+            path: `/api/v1/commits/${sha}/files-changed`,
+            method: 'POST',
+            query: query,
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name GetApiCommitsMuiTree
+     * @summary Get commit changed files tree (MUI format)
+     * @request GET:/api/v1/commits/{sha}/mui-tree
+     */
+    getApiCommitsMuiTree: () => {
+      const base = 'GET:/api/v1/commits/{sha}/mui-tree' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiCommitsMuiTreeData>([base]),
+        requestKey: (params: GetApiCommitsMuiTreeParams) =>
+          dataTaggedQueryKey<GetApiCommitsMuiTreeData>([base, params]),
+        request: ({ sha, ...query }: GetApiCommitsMuiTreeParams, params: RequestParams = {}) =>
+          this.request<GetApiCommitsMuiTreeData>({
+            path: `/api/v1/commits/${sha}/mui-tree`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Conversation and Comment
+     * @name DeleteApiConversationReactionsById
+     * @summary Delete conversation reactions
+     * @request DELETE:/api/v1/conversation/reactions/{id}
+     */
+    deleteApiConversationReactionsById: () => {
+      const base = 'DELETE:/api/v1/conversation/reactions/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiConversationReactionsByIdData>([base]),
+        requestKey: (id: string) => dataTaggedQueryKey<DeleteApiConversationReactionsByIdData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
+          this.request<DeleteApiConversationReactionsByIdData>({
+            path: `/api/v1/conversation/reactions/${id}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Conversation and Comment
+     * @name PostApiConversationByCommentId
+     * @summary Edit comment
+     * @request POST:/api/v1/conversation/{comment_id}
+     */
+    postApiConversationByCommentId: () => {
+      const base = 'POST:/api/v1/conversation/{comment_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiConversationByCommentIdData>([base]),
+        requestKey: (commentId: number) => dataTaggedQueryKey<PostApiConversationByCommentIdData>([base, commentId]),
+        request: (commentId: number, data: ContentPayload, params: RequestParams = {}) =>
+          this.request<PostApiConversationByCommentIdData>({
+            path: `/api/v1/conversation/${commentId}`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Conversation and Comment
+     * @name DeleteApiConversationByCommentId
+     * @summary Delete Comment
+     * @request DELETE:/api/v1/conversation/{comment_id}
+     */
+    deleteApiConversationByCommentId: () => {
+      const base = 'DELETE:/api/v1/conversation/{comment_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiConversationByCommentIdData>([base]),
+        requestKey: (commentId: number) => dataTaggedQueryKey<DeleteApiConversationByCommentIdData>([base, commentId]),
+        request: (commentId: number, params: RequestParams = {}) =>
+          this.request<DeleteApiConversationByCommentIdData>({
+            path: `/api/v1/conversation/${commentId}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Conversation and Comment
+     * @name PostApiConversationReactions
+     * @summary Add comment reactions with emoji
+     * @request POST:/api/v1/conversation/{comment_id}/reactions
+     */
+    postApiConversationReactions: () => {
+      const base = 'POST:/api/v1/conversation/{comment_id}/reactions' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiConversationReactionsData>([base]),
+        requestKey: (commentId: number) => dataTaggedQueryKey<PostApiConversationReactionsData>([base, commentId]),
+        request: (commentId: number, data: ReactionRequest, params: RequestParams = {}) =>
+          this.request<PostApiConversationReactionsData>({
+            path: `/api/v1/conversation/${commentId}/reactions`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name PostApiCreateEntry
+     * @summary Create file or folder in web UI
+     * @request POST:/api/v1/create-entry
+     */
+    postApiCreateEntry: () => {
+      const base = 'POST:/api/v1/create-entry' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiCreateEntryData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiCreateEntryData>([base]),
+        request: (data: CreateEntryInfo, params: RequestParams = {}) =>
+          this.request<PostApiCreateEntryData>({
+            path: `/api/v1/create-entry`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name PostApiEditDiffPreview
+     * @summary Preview unified diff for a single file before saving
+     * @request POST:/api/v1/edit/diff-preview
+     */
+    postApiEditDiffPreview: () => {
+      const base = 'POST:/api/v1/edit/diff-preview' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiEditDiffPreviewData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiEditDiffPreviewData>([base]),
+        request: (data: DiffPreviewPayload, params: RequestParams = {}) =>
+          this.request<PostApiEditDiffPreviewData>({
+            path: `/api/v1/edit/diff-preview`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name PostApiEditSave
+     * @summary Save edit and create a commit
+     * @request POST:/api/v1/edit/save
+     */
+    postApiEditSave: () => {
+      const base = 'POST:/api/v1/edit/save' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiEditSaveData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiEditSaveData>([base]),
+        request: (data: EditFilePayload, params: RequestParams = {}) =>
+          this.request<PostApiEditSaveData>({
+            path: `/api/v1/edit/save`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Gpg Key
+     * @name PostApiGpgAdd
+     * @request POST:/api/v1/gpg/add
+     */
+    postApiGpgAdd: () => {
+      const base = 'POST:/api/v1/gpg/add' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiGpgAddData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiGpgAddData>([base]),
+        request: (data: NewGpgRequest, params: RequestParams = {}) =>
+          this.request<PostApiGpgAddData>({
+            path: `/api/v1/gpg/add`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Gpg Key
+     * @name GetApiGpgList
+     * @request GET:/api/v1/gpg/list
+     */
+    getApiGpgList: () => {
+      const base = 'GET:/api/v1/gpg/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiGpgListData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiGpgListData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiGpgListData>({
+            path: `/api/v1/gpg/list`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Gpg Key
+     * @name DeleteApiGpgRemove
+     * @request DELETE:/api/v1/gpg/remove
+     */
+    deleteApiGpgRemove: () => {
+      const base = 'DELETE:/api/v1/gpg/remove' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiGpgRemoveData>([base]),
+        requestKey: () => dataTaggedQueryKey<DeleteApiGpgRemoveData>([base]),
+        request: (data: RemoveGpgRequest, params: RequestParams = {}) =>
+          this.request<DeleteApiGpgRemoveData>({
+            path: `/api/v1/gpg/remove`,
+            method: 'DELETE',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueAssignees
+     * @summary Update issue related assignees
+     * @request POST:/api/v1/issue/assignees
+     */
+    postApiIssueAssignees: () => {
+      const base = 'POST:/api/v1/issue/assignees' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueAssigneesData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiIssueAssigneesData>([base]),
+        request: (data: AssigneeUpdatePayload, params: RequestParams = {}) =>
+          this.request<PostApiIssueAssigneesData>({
+            path: `/api/v1/issue/assignees`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name GetApiIssueIssueSuggester
+     * @summary Get issue suggester in comment
+     * @request GET:/api/v1/issue/issue_suggester
+     */
+    getApiIssueIssueSuggester: () => {
+      const base = 'GET:/api/v1/issue/issue_suggester' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiIssueIssueSuggesterData>([base]),
+        requestKey: (params: GetApiIssueIssueSuggesterParams) =>
+          dataTaggedQueryKey<GetApiIssueIssueSuggesterData>([base, params]),
+        request: (query: GetApiIssueIssueSuggesterParams, params: RequestParams = {}) =>
+          this.request<GetApiIssueIssueSuggesterData>({
+            path: `/api/v1/issue/issue_suggester`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueLabels
+     * @summary Update issue related labels
+     * @request POST:/api/v1/issue/labels
+     */
+    postApiIssueLabels: () => {
+      const base = 'POST:/api/v1/issue/labels' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueLabelsData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiIssueLabelsData>([base]),
+        request: (data: LabelUpdatePayload, params: RequestParams = {}) =>
+          this.request<PostApiIssueLabelsData>({
+            path: `/api/v1/issue/labels`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueList
+     * @summary Fetch Issue list
+     * @request POST:/api/v1/issue/list
+     */
+    postApiIssueList: () => {
+      const base = 'POST:/api/v1/issue/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueListData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiIssueListData>([base]),
+        request: (data: PageParamsListPayload, params: RequestParams = {}) =>
+          this.request<PostApiIssueListData>({
+            path: `/api/v1/issue/list`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueNew
+     * @summary New Issue
+     * @request POST:/api/v1/issue/new
+     */
+    postApiIssueNew: () => {
+      const base = 'POST:/api/v1/issue/new' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueNewData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiIssueNewData>([base]),
+        request: (data: NewIssue, params: RequestParams = {}) =>
+          this.request<PostApiIssueNewData>({
+            path: `/api/v1/issue/new`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueClose
+     * @summary Close an issue
+     * @request POST:/api/v1/issue/{link}/close
+     */
+    postApiIssueClose: () => {
+      const base = 'POST:/api/v1/issue/{link}/close' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueCloseData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiIssueCloseData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<PostApiIssueCloseData>({
+            path: `/api/v1/issue/${link}/close`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueComment
+     * @summary Add new comment on Issue
+     * @request POST:/api/v1/issue/{link}/comment
+     */
+    postApiIssueComment: () => {
+      const base = 'POST:/api/v1/issue/{link}/comment' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueCommentData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiIssueCommentData>([base, link]),
+        request: (link: string, data: ContentPayload, params: RequestParams = {}) =>
+          this.request<PostApiIssueCommentData>({
+            path: `/api/v1/issue/${link}/comment`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name GetApiIssueDetail
+     * @summary Get issue details
+     * @request GET:/api/v1/issue/{link}/detail
+     */
+    getApiIssueDetail: () => {
+      const base = 'GET:/api/v1/issue/{link}/detail' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiIssueDetailData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<GetApiIssueDetailData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<GetApiIssueDetailData>({
+            path: `/api/v1/issue/${link}/detail`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueReopen
+     * @summary Reopen an issue
+     * @request POST:/api/v1/issue/{link}/reopen
+     */
+    postApiIssueReopen: () => {
+      const base = 'POST:/api/v1/issue/{link}/reopen' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueReopenData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiIssueReopenData>([base, link]),
+        request: (link: string, params: RequestParams = {}) =>
+          this.request<PostApiIssueReopenData>({
+            path: `/api/v1/issue/${link}/reopen`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Issue Management
+     * @name PostApiIssueTitle
+     * @summary Edit issue title
+     * @request POST:/api/v1/issue/{link}/title
+     */
+    postApiIssueTitle: () => {
+      const base = 'POST:/api/v1/issue/{link}/title' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiIssueTitleData>([base]),
+        requestKey: (link: string) => dataTaggedQueryKey<PostApiIssueTitleData>([base, link]),
+        request: (link: string, data: ContentPayload, params: RequestParams = {}) =>
+          this.request<PostApiIssueTitleData>({
+            path: `/api/v1/issue/${link}/title`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Label Management
+     * @name PostApiLabelList
+     * @summary List label in page
+     * @request POST:/api/v1/label/list
+     */
+    postApiLabelList: () => {
+      const base = 'POST:/api/v1/label/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiLabelListData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiLabelListData>([base]),
+        request: (data: PageParamsString, params: RequestParams = {}) =>
+          this.request<PostApiLabelListData>({
+            path: `/api/v1/label/list`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Label Management
+     * @name PostApiLabelNew
+     * @summary New label
+     * @request POST:/api/v1/label/new
+     */
+    postApiLabelNew: () => {
+      const base = 'POST:/api/v1/label/new' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiLabelNewData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiLabelNewData>([base]),
+        request: (data: NewLabel, params: RequestParams = {}) =>
+          this.request<PostApiLabelNewData>({
+            path: `/api/v1/label/new`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Label Management
+     * @name GetApiLabelById
+     * @summary Fetch label details
+     * @request GET:/api/v1/label/{id}
+     */
+    getApiLabelById: () => {
+      const base = 'GET:/api/v1/label/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiLabelByIdData>([base]),
+        requestKey: (id: number) => dataTaggedQueryKey<GetApiLabelByIdData>([base, id]),
+        request: (id: number, params: RequestParams = {}) =>
+          this.request<GetApiLabelByIdData>({
+            path: `/api/v1/label/${id}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name GetApiLatestCommit
+     * @summary Get latest commit by path
+     * @request GET:/api/v1/latest-commit
+     */
+    getApiLatestCommit: () => {
+      const base = 'GET:/api/v1/latest-commit' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiLatestCommitData>([base]),
+        requestKey: (params: GetApiLatestCommitParams) => dataTaggedQueryKey<GetApiLatestCommitData>([base, params]),
+        request: (query: GetApiLatestCommitParams, params: RequestParams = {}) =>
+          this.request<GetApiLatestCommitData>({
+            path: `/api/v1/latest-commit`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description List LFS locks. This handler is also available at `/info/lfs/locks` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name GetApiLfsLocks
+     * @summary List LFS locks
+     * @request GET:/api/v1/lfs/locks
+     */
+    getApiLfsLocks: () => {
+      const base = 'GET:/api/v1/lfs/locks' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiLfsLocksData>([base]),
+        requestKey: (params: GetApiLfsLocksParams) => dataTaggedQueryKey<GetApiLfsLocksData>([base, params]),
+        request: (query: GetApiLfsLocksParams, params: RequestParams = {}) =>
+          this.request<GetApiLfsLocksData>({
+            path: `/api/v1/lfs/locks`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Create an LFS lock. This handler is also available at `/info/lfs/locks` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name PostApiLfsLocks
+     * @summary Create an LFS lock
+     * @request POST:/api/v1/lfs/locks
+     */
+    postApiLfsLocks: () => {
+      const base = 'POST:/api/v1/lfs/locks' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiLfsLocksData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiLfsLocksData>([base]),
+        request: (data: LockRequest, params: RequestParams = {}) =>
+          this.request<PostApiLfsLocksData>({
+            path: `/api/v1/lfs/locks`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Verify LFS locks. This handler is also available at `/info/lfs/locks/verify` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name PostApiLfsLocksVerify
+     * @summary Verify LFS locks
+     * @request POST:/api/v1/lfs/locks/verify
+     */
+    postApiLfsLocksVerify: () => {
+      const base = 'POST:/api/v1/lfs/locks/verify' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiLfsLocksVerifyData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiLfsLocksVerifyData>([base]),
+        request: (data: VerifiableLockRequest, params: RequestParams = {}) =>
+          this.request<PostApiLfsLocksVerifyData>({
+            path: `/api/v1/lfs/locks/verify`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Delete an LFS lock. This handler is also available at `/info/lfs/locks/{id}/unlock` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name PostApiLfsLocksUnlock
+     * @summary Delete an LFS lock
+     * @request POST:/api/v1/lfs/locks/{id}/unlock
+     */
+    postApiLfsLocksUnlock: () => {
+      const base = 'POST:/api/v1/lfs/locks/{id}/unlock' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiLfsLocksUnlockData>([base]),
+        requestKey: (id: string) => dataTaggedQueryKey<PostApiLfsLocksUnlockData>([base, id]),
+        request: (id: string, data: UnlockRequest, params: RequestParams = {}) =>
+          this.request<PostApiLfsLocksUnlockData>({
+            path: `/api/v1/lfs/locks/${id}/unlock`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Process LFS batch request. This handler is also available at `/info/lfs/objects/batch` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name PostApiLfsObjectsBatch
+     * @summary Process LFS batch request
+     * @request POST:/api/v1/lfs/objects/batch
+     */
+    postApiLfsObjectsBatch: () => {
+      const base = 'POST:/api/v1/lfs/objects/batch' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiLfsObjectsBatchData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiLfsObjectsBatchData>([base]),
+        request: (data: BatchRequest, params: RequestParams = {}) =>
+          this.request<PostApiLfsObjectsBatchData>({
+            path: `/api/v1/lfs/objects/batch`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Download an LFS object. This handler is also available at `/info/lfs/objects/{object_id}` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name GetApiLfsObjectsByObjectId
+     * @summary Download an LFS object
+     * @request GET:/api/v1/lfs/objects/{object_id}
+     */
+    getApiLfsObjectsByObjectId: () => {
+      const base = 'GET:/api/v1/lfs/objects/{object_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<Blob>([base]),
+        requestKey: (objectId: string) => dataTaggedQueryKey<Blob>([base, objectId]),
+        request: (objectId: string, params: RequestParams = {}) =>
+          this.request<Blob>({
+            path: `/api/v1/lfs/objects/${objectId}`,
+            method: 'GET',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Upload an LFS object. This handler is also available at `/info/lfs/objects/{object_id}` for Git LFS client compatibility.
+     *
+     * @tags Git LFS
+     * @name PutApiLfsObjectsByObjectId
+     * @summary Upload an LFS object
+     * @request PUT:/api/v1/lfs/objects/{object_id}
+     */
+    putApiLfsObjectsByObjectId: () => {
+      const base = 'PUT:/api/v1/lfs/objects/{object_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PutApiLfsObjectsByObjectIdData>([base]),
+        requestKey: (objectId: string) => dataTaggedQueryKey<PutApiLfsObjectsByObjectIdData>([base, objectId]),
+        request: (objectId: string, data: PutApiLfsObjectsByObjectIdPayload, params: RequestParams = {}) =>
+          this.request<PutApiLfsObjectsByObjectIdData>({
+            path: `/api/v1/lfs/objects/${objectId}`,
+            method: 'PUT',
+            body: data,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name PostApiMergeQueueAdd
+     * @request POST:/api/v1/merge-queue/add
+     */
+    postApiMergeQueueAdd: () => {
+      const base = 'POST:/api/v1/merge-queue/add' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiMergeQueueAddData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiMergeQueueAddData>([base]),
+        request: (data: AddToQueueRequest, params: RequestParams = {}) =>
+          this.request<PostApiMergeQueueAddData>({
+            path: `/api/v1/merge-queue/add`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name PostApiMergeQueueCancelAll
+     * @request POST:/api/v1/merge-queue/cancel-all
+     */
+    postApiMergeQueueCancelAll: () => {
+      const base = 'POST:/api/v1/merge-queue/cancel-all' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiMergeQueueCancelAllData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiMergeQueueCancelAllData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<PostApiMergeQueueCancelAllData>({
+            path: `/api/v1/merge-queue/cancel-all`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name GetApiMergeQueueList
+     * @request GET:/api/v1/merge-queue/list
+     */
+    getApiMergeQueueList: () => {
+      const base = 'GET:/api/v1/merge-queue/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiMergeQueueListData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiMergeQueueListData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiMergeQueueListData>({
+            path: `/api/v1/merge-queue/list`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name DeleteApiMergeQueueRemoveByClLink
+     * @request DELETE:/api/v1/merge-queue/remove/{cl_link}
+     */
+    deleteApiMergeQueueRemoveByClLink: () => {
+      const base = 'DELETE:/api/v1/merge-queue/remove/{cl_link}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiMergeQueueRemoveByClLinkData>([base]),
+        requestKey: (clLink: string) => dataTaggedQueryKey<DeleteApiMergeQueueRemoveByClLinkData>([base, clLink]),
+        request: (clLink: string, params: RequestParams = {}) =>
+          this.request<DeleteApiMergeQueueRemoveByClLinkData>({
+            path: `/api/v1/merge-queue/remove/${clLink}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name PostApiMergeQueueRetryByClLink
+     * @request POST:/api/v1/merge-queue/retry/{cl_link}
+     */
+    postApiMergeQueueRetryByClLink: () => {
+      const base = 'POST:/api/v1/merge-queue/retry/{cl_link}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiMergeQueueRetryByClLinkData>([base]),
+        requestKey: (clLink: string) => dataTaggedQueryKey<PostApiMergeQueueRetryByClLinkData>([base, clLink]),
+        request: (clLink: string, params: RequestParams = {}) =>
+          this.request<PostApiMergeQueueRetryByClLinkData>({
+            path: `/api/v1/merge-queue/retry/${clLink}`,
+            method: 'POST',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name GetApiMergeQueueStats
+     * @request GET:/api/v1/merge-queue/stats
+     */
+    getApiMergeQueueStats: () => {
+      const base = 'GET:/api/v1/merge-queue/stats' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiMergeQueueStatsData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiMergeQueueStatsData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiMergeQueueStatsData>({
+            path: `/api/v1/merge-queue/stats`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Merge Queue Management
+     * @name GetApiMergeQueueStatusByClLink
+     * @request GET:/api/v1/merge-queue/status/{cl_link}
+     */
+    getApiMergeQueueStatusByClLink: () => {
+      const base = 'GET:/api/v1/merge-queue/status/{cl_link}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiMergeQueueStatusByClLinkData>([base]),
+        requestKey: (clLink: string) => dataTaggedQueryKey<GetApiMergeQueueStatusByClLinkData>([base, clLink]),
+        request: (clLink: string, params: RequestParams = {}) =>
+          this.request<GetApiMergeQueueStatusByClLinkData>({
+            path: `/api/v1/merge-queue/status/${clLink}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags sync-notes-state
+     * @name GetApiOrganizationsNotesSyncState
+     * @request GET:/api/v1/organizations/{org_slug}/notes/{id}/sync_state
+     */
+    getApiOrganizationsNotesSyncState: () => {
+      const base = 'GET:/api/v1/organizations/{org_slug}/notes/{id}/sync_state' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiOrganizationsNotesSyncStateData>([base]),
+        requestKey: (orgSlug: number, id: string) =>
+          dataTaggedQueryKey<GetApiOrganizationsNotesSyncStateData>([base, orgSlug, id]),
+        request: (orgSlug: number, id: string, params: RequestParams = {}) =>
+          this.request<GetApiOrganizationsNotesSyncStateData>({
+            path: `/api/v1/organizations/${orgSlug}/notes/${id}/sync_state`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags sync-notes-state
+     * @name PatchApiOrganizationsNotesSyncState
+     * @request PATCH:/api/v1/organizations/{org_slug}/notes/{id}/sync_state
+     */
+    patchApiOrganizationsNotesSyncState: () => {
+      const base = 'PATCH:/api/v1/organizations/{org_slug}/notes/{id}/sync_state' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PatchApiOrganizationsNotesSyncStateData>([base]),
+        requestKey: (orgSlug: number, id: string) =>
+          dataTaggedQueryKey<PatchApiOrganizationsNotesSyncStateData>([base, orgSlug, id]),
+        request: (orgSlug: number, id: string, data: NoteUpdateRequest, params: RequestParams = {}) =>
+          this.request<PatchApiOrganizationsNotesSyncStateData>({
+            path: `/api/v1/organizations/${orgSlug}/notes/${id}/sync_state`,
+            method: 'PATCH',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name PostApiOrionRunners
+     * @summary Start a new Orion runner VM via orion-scheduler.
+     * @request POST:/api/v1/orion/runners
+     */
+    postApiOrionRunners: () => {
+      const base = 'POST:/api/v1/orion/runners' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiOrionRunnersData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiOrionRunnersData>([base]),
+        request: (data: StartRunnerRequest, params: RequestParams = {}) =>
+          this.request<PostApiOrionRunnersData>({
+            path: `/api/v1/orion/runners`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name GetApiOrionRunnersById
+     * @summary Get provisioning/running status for a runner VM.
+     * @request GET:/api/v1/orion/runners/{id}
+     */
+    getApiOrionRunnersById: () => {
+      const base = 'GET:/api/v1/orion/runners/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiOrionRunnersByIdData>([base]),
+        requestKey: (id: string) => dataTaggedQueryKey<GetApiOrionRunnersByIdData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
+          this.request<GetApiOrionRunnersByIdData>({
+            path: `/api/v1/orion/runners/${id}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name GetApiOrionRunnersLogsStream
+     * @summary Proxy live Orion runner / client startup logs from orion-scheduler as SSE.
+     * @request GET:/api/v1/orion/runners/{id}/logs/stream
+     */
+    getApiOrionRunnersLogsStream: () => {
+      const base = 'GET:/api/v1/orion/runners/{id}/logs/stream' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiOrionRunnersLogsStreamData>([base]),
+        requestKey: (id: string) => dataTaggedQueryKey<GetApiOrionRunnersLogsStreamData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
+          this.request<GetApiOrionRunnersLogsStreamData>({
+            path: `/api/v1/orion/runners/${id}/logs/stream`,
+            method: 'GET',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Group Permission Management
+     * @name GetApiPermissionsMeByResourceId
+     * @request GET:/api/v1/permissions/me/{resource_type}/{resource_id}
+     */
+    getApiPermissionsMeByResourceId: () => {
+      const base = 'GET:/api/v1/permissions/me/{resource_type}/{resource_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiPermissionsMeByResourceIdData>([base]),
+        requestKey: (resourceType: string, resourceId: string) =>
+          dataTaggedQueryKey<GetApiPermissionsMeByResourceIdData>([base, resourceType, resourceId]),
+        request: (resourceType: string, resourceId: string, params: RequestParams = {}) =>
+          this.request<GetApiPermissionsMeByResourceIdData>({
+            path: `/api/v1/permissions/me/${resourceType}/${resourceId}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Repo creation and synchronisation
+     * @name PostApiRepoClone
+     * @request POST:/api/v1/repo/clone
+     */
+    postApiRepoClone: () => {
+      const base = 'POST:/api/v1/repo/clone' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiRepoCloneData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiRepoCloneData>([base]),
+        request: (data: CloneRepoPayload, params: RequestParams = {}) =>
+          this.request<PostApiRepoCloneData>({
+            path: `/api/v1/repo/clone`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Repo Artifacts
+     * @name PostApiReposArtifactsBatch
+     * @summary Batch negotiate repo-scoped artifact uploads.
+     * @request POST:/api/v1/repos/{repo}/artifacts/batch
+     */
+    postApiReposArtifactsBatch: () => {
+      const base = 'POST:/api/v1/repos/{repo}/artifacts/batch' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiReposArtifactsBatchData>([base]),
+        requestKey: (repo: string) => dataTaggedQueryKey<PostApiReposArtifactsBatchData>([base, repo]),
+        request: (repo: string, data: ArtifactBatchRequest, params: RequestParams = {}) =>
+          this.request<PostApiReposArtifactsBatchData>({
+            path: `/api/v1/repos/${repo}/artifacts/batch`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Repo Artifacts
+     * @name PostApiReposArtifactsCommit
+     * @summary Commit an artifact set manifest to make it queryable.
+     * @request POST:/api/v1/repos/{repo}/artifacts/commit
+     */
+    postApiReposArtifactsCommit: () => {
+      const base = 'POST:/api/v1/repos/{repo}/artifacts/commit' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiReposArtifactsCommitData>([base]),
+        requestKey: (repo: string) => dataTaggedQueryKey<PostApiReposArtifactsCommitData>([base, repo]),
+        request: (repo: string, data: ArtifactCommitRequest, params: RequestParams = {}) =>
+          this.request<PostApiReposArtifactsCommitData>({
+            path: `/api/v1/repos/${repo}/artifacts/commit`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Repo Artifacts
+     * @name GetApiReposArtifactsDiscovery
+     * @summary Discover artifact protocol capabilities for a repo (see `docs/artifacts-protocol.md`).
+     * @request GET:/api/v1/repos/{repo}/artifacts/discovery
+     */
+    getApiReposArtifactsDiscovery: () => {
+      const base = 'GET:/api/v1/repos/{repo}/artifacts/discovery' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiReposArtifactsDiscoveryData>([base]),
+        requestKey: (repo: string) => dataTaggedQueryKey<GetApiReposArtifactsDiscoveryData>([base, repo]),
+        request: (repo: string, params: RequestParams = {}) =>
+          this.request<GetApiReposArtifactsDiscoveryData>({
+            path: `/api/v1/repos/${repo}/artifacts/discovery`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Repo Artifacts
+     * @name GetApiReposArtifactsObjectsByOid
+     * @summary Download object bytes, redirect to signed URL, or return a JSON download link (see protocol §8.7.4).
+     * @request GET:/api/v1/repos/{repo}/artifacts/objects/{oid}
+     */
+    getApiReposArtifactsObjectsByOid: () => {
+      const base = 'GET:/api/v1/repos/{repo}/artifacts/objects/{oid}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiReposArtifactsObjectsByOidData>([base]),
+        requestKey: (params: GetApiReposArtifactsObjectsByOidParams) =>
+          dataTaggedQueryKey<GetApiReposArtifactsObjectsByOidData>([base, params]),
+        request: ({ repo, oid, ...query }: GetApiReposArtifactsObjectsByOidParams, params: RequestParams = {}) =>
+          this.request<GetApiReposArtifactsObjectsByOidData>({
+            path: `/api/v1/repos/${repo}/artifacts/objects/${oid}`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Repo Artifacts
+     * @name PutApiReposArtifactsObjectsByOid
+     * @summary Fallback endpoint to upload object bytes through the Mono server (when signed URLs are unavailable).
+     * @request PUT:/api/v1/repos/{repo}/artifacts/objects/{oid}
+     */
+    putApiReposArtifactsObjectsByOid: () => {
+      const base = 'PUT:/api/v1/repos/{repo}/artifacts/objects/{oid}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PutApiReposArtifactsObjectsByOidData>([base]),
+        requestKey: (repo: string, oid: string) =>
+          dataTaggedQueryKey<PutApiReposArtifactsObjectsByOidData>([base, repo, oid]),
+        request: (
+          repo: string,
+          oid: string,
+          data: PutApiReposArtifactsObjectsByOidPayload,
+          params: RequestParams = {}
+        ) =>
+          this.request<PutApiReposArtifactsObjectsByOidData>({
+            path: `/api/v1/repos/${repo}/artifacts/objects/${oid}`,
+            method: 'PUT',
+            body: data,
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Repo Artifacts
+     * @name HeadApiReposArtifactsObjectsByOid
+     * @summary `HEAD .../objects/{oid}` — metadata only (protocol §8.7.4 optional).
+     * @request HEAD:/api/v1/repos/{repo}/artifacts/objects/{oid}
+     */
+    headApiReposArtifactsObjectsByOid: () => {
+      const base = 'HEAD:/api/v1/repos/{repo}/artifacts/objects/{oid}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<Blob>([base]),
+        requestKey: (repo: string, oid: string) => dataTaggedQueryKey<Blob>([base, repo, oid]),
+        request: (repo: string, oid: string, params: RequestParams = {}) =>
+          this.request<Blob>({
+            path: `/api/v1/repos/${repo}/artifacts/objects/${oid}`,
+            method: 'HEAD',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Repo Artifacts
+     * @name GetApiReposArtifactsResolveFile
+     * @summary Resolve latest committed file row by logical path and optional metadata filters.
+     * @request GET:/api/v1/repos/{repo}/artifacts/resolve-file
+     */
+    getApiReposArtifactsResolveFile: () => {
+      const base = 'GET:/api/v1/repos/{repo}/artifacts/resolve-file' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiReposArtifactsResolveFileData>([base]),
+        requestKey: (params: GetApiReposArtifactsResolveFileParams) =>
+          dataTaggedQueryKey<GetApiReposArtifactsResolveFileData>([base, params]),
+        request: ({ repo, ...query }: GetApiReposArtifactsResolveFileParams, params: RequestParams = {}) =>
+          this.request<GetApiReposArtifactsResolveFileData>({
+            path: `/api/v1/repos/${repo}/artifacts/resolve-file`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Repo Artifacts
+     * @name GetApiReposArtifactsSets
+     * @summary List committed artifact sets for a repo (paginated).
+     * @request GET:/api/v1/repos/{repo}/artifacts/sets
+     */
+    getApiReposArtifactsSets: () => {
+      const base = 'GET:/api/v1/repos/{repo}/artifacts/sets' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiReposArtifactsSetsData>([base]),
+        requestKey: (params: GetApiReposArtifactsSetsParams) =>
+          dataTaggedQueryKey<GetApiReposArtifactsSetsData>([base, params]),
+        request: ({ repo, ...query }: GetApiReposArtifactsSetsParams, params: RequestParams = {}) =>
+          this.request<GetApiReposArtifactsSetsData>({
+            path: `/api/v1/repos/${repo}/artifacts/sets`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Repo Artifacts
+     * @name GetApiReposArtifactsSetsByArtifactSetId
+     * @summary Get one artifact set manifest (metadata + files).
+     * @request GET:/api/v1/repos/{repo}/artifacts/sets/{artifact_set_id}
+     */
+    getApiReposArtifactsSetsByArtifactSetId: () => {
+      const base = 'GET:/api/v1/repos/{repo}/artifacts/sets/{artifact_set_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiReposArtifactsSetsByArtifactSetIdData>([base]),
+        requestKey: (params: GetApiReposArtifactsSetsByArtifactSetIdParams) =>
+          dataTaggedQueryKey<GetApiReposArtifactsSetsByArtifactSetIdData>([base, params]),
+        request: (
+          { repo, artifactSetId, ...query }: GetApiReposArtifactsSetsByArtifactSetIdParams,
+          params: RequestParams = {}
+        ) =>
+          this.request<GetApiReposArtifactsSetsByArtifactSetIdData>({
+            path: `/api/v1/repos/${repo}/artifacts/sets/${artifactSetId}`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Sidebar Management
+     * @name GetApiSidebarList
+     * @summary Get all sidebar menu
+     * @request GET:/api/v1/sidebar/list
+     */
+    getApiSidebarList: () => {
+      const base = 'GET:/api/v1/sidebar/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiSidebarListData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiSidebarListData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiSidebarListData>({
+            path: `/api/v1/sidebar/list`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Sidebar Management
+     * @name PostApiSidebarNew
+     * @summary New sidebar menu
+     * @request POST:/api/v1/sidebar/new
+     */
+    postApiSidebarNew: () => {
+      const base = 'POST:/api/v1/sidebar/new' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiSidebarNewData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiSidebarNewData>([base]),
+        request: (data: CreateSidebarPayload, params: RequestParams = {}) =>
+          this.request<PostApiSidebarNewData>({
+            path: `/api/v1/sidebar/new`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Sync sidebar menus. Each `public_id` and `order_index` must be unique across all sidebar items. The operation will fail if: - A new item has a `public_id` that already exists - An update tries to set a `public_id` to one that's already in use by another item - Multiple items in the payload have the same `order_index` - An update tries to set an `order_index` that's already in use The transaction will be rolled back if any of these constraints are violated.
+     *
+     * @tags Sidebar Management
+     * @name PostApiSidebarSync
+     * @summary Sync sidebar menus
+     * @request POST:/api/v1/sidebar/sync
+     */
+    postApiSidebarSync: () => {
+      const base = 'POST:/api/v1/sidebar/sync' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiSidebarSyncData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiSidebarSyncData>([base]),
+        request: (data: PostApiSidebarSyncPayload, params: RequestParams = {}) =>
+          this.request<PostApiSidebarSyncData>({
+            path: `/api/v1/sidebar/sync`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Sidebar Management
+     * @name PostApiSidebarUpdateById
+     * @summary Update sidebar menu
+     * @request POST:/api/v1/sidebar/update/{id}
+     */
+    postApiSidebarUpdateById: () => {
+      const base = 'POST:/api/v1/sidebar/update/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiSidebarUpdateByIdData>([base]),
+        requestKey: (id: number) => dataTaggedQueryKey<PostApiSidebarUpdateByIdData>([base, id]),
+        request: (id: number, data: UpdateSidebarPayload, params: RequestParams = {}) =>
+          this.request<PostApiSidebarUpdateByIdData>({
+            path: `/api/v1/sidebar/update/${id}`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Sidebar Management
+     * @name DeleteApiSidebarById
+     * @summary Delete sidebar menu
+     * @request DELETE:/api/v1/sidebar/{id}
+     */
+    deleteApiSidebarById: () => {
+      const base = 'DELETE:/api/v1/sidebar/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiSidebarByIdData>([base]),
+        requestKey: (id: number) => dataTaggedQueryKey<DeleteApiSidebarByIdData>([base, id]),
+        request: (id: number, params: RequestParams = {}) =>
+          this.request<DeleteApiSidebarByIdData>({
+            path: `/api/v1/sidebar/${id}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags System Common
+     * @name GetApiStatus
+     * @summary Health Check
+     * @request GET:/api/v1/status
+     */
+    getApiStatus: () => {
+      const base = 'GET:/api/v1/status' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiStatusData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiStatusData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiStatusData>({
+            path: `/api/v1/status`,
+            method: 'GET',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Tag Management
+     * @name PostApiTags
+     * @summary Create Tag
+     * @request POST:/api/v1/tags
+     */
+    postApiTags: () => {
+      const base = 'POST:/api/v1/tags' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiTagsData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiTagsData>([base]),
+        request: (data: CreateTagRequest, params: RequestParams = {}) =>
+          this.request<PostApiTagsData>({
+            path: `/api/v1/tags`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Tag Management
+     * @name PostApiTagsList
+     * @summary List all Tags
+     * @request POST:/api/v1/tags/list
+     */
+    postApiTagsList: () => {
+      const base = 'POST:/api/v1/tags/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiTagsListData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiTagsListData>([base]),
+        request: (data: PageParamsString, params: RequestParams = {}) =>
+          this.request<PostApiTagsListData>({
+            path: `/api/v1/tags/list`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Tag Management
+     * @name GetApiTagsByName
+     * @summary Get Tag by name
+     * @request GET:/api/v1/tags/{name}
+     */
+    getApiTagsByName: () => {
+      const base = 'GET:/api/v1/tags/{name}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiTagsByNameData>([base]),
+        requestKey: (name: string) => dataTaggedQueryKey<GetApiTagsByNameData>([base, name]),
+        request: (name: string, params: RequestParams = {}) =>
+          this.request<GetApiTagsByNameData>({
+            path: `/api/v1/tags/${name}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Tag Management
+     * @name DeleteApiTagsByName
+     * @summary Delete Tag
+     * @request DELETE:/api/v1/tags/{name}
+     */
+    deleteApiTagsByName: () => {
+      const base = 'DELETE:/api/v1/tags/{name}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiTagsByNameData>([base]),
+        requestKey: (name: string) => dataTaggedQueryKey<DeleteApiTagsByNameData>([base, name]),
+        request: (name: string, params: RequestParams = {}) =>
+          this.request<DeleteApiTagsByNameData>({
+            path: `/api/v1/tags/${name}`,
+            method: 'DELETE',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name GetApiTree
+     * @summary Get tree brief info
+     * @request GET:/api/v1/tree
+     */
+    getApiTree: () => {
+      const base = 'GET:/api/v1/tree' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiTreeData>([base]),
+        requestKey: (params: GetApiTreeParams) => dataTaggedQueryKey<GetApiTreeData>([base, params]),
+        request: (query: GetApiTreeParams, params: RequestParams = {}) =>
+          this.request<GetApiTreeData>({
+            path: `/api/v1/tree`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name GetApiTreeCommitInfo
+     * @summary List matching trees with commit msg by query
+     * @request GET:/api/v1/tree/commit-info
+     */
+    getApiTreeCommitInfo: () => {
+      const base = 'GET:/api/v1/tree/commit-info' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiTreeCommitInfoData>([base]),
+        requestKey: (params: GetApiTreeCommitInfoParams) =>
+          dataTaggedQueryKey<GetApiTreeCommitInfoData>([base, params]),
+        request: (query: GetApiTreeCommitInfoParams, params: RequestParams = {}) =>
+          this.request<GetApiTreeCommitInfoData>({
+            path: `/api/v1/tree/commit-info`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name GetApiTreeContentHash
+     * @summary Get tree content hash,the dir's hash as same as old,file's hash is the content hash
+     * @request GET:/api/v1/tree/content-hash
+     */
+    getApiTreeContentHash: () => {
+      const base = 'GET:/api/v1/tree/content-hash' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiTreeContentHashData>([base]),
+        requestKey: (params: GetApiTreeContentHashParams) =>
+          dataTaggedQueryKey<GetApiTreeContentHashData>([base, params]),
+        request: (query: GetApiTreeContentHashParams, params: RequestParams = {}) =>
+          this.request<GetApiTreeContentHashData>({
+            path: `/api/v1/tree/content-hash`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name GetApiTreeDirHash
+     * @summary return the dir's hash
+     * @request GET:/api/v1/tree/dir-hash
+     */
+    getApiTreeDirHash: () => {
+      const base = 'GET:/api/v1/tree/dir-hash' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiTreeDirHashData>([base]),
+        requestKey: (params: GetApiTreeDirHashParams) => dataTaggedQueryKey<GetApiTreeDirHashData>([base, params]),
+        request: (query: GetApiTreeDirHashParams, params: RequestParams = {}) =>
+          this.request<GetApiTreeDirHashData>({
+            path: `/api/v1/tree/dir-hash`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Code Preview
+     * @name GetApiTreePathCanClone
+     * @summary Check if a path can be cloned
+     * @request GET:/api/v1/tree/path-can-clone
+     */
+    getApiTreePathCanClone: () => {
+      const base = 'GET:/api/v1/tree/path-can-clone' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiTreePathCanCloneData>([base]),
+        requestKey: (params: GetApiTreePathCanCloneParams) =>
+          dataTaggedQueryKey<GetApiTreePathCanCloneData>([base, params]),
+        request: (query: GetApiTreePathCanCloneParams, params: RequestParams = {}) =>
+          this.request<GetApiTreePathCanCloneData>({
+            path: `/api/v1/tree/path-can-clone`,
+            method: 'GET',
+            query: query,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Creates a new build trigger with automatic ref resolution. Supports branch names, tag names, commit hashes, or CL links. Defaults to "main" branch if no ref is specified.
+     *
+     * @tags Automation & Integrations
+     * @name PostApiTriggers
+     * @summary Create a new build trigger
+     * @request POST:/api/v1/triggers
+     */
+    postApiTriggers: () => {
+      const base = 'POST:/api/v1/triggers' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiTriggersData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiTriggersData>([base]),
+        request: (data: CreateTriggerRequest, params: RequestParams = {}) =>
+          this.request<PostApiTriggersData>({
+            path: `/api/v1/triggers`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Returns build triggers with pagination and optional filters. Supports filtering by repository, trigger type, source, user, and time range. This endpoint follows the project's standard Google-style API pattern: - Uses POST method for complex query parameters - Accepts PageParams with pagination and filter parameters - Returns CommonPage with items and total count
+     *
+     * @tags Automation & Integrations
+     * @name PostApiTriggersList
+     * @summary List build triggers with filters
+     * @request POST:/api/v1/triggers/list
+     */
+    postApiTriggersList: () => {
+      const base = 'POST:/api/v1/triggers/list' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiTriggersListData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiTriggersListData>([base]),
+        request: (data: PageParamsListTriggersParams, params: RequestParams = {}) =>
+          this.request<PostApiTriggersListData>({
+            path: `/api/v1/triggers/list`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Returns complete details about a specific trigger including: - Trigger metadata (type, source, time) - Repository and commit information - Ref information (branch/tag name if applicable) - Build parameters
+     *
+     * @tags Automation & Integrations
+     * @name GetApiTriggersById
+     * @summary Get a specific build trigger by ID
+     * @request GET:/api/v1/triggers/{id}
+     */
+    getApiTriggersById: () => {
+      const base = 'GET:/api/v1/triggers/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiTriggersByIdData>([base]),
+        requestKey: (id: number) => dataTaggedQueryKey<GetApiTriggersByIdData>([base, id]),
+        request: (id: number, params: RequestParams = {}) =>
+          this.request<GetApiTriggersByIdData>({
+            path: `/api/v1/triggers/${id}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * @description Creates a new trigger that retries a previous build. The new trigger will use the same repository, commit, and parameters as the original trigger.
+     *
+     * @tags Automation & Integrations
+     * @name PostApiTriggersRetry
+     * @summary Retry a specific build trigger
+     * @request POST:/api/v1/triggers/{id}/retry
+     */
+    postApiTriggersRetry: () => {
+      const base = 'POST:/api/v1/triggers/{id}/retry' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiTriggersRetryData>([base]),
+        requestKey: (id: number) => dataTaggedQueryKey<PostApiTriggersRetryData>([base, id]),
+        request: (id: number, params: RequestParams = {}) =>
+          this.request<PostApiTriggersRetryData>({
+            path: `/api/v1/triggers/${id}/retry`,
             method: 'POST',
             format: 'json',
             ...params
@@ -18832,9 +22173,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiUserSshByKeyIdData>([base]),
-        requestKey: (params: DeleteApiUserSshByKeyIdParams) =>
-          dataTaggedQueryKey<DeleteApiUserSshByKeyIdData>([base, params]),
-        request: ({ keyId, ...query }: DeleteApiUserSshByKeyIdParams, params: RequestParams = {}) =>
+        requestKey: (keyId: number) => dataTaggedQueryKey<DeleteApiUserSshByKeyIdData>([base, keyId]),
+        request: (keyId: number, params: RequestParams = {}) =>
           this.request<DeleteApiUserSshByKeyIdData>({
             path: `/api/v1/user/ssh/${keyId}`,
             method: 'DELETE',
@@ -18905,1204 +22245,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiUserTokenByKeyIdData>([base]),
-        requestKey: (params: DeleteApiUserTokenByKeyIdParams) =>
-          dataTaggedQueryKey<DeleteApiUserTokenByKeyIdData>([base, params]),
-        request: ({ keyId, ...query }: DeleteApiUserTokenByKeyIdParams, params: RequestParams = {}) =>
+        requestKey: (keyId: number) => dataTaggedQueryKey<DeleteApiUserTokenByKeyIdData>([base, keyId]),
+        request: (keyId: number, params: RequestParams = {}) =>
           this.request<DeleteApiUserTokenByKeyIdData>({
             path: `/api/v1/user/token/${keyId}`,
             method: 'DELETE',
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  groupPermissionManagement = {
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PostApiAdminGroups
-     * @request POST:/api/v1/admin/groups
-     */
-    postApiAdminGroups: () => {
-      const base = 'POST:/api/v1/admin/groups' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiAdminGroupsData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiAdminGroupsData>([base]),
-        request: (data: CreateGroupRequest, params: RequestParams = {}) =>
-          this.request<PostApiAdminGroupsData>({
-            path: `/api/v1/admin/groups`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PostApiAdminGroupsList
-     * @request POST:/api/v1/admin/groups/list
-     */
-    postApiAdminGroupsList: () => {
-      const base = 'POST:/api/v1/admin/groups/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiAdminGroupsListData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiAdminGroupsListData>([base]),
-        request: (data: PageParamsEmptyListAdditional, params: RequestParams = {}) =>
-          this.request<PostApiAdminGroupsListData>({
-            path: `/api/v1/admin/groups/list`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name GetApiAdminGroupsByGroupId
-     * @request GET:/api/v1/admin/groups/{group_id}
-     */
-    getApiAdminGroupsByGroupId: () => {
-      const base = 'GET:/api/v1/admin/groups/{group_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiAdminGroupsByGroupIdData>([base]),
-        requestKey: (params: GetApiAdminGroupsByGroupIdParams) =>
-          dataTaggedQueryKey<GetApiAdminGroupsByGroupIdData>([base, params]),
-        request: ({ groupId, ...query }: GetApiAdminGroupsByGroupIdParams, params: RequestParams = {}) =>
-          this.request<GetApiAdminGroupsByGroupIdData>({
-            path: `/api/v1/admin/groups/${groupId}`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PutApiAdminGroupsByGroupId
-     * @request PUT:/api/v1/admin/groups/{group_id}
-     */
-    putApiAdminGroupsByGroupId: () => {
-      const base = 'PUT:/api/v1/admin/groups/{group_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PutApiAdminGroupsByGroupIdData>([base]),
-        requestKey: (params: PutApiAdminGroupsByGroupIdParams) =>
-          dataTaggedQueryKey<PutApiAdminGroupsByGroupIdData>([base, params]),
-        request: (
-          { groupId, ...query }: PutApiAdminGroupsByGroupIdParams,
-          data: UpdateGroupRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PutApiAdminGroupsByGroupIdData>({
-            path: `/api/v1/admin/groups/${groupId}`,
-            method: 'PUT',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name DeleteApiAdminGroupsByGroupId
-     * @request DELETE:/api/v1/admin/groups/{group_id}
-     */
-    deleteApiAdminGroupsByGroupId: () => {
-      const base = 'DELETE:/api/v1/admin/groups/{group_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiAdminGroupsByGroupIdData>([base]),
-        requestKey: (params: DeleteApiAdminGroupsByGroupIdParams) =>
-          dataTaggedQueryKey<DeleteApiAdminGroupsByGroupIdData>([base, params]),
-        request: ({ groupId, ...query }: DeleteApiAdminGroupsByGroupIdParams, params: RequestParams = {}) =>
-          this.request<DeleteApiAdminGroupsByGroupIdData>({
-            path: `/api/v1/admin/groups/${groupId}`,
-            method: 'DELETE',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PostApiAdminGroupsMembers
-     * @request POST:/api/v1/admin/groups/{group_id}/members
-     */
-    postApiAdminGroupsMembers: () => {
-      const base = 'POST:/api/v1/admin/groups/{group_id}/members' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiAdminGroupsMembersData>([base]),
-        requestKey: (params: PostApiAdminGroupsMembersParams) =>
-          dataTaggedQueryKey<PostApiAdminGroupsMembersData>([base, params]),
-        request: (
-          { groupId, ...query }: PostApiAdminGroupsMembersParams,
-          data: AddMembersRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiAdminGroupsMembersData>({
-            path: `/api/v1/admin/groups/${groupId}/members`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PostApiAdminGroupsMembersList
-     * @request POST:/api/v1/admin/groups/{group_id}/members/list
-     */
-    postApiAdminGroupsMembersList: () => {
-      const base = 'POST:/api/v1/admin/groups/{group_id}/members/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiAdminGroupsMembersListData>([base]),
-        requestKey: (params: PostApiAdminGroupsMembersListParams) =>
-          dataTaggedQueryKey<PostApiAdminGroupsMembersListData>([base, params]),
-        request: (
-          { groupId, ...query }: PostApiAdminGroupsMembersListParams,
-          data: PageParamsEmptyListAdditional,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiAdminGroupsMembersListData>({
-            path: `/api/v1/admin/groups/${groupId}/members/list`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name DeleteApiAdminGroupsMembersByUsername
-     * @request DELETE:/api/v1/admin/groups/{group_id}/members/{username}
-     */
-    deleteApiAdminGroupsMembersByUsername: () => {
-      const base = 'DELETE:/api/v1/admin/groups/{group_id}/members/{username}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiAdminGroupsMembersByUsernameData>([base]),
-        requestKey: (params: DeleteApiAdminGroupsMembersByUsernameParams) =>
-          dataTaggedQueryKey<DeleteApiAdminGroupsMembersByUsernameData>([base, params]),
-        request: (
-          { groupId, username, ...query }: DeleteApiAdminGroupsMembersByUsernameParams,
-          params: RequestParams = {}
-        ) =>
-          this.request<DeleteApiAdminGroupsMembersByUsernameData>({
-            path: `/api/v1/admin/groups/${groupId}/members/${username}`,
-            method: 'DELETE',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name GetApiAdminResourcesPermissions
-     * @request GET:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
-     */
-    getApiAdminResourcesPermissions: () => {
-      const base = 'GET:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiAdminResourcesPermissionsData>([base]),
-        requestKey: (params: GetApiAdminResourcesPermissionsParams) =>
-          dataTaggedQueryKey<GetApiAdminResourcesPermissionsData>([base, params]),
-        request: (
-          { resourceType, resourceId, ...query }: GetApiAdminResourcesPermissionsParams,
-          params: RequestParams = {}
-        ) =>
-          this.request<GetApiAdminResourcesPermissionsData>({
-            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PutApiAdminResourcesPermissions
-     * @request PUT:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
-     */
-    putApiAdminResourcesPermissions: () => {
-      const base = 'PUT:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PutApiAdminResourcesPermissionsData>([base]),
-        requestKey: (params: PutApiAdminResourcesPermissionsParams) =>
-          dataTaggedQueryKey<PutApiAdminResourcesPermissionsData>([base, params]),
-        request: (
-          { resourceType, resourceId, ...query }: PutApiAdminResourcesPermissionsParams,
-          data: SetPermissionsRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PutApiAdminResourcesPermissionsData>({
-            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
-            method: 'PUT',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name PostApiAdminResourcesPermissions
-     * @request POST:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
-     */
-    postApiAdminResourcesPermissions: () => {
-      const base = 'POST:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiAdminResourcesPermissionsData>([base]),
-        requestKey: (params: PostApiAdminResourcesPermissionsParams) =>
-          dataTaggedQueryKey<PostApiAdminResourcesPermissionsData>([base, params]),
-        request: (
-          { resourceType, resourceId, ...query }: PostApiAdminResourcesPermissionsParams,
-          data: SetPermissionsRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiAdminResourcesPermissionsData>({
-            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name DeleteApiAdminResourcesPermissions
-     * @request DELETE:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions
-     */
-    deleteApiAdminResourcesPermissions: () => {
-      const base = 'DELETE:/api/v1/admin/resources/{resource_type}/{resource_id}/permissions' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiAdminResourcesPermissionsData>([base]),
-        requestKey: (params: DeleteApiAdminResourcesPermissionsParams) =>
-          dataTaggedQueryKey<DeleteApiAdminResourcesPermissionsData>([base, params]),
-        request: (
-          { resourceType, resourceId, ...query }: DeleteApiAdminResourcesPermissionsParams,
-          params: RequestParams = {}
-        ) =>
-          this.request<DeleteApiAdminResourcesPermissionsData>({
-            path: `/api/v1/admin/resources/${resourceType}/${resourceId}/permissions`,
-            method: 'DELETE',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name GetApiAdminUsersGroups
-     * @request GET:/api/v1/admin/users/{username}/groups
-     */
-    getApiAdminUsersGroups: () => {
-      const base = 'GET:/api/v1/admin/users/{username}/groups' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiAdminUsersGroupsData>([base]),
-        requestKey: (params: GetApiAdminUsersGroupsParams) =>
-          dataTaggedQueryKey<GetApiAdminUsersGroupsData>([base, params]),
-        request: ({ username, ...query }: GetApiAdminUsersGroupsParams, params: RequestParams = {}) =>
-          this.request<GetApiAdminUsersGroupsData>({
-            path: `/api/v1/admin/users/${username}/groups`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name GetApiAdminUsersPermissionsByResourceId
-     * @request GET:/api/v1/admin/users/{username}/permissions/{resource_type}/{resource_id}
-     */
-    getApiAdminUsersPermissionsByResourceId: () => {
-      const base = 'GET:/api/v1/admin/users/{username}/permissions/{resource_type}/{resource_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiAdminUsersPermissionsByResourceIdData>([base]),
-        requestKey: (params: GetApiAdminUsersPermissionsByResourceIdParams) =>
-          dataTaggedQueryKey<GetApiAdminUsersPermissionsByResourceIdData>([base, params]),
-        request: (
-          { username, resourceType, resourceId, ...query }: GetApiAdminUsersPermissionsByResourceIdParams,
-          params: RequestParams = {}
-        ) =>
-          this.request<GetApiAdminUsersPermissionsByResourceIdData>({
-            path: `/api/v1/admin/users/${username}/permissions/${resourceType}/${resourceId}`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Group Permission Management
-     * @name GetApiPermissionsMeByResourceId
-     * @request GET:/api/v1/permissions/me/{resource_type}/{resource_id}
-     */
-    getApiPermissionsMeByResourceId: () => {
-      const base = 'GET:/api/v1/permissions/me/{resource_type}/{resource_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiPermissionsMeByResourceIdData>([base]),
-        requestKey: (params: GetApiPermissionsMeByResourceIdParams) =>
-          dataTaggedQueryKey<GetApiPermissionsMeByResourceIdData>([base, params]),
-        request: (
-          { resourceType, resourceId, ...query }: GetApiPermissionsMeByResourceIdParams,
-          params: RequestParams = {}
-        ) =>
-          this.request<GetApiPermissionsMeByResourceIdData>({
-            path: `/api/v1/permissions/me/${resourceType}/${resourceId}`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  codePreview = {
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiBlame
-     * @summary Get blame information for a file
-     * @request GET:/api/v1/blame
-     */
-    getApiBlame: () => {
-      const base = 'GET:/api/v1/blame' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiBlameData>([base]),
-        requestKey: (params: GetApiBlameParams) => dataTaggedQueryKey<GetApiBlameData>([base, params]),
-        request: (query: GetApiBlameParams, params: RequestParams = {}) =>
-          this.request<GetApiBlameData>({
-            path: `/api/v1/blame`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiBlob
-     * @summary Get blob file as string
-     * @request GET:/api/v1/blob
-     */
-    getApiBlob: () => {
-      const base = 'GET:/api/v1/blob' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiBlobData>([base]),
-        requestKey: (params: GetApiBlobParams) => dataTaggedQueryKey<GetApiBlobData>([base, params]),
-        request: (query: GetApiBlobParams, params: RequestParams = {}) =>
-          this.request<GetApiBlobData>({
-            path: `/api/v1/blob`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name PostApiCommitsHistory
-     * @summary List commit history with optional refs, path filter, author filter, and pagination.
-     * @request POST:/api/v1/commits/history
-     */
-    postApiCommitsHistory: () => {
-      const base = 'POST:/api/v1/commits/history' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiCommitsHistoryData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiCommitsHistoryData>([base]),
-        request: (data: PageParamsCommitHistoryParams, params: RequestParams = {}) =>
-          this.request<PostApiCommitsHistoryData>({
-            path: `/api/v1/commits/history`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name PutApiCommitsBinding
-     * @summary Update commit binding information
-     * @request PUT:/api/v1/commits/{sha}/binding
-     */
-    putApiCommitsBinding: () => {
-      const base = 'PUT:/api/v1/commits/{sha}/binding' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PutApiCommitsBindingData>([base]),
-        requestKey: (params: PutApiCommitsBindingParams) =>
-          dataTaggedQueryKey<PutApiCommitsBindingData>([base, params]),
-        request: (
-          { sha, ...query }: PutApiCommitsBindingParams,
-          data: UpdateCommitBindingRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PutApiCommitsBindingData>({
-            path: `/api/v1/commits/${sha}/binding`,
-            method: 'PUT',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name PostApiCommitsFilesChanged
-     * @summary Get paginated list of files changed in a commit, scoped by repository/subrepo selector
-     * @request POST:/api/v1/commits/{sha}/files-changed
-     */
-    postApiCommitsFilesChanged: () => {
-      const base = 'POST:/api/v1/commits/{sha}/files-changed' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiCommitsFilesChangedData>([base]),
-        requestKey: (params: PostApiCommitsFilesChangedParams) =>
-          dataTaggedQueryKey<PostApiCommitsFilesChangedData>([base, params]),
-        request: ({ sha, ...query }: PostApiCommitsFilesChangedParams, data: Pagination, params: RequestParams = {}) =>
-          this.request<PostApiCommitsFilesChangedData>({
-            path: `/api/v1/commits/${sha}/files-changed`,
-            method: 'POST',
-            query: query,
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiCommitsMuiTree
-     * @summary Get commit changed files tree (MUI format)
-     * @request GET:/api/v1/commits/{sha}/mui-tree
-     */
-    getApiCommitsMuiTree: () => {
-      const base = 'GET:/api/v1/commits/{sha}/mui-tree' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiCommitsMuiTreeData>([base]),
-        requestKey: (params: GetApiCommitsMuiTreeParams) =>
-          dataTaggedQueryKey<GetApiCommitsMuiTreeData>([base, params]),
-        request: ({ sha, ...query }: GetApiCommitsMuiTreeParams, params: RequestParams = {}) =>
-          this.request<GetApiCommitsMuiTreeData>({
-            path: `/api/v1/commits/${sha}/mui-tree`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name PostApiCreateEntry
-     * @summary Create file or folder in web UI
-     * @request POST:/api/v1/create-entry
-     */
-    postApiCreateEntry: () => {
-      const base = 'POST:/api/v1/create-entry' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiCreateEntryData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiCreateEntryData>([base]),
-        request: (data: CreateEntryInfo, params: RequestParams = {}) =>
-          this.request<PostApiCreateEntryData>({
-            path: `/api/v1/create-entry`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name PostApiEditDiffPreview
-     * @summary Preview unified diff for a single file before saving
-     * @request POST:/api/v1/edit/diff-preview
-     */
-    postApiEditDiffPreview: () => {
-      const base = 'POST:/api/v1/edit/diff-preview' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiEditDiffPreviewData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiEditDiffPreviewData>([base]),
-        request: (data: DiffPreviewPayload, params: RequestParams = {}) =>
-          this.request<PostApiEditDiffPreviewData>({
-            path: `/api/v1/edit/diff-preview`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name PostApiEditSave
-     * @summary Save edit and create a commit
-     * @request POST:/api/v1/edit/save
-     */
-    postApiEditSave: () => {
-      const base = 'POST:/api/v1/edit/save' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiEditSaveData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiEditSaveData>([base]),
-        request: (data: EditFilePayload, params: RequestParams = {}) =>
-          this.request<PostApiEditSaveData>({
-            path: `/api/v1/edit/save`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiLatestCommit
-     * @summary Get latest commit by path
-     * @request GET:/api/v1/latest-commit
-     */
-    getApiLatestCommit: () => {
-      const base = 'GET:/api/v1/latest-commit' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiLatestCommitData>([base]),
-        requestKey: (params: GetApiLatestCommitParams) => dataTaggedQueryKey<GetApiLatestCommitData>([base, params]),
-        request: (query: GetApiLatestCommitParams, params: RequestParams = {}) =>
-          this.request<GetApiLatestCommitData>({
-            path: `/api/v1/latest-commit`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiTree
-     * @summary Get tree brief info
-     * @request GET:/api/v1/tree
-     */
-    getApiTree: () => {
-      const base = 'GET:/api/v1/tree' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiTreeData>([base]),
-        requestKey: (params: GetApiTreeParams) => dataTaggedQueryKey<GetApiTreeData>([base, params]),
-        request: (query: GetApiTreeParams, params: RequestParams = {}) =>
-          this.request<GetApiTreeData>({
-            path: `/api/v1/tree`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiTreeCommitInfo
-     * @summary List matching trees with commit msg by query
-     * @request GET:/api/v1/tree/commit-info
-     */
-    getApiTreeCommitInfo: () => {
-      const base = 'GET:/api/v1/tree/commit-info' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiTreeCommitInfoData>([base]),
-        requestKey: (params: GetApiTreeCommitInfoParams) =>
-          dataTaggedQueryKey<GetApiTreeCommitInfoData>([base, params]),
-        request: (query: GetApiTreeCommitInfoParams, params: RequestParams = {}) =>
-          this.request<GetApiTreeCommitInfoData>({
-            path: `/api/v1/tree/commit-info`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiTreeContentHash
-     * @summary Get tree content hash,the dir's hash as same as old,file's hash is the content hash
-     * @request GET:/api/v1/tree/content-hash
-     */
-    getApiTreeContentHash: () => {
-      const base = 'GET:/api/v1/tree/content-hash' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiTreeContentHashData>([base]),
-        requestKey: (params: GetApiTreeContentHashParams) =>
-          dataTaggedQueryKey<GetApiTreeContentHashData>([base, params]),
-        request: (query: GetApiTreeContentHashParams, params: RequestParams = {}) =>
-          this.request<GetApiTreeContentHashData>({
-            path: `/api/v1/tree/content-hash`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiTreeDirHash
-     * @summary return the dir's hash
-     * @request GET:/api/v1/tree/dir-hash
-     */
-    getApiTreeDirHash: () => {
-      const base = 'GET:/api/v1/tree/dir-hash' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiTreeDirHashData>([base]),
-        requestKey: (params: GetApiTreeDirHashParams) => dataTaggedQueryKey<GetApiTreeDirHashData>([base, params]),
-        request: (query: GetApiTreeDirHashParams, params: RequestParams = {}) =>
-          this.request<GetApiTreeDirHashData>({
-            path: `/api/v1/tree/dir-hash`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Preview
-     * @name GetApiTreePathCanClone
-     * @summary Check if a path can be cloned
-     * @request GET:/api/v1/tree/path-can-clone
-     */
-    getApiTreePathCanClone: () => {
-      const base = 'GET:/api/v1/tree/path-can-clone' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiTreePathCanCloneData>([base]),
-        requestKey: (params: GetApiTreePathCanCloneParams) =>
-          dataTaggedQueryKey<GetApiTreePathCanCloneData>([base, params]),
-        request: (query: GetApiTreePathCanCloneParams, params: RequestParams = {}) =>
-          this.request<GetApiTreePathCanCloneData>({
-            path: `/api/v1/tree/path-can-clone`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  automationIntegrations = {
-    /**
-     * @description List existing tokens for a bot (without plaintext).
-     *
-     * @tags Automation & Integrations
-     * @name GetApiBotsTokens
-     * @summary GET /api/v1/bots/{bot_id}/tokens
-     * @request GET:/api/v1/bots/{bot_id}/tokens
-     */
-    getApiBotsTokens: () => {
-      const base = 'GET:/api/v1/bots/{bot_id}/tokens' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiBotsTokensData>([base]),
-        requestKey: (params: GetApiBotsTokensParams) => dataTaggedQueryKey<GetApiBotsTokensData>([base, params]),
-        request: ({ botId, ...query }: GetApiBotsTokensParams, params: RequestParams = {}) =>
-          this.request<GetApiBotsTokensData>({
-            path: `/api/v1/bots/${botId}/tokens`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Create a new bot token. Only admins can perform this operation.
-     *
-     * @tags Automation & Integrations
-     * @name PostApiBotsTokens
-     * @summary POST /api/v1/bots/{bot_id}/tokens
-     * @request POST:/api/v1/bots/{bot_id}/tokens
-     */
-    postApiBotsTokens: () => {
-      const base = 'POST:/api/v1/bots/{bot_id}/tokens' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBotsTokensData>([base]),
-        requestKey: (params: PostApiBotsTokensParams) => dataTaggedQueryKey<PostApiBotsTokensData>([base, params]),
-        request: (
-          { botId, ...query }: PostApiBotsTokensParams,
-          data: CreateBotTokenRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiBotsTokensData>({
-            path: `/api/v1/bots/${botId}/tokens`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Revoke all tokens for a given bot. Idempotent.
-     *
-     * @tags Automation & Integrations
-     * @name PostApiBotsTokensRevokeAll
-     * @summary POST /api/v1/bots/{bot_id}/tokens/revoke_all
-     * @request POST:/api/v1/bots/{bot_id}/tokens/revoke_all
-     */
-    postApiBotsTokensRevokeAll: () => {
-      const base = 'POST:/api/v1/bots/{bot_id}/tokens/revoke_all' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBotsTokensRevokeAllData>([base]),
-        requestKey: (params: PostApiBotsTokensRevokeAllParams) =>
-          dataTaggedQueryKey<PostApiBotsTokensRevokeAllData>([base, params]),
-        request: ({ botId, ...query }: PostApiBotsTokensRevokeAllParams, params: RequestParams = {}) =>
-          this.request<PostApiBotsTokensRevokeAllData>({
-            path: `/api/v1/bots/${botId}/tokens/revoke_all`,
-            method: 'POST',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Revoke a single bot token. Idempotent.
-     *
-     * @tags Automation & Integrations
-     * @name DeleteApiBotsTokensById
-     * @summary DELETE /api/v1/bots/{bot_id}/tokens/{id}
-     * @request DELETE:/api/v1/bots/{bot_id}/tokens/{id}
-     */
-    deleteApiBotsTokensById: () => {
-      const base = 'DELETE:/api/v1/bots/{bot_id}/tokens/{id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiBotsTokensByIdData>([base]),
-        requestKey: (params: DeleteApiBotsTokensByIdParams) =>
-          dataTaggedQueryKey<DeleteApiBotsTokensByIdData>([base, params]),
-        request: ({ botId, id, ...query }: DeleteApiBotsTokensByIdParams, params: RequestParams = {}) =>
-          this.request<DeleteApiBotsTokensByIdData>({
-            path: `/api/v1/bots/${botId}/tokens/${id}`,
-            method: 'DELETE',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name GetApiBotsInstallations
-     * @summary Get installed bot
-     * @request GET:/api/v1/bots/{id}/installations
-     */
-    getApiBotsInstallations: () => {
-      const base = 'GET:/api/v1/bots/{id}/installations' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiBotsInstallationsData>([base]),
-        requestKey: (params: GetApiBotsInstallationsParams) =>
-          dataTaggedQueryKey<GetApiBotsInstallationsData>([base, params]),
-        request: ({ id, ...query }: GetApiBotsInstallationsParams, params: RequestParams = {}) =>
-          this.request<GetApiBotsInstallationsData>({
-            path: `/api/v1/bots/${id}/installations`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name PostApiBotsInstallations
-     * @summary Install bot
-     * @request POST:/api/v1/bots/{id}/installations
-     */
-    postApiBotsInstallations: () => {
-      const base = 'POST:/api/v1/bots/{id}/installations' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBotsInstallationsData>([base]),
-        requestKey: (params: PostApiBotsInstallationsParams) =>
-          dataTaggedQueryKey<PostApiBotsInstallationsData>([base, params]),
-        request: ({ id, ...query }: PostApiBotsInstallationsParams, data: InstallBotReq, params: RequestParams = {}) =>
-          this.request<PostApiBotsInstallationsData>({
-            path: `/api/v1/bots/${id}/installations`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name DeleteApiBotsInstallationsByInstallationId
-     * @request DELETE:/api/v1/bots/{id}/installations/{installation_id}
-     */
-    deleteApiBotsInstallationsByInstallationId: () => {
-      const base = 'DELETE:/api/v1/bots/{id}/installations/{installation_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiBotsInstallationsByInstallationIdData>([base]),
-        requestKey: (params: DeleteApiBotsInstallationsByInstallationIdParams) =>
-          dataTaggedQueryKey<DeleteApiBotsInstallationsByInstallationIdData>([base, params]),
-        request: (
-          { id, installationId, ...query }: DeleteApiBotsInstallationsByInstallationIdParams,
-          data: InstallationTargetType,
-          params: RequestParams = {}
-        ) =>
-          this.request<DeleteApiBotsInstallationsByInstallationIdData>({
-            path: `/api/v1/bots/${id}/installations/${installationId}`,
-            method: 'DELETE',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name PatchApiBotsInstallationsByInstallationId
-     * @request PATCH:/api/v1/bots/{id}/installations/{installation_id}
-     */
-    patchApiBotsInstallationsByInstallationId: () => {
-      const base = 'PATCH:/api/v1/bots/{id}/installations/{installation_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PatchApiBotsInstallationsByInstallationIdData>([base]),
-        requestKey: (params: PatchApiBotsInstallationsByInstallationIdParams) =>
-          dataTaggedQueryKey<PatchApiBotsInstallationsByInstallationIdData>([base, params]),
-        request: (
-          { id, installationId, ...query }: PatchApiBotsInstallationsByInstallationIdParams,
-          data: ChangeInstallationStatus,
-          params: RequestParams = {}
-        ) =>
-          this.request<PatchApiBotsInstallationsByInstallationIdData>({
-            path: `/api/v1/bots/${id}/installations/${installationId}`,
-            method: 'PATCH',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name PostApiOrionRunners
-     * @summary Start a new Orion runner VM via orion-scheduler.
-     * @request POST:/api/v1/orion/runners
-     */
-    postApiOrionRunners: () => {
-      const base = 'POST:/api/v1/orion/runners' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiOrionRunnersData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiOrionRunnersData>([base]),
-        request: (data: StartRunnerRequest, params: RequestParams = {}) =>
-          this.request<PostApiOrionRunnersData>({
-            path: `/api/v1/orion/runners`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name GetApiOrionRunnersById
-     * @summary Get provisioning/running status for a runner VM.
-     * @request GET:/api/v1/orion/runners/{id}
-     */
-    getApiOrionRunnersById: () => {
-      const base = 'GET:/api/v1/orion/runners/{id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiOrionRunnersByIdData>([base]),
-        requestKey: (params: GetApiOrionRunnersByIdParams) =>
-          dataTaggedQueryKey<GetApiOrionRunnersByIdData>([base, params]),
-        request: ({ id, ...query }: GetApiOrionRunnersByIdParams, params: RequestParams = {}) =>
-          this.request<GetApiOrionRunnersByIdData>({
-            path: `/api/v1/orion/runners/${id}`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Automation & Integrations
-     * @name GetApiOrionRunnersLogsStream
-     * @summary Proxy live Orion runner / client startup logs from orion-scheduler as SSE.
-     * @request GET:/api/v1/orion/runners/{id}/logs/stream
-     */
-    getApiOrionRunnersLogsStream: () => {
-      const base = 'GET:/api/v1/orion/runners/{id}/logs/stream' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiOrionRunnersLogsStreamData>([base]),
-        requestKey: (params: GetApiOrionRunnersLogsStreamParams) =>
-          dataTaggedQueryKey<GetApiOrionRunnersLogsStreamData>([base, params]),
-        request: ({ id, ...query }: GetApiOrionRunnersLogsStreamParams, params: RequestParams = {}) =>
-          this.request<GetApiOrionRunnersLogsStreamData>({
-            path: `/api/v1/orion/runners/${id}/logs/stream`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Creates a new build trigger with automatic ref resolution. Supports branch names, tag names, commit hashes, or CL links. Defaults to "main" branch if no ref is specified.
-     *
-     * @tags Automation & Integrations
-     * @name PostApiTriggers
-     * @summary Create a new build trigger
-     * @request POST:/api/v1/triggers
-     */
-    postApiTriggers: () => {
-      const base = 'POST:/api/v1/triggers' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiTriggersData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiTriggersData>([base]),
-        request: (data: CreateTriggerRequest, params: RequestParams = {}) =>
-          this.request<PostApiTriggersData>({
-            path: `/api/v1/triggers`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Returns build triggers with pagination and optional filters. Supports filtering by repository, trigger type, source, user, and time range. This endpoint follows the project's standard Google-style API pattern: - Uses POST method for complex query parameters - Accepts PageParams with pagination and filter parameters - Returns CommonPage with items and total count
-     *
-     * @tags Automation & Integrations
-     * @name PostApiTriggersList
-     * @summary List build triggers with filters
-     * @request POST:/api/v1/triggers/list
-     */
-    postApiTriggersList: () => {
-      const base = 'POST:/api/v1/triggers/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiTriggersListData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiTriggersListData>([base]),
-        request: (data: PageParamsListTriggersParams, params: RequestParams = {}) =>
-          this.request<PostApiTriggersListData>({
-            path: `/api/v1/triggers/list`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Returns complete details about a specific trigger including: - Trigger metadata (type, source, time) - Repository and commit information - Ref information (branch/tag name if applicable) - Build parameters
-     *
-     * @tags Automation & Integrations
-     * @name GetApiTriggersById
-     * @summary Get a specific build trigger by ID
-     * @request GET:/api/v1/triggers/{id}
-     */
-    getApiTriggersById: () => {
-      const base = 'GET:/api/v1/triggers/{id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiTriggersByIdData>([base]),
-        requestKey: (params: GetApiTriggersByIdParams) => dataTaggedQueryKey<GetApiTriggersByIdData>([base, params]),
-        request: ({ id, ...query }: GetApiTriggersByIdParams, params: RequestParams = {}) =>
-          this.request<GetApiTriggersByIdData>({
-            path: `/api/v1/triggers/${id}`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Creates a new trigger that retries a previous build. The new trigger will use the same repository, commit, and parameters as the original trigger.
-     *
-     * @tags Automation & Integrations
-     * @name PostApiTriggersRetry
-     * @summary Retry a specific build trigger
-     * @request POST:/api/v1/triggers/{id}/retry
-     */
-    postApiTriggersRetry: () => {
-      const base = 'POST:/api/v1/triggers/{id}/retry' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiTriggersRetryData>([base]),
-        requestKey: (params: PostApiTriggersRetryParams) =>
-          dataTaggedQueryKey<PostApiTriggersRetryData>([base, params]),
-        request: ({ id, ...query }: PostApiTriggersRetryParams, params: RequestParams = {}) =>
-          this.request<PostApiTriggersRetryData>({
-            path: `/api/v1/triggers/${id}/retry`,
-            method: 'POST',
             format: 'json',
             ...params
           })
@@ -20173,9 +22320,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiWebhooksByIdData>([base]),
-        requestKey: (params: DeleteApiWebhooksByIdParams) =>
-          dataTaggedQueryKey<DeleteApiWebhooksByIdData>([base, params]),
-        request: ({ id, ...query }: DeleteApiWebhooksByIdParams, params: RequestParams = {}) =>
+        requestKey: (id: number) => dataTaggedQueryKey<DeleteApiWebhooksByIdData>([base, id]),
+        request: (id: number, params: RequestParams = {}) =>
           this.request<DeleteApiWebhooksByIdData>({
             path: `/api/v1/webhooks/${id}`,
             method: 'DELETE',
@@ -20185,2361 +22331,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }
     }
   }
-  buckUploadApi = {
-    /**
-     * @description Creates a new upload session and pre-creates a Draft CL.
-     *
-     * @tags Buck Upload API
-     * @name PostApiBuckSessionStart
-     * @summary Create upload session
-     * @request POST:/api/v1/buck/session/start
-     */
-    postApiBuckSessionStart: () => {
-      const base = 'POST:/api/v1/buck/session/start' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBuckSessionStartData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiBuckSessionStartData>([base]),
-        request: (data: CreateSessionPayload, params: RequestParams = {}) =>
-          this.request<PostApiBuckSessionStartData>({
-            path: `/api/v1/buck/session/start`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Complete the upload session, create Git commit, and activate CL. Returns immediately - CI build is triggered asynchronously. Request body is optional. Commit message is read from session.
-     *
-     * @tags Buck Upload API
-     * @name PostApiBuckSessionComplete
-     * @summary Complete upload
-     * @request POST:/api/v1/buck/session/{cl_link}/complete
-     */
-    postApiBuckSessionComplete: () => {
-      const base = 'POST:/api/v1/buck/session/{cl_link}/complete' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBuckSessionCompleteData>([base]),
-        requestKey: (params: PostApiBuckSessionCompleteParams) =>
-          dataTaggedQueryKey<PostApiBuckSessionCompleteData>([base, params]),
-        request: (
-          { clLink, ...query }: PostApiBuckSessionCompleteParams,
-          data: PostApiBuckSessionCompletePayload,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiBuckSessionCompleteData>({
-            path: `/api/v1/buck/session/${clLink}/complete`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Upload a single file content. Can be called concurrently for different files.
-     *
-     * @tags Buck Upload API
-     * @name PostApiBuckSessionFile
-     * @summary Upload file
-     * @request POST:/api/v1/buck/session/{cl_link}/file
-     */
-    postApiBuckSessionFile: () => {
-      const base = 'POST:/api/v1/buck/session/{cl_link}/file' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBuckSessionFileData>([base]),
-        requestKey: (params: PostApiBuckSessionFileParams) =>
-          dataTaggedQueryKey<PostApiBuckSessionFileData>([base, params]),
-        request: ({ clLink, ...query }: PostApiBuckSessionFileParams, params: RequestParams = {}) =>
-          this.request<PostApiBuckSessionFileData>({
-            path: `/api/v1/buck/session/${clLink}/file`,
-            method: 'POST',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Submit file manifest and get list of files that need to be uploaded.
-     *
-     * @tags Buck Upload API
-     * @name PostApiBuckSessionManifest
-     * @summary Upload file manifest
-     * @request POST:/api/v1/buck/session/{cl_link}/manifest
-     */
-    postApiBuckSessionManifest: () => {
-      const base = 'POST:/api/v1/buck/session/{cl_link}/manifest' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiBuckSessionManifestData>([base]),
-        requestKey: (params: PostApiBuckSessionManifestParams) =>
-          dataTaggedQueryKey<PostApiBuckSessionManifestData>([base, params]),
-        request: (
-          { clLink, ...query }: PostApiBuckSessionManifestParams,
-          data: ManifestPayload,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiBuckSessionManifestData>({
-            path: `/api/v1/buck/session/${clLink}/manifest`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  changeList = {
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClAssignees
-     * @summary Update CL related assignees
-     * @request POST:/api/v1/cl/assignees
-     */
-    postApiClAssignees: () => {
-      const base = 'POST:/api/v1/cl/assignees' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClAssigneesData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiClAssigneesData>([base]),
-        request: (data: AssigneeUpdatePayload, params: RequestParams = {}) =>
-          this.request<PostApiClAssigneesData>({
-            path: `/api/v1/cl/assignees`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClLabels
-     * @summary Update cl related labels
-     * @request POST:/api/v1/cl/labels
-     */
-    postApiClLabels: () => {
-      const base = 'POST:/api/v1/cl/labels' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClLabelsData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiClLabelsData>([base]),
-        request: (data: LabelUpdatePayload, params: RequestParams = {}) =>
-          this.request<PostApiClLabelsData>({
-            path: `/api/v1/cl/labels`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClList
-     * @summary Fetch CL list
-     * @request POST:/api/v1/cl/list
-     */
-    postApiClList: () => {
-      const base = 'POST:/api/v1/cl/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClListData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiClListData>([base]),
-        request: (data: PageParamsListPayload, params: RequestParams = {}) =>
-          this.request<PostApiClListData>({
-            path: `/api/v1/cl/list`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClClose
-     * @summary Close Change List
-     * @request POST:/api/v1/cl/{link}/close
-     */
-    postApiClClose: () => {
-      const base = 'POST:/api/v1/cl/{link}/close' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClCloseData>([base]),
-        requestKey: (params: PostApiClCloseParams) => dataTaggedQueryKey<PostApiClCloseData>([base, params]),
-        request: ({ link, ...query }: PostApiClCloseParams, params: RequestParams = {}) =>
-          this.request<PostApiClCloseData>({
-            path: `/api/v1/cl/${link}/close`,
-            method: 'POST',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClComment
-     * @summary Add new comment on Change List
-     * @request POST:/api/v1/cl/{link}/comment
-     */
-    postApiClComment: () => {
-      const base = 'POST:/api/v1/cl/{link}/comment' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClCommentData>([base]),
-        requestKey: (params: PostApiClCommentParams) => dataTaggedQueryKey<PostApiClCommentData>([base, params]),
-        request: ({ link, ...query }: PostApiClCommentParams, data: ContentPayload, params: RequestParams = {}) =>
-          this.request<PostApiClCommentData>({
-            path: `/api/v1/cl/${link}/comment`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name GetApiClDetail
-     * @summary Get change list details
-     * @request GET:/api/v1/cl/{link}/detail
-     */
-    getApiClDetail: () => {
-      const base = 'GET:/api/v1/cl/{link}/detail' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiClDetailData>([base]),
-        requestKey: (params: GetApiClDetailParams) => dataTaggedQueryKey<GetApiClDetailData>([base, params]),
-        request: ({ link, ...query }: GetApiClDetailParams, params: RequestParams = {}) =>
-          this.request<GetApiClDetailData>({
-            path: `/api/v1/cl/${link}/detail`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClFilesChanged
-     * @summary Get Change List file changed list in Pagination
-     * @request POST:/api/v1/cl/{link}/files-changed
-     */
-    postApiClFilesChanged: () => {
-      const base = 'POST:/api/v1/cl/{link}/files-changed' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClFilesChangedData>([base]),
-        requestKey: (params: PostApiClFilesChangedParams) =>
-          dataTaggedQueryKey<PostApiClFilesChangedData>([base, params]),
-        request: (
-          { link, ...query }: PostApiClFilesChangedParams,
-          data: PageParamsString,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiClFilesChangedData>({
-            path: `/api/v1/cl/${link}/files-changed`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name GetApiClFilesList
-     * @summary Get Change List file list
-     * @request GET:/api/v1/cl/{link}/files-list
-     */
-    getApiClFilesList: () => {
-      const base = 'GET:/api/v1/cl/{link}/files-list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiClFilesListData>([base]),
-        requestKey: (params: GetApiClFilesListParams) => dataTaggedQueryKey<GetApiClFilesListData>([base, params]),
-        request: ({ link, ...query }: GetApiClFilesListParams, params: RequestParams = {}) =>
-          this.request<GetApiClFilesListData>({
-            path: `/api/v1/cl/${link}/files-list`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClMerge
-     * @summary Approve Change List
-     * @request POST:/api/v1/cl/{link}/merge
-     */
-    postApiClMerge: () => {
-      const base = 'POST:/api/v1/cl/{link}/merge' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClMergeData>([base]),
-        requestKey: (params: PostApiClMergeParams) => dataTaggedQueryKey<PostApiClMergeData>([base, params]),
-        request: ({ link, ...query }: PostApiClMergeParams, params: RequestParams = {}) =>
-          this.request<PostApiClMergeData>({
-            path: `/api/v1/cl/${link}/merge`,
-            method: 'POST',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name GetApiClMergeBox
-     * @summary Get Merge Box to check merge status
-     * @request GET:/api/v1/cl/{link}/merge-box
-     */
-    getApiClMergeBox: () => {
-      const base = 'GET:/api/v1/cl/{link}/merge-box' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiClMergeBoxData>([base]),
-        requestKey: (params: GetApiClMergeBoxParams) => dataTaggedQueryKey<GetApiClMergeBoxData>([base, params]),
-        request: ({ link, ...query }: GetApiClMergeBoxParams, params: RequestParams = {}) =>
-          this.request<GetApiClMergeBoxData>({
-            path: `/api/v1/cl/${link}/merge-box`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClMergeNoAuth
-     * @summary Change List without authentication It's for local testing purposes.
-     * @request POST:/api/v1/cl/{link}/merge-no-auth
-     */
-    postApiClMergeNoAuth: () => {
-      const base = 'POST:/api/v1/cl/{link}/merge-no-auth' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClMergeNoAuthData>([base]),
-        requestKey: (params: PostApiClMergeNoAuthParams) =>
-          dataTaggedQueryKey<PostApiClMergeNoAuthData>([base, params]),
-        request: ({ link, ...query }: PostApiClMergeNoAuthParams, params: RequestParams = {}) =>
-          this.request<PostApiClMergeNoAuthData>({
-            path: `/api/v1/cl/${link}/merge-no-auth`,
-            method: 'POST',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name GetApiClMuiTree
-     * @request GET:/api/v1/cl/{link}/mui-tree
-     */
-    getApiClMuiTree: () => {
-      const base = 'GET:/api/v1/cl/{link}/mui-tree' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiClMuiTreeData>([base]),
-        requestKey: (params: GetApiClMuiTreeParams) => dataTaggedQueryKey<GetApiClMuiTreeData>([base, params]),
-        request: ({ link, ...query }: GetApiClMuiTreeParams, params: RequestParams = {}) =>
-          this.request<GetApiClMuiTreeData>({
-            path: `/api/v1/cl/${link}/mui-tree`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClReopen
-     * @summary Reopen Change List
-     * @request POST:/api/v1/cl/{link}/reopen
-     */
-    postApiClReopen: () => {
-      const base = 'POST:/api/v1/cl/{link}/reopen' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClReopenData>([base]),
-        requestKey: (params: PostApiClReopenParams) => dataTaggedQueryKey<PostApiClReopenData>([base, params]),
-        request: ({ link, ...query }: PostApiClReopenParams, params: RequestParams = {}) =>
-          this.request<PostApiClReopenData>({
-            path: `/api/v1/cl/${link}/reopen`,
-            method: 'POST',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClReviewResolve
-     * @request POST:/api/v1/cl/{link}/review/resolve
-     */
-    postApiClReviewResolve: () => {
-      const base = 'POST:/api/v1/cl/{link}/review/resolve' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClReviewResolveData>([base]),
-        requestKey: (params: PostApiClReviewResolveParams) =>
-          dataTaggedQueryKey<PostApiClReviewResolveData>([base, params]),
-        request: (
-          { link, ...query }: PostApiClReviewResolveParams,
-          data: ChangeReviewStatePayload,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiClReviewResolveData>({
-            path: `/api/v1/cl/${link}/review/resolve`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClReviewerApprove
-     * @summary Change the reviewer approval state
-     * @request POST:/api/v1/cl/{link}/reviewer/approve
-     */
-    postApiClReviewerApprove: () => {
-      const base = 'POST:/api/v1/cl/{link}/reviewer/approve' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClReviewerApproveData>([base]),
-        requestKey: (params: PostApiClReviewerApproveParams) =>
-          dataTaggedQueryKey<PostApiClReviewerApproveData>([base, params]),
-        request: (
-          { link, ...query }: PostApiClReviewerApproveParams,
-          data: ChangeReviewerStatePayload,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiClReviewerApproveData>({
-            path: `/api/v1/cl/${link}/reviewer/approve`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name GetApiClReviewers
-     * @request GET:/api/v1/cl/{link}/reviewers
-     */
-    getApiClReviewers: () => {
-      const base = 'GET:/api/v1/cl/{link}/reviewers' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiClReviewersData>([base]),
-        requestKey: (params: GetApiClReviewersParams) => dataTaggedQueryKey<GetApiClReviewersData>([base, params]),
-        request: ({ link, ...query }: GetApiClReviewersParams, params: RequestParams = {}) =>
-          this.request<GetApiClReviewersData>({
-            path: `/api/v1/cl/${link}/reviewers`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClReviewers
-     * @request POST:/api/v1/cl/{link}/reviewers
-     */
-    postApiClReviewers: () => {
-      const base = 'POST:/api/v1/cl/{link}/reviewers' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClReviewersData>([base]),
-        requestKey: (params: PostApiClReviewersParams) => dataTaggedQueryKey<PostApiClReviewersData>([base, params]),
-        request: ({ link, ...query }: PostApiClReviewersParams, data: ReviewerPayload, params: RequestParams = {}) =>
-          this.request<PostApiClReviewersData>({
-            path: `/api/v1/cl/${link}/reviewers`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name DeleteApiClReviewers
-     * @request DELETE:/api/v1/cl/{link}/reviewers
-     */
-    deleteApiClReviewers: () => {
-      const base = 'DELETE:/api/v1/cl/{link}/reviewers' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiClReviewersData>([base]),
-        requestKey: (params: DeleteApiClReviewersParams) =>
-          dataTaggedQueryKey<DeleteApiClReviewersData>([base, params]),
-        request: ({ link, ...query }: DeleteApiClReviewersParams, data: ReviewerPayload, params: RequestParams = {}) =>
-          this.request<DeleteApiClReviewersData>({
-            path: `/api/v1/cl/${link}/reviewers`,
-            method: 'DELETE',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClStatus
-     * @summary Update CL status (Draft or Open)
-     * @request POST:/api/v1/cl/{link}/status
-     */
-    postApiClStatus: () => {
-      const base = 'POST:/api/v1/cl/{link}/status' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClStatusData>([base]),
-        requestKey: (params: PostApiClStatusParams) => dataTaggedQueryKey<PostApiClStatusData>([base, params]),
-        request: ({ link, ...query }: PostApiClStatusParams, data: UpdateClStatusPayload, params: RequestParams = {}) =>
-          this.request<PostApiClStatusData>({
-            path: `/api/v1/cl/${link}/status`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClTitle
-     * @summary Edit CL title
-     * @request POST:/api/v1/cl/{link}/title
-     */
-    postApiClTitle: () => {
-      const base = 'POST:/api/v1/cl/{link}/title' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClTitleData>([base]),
-        requestKey: (params: PostApiClTitleParams) => dataTaggedQueryKey<PostApiClTitleData>([base, params]),
-        request: ({ link, ...query }: PostApiClTitleParams, data: ContentPayload, params: RequestParams = {}) =>
-          this.request<PostApiClTitleData>({
-            path: `/api/v1/cl/${link}/title`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name PostApiClUpdateBranch
-     * @summary Update Branch for Change List
-     * @request POST:/api/v1/cl/{link}/update-branch
-     */
-    postApiClUpdateBranch: () => {
-      const base = 'POST:/api/v1/cl/{link}/update-branch' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiClUpdateBranchData>([base]),
-        requestKey: (params: PostApiClUpdateBranchParams) =>
-          dataTaggedQueryKey<PostApiClUpdateBranchData>([base, params]),
-        request: ({ link, ...query }: PostApiClUpdateBranchParams, params: RequestParams = {}) =>
-          this.request<PostApiClUpdateBranchData>({
-            path: `/api/v1/cl/${link}/update-branch`,
-            method: 'POST',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Change List
-     * @name GetApiClUpdateStatus
-     * @summary Get Update Branch status
-     * @request GET:/api/v1/cl/{link}/update-status
-     */
-    getApiClUpdateStatus: () => {
-      const base = 'GET:/api/v1/cl/{link}/update-status' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiClUpdateStatusData>([base]),
-        requestKey: (params: GetApiClUpdateStatusParams) =>
-          dataTaggedQueryKey<GetApiClUpdateStatusData>([base, params]),
-        request: ({ link, ...query }: GetApiClUpdateStatusParams, params: RequestParams = {}) =>
-          this.request<GetApiClUpdateStatusData>({
-            path: `/api/v1/cl/${link}/update-status`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  codeReview = {
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name DeleteApiCodeReviewCommentByCommentId
-     * @summary Delete a code review comment
-     * @request DELETE:/api/v1/code_review/comment/{comment_id}
-     */
-    deleteApiCodeReviewCommentByCommentId: () => {
-      const base = 'DELETE:/api/v1/code_review/comment/{comment_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiCodeReviewCommentByCommentIdData>([base]),
-        requestKey: (params: DeleteApiCodeReviewCommentByCommentIdParams) =>
-          dataTaggedQueryKey<DeleteApiCodeReviewCommentByCommentIdData>([base, params]),
-        request: ({ commentId, ...query }: DeleteApiCodeReviewCommentByCommentIdParams, params: RequestParams = {}) =>
-          this.request<DeleteApiCodeReviewCommentByCommentIdData>({
-            path: `/api/v1/code_review/comment/${commentId}`,
-            method: 'DELETE',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name DeleteApiCodeReviewThreadByThreadId
-     * @summary Delete a code review thread and its comments
-     * @request DELETE:/api/v1/code_review/thread/{thread_id}
-     */
-    deleteApiCodeReviewThreadByThreadId: () => {
-      const base = 'DELETE:/api/v1/code_review/thread/{thread_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiCodeReviewThreadByThreadIdData>([base]),
-        requestKey: (params: DeleteApiCodeReviewThreadByThreadIdParams) =>
-          dataTaggedQueryKey<DeleteApiCodeReviewThreadByThreadIdData>([base, params]),
-        request: ({ threadId, ...query }: DeleteApiCodeReviewThreadByThreadIdParams, params: RequestParams = {}) =>
-          this.request<DeleteApiCodeReviewThreadByThreadIdData>({
-            path: `/api/v1/code_review/thread/${threadId}`,
-            method: 'DELETE',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name PostApiCodeReviewUpdate
-     * @summary Update a code review comment
-     * @request POST:/api/v1/code_review/{comment_id}/update
-     */
-    postApiCodeReviewUpdate: () => {
-      const base = 'POST:/api/v1/code_review/{comment_id}/update' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiCodeReviewUpdateData>([base]),
-        requestKey: (params: PostApiCodeReviewUpdateParams) =>
-          dataTaggedQueryKey<PostApiCodeReviewUpdateData>([base, params]),
-        request: (
-          { commentId, ...query }: PostApiCodeReviewUpdateParams,
-          data: UpdateCommentRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiCodeReviewUpdateData>({
-            path: `/api/v1/code_review/${commentId}/update`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name PostApiCodeReviewCommentInit
-     * @summary Initialize a code review comment in a new thread
-     * @request POST:/api/v1/code_review/{link}/comment/init
-     */
-    postApiCodeReviewCommentInit: () => {
-      const base = 'POST:/api/v1/code_review/{link}/comment/init' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiCodeReviewCommentInitData>([base]),
-        requestKey: (params: PostApiCodeReviewCommentInitParams) =>
-          dataTaggedQueryKey<PostApiCodeReviewCommentInitData>([base, params]),
-        request: (
-          { link, ...query }: PostApiCodeReviewCommentInitParams,
-          data: InitializeCommentRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiCodeReviewCommentInitData>({
-            path: `/api/v1/code_review/${link}/comment/init`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name GetApiCodeReviewComments
-     * @summary List code review comments
-     * @request GET:/api/v1/code_review/{link}/comments
-     */
-    getApiCodeReviewComments: () => {
-      const base = 'GET:/api/v1/code_review/{link}/comments' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiCodeReviewCommentsData>([base]),
-        requestKey: (params: GetApiCodeReviewCommentsParams) =>
-          dataTaggedQueryKey<GetApiCodeReviewCommentsData>([base, params]),
-        request: ({ link, ...query }: GetApiCodeReviewCommentsParams, params: RequestParams = {}) =>
-          this.request<GetApiCodeReviewCommentsData>({
-            path: `/api/v1/code_review/${link}/comments`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name PostApiCodeReviewCommentReply
-     * @summary Reply to a code review comment
-     * @request POST:/api/v1/code_review/{thread_id}/comment/reply
-     */
-    postApiCodeReviewCommentReply: () => {
-      const base = 'POST:/api/v1/code_review/{thread_id}/comment/reply' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiCodeReviewCommentReplyData>([base]),
-        requestKey: (params: PostApiCodeReviewCommentReplyParams) =>
-          dataTaggedQueryKey<PostApiCodeReviewCommentReplyData>([base, params]),
-        request: (
-          { threadId, ...query }: PostApiCodeReviewCommentReplyParams,
-          data: CommentReplyRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiCodeReviewCommentReplyData>({
-            path: `/api/v1/code_review/${threadId}/comment/reply`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name PostApiCodeReviewReopen
-     * @summary Reopen a code review thread
-     * @request POST:/api/v1/code_review/{thread_id}/reopen
-     */
-    postApiCodeReviewReopen: () => {
-      const base = 'POST:/api/v1/code_review/{thread_id}/reopen' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiCodeReviewReopenData>([base]),
-        requestKey: (params: PostApiCodeReviewReopenParams) =>
-          dataTaggedQueryKey<PostApiCodeReviewReopenData>([base, params]),
-        request: ({ threadId, ...query }: PostApiCodeReviewReopenParams, params: RequestParams = {}) =>
-          this.request<PostApiCodeReviewReopenData>({
-            path: `/api/v1/code_review/${threadId}/reopen`,
-            method: 'POST',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Code Review
-     * @name PostApiCodeReviewResolve
-     * @summary Resolve a code review thread
-     * @request POST:/api/v1/code_review/{thread_id}/resolve
-     */
-    postApiCodeReviewResolve: () => {
-      const base = 'POST:/api/v1/code_review/{thread_id}/resolve' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiCodeReviewResolveData>([base]),
-        requestKey: (params: PostApiCodeReviewResolveParams) =>
-          dataTaggedQueryKey<PostApiCodeReviewResolveData>([base, params]),
-        request: ({ threadId, ...query }: PostApiCodeReviewResolveParams, params: RequestParams = {}) =>
-          this.request<PostApiCodeReviewResolveData>({
-            path: `/api/v1/code_review/${threadId}/resolve`,
-            method: 'POST',
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  conversationAndComment = {
-    /**
-     * No description
-     *
-     * @tags Conversation and Comment
-     * @name DeleteApiConversationReactionsById
-     * @summary Delete conversation reactions
-     * @request DELETE:/api/v1/conversation/reactions/{id}
-     */
-    deleteApiConversationReactionsById: () => {
-      const base = 'DELETE:/api/v1/conversation/reactions/{id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiConversationReactionsByIdData>([base]),
-        requestKey: (params: DeleteApiConversationReactionsByIdParams) =>
-          dataTaggedQueryKey<DeleteApiConversationReactionsByIdData>([base, params]),
-        request: ({ id, ...query }: DeleteApiConversationReactionsByIdParams, params: RequestParams = {}) =>
-          this.request<DeleteApiConversationReactionsByIdData>({
-            path: `/api/v1/conversation/reactions/${id}`,
-            method: 'DELETE',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Conversation and Comment
-     * @name PostApiConversationByCommentId
-     * @summary Edit comment
-     * @request POST:/api/v1/conversation/{comment_id}
-     */
-    postApiConversationByCommentId: () => {
-      const base = 'POST:/api/v1/conversation/{comment_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiConversationByCommentIdData>([base]),
-        requestKey: (params: PostApiConversationByCommentIdParams) =>
-          dataTaggedQueryKey<PostApiConversationByCommentIdData>([base, params]),
-        request: (
-          { commentId, ...query }: PostApiConversationByCommentIdParams,
-          data: ContentPayload,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiConversationByCommentIdData>({
-            path: `/api/v1/conversation/${commentId}`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Conversation and Comment
-     * @name DeleteApiConversationByCommentId
-     * @summary Delete Comment
-     * @request DELETE:/api/v1/conversation/{comment_id}
-     */
-    deleteApiConversationByCommentId: () => {
-      const base = 'DELETE:/api/v1/conversation/{comment_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiConversationByCommentIdData>([base]),
-        requestKey: (params: DeleteApiConversationByCommentIdParams) =>
-          dataTaggedQueryKey<DeleteApiConversationByCommentIdData>([base, params]),
-        request: ({ commentId, ...query }: DeleteApiConversationByCommentIdParams, params: RequestParams = {}) =>
-          this.request<DeleteApiConversationByCommentIdData>({
-            path: `/api/v1/conversation/${commentId}`,
-            method: 'DELETE',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Conversation and Comment
-     * @name PostApiConversationReactions
-     * @summary Add comment reactions with emoji
-     * @request POST:/api/v1/conversation/{comment_id}/reactions
-     */
-    postApiConversationReactions: () => {
-      const base = 'POST:/api/v1/conversation/{comment_id}/reactions' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiConversationReactionsData>([base]),
-        requestKey: (params: PostApiConversationReactionsParams) =>
-          dataTaggedQueryKey<PostApiConversationReactionsData>([base, params]),
-        request: (
-          { commentId, ...query }: PostApiConversationReactionsParams,
-          data: ReactionRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiConversationReactionsData>({
-            path: `/api/v1/conversation/${commentId}/reactions`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  gpgKey = {
-    /**
-     * No description
-     *
-     * @tags Gpg Key
-     * @name PostApiGpgAdd
-     * @request POST:/api/v1/gpg/add
-     */
-    postApiGpgAdd: () => {
-      const base = 'POST:/api/v1/gpg/add' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiGpgAddData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiGpgAddData>([base]),
-        request: (data: NewGpgRequest, params: RequestParams = {}) =>
-          this.request<PostApiGpgAddData>({
-            path: `/api/v1/gpg/add`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Gpg Key
-     * @name GetApiGpgList
-     * @request GET:/api/v1/gpg/list
-     */
-    getApiGpgList: () => {
-      const base = 'GET:/api/v1/gpg/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiGpgListData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiGpgListData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiGpgListData>({
-            path: `/api/v1/gpg/list`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Gpg Key
-     * @name DeleteApiGpgRemove
-     * @request DELETE:/api/v1/gpg/remove
-     */
-    deleteApiGpgRemove: () => {
-      const base = 'DELETE:/api/v1/gpg/remove' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiGpgRemoveData>([base]),
-        requestKey: () => dataTaggedQueryKey<DeleteApiGpgRemoveData>([base]),
-        request: (data: RemoveGpgRequest, params: RequestParams = {}) =>
-          this.request<DeleteApiGpgRemoveData>({
-            path: `/api/v1/gpg/remove`,
-            method: 'DELETE',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  issueManagement = {
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueAssignees
-     * @summary Update issue related assignees
-     * @request POST:/api/v1/issue/assignees
-     */
-    postApiIssueAssignees: () => {
-      const base = 'POST:/api/v1/issue/assignees' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueAssigneesData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiIssueAssigneesData>([base]),
-        request: (data: AssigneeUpdatePayload, params: RequestParams = {}) =>
-          this.request<PostApiIssueAssigneesData>({
-            path: `/api/v1/issue/assignees`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name GetApiIssueIssueSuggester
-     * @summary Get issue suggester in comment
-     * @request GET:/api/v1/issue/issue_suggester
-     */
-    getApiIssueIssueSuggester: () => {
-      const base = 'GET:/api/v1/issue/issue_suggester' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiIssueIssueSuggesterData>([base]),
-        requestKey: (params: GetApiIssueIssueSuggesterParams) =>
-          dataTaggedQueryKey<GetApiIssueIssueSuggesterData>([base, params]),
-        request: (query: GetApiIssueIssueSuggesterParams, params: RequestParams = {}) =>
-          this.request<GetApiIssueIssueSuggesterData>({
-            path: `/api/v1/issue/issue_suggester`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueLabels
-     * @summary Update issue related labels
-     * @request POST:/api/v1/issue/labels
-     */
-    postApiIssueLabels: () => {
-      const base = 'POST:/api/v1/issue/labels' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueLabelsData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiIssueLabelsData>([base]),
-        request: (data: LabelUpdatePayload, params: RequestParams = {}) =>
-          this.request<PostApiIssueLabelsData>({
-            path: `/api/v1/issue/labels`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueList
-     * @summary Fetch Issue list
-     * @request POST:/api/v1/issue/list
-     */
-    postApiIssueList: () => {
-      const base = 'POST:/api/v1/issue/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueListData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiIssueListData>([base]),
-        request: (data: PageParamsListPayload, params: RequestParams = {}) =>
-          this.request<PostApiIssueListData>({
-            path: `/api/v1/issue/list`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueNew
-     * @summary New Issue
-     * @request POST:/api/v1/issue/new
-     */
-    postApiIssueNew: () => {
-      const base = 'POST:/api/v1/issue/new' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueNewData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiIssueNewData>([base]),
-        request: (data: NewIssue, params: RequestParams = {}) =>
-          this.request<PostApiIssueNewData>({
-            path: `/api/v1/issue/new`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueClose
-     * @summary Close an issue
-     * @request POST:/api/v1/issue/{link}/close
-     */
-    postApiIssueClose: () => {
-      const base = 'POST:/api/v1/issue/{link}/close' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueCloseData>([base]),
-        requestKey: (params: PostApiIssueCloseParams) => dataTaggedQueryKey<PostApiIssueCloseData>([base, params]),
-        request: ({ link, ...query }: PostApiIssueCloseParams, params: RequestParams = {}) =>
-          this.request<PostApiIssueCloseData>({
-            path: `/api/v1/issue/${link}/close`,
-            method: 'POST',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueComment
-     * @summary Add new comment on Issue
-     * @request POST:/api/v1/issue/{link}/comment
-     */
-    postApiIssueComment: () => {
-      const base = 'POST:/api/v1/issue/{link}/comment' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueCommentData>([base]),
-        requestKey: (params: PostApiIssueCommentParams) => dataTaggedQueryKey<PostApiIssueCommentData>([base, params]),
-        request: ({ link, ...query }: PostApiIssueCommentParams, data: ContentPayload, params: RequestParams = {}) =>
-          this.request<PostApiIssueCommentData>({
-            path: `/api/v1/issue/${link}/comment`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name GetApiIssueDetail
-     * @summary Get issue details
-     * @request GET:/api/v1/issue/{link}/detail
-     */
-    getApiIssueDetail: () => {
-      const base = 'GET:/api/v1/issue/{link}/detail' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiIssueDetailData>([base]),
-        requestKey: (params: GetApiIssueDetailParams) => dataTaggedQueryKey<GetApiIssueDetailData>([base, params]),
-        request: ({ link, ...query }: GetApiIssueDetailParams, params: RequestParams = {}) =>
-          this.request<GetApiIssueDetailData>({
-            path: `/api/v1/issue/${link}/detail`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueReopen
-     * @summary Reopen an issue
-     * @request POST:/api/v1/issue/{link}/reopen
-     */
-    postApiIssueReopen: () => {
-      const base = 'POST:/api/v1/issue/{link}/reopen' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueReopenData>([base]),
-        requestKey: (params: PostApiIssueReopenParams) => dataTaggedQueryKey<PostApiIssueReopenData>([base, params]),
-        request: ({ link, ...query }: PostApiIssueReopenParams, params: RequestParams = {}) =>
-          this.request<PostApiIssueReopenData>({
-            path: `/api/v1/issue/${link}/reopen`,
-            method: 'POST',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Issue Management
-     * @name PostApiIssueTitle
-     * @summary Edit issue title
-     * @request POST:/api/v1/issue/{link}/title
-     */
-    postApiIssueTitle: () => {
-      const base = 'POST:/api/v1/issue/{link}/title' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiIssueTitleData>([base]),
-        requestKey: (params: PostApiIssueTitleParams) => dataTaggedQueryKey<PostApiIssueTitleData>([base, params]),
-        request: ({ link, ...query }: PostApiIssueTitleParams, data: ContentPayload, params: RequestParams = {}) =>
-          this.request<PostApiIssueTitleData>({
-            path: `/api/v1/issue/${link}/title`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  labelManagement = {
-    /**
-     * No description
-     *
-     * @tags Label Management
-     * @name PostApiLabelList
-     * @summary List label in page
-     * @request POST:/api/v1/label/list
-     */
-    postApiLabelList: () => {
-      const base = 'POST:/api/v1/label/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiLabelListData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiLabelListData>([base]),
-        request: (data: PageParamsString, params: RequestParams = {}) =>
-          this.request<PostApiLabelListData>({
-            path: `/api/v1/label/list`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Label Management
-     * @name PostApiLabelNew
-     * @summary New label
-     * @request POST:/api/v1/label/new
-     */
-    postApiLabelNew: () => {
-      const base = 'POST:/api/v1/label/new' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiLabelNewData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiLabelNewData>([base]),
-        request: (data: NewLabel, params: RequestParams = {}) =>
-          this.request<PostApiLabelNewData>({
-            path: `/api/v1/label/new`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Label Management
-     * @name GetApiLabelById
-     * @summary Fetch label details
-     * @request GET:/api/v1/label/{id}
-     */
-    getApiLabelById: () => {
-      const base = 'GET:/api/v1/label/{id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiLabelByIdData>([base]),
-        requestKey: (params: GetApiLabelByIdParams) => dataTaggedQueryKey<GetApiLabelByIdData>([base, params]),
-        request: ({ id, ...query }: GetApiLabelByIdParams, params: RequestParams = {}) =>
-          this.request<GetApiLabelByIdData>({
-            path: `/api/v1/label/${id}`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  gitLfs = {
-    /**
-     * @description List LFS locks. This handler is also available at `/info/lfs/locks` for Git LFS client compatibility.
-     *
-     * @tags Git LFS
-     * @name GetApiLfsLocks
-     * @summary List LFS locks
-     * @request GET:/api/v1/lfs/locks
-     */
-    getApiLfsLocks: () => {
-      const base = 'GET:/api/v1/lfs/locks' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiLfsLocksData>([base]),
-        requestKey: (params: GetApiLfsLocksParams) => dataTaggedQueryKey<GetApiLfsLocksData>([base, params]),
-        request: (query: GetApiLfsLocksParams, params: RequestParams = {}) =>
-          this.request<GetApiLfsLocksData>({
-            path: `/api/v1/lfs/locks`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Create an LFS lock. This handler is also available at `/info/lfs/locks` for Git LFS client compatibility.
-     *
-     * @tags Git LFS
-     * @name PostApiLfsLocks
-     * @summary Create an LFS lock
-     * @request POST:/api/v1/lfs/locks
-     */
-    postApiLfsLocks: () => {
-      const base = 'POST:/api/v1/lfs/locks' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiLfsLocksData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiLfsLocksData>([base]),
-        request: (data: LockRequest, params: RequestParams = {}) =>
-          this.request<PostApiLfsLocksData>({
-            path: `/api/v1/lfs/locks`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Verify LFS locks. This handler is also available at `/info/lfs/locks/verify` for Git LFS client compatibility.
-     *
-     * @tags Git LFS
-     * @name PostApiLfsLocksVerify
-     * @summary Verify LFS locks
-     * @request POST:/api/v1/lfs/locks/verify
-     */
-    postApiLfsLocksVerify: () => {
-      const base = 'POST:/api/v1/lfs/locks/verify' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiLfsLocksVerifyData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiLfsLocksVerifyData>([base]),
-        request: (data: VerifiableLockRequest, params: RequestParams = {}) =>
-          this.request<PostApiLfsLocksVerifyData>({
-            path: `/api/v1/lfs/locks/verify`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Delete an LFS lock. This handler is also available at `/info/lfs/locks/{id}/unlock` for Git LFS client compatibility.
-     *
-     * @tags Git LFS
-     * @name PostApiLfsLocksUnlock
-     * @summary Delete an LFS lock
-     * @request POST:/api/v1/lfs/locks/{id}/unlock
-     */
-    postApiLfsLocksUnlock: () => {
-      const base = 'POST:/api/v1/lfs/locks/{id}/unlock' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiLfsLocksUnlockData>([base]),
-        requestKey: (params: PostApiLfsLocksUnlockParams) =>
-          dataTaggedQueryKey<PostApiLfsLocksUnlockData>([base, params]),
-        request: ({ id, ...query }: PostApiLfsLocksUnlockParams, data: UnlockRequest, params: RequestParams = {}) =>
-          this.request<PostApiLfsLocksUnlockData>({
-            path: `/api/v1/lfs/locks/${id}/unlock`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Process LFS batch request. This handler is also available at `/info/lfs/objects/batch` for Git LFS client compatibility.
-     *
-     * @tags Git LFS
-     * @name PostApiLfsObjectsBatch
-     * @summary Process LFS batch request
-     * @request POST:/api/v1/lfs/objects/batch
-     */
-    postApiLfsObjectsBatch: () => {
-      const base = 'POST:/api/v1/lfs/objects/batch' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiLfsObjectsBatchData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiLfsObjectsBatchData>([base]),
-        request: (data: BatchRequest, params: RequestParams = {}) =>
-          this.request<PostApiLfsObjectsBatchData>({
-            path: `/api/v1/lfs/objects/batch`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Download an LFS object. This handler is also available at `/info/lfs/objects/{object_id}` for Git LFS client compatibility.
-     *
-     * @tags Git LFS
-     * @name GetApiLfsObjectsByObjectId
-     * @summary Download an LFS object
-     * @request GET:/api/v1/lfs/objects/{object_id}
-     */
-    getApiLfsObjectsByObjectId: () => {
-      const base = 'GET:/api/v1/lfs/objects/{object_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<Blob>([base]),
-        requestKey: (params: GetApiLfsObjectsByObjectIdParams) => dataTaggedQueryKey<Blob>([base, params]),
-        request: ({ objectId, ...query }: GetApiLfsObjectsByObjectIdParams, params: RequestParams = {}) =>
-          this.request<Blob>({
-            path: `/api/v1/lfs/objects/${objectId}`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Upload an LFS object. This handler is also available at `/info/lfs/objects/{object_id}` for Git LFS client compatibility.
-     *
-     * @tags Git LFS
-     * @name PutApiLfsObjectsByObjectId
-     * @summary Upload an LFS object
-     * @request PUT:/api/v1/lfs/objects/{object_id}
-     */
-    putApiLfsObjectsByObjectId: () => {
-      const base = 'PUT:/api/v1/lfs/objects/{object_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PutApiLfsObjectsByObjectIdData>([base]),
-        requestKey: (params: PutApiLfsObjectsByObjectIdParams) =>
-          dataTaggedQueryKey<PutApiLfsObjectsByObjectIdData>([base, params]),
-        request: (
-          { objectId, ...query }: PutApiLfsObjectsByObjectIdParams,
-          data: PutApiLfsObjectsByObjectIdPayload,
-          params: RequestParams = {}
-        ) =>
-          this.request<PutApiLfsObjectsByObjectIdData>({
-            path: `/api/v1/lfs/objects/${objectId}`,
-            method: 'PUT',
-            body: data,
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  mergeQueueManagement = {
-    /**
-     * No description
-     *
-     * @tags Merge Queue Management
-     * @name PostApiMergeQueueAdd
-     * @request POST:/api/v1/merge-queue/add
-     */
-    postApiMergeQueueAdd: () => {
-      const base = 'POST:/api/v1/merge-queue/add' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiMergeQueueAddData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiMergeQueueAddData>([base]),
-        request: (data: AddToQueueRequest, params: RequestParams = {}) =>
-          this.request<PostApiMergeQueueAddData>({
-            path: `/api/v1/merge-queue/add`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Merge Queue Management
-     * @name PostApiMergeQueueCancelAll
-     * @request POST:/api/v1/merge-queue/cancel-all
-     */
-    postApiMergeQueueCancelAll: () => {
-      const base = 'POST:/api/v1/merge-queue/cancel-all' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiMergeQueueCancelAllData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiMergeQueueCancelAllData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<PostApiMergeQueueCancelAllData>({
-            path: `/api/v1/merge-queue/cancel-all`,
-            method: 'POST',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Merge Queue Management
-     * @name GetApiMergeQueueList
-     * @request GET:/api/v1/merge-queue/list
-     */
-    getApiMergeQueueList: () => {
-      const base = 'GET:/api/v1/merge-queue/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiMergeQueueListData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiMergeQueueListData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiMergeQueueListData>({
-            path: `/api/v1/merge-queue/list`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Merge Queue Management
-     * @name DeleteApiMergeQueueRemoveByClLink
-     * @request DELETE:/api/v1/merge-queue/remove/{cl_link}
-     */
-    deleteApiMergeQueueRemoveByClLink: () => {
-      const base = 'DELETE:/api/v1/merge-queue/remove/{cl_link}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiMergeQueueRemoveByClLinkData>([base]),
-        requestKey: (params: DeleteApiMergeQueueRemoveByClLinkParams) =>
-          dataTaggedQueryKey<DeleteApiMergeQueueRemoveByClLinkData>([base, params]),
-        request: ({ clLink, ...query }: DeleteApiMergeQueueRemoveByClLinkParams, params: RequestParams = {}) =>
-          this.request<DeleteApiMergeQueueRemoveByClLinkData>({
-            path: `/api/v1/merge-queue/remove/${clLink}`,
-            method: 'DELETE',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Merge Queue Management
-     * @name PostApiMergeQueueRetryByClLink
-     * @request POST:/api/v1/merge-queue/retry/{cl_link}
-     */
-    postApiMergeQueueRetryByClLink: () => {
-      const base = 'POST:/api/v1/merge-queue/retry/{cl_link}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiMergeQueueRetryByClLinkData>([base]),
-        requestKey: (params: PostApiMergeQueueRetryByClLinkParams) =>
-          dataTaggedQueryKey<PostApiMergeQueueRetryByClLinkData>([base, params]),
-        request: ({ clLink, ...query }: PostApiMergeQueueRetryByClLinkParams, params: RequestParams = {}) =>
-          this.request<PostApiMergeQueueRetryByClLinkData>({
-            path: `/api/v1/merge-queue/retry/${clLink}`,
-            method: 'POST',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Merge Queue Management
-     * @name GetApiMergeQueueStats
-     * @request GET:/api/v1/merge-queue/stats
-     */
-    getApiMergeQueueStats: () => {
-      const base = 'GET:/api/v1/merge-queue/stats' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiMergeQueueStatsData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiMergeQueueStatsData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiMergeQueueStatsData>({
-            path: `/api/v1/merge-queue/stats`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Merge Queue Management
-     * @name GetApiMergeQueueStatusByClLink
-     * @request GET:/api/v1/merge-queue/status/{cl_link}
-     */
-    getApiMergeQueueStatusByClLink: () => {
-      const base = 'GET:/api/v1/merge-queue/status/{cl_link}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiMergeQueueStatusByClLinkData>([base]),
-        requestKey: (params: GetApiMergeQueueStatusByClLinkParams) =>
-          dataTaggedQueryKey<GetApiMergeQueueStatusByClLinkData>([base, params]),
-        request: ({ clLink, ...query }: GetApiMergeQueueStatusByClLinkParams, params: RequestParams = {}) =>
-          this.request<GetApiMergeQueueStatusByClLinkData>({
-            path: `/api/v1/merge-queue/status/${clLink}`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  syncNotesState = {
-    /**
-     * No description
-     *
-     * @tags sync-notes-state
-     * @name GetApiOrganizationsNotesSyncState
-     * @request GET:/api/v1/organizations/{org_slug}/notes/{id}/sync_state
-     */
-    getApiOrganizationsNotesSyncState: () => {
-      const base = 'GET:/api/v1/organizations/{org_slug}/notes/{id}/sync_state' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiOrganizationsNotesSyncStateData>([base]),
-        requestKey: (params: GetApiOrganizationsNotesSyncStateParams) =>
-          dataTaggedQueryKey<GetApiOrganizationsNotesSyncStateData>([base, params]),
-        request: ({ orgSlug, id, ...query }: GetApiOrganizationsNotesSyncStateParams, params: RequestParams = {}) =>
-          this.request<GetApiOrganizationsNotesSyncStateData>({
-            path: `/api/v1/organizations/${orgSlug}/notes/${id}/sync_state`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags sync-notes-state
-     * @name PatchApiOrganizationsNotesSyncState
-     * @request PATCH:/api/v1/organizations/{org_slug}/notes/{id}/sync_state
-     */
-    patchApiOrganizationsNotesSyncState: () => {
-      const base = 'PATCH:/api/v1/organizations/{org_slug}/notes/{id}/sync_state' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PatchApiOrganizationsNotesSyncStateData>([base]),
-        requestKey: (params: PatchApiOrganizationsNotesSyncStateParams) =>
-          dataTaggedQueryKey<PatchApiOrganizationsNotesSyncStateData>([base, params]),
-        request: (
-          { orgSlug, id, ...query }: PatchApiOrganizationsNotesSyncStateParams,
-          data: NoteUpdateRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PatchApiOrganizationsNotesSyncStateData>({
-            path: `/api/v1/organizations/${orgSlug}/notes/${id}/sync_state`,
-            method: 'PATCH',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  repoCreationAndSynchronisation = {
-    /**
-     * No description
-     *
-     * @tags Repo creation and synchronisation
-     * @name PostApiRepoClone
-     * @request POST:/api/v1/repo/clone
-     */
-    postApiRepoClone: () => {
-      const base = 'POST:/api/v1/repo/clone' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiRepoCloneData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiRepoCloneData>([base]),
-        request: (data: CloneRepoPayload, params: RequestParams = {}) =>
-          this.request<PostApiRepoCloneData>({
-            path: `/api/v1/repo/clone`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  repoArtifacts = {
-    /**
-     * No description
-     *
-     * @tags Repo Artifacts
-     * @name PostApiReposArtifactsBatch
-     * @summary Batch negotiate repo-scoped artifact uploads.
-     * @request POST:/api/v1/repos/{repo}/artifacts/batch
-     */
-    postApiReposArtifactsBatch: () => {
-      const base = 'POST:/api/v1/repos/{repo}/artifacts/batch' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiReposArtifactsBatchData>([base]),
-        requestKey: (params: PostApiReposArtifactsBatchParams) =>
-          dataTaggedQueryKey<PostApiReposArtifactsBatchData>([base, params]),
-        request: (
-          { repo, ...query }: PostApiReposArtifactsBatchParams,
-          data: ArtifactBatchRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiReposArtifactsBatchData>({
-            path: `/api/v1/repos/${repo}/artifacts/batch`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Repo Artifacts
-     * @name PostApiReposArtifactsCommit
-     * @summary Commit an artifact set manifest to make it queryable.
-     * @request POST:/api/v1/repos/{repo}/artifacts/commit
-     */
-    postApiReposArtifactsCommit: () => {
-      const base = 'POST:/api/v1/repos/{repo}/artifacts/commit' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiReposArtifactsCommitData>([base]),
-        requestKey: (params: PostApiReposArtifactsCommitParams) =>
-          dataTaggedQueryKey<PostApiReposArtifactsCommitData>([base, params]),
-        request: (
-          { repo, ...query }: PostApiReposArtifactsCommitParams,
-          data: ArtifactCommitRequest,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiReposArtifactsCommitData>({
-            path: `/api/v1/repos/${repo}/artifacts/commit`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Repo Artifacts
-     * @name GetApiReposArtifactsDiscovery
-     * @summary Discover artifact protocol capabilities for a repo (see `docs/artifacts-protocol.md`).
-     * @request GET:/api/v1/repos/{repo}/artifacts/discovery
-     */
-    getApiReposArtifactsDiscovery: () => {
-      const base = 'GET:/api/v1/repos/{repo}/artifacts/discovery' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiReposArtifactsDiscoveryData>([base]),
-        requestKey: (params: GetApiReposArtifactsDiscoveryParams) =>
-          dataTaggedQueryKey<GetApiReposArtifactsDiscoveryData>([base, params]),
-        request: ({ repo, ...query }: GetApiReposArtifactsDiscoveryParams, params: RequestParams = {}) =>
-          this.request<GetApiReposArtifactsDiscoveryData>({
-            path: `/api/v1/repos/${repo}/artifacts/discovery`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Repo Artifacts
-     * @name GetApiReposArtifactsObjectsByOid
-     * @summary Download object bytes, redirect to signed URL, or return a JSON download link (see protocol §8.7.4).
-     * @request GET:/api/v1/repos/{repo}/artifacts/objects/{oid}
-     */
-    getApiReposArtifactsObjectsByOid: () => {
-      const base = 'GET:/api/v1/repos/{repo}/artifacts/objects/{oid}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiReposArtifactsObjectsByOidData>([base]),
-        requestKey: (params: GetApiReposArtifactsObjectsByOidParams) =>
-          dataTaggedQueryKey<GetApiReposArtifactsObjectsByOidData>([base, params]),
-        request: ({ repo, oid, ...query }: GetApiReposArtifactsObjectsByOidParams, params: RequestParams = {}) =>
-          this.request<GetApiReposArtifactsObjectsByOidData>({
-            path: `/api/v1/repos/${repo}/artifacts/objects/${oid}`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Repo Artifacts
-     * @name PutApiReposArtifactsObjectsByOid
-     * @summary Fallback endpoint to upload object bytes through the Mono server (when signed URLs are unavailable).
-     * @request PUT:/api/v1/repos/{repo}/artifacts/objects/{oid}
-     */
-    putApiReposArtifactsObjectsByOid: () => {
-      const base = 'PUT:/api/v1/repos/{repo}/artifacts/objects/{oid}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PutApiReposArtifactsObjectsByOidData>([base]),
-        requestKey: (params: PutApiReposArtifactsObjectsByOidParams) =>
-          dataTaggedQueryKey<PutApiReposArtifactsObjectsByOidData>([base, params]),
-        request: (
-          { repo, oid, ...query }: PutApiReposArtifactsObjectsByOidParams,
-          data: PutApiReposArtifactsObjectsByOidPayload,
-          params: RequestParams = {}
-        ) =>
-          this.request<PutApiReposArtifactsObjectsByOidData>({
-            path: `/api/v1/repos/${repo}/artifacts/objects/${oid}`,
-            method: 'PUT',
-            body: data,
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Repo Artifacts
-     * @name HeadApiReposArtifactsObjectsByOid
-     * @summary `HEAD .../objects/{oid}` — metadata only (protocol §8.7.4 optional).
-     * @request HEAD:/api/v1/repos/{repo}/artifacts/objects/{oid}
-     */
-    headApiReposArtifactsObjectsByOid: () => {
-      const base = 'HEAD:/api/v1/repos/{repo}/artifacts/objects/{oid}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<Blob>([base]),
-        requestKey: (params: HeadApiReposArtifactsObjectsByOidParams) => dataTaggedQueryKey<Blob>([base, params]),
-        request: ({ repo, oid, ...query }: HeadApiReposArtifactsObjectsByOidParams, params: RequestParams = {}) =>
-          this.request<Blob>({
-            path: `/api/v1/repos/${repo}/artifacts/objects/${oid}`,
-            method: 'HEAD',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Repo Artifacts
-     * @name GetApiReposArtifactsResolveFile
-     * @summary Resolve latest committed file row by logical path and optional metadata filters.
-     * @request GET:/api/v1/repos/{repo}/artifacts/resolve-file
-     */
-    getApiReposArtifactsResolveFile: () => {
-      const base = 'GET:/api/v1/repos/{repo}/artifacts/resolve-file' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiReposArtifactsResolveFileData>([base]),
-        requestKey: (params: GetApiReposArtifactsResolveFileParams) =>
-          dataTaggedQueryKey<GetApiReposArtifactsResolveFileData>([base, params]),
-        request: ({ repo, ...query }: GetApiReposArtifactsResolveFileParams, params: RequestParams = {}) =>
-          this.request<GetApiReposArtifactsResolveFileData>({
-            path: `/api/v1/repos/${repo}/artifacts/resolve-file`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Repo Artifacts
-     * @name GetApiReposArtifactsSets
-     * @summary List committed artifact sets for a repo (paginated).
-     * @request GET:/api/v1/repos/{repo}/artifacts/sets
-     */
-    getApiReposArtifactsSets: () => {
-      const base = 'GET:/api/v1/repos/{repo}/artifacts/sets' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiReposArtifactsSetsData>([base]),
-        requestKey: (params: GetApiReposArtifactsSetsParams) =>
-          dataTaggedQueryKey<GetApiReposArtifactsSetsData>([base, params]),
-        request: ({ repo, ...query }: GetApiReposArtifactsSetsParams, params: RequestParams = {}) =>
-          this.request<GetApiReposArtifactsSetsData>({
-            path: `/api/v1/repos/${repo}/artifacts/sets`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Repo Artifacts
-     * @name GetApiReposArtifactsSetsByArtifactSetId
-     * @summary Get one artifact set manifest (metadata + files).
-     * @request GET:/api/v1/repos/{repo}/artifacts/sets/{artifact_set_id}
-     */
-    getApiReposArtifactsSetsByArtifactSetId: () => {
-      const base = 'GET:/api/v1/repos/{repo}/artifacts/sets/{artifact_set_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiReposArtifactsSetsByArtifactSetIdData>([base]),
-        requestKey: (params: GetApiReposArtifactsSetsByArtifactSetIdParams) =>
-          dataTaggedQueryKey<GetApiReposArtifactsSetsByArtifactSetIdData>([base, params]),
-        request: (
-          { repo, artifactSetId, ...query }: GetApiReposArtifactsSetsByArtifactSetIdParams,
-          params: RequestParams = {}
-        ) =>
-          this.request<GetApiReposArtifactsSetsByArtifactSetIdData>({
-            path: `/api/v1/repos/${repo}/artifacts/sets/${artifactSetId}`,
-            method: 'GET',
-            query: query,
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  sidebarManagement = {
-    /**
-     * No description
-     *
-     * @tags Sidebar Management
-     * @name GetApiSidebarList
-     * @summary Get all sidebar menu
-     * @request GET:/api/v1/sidebar/list
-     */
-    getApiSidebarList: () => {
-      const base = 'GET:/api/v1/sidebar/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiSidebarListData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiSidebarListData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiSidebarListData>({
-            path: `/api/v1/sidebar/list`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Sidebar Management
-     * @name PostApiSidebarNew
-     * @summary New sidebar menu
-     * @request POST:/api/v1/sidebar/new
-     */
-    postApiSidebarNew: () => {
-      const base = 'POST:/api/v1/sidebar/new' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiSidebarNewData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiSidebarNewData>([base]),
-        request: (data: CreateSidebarPayload, params: RequestParams = {}) =>
-          this.request<PostApiSidebarNewData>({
-            path: `/api/v1/sidebar/new`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * @description Sync sidebar menus. Each `public_id` and `order_index` must be unique across all sidebar items. The operation will fail if: - A new item has a `public_id` that already exists - An update tries to set a `public_id` to one that's already in use by another item - Multiple items in the payload have the same `order_index` - An update tries to set an `order_index` that's already in use The transaction will be rolled back if any of these constraints are violated.
-     *
-     * @tags Sidebar Management
-     * @name PostApiSidebarSync
-     * @summary Sync sidebar menus
-     * @request POST:/api/v1/sidebar/sync
-     */
-    postApiSidebarSync: () => {
-      const base = 'POST:/api/v1/sidebar/sync' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiSidebarSyncData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiSidebarSyncData>([base]),
-        request: (data: PostApiSidebarSyncPayload, params: RequestParams = {}) =>
-          this.request<PostApiSidebarSyncData>({
-            path: `/api/v1/sidebar/sync`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Sidebar Management
-     * @name PostApiSidebarUpdateById
-     * @summary Update sidebar menu
-     * @request POST:/api/v1/sidebar/update/{id}
-     */
-    postApiSidebarUpdateById: () => {
-      const base = 'POST:/api/v1/sidebar/update/{id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiSidebarUpdateByIdData>([base]),
-        requestKey: (params: PostApiSidebarUpdateByIdParams) =>
-          dataTaggedQueryKey<PostApiSidebarUpdateByIdData>([base, params]),
-        request: (
-          { id, ...query }: PostApiSidebarUpdateByIdParams,
-          data: UpdateSidebarPayload,
-          params: RequestParams = {}
-        ) =>
-          this.request<PostApiSidebarUpdateByIdData>({
-            path: `/api/v1/sidebar/update/${id}`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Sidebar Management
-     * @name DeleteApiSidebarById
-     * @summary Delete sidebar menu
-     * @request DELETE:/api/v1/sidebar/{id}
-     */
-    deleteApiSidebarById: () => {
-      const base = 'DELETE:/api/v1/sidebar/{id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiSidebarByIdData>([base]),
-        requestKey: (params: DeleteApiSidebarByIdParams) =>
-          dataTaggedQueryKey<DeleteApiSidebarByIdData>([base, params]),
-        request: ({ id, ...query }: DeleteApiSidebarByIdParams, params: RequestParams = {}) =>
-          this.request<DeleteApiSidebarByIdData>({
-            path: `/api/v1/sidebar/${id}`,
-            method: 'DELETE',
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  systemCommon = {
-    /**
-     * No description
-     *
-     * @tags System Common
-     * @name GetApiStatus
-     * @summary Health Check
-     * @request GET:/api/v1/status
-     */
-    getApiStatus: () => {
-      const base = 'GET:/api/v1/status' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiStatusData>([base]),
-        requestKey: () => dataTaggedQueryKey<GetApiStatusData>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetApiStatusData>({
-            path: `/api/v1/status`,
-            method: 'GET',
-            ...params
-          })
-      }
-    }
-  }
-  tagManagement = {
-    /**
-     * No description
-     *
-     * @tags Tag Management
-     * @name PostApiTags
-     * @summary Create Tag
-     * @request POST:/api/v1/tags
-     */
-    postApiTags: () => {
-      const base = 'POST:/api/v1/tags' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiTagsData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiTagsData>([base]),
-        request: (data: CreateTagRequest, params: RequestParams = {}) =>
-          this.request<PostApiTagsData>({
-            path: `/api/v1/tags`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Tag Management
-     * @name PostApiTagsList
-     * @summary List all Tags
-     * @request POST:/api/v1/tags/list
-     */
-    postApiTagsList: () => {
-      const base = 'POST:/api/v1/tags/list' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostApiTagsListData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostApiTagsListData>([base]),
-        request: (data: PageParamsString, params: RequestParams = {}) =>
-          this.request<PostApiTagsListData>({
-            path: `/api/v1/tags/list`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Tag Management
-     * @name GetApiTagsByName
-     * @summary Get Tag by name
-     * @request GET:/api/v1/tags/{name}
-     */
-    getApiTagsByName: () => {
-      const base = 'GET:/api/v1/tags/{name}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetApiTagsByNameData>([base]),
-        requestKey: (params: GetApiTagsByNameParams) => dataTaggedQueryKey<GetApiTagsByNameData>([base, params]),
-        request: ({ name, ...query }: GetApiTagsByNameParams, params: RequestParams = {}) =>
-          this.request<GetApiTagsByNameData>({
-            path: `/api/v1/tags/${name}`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Tag Management
-     * @name DeleteApiTagsByName
-     * @summary Delete Tag
-     * @request DELETE:/api/v1/tags/{name}
-     */
-    deleteApiTagsByName: () => {
-      const base = 'DELETE:/api/v1/tags/{name}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<DeleteApiTagsByNameData>([base]),
-        requestKey: (params: DeleteApiTagsByNameParams) => dataTaggedQueryKey<DeleteApiTagsByNameData>([base, params]),
-        request: ({ name, ...query }: DeleteApiTagsByNameParams, params: RequestParams = {}) =>
-          this.request<DeleteApiTagsByNameData>({
-            path: `/api/v1/tags/${name}`,
-            method: 'DELETE',
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  worker = {
+  id = {
     /**
      * No description
      *
@@ -22553,9 +22345,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetOrionClientStatusByIdData>([base]),
-        requestKey: (params: GetOrionClientStatusByIdParams) =>
-          dataTaggedQueryKey<GetOrionClientStatusByIdData>([base, params]),
-        request: ({ id, ...query }: GetOrionClientStatusByIdParams, params: RequestParams = {}) =>
+        requestKey: (id: string) => dataTaggedQueryKey<GetOrionClientStatusByIdData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
           this.request<GetOrionClientStatusByIdData>({
             path: `/orion-client-status/${id}`,
             method: 'GET',
@@ -22568,30 +22359,27 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags Worker
-     * @name PostOrionClientsInfo
-     * @summary Endpoint to retrieve paginated Orion client information.
-     * @request POST:/orion-clients-info
+     * @tags Task
+     * @name GetTaskOutputById
+     * @summary Streams build output logs in real-time using Server-Sent Events (SSE) Continuously monitors the log file and streams new content as it becomes available
+     * @request GET:/task-output/{id}
      */
-    postOrionClientsInfo: () => {
-      const base = 'POST:/orion-clients-info' as const
+    getTaskOutputById: () => {
+      const base = 'GET:/task-output/{id}' as const
 
       return {
-        baseKey: dataTaggedQueryKey<PostOrionClientsInfoData>([base]),
-        requestKey: () => dataTaggedQueryKey<PostOrionClientsInfoData>([base]),
-        request: (data: PageParamsOrionClientQuery, params: RequestParams = {}) =>
-          this.request<PostOrionClientsInfoData>({
-            path: `/orion-clients-info`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
+        baseKey: dataTaggedQueryKey<GetTaskOutputByIdData>([base]),
+        requestKey: (id: string) => dataTaggedQueryKey<GetTaskOutputByIdData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
+          this.request<GetTaskOutputByIdData>({
+            path: `/task-output/${id}`,
+            method: 'GET',
             ...params
           })
       }
     }
   }
-  targetStatus = {
+  targetId = {
     /**
      * No description
      *
@@ -22614,8 +22402,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
             ...params
           })
       }
-    },
-
+    }
+  }
+  allTargetStatus = {
     /**
      * No description
      *
@@ -22629,17 +22418,168 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetAllTargetStatusByTaskIdV2Data>([base]),
-        requestKey: (params: GetAllTargetStatusByTaskIdV2Params) =>
-          dataTaggedQueryKey<GetAllTargetStatusByTaskIdV2Data>([base, params]),
-        request: ({ taskId, ...query }: GetAllTargetStatusByTaskIdV2Params, params: RequestParams = {}) =>
+        requestKey: (taskId: string) => dataTaggedQueryKey<GetAllTargetStatusByTaskIdV2Data>([base, taskId]),
+        request: (taskId: string, params: RequestParams = {}) =>
           this.request<GetAllTargetStatusByTaskIdV2Data>({
             path: `/v2/all-target-status/${taskId}`,
             method: 'GET',
             ...params
           })
       }
-    },
+    }
+  }
+  buildEvents = {
+    /**
+     * No description
+     *
+     * @tags Build
+     * @name GetBuildEventsByTaskIdV2
+     * @request GET:/v2/build-events/{task_id}
+     */
+    getBuildEventsByTaskIdV2: () => {
+      const base = 'GET:/v2/build-events/{task_id}' as const
 
+      return {
+        baseKey: dataTaggedQueryKey<GetBuildEventsByTaskIdV2Data>([base]),
+        requestKey: (taskId: string) => dataTaggedQueryKey<GetBuildEventsByTaskIdV2Data>([base, taskId]),
+        request: (taskId: string, params: RequestParams = {}) =>
+          this.request<GetBuildEventsByTaskIdV2Data>({
+            path: `/v2/build-events/${taskId}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  buildState = {
+    /**
+     * No description
+     *
+     * @tags Build
+     * @name GetBuildStateByBuildIdV2
+     * @summary Get build state by build ID
+     * @request GET:/v2/build-state/{build_id}
+     */
+    getBuildStateByBuildIdV2: () => {
+      const base = 'GET:/v2/build-state/{build_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetBuildStateByBuildIdV2Data>([base]),
+        requestKey: (buildId: string) => dataTaggedQueryKey<GetBuildStateByBuildIdV2Data>([base, buildId]),
+        request: (buildId: string, params: RequestParams = {}) =>
+          this.request<GetBuildStateByBuildIdV2Data>({
+            path: `/v2/build-state/${buildId}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  builds = {
+    /**
+     * No description
+     *
+     * @tags Build
+     * @name GetBuildsLogsV2
+     * @summary Get complete log for a specific build event
+     * @request GET:/v2/builds/{build_id}/logs
+     */
+    getBuildsLogsV2: () => {
+      const base = 'GET:/v2/builds/{build_id}/logs' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetBuildsLogsV2Data>([base]),
+        requestKey: (buildId: string) => dataTaggedQueryKey<GetBuildsLogsV2Data>([base, buildId]),
+        request: (buildId: string, params: RequestParams = {}) =>
+          this.request<GetBuildsLogsV2Data>({
+            path: `/v2/builds/${buildId}/logs`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  health = {
+    /**
+     * No description
+     *
+     * @tags System
+     * @name GetHealthV2
+     * @summary Health check endpoint for Orion Server Returns simple health status based on database connectivity
+     * @request GET:/v2/health
+     */
+    getHealthV2: () => {
+      const base = 'GET:/v2/health' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetHealthV2Data>([base]),
+        requestKey: () => dataTaggedQueryKey<GetHealthV2Data>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetHealthV2Data>({
+            path: `/v2/health`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  latestBuildResult = {
+    /**
+     * No description
+     *
+     * @tags Build
+     * @name GetLatestBuildResultByTaskIdV2
+     * @summary Get latest build result by task ID
+     * @request GET:/v2/latest_build_result/{task_id}
+     */
+    getLatestBuildResultByTaskIdV2: () => {
+      const base = 'GET:/v2/latest_build_result/{task_id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetLatestBuildResultByTaskIdV2Data>([base]),
+        requestKey: (taskId: string) => dataTaggedQueryKey<GetLatestBuildResultByTaskIdV2Data>([base, taskId]),
+        request: (taskId: string, params: RequestParams = {}) =>
+          this.request<GetLatestBuildResultByTaskIdV2Data>({
+            path: `/v2/latest_build_result/${taskId}`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  retryBuild = {
+    /**
+     * No description
+     *
+     * @tags Build
+     * @name PostRetryBuildV2
+     * @summary Retry the build
+     * @request POST:/v2/retry-build
+     */
+    postRetryBuildV2: () => {
+      const base = 'POST:/v2/retry-build' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostRetryBuildV2Data>([base]),
+        requestKey: () => dataTaggedQueryKey<PostRetryBuildV2Data>([base]),
+        request: (data: RetryBuildRequest, params: RequestParams = {}) =>
+          this.request<PostRetryBuildV2Data>({
+            path: `/v2/retry-build`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    }
+  }
+  targetStatus = {
     /**
      * No description
      *
@@ -22653,9 +22593,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetTargetStatusByTargetIdV2Data>([base]),
-        requestKey: (params: GetTargetStatusByTargetIdV2Params) =>
-          dataTaggedQueryKey<GetTargetStatusByTargetIdV2Data>([base, params]),
-        request: ({ targetId, ...query }: GetTargetStatusByTargetIdV2Params, params: RequestParams = {}) =>
+        requestKey: (targetId: string) => dataTaggedQueryKey<GetTargetStatusByTargetIdV2Data>([base, targetId]),
+        request: (targetId: string, params: RequestParams = {}) =>
           this.request<GetTargetStatusByTargetIdV2Data>({
             path: `/v2/target-status/${targetId}`,
             method: 'GET',
@@ -22664,56 +22603,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }
     }
   }
-  task = {
+  targets = {
     /**
      * No description
      *
-     * @tags Task
-     * @name GetTaskHistoryOutput
-     * @summary Provides the ability to read historical task logs supporting either retrieving the entire log at once or segmenting it by line count.
-     * @request GET:/task-history-output
+     * @tags Build
+     * @name GetTargetsByTaskIdV2
+     * @request GET:/v2/targets/{task_id}
      */
-    getTaskHistoryOutput: () => {
-      const base = 'GET:/task-history-output' as const
+    getTargetsByTaskIdV2: () => {
+      const base = 'GET:/v2/targets/{task_id}' as const
 
       return {
-        baseKey: dataTaggedQueryKey<GetTaskHistoryOutputData>([base]),
-        requestKey: (params: GetTaskHistoryOutputParams) =>
-          dataTaggedQueryKey<GetTaskHistoryOutputData>([base, params]),
-        request: (query: GetTaskHistoryOutputParams, params: RequestParams = {}) =>
-          this.request<GetTaskHistoryOutputData>({
-            path: `/task-history-output`,
+        baseKey: dataTaggedQueryKey<GetTargetsByTaskIdV2Data>([base]),
+        requestKey: (taskId: string) => dataTaggedQueryKey<GetTargetsByTaskIdV2Data>([base, taskId]),
+        request: (taskId: string, params: RequestParams = {}) =>
+          this.request<GetTargetsByTaskIdV2Data>({
+            path: `/v2/targets/${taskId}`,
             method: 'GET',
-            query: query,
             format: 'json',
             ...params
           })
       }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Task
-     * @name GetTaskOutputById
-     * @summary Streams build output logs in real-time using Server-Sent Events (SSE) Continuously monitors the log file and streams new content as it becomes available
-     * @request GET:/task-output/{id}
-     */
-    getTaskOutputById: () => {
-      const base = 'GET:/task-output/{id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetTaskOutputByIdData>([base]),
-        requestKey: (params: GetTaskOutputByIdParams) => dataTaggedQueryKey<GetTaskOutputByIdData>([base, params]),
-        request: ({ id, ...query }: GetTaskOutputByIdParams, params: RequestParams = {}) =>
-          this.request<GetTaskOutputByIdData>({
-            path: `/task-output/${id}`,
-            method: 'GET',
-            ...params
-          })
-      }
-    },
-
+    }
+  }
+  task = {
     /**
      * No description
      *
@@ -22752,184 +22666,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetTaskByClV2Data>([base]),
-        requestKey: (params: GetTaskByClV2Params) => dataTaggedQueryKey<GetTaskByClV2Data>([base, params]),
-        request: ({ cl, ...query }: GetTaskByClV2Params, params: RequestParams = {}) =>
+        requestKey: (cl: string) => dataTaggedQueryKey<GetTaskByClV2Data>([base, cl]),
+        request: (cl: string, params: RequestParams = {}) =>
           this.request<GetTaskByClV2Data>({
             path: `/v2/task/${cl}`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  build = {
-    /**
-     * No description
-     *
-     * @tags Build
-     * @name GetBuildEventsByTaskIdV2
-     * @request GET:/v2/build-events/{task_id}
-     */
-    getBuildEventsByTaskIdV2: () => {
-      const base = 'GET:/v2/build-events/{task_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetBuildEventsByTaskIdV2Data>([base]),
-        requestKey: (params: GetBuildEventsByTaskIdV2Params) =>
-          dataTaggedQueryKey<GetBuildEventsByTaskIdV2Data>([base, params]),
-        request: ({ taskId, ...query }: GetBuildEventsByTaskIdV2Params, params: RequestParams = {}) =>
-          this.request<GetBuildEventsByTaskIdV2Data>({
-            path: `/v2/build-events/${taskId}`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Build
-     * @name GetBuildStateByBuildIdV2
-     * @summary Get build state by build ID
-     * @request GET:/v2/build-state/{build_id}
-     */
-    getBuildStateByBuildIdV2: () => {
-      const base = 'GET:/v2/build-state/{build_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetBuildStateByBuildIdV2Data>([base]),
-        requestKey: (params: GetBuildStateByBuildIdV2Params) =>
-          dataTaggedQueryKey<GetBuildStateByBuildIdV2Data>([base, params]),
-        request: ({ buildId, ...query }: GetBuildStateByBuildIdV2Params, params: RequestParams = {}) =>
-          this.request<GetBuildStateByBuildIdV2Data>({
-            path: `/v2/build-state/${buildId}`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Build
-     * @name GetBuildsLogsV2
-     * @summary Get complete log for a specific build event
-     * @request GET:/v2/builds/{build_id}/logs
-     */
-    getBuildsLogsV2: () => {
-      const base = 'GET:/v2/builds/{build_id}/logs' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetBuildsLogsV2Data>([base]),
-        requestKey: (params: GetBuildsLogsV2Params) => dataTaggedQueryKey<GetBuildsLogsV2Data>([base, params]),
-        request: ({ buildId, ...query }: GetBuildsLogsV2Params, params: RequestParams = {}) =>
-          this.request<GetBuildsLogsV2Data>({
-            path: `/v2/builds/${buildId}/logs`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Build
-     * @name GetLatestBuildResultByTaskIdV2
-     * @summary Get latest build result by task ID
-     * @request GET:/v2/latest_build_result/{task_id}
-     */
-    getLatestBuildResultByTaskIdV2: () => {
-      const base = 'GET:/v2/latest_build_result/{task_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetLatestBuildResultByTaskIdV2Data>([base]),
-        requestKey: (params: GetLatestBuildResultByTaskIdV2Params) =>
-          dataTaggedQueryKey<GetLatestBuildResultByTaskIdV2Data>([base, params]),
-        request: ({ taskId, ...query }: GetLatestBuildResultByTaskIdV2Params, params: RequestParams = {}) =>
-          this.request<GetLatestBuildResultByTaskIdV2Data>({
-            path: `/v2/latest_build_result/${taskId}`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Build
-     * @name PostRetryBuildV2
-     * @summary Retry the build
-     * @request POST:/v2/retry-build
-     */
-    postRetryBuildV2: () => {
-      const base = 'POST:/v2/retry-build' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<PostRetryBuildV2Data>([base]),
-        requestKey: () => dataTaggedQueryKey<PostRetryBuildV2Data>([base]),
-        request: (data: RetryBuildRequest, params: RequestParams = {}) =>
-          this.request<PostRetryBuildV2Data>({
-            path: `/v2/retry-build`,
-            method: 'POST',
-            body: data,
-            type: ContentType.Json,
-            format: 'json',
-            ...params
-          })
-      }
-    },
-
-    /**
-     * No description
-     *
-     * @tags Build
-     * @name GetTargetsByTaskIdV2
-     * @request GET:/v2/targets/{task_id}
-     */
-    getTargetsByTaskIdV2: () => {
-      const base = 'GET:/v2/targets/{task_id}' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetTargetsByTaskIdV2Data>([base]),
-        requestKey: (params: GetTargetsByTaskIdV2Params) =>
-          dataTaggedQueryKey<GetTargetsByTaskIdV2Data>([base, params]),
-        request: ({ taskId, ...query }: GetTargetsByTaskIdV2Params, params: RequestParams = {}) =>
-          this.request<GetTargetsByTaskIdV2Data>({
-            path: `/v2/targets/${taskId}`,
-            method: 'GET',
-            format: 'json',
-            ...params
-          })
-      }
-    }
-  }
-  system = {
-    /**
-     * No description
-     *
-     * @tags System
-     * @name GetHealthV2
-     * @summary Health check endpoint for Orion Server Returns simple health status based on database connectivity
-     * @request GET:/v2/health
-     */
-    getHealthV2: () => {
-      const base = 'GET:/v2/health' as const
-
-      return {
-        baseKey: dataTaggedQueryKey<GetHealthV2Data>([base]),
-        requestKey: () => dataTaggedQueryKey<GetHealthV2Data>([base]),
-        request: (params: RequestParams = {}) =>
-          this.request<GetHealthV2Data>({
-            path: `/v2/health`,
             method: 'GET',
             format: 'json',
             ...params

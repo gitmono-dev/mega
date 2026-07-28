@@ -1,5 +1,12 @@
 @reference '../../../packages/ui/src/styles/reference.css';
 
+/* Must be top-level: nested @keyframes inside .prose trips Lightning CSS ("Unknown at rule"). */
+@keyframes autohide-cursor {
+  to {
+    opacity: 0;
+  }
+}
+
 @layer components {
   /* 
   Any base-element override should be appended with :not(:where([class~='not-prose'] *) to support disabling prose
@@ -174,12 +181,6 @@
     .collaboration-carets__caret {
       @apply relative -mx-px inline border-x;
       word-break: normal;
-    }
-
-    @keyframes autohide-cursor {
-      to {
-        opacity: 0;
-      }
     }
 
     .collaboration-carets__label {

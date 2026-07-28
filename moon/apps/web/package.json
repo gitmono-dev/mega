@@ -55,6 +55,8 @@
     "@todesktop/client-core": "catalog:",
     "@vercel/og": "catalog:",
     "@vercel/speed-insights": "catalog:",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
     "clsx": "catalog:",
     "colord": "catalog:",
     "cookies-next": "6.1.1",

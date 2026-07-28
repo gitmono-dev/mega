@@ -1,4 +1,7 @@
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { useAtomValue } from 'jotai'
+
+import { NotePage } from '@gitmono/types'
 
 import { filterAtom, NoteIndexFilterType, sortAtom } from '@/components/NotesIndex/NotesIndexDisplayDropdown'
 import { useScope } from '@/contexts/scope'
@@ -12,7 +15,9 @@ interface Props {
   query?: string
 }
 
-export function useGetNotesIndex({ localFilter, query, enabled = true }: Props = {}) {
+export function useGetNotesIndex({ localFilter, query, enabled = true }: Props = {}): ReturnType<
+  typeof useInfiniteQuery<NotePage>
+> {
   const { scope } = useScope()
   const globalFilter = useAtomValue(filterAtom(scope))
   const filter = localFilter ?? globalFilter

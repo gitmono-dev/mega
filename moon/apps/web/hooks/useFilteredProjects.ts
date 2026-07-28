@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import type { QueryObserverResult } from '@tanstack/react-query'
 
 import { SyncProject } from '@gitmono/types/generated'
 
@@ -17,7 +18,10 @@ export function useFilteredProjects({
   query,
   includeProjectId,
   excludeChatProjects = false
-}: Options) {
+}: Options): {
+  filteredProjects: SyncProject[]
+  refetch: () => Promise<QueryObserverResult>
+} {
   const { projects, refetch } = useSyncedProjects({ includeProjectId })
 
   const { filteredProjects } = useMemo(() => {

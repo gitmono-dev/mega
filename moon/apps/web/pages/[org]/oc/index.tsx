@@ -15,7 +15,7 @@ import { Button, UIText } from '@gitmono/ui'
 import { RefreshIcon } from '@gitmono/ui/Icons'
 
 import { AppLayout } from '@/components/Layout/AppLayout'
-import { ClientsTable, OrionClient, OrionClientStatus } from '@/components/OrionClient'
+import { ClientsTable, OrionClient, OrionClientStatus, VmTerminal } from '@/components/OrionClient'
 import AuthAppProviders from '@/components/Providers/AuthAppProviders'
 import { useAdminCheck } from '@/hooks/admin/useAdminCheck'
 import { usePostOrionClientsInfo } from '@/hooks/OrionClient/OrionClientsInfo'
@@ -42,6 +42,7 @@ function domainFromClientHostname(hostname: string): string | null {
 }
 
 type LogPanelSource = 'runner' | 'client'
+type TerminalPanelSource = 'runner' | 'client'
 
 const OrionClientPage: PageWithLayout<any> = () => {
   const { resolvedTheme } = useTheme()
@@ -55,8 +56,13 @@ const OrionClientPage: PageWithLayout<any> = () => {
   const [activeDomain, setActiveDomain] = React.useState<string | null>(null)
   const [logSource, setLogSource] = React.useState<LogPanelSource | null>(null)
   const [logClientId, setLogClientId] = React.useState<string | null>(null)
+  const [activeTerminalKey, setActiveTerminalKey] = React.useState<string | null>(null)
+  const [terminalSource, setTerminalSource] = React.useState<TerminalPanelSource | null>(null)
+  const [terminalClientId, setTerminalClientId] = React.useState<string | null>(null)
+  const [terminalDomain, setTerminalDomain] = React.useState<string | null>(null)
   const [copyFeedback, setCopyFeedback] = React.useState(false)
   const logPanelRef = React.useRef<HTMLDivElement>(null)
+  const terminalPanelRef = React.useRef<HTMLDivElement>(null)
   const logsScrollRef = React.useRef<HTMLDivElement>(null)
   const logsPreRef = React.useRef<HTMLPreElement>(null)
   const logsFollowRef = React.useRef(true)
@@ -64,6 +70,8 @@ const OrionClientPage: PageWithLayout<any> = () => {
 
   const perPage = 8
   const showingLogs = Boolean(activeLogKey)
+  const showingTerminal = Boolean(activeTerminalKey)
+  const showingOverlay = showingLogs || showingTerminal
 
   const { data: adminCheck } = useAdminCheck()
   const isAdmin = adminCheck?.data?.is_admin || false
@@ -146,14 +154,14 @@ const OrionClientPage: PageWithLayout<any> = () => {
   }, [currentPage, debouncedHostname, perPage, statusFilter])
 
   const handleRefresh = React.useCallback(() => {
-    if (showingLogs) return
+    if (showingOverlay) return
 
     mutate(requestPayload, {
       onSuccess: (data) => {
         setClientsPage(data)
       }
     })
-  }, [mutate, requestPayload, showingLogs])
+  }, [mutate, requestPayload, showingOverlay])
 
   React.useEffect(() => {
     if (!runnerStatus) return
@@ -163,13 +171,28 @@ const OrionClientPage: PageWithLayout<any> = () => {
     }
   }, [runnerStatus])
 
-  // Do not refresh the client list while the log panel is open.
+  // Do not refresh the client list while a panel is open.
   React.useEffect(() => {
-    if (showingLogs) return
+    if (showingOverlay) return
     if (runnerStatus?.phase === 'running') {
       handleRefresh()
     }
-  }, [runnerStatus?.phase, handleRefresh, showingLogs])
+  }, [runnerStatus?.phase, handleRefresh, showingOverlay])
+
+  const clearTerminalPanel = React.useCallback(() => {
+    setActiveTerminalKey(null)
+    setTerminalSource(null)
+    setTerminalClientId(null)
+    setTerminalDomain(null)
+  }, [])
+
+  const clearLogPanel = React.useCallback(() => {
+    setActiveLogKey(null)
+    setLogSource(null)
+    setActiveDomain(null)
+    setLogClientId(null)
+    setActivePhase(null)
+  }, [])
 
   const openLogPanel = React.useCallback(
     (
@@ -177,6 +200,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
       source: LogPanelSource,
       opts?: { domain?: string | null; clientId?: string | null; phase?: string | null }
     ) => {
+      clearTerminalPanel()
       setActiveLogKey(key)
       setLogSource(source)
       setActiveDomain(opts?.domain ?? null)
@@ -188,16 +212,30 @@ const OrionClientPage: PageWithLayout<any> = () => {
         logPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       })
     },
-    []
+    [clearTerminalPanel]
+  )
+
+  const openTerminalPanel = React.useCallback(
+    (key: string, source: TerminalPanelSource, opts?: { domain?: string | null; clientId?: string | null }) => {
+      clearLogPanel()
+      setActiveTerminalKey(key)
+      setTerminalSource(source)
+      setTerminalDomain(opts?.domain ?? null)
+      setTerminalClientId(opts?.clientId ?? null)
+      requestAnimationFrame(() => {
+        terminalPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    },
+    [clearLogPanel]
   )
 
   const handleCloseLogs = React.useCallback(() => {
-    setActiveLogKey(null)
-    setLogSource(null)
-    setActiveDomain(null)
-    setLogClientId(null)
-    setActivePhase(null)
-  }, [])
+    clearLogPanel()
+  }, [clearLogPanel])
+
+  const handleCloseTerminal = React.useCallback(() => {
+    clearTerminalPanel()
+  }, [clearTerminalPanel])
 
   const handleStartRunner = React.useCallback(
     (replace = false) => {
@@ -227,6 +265,19 @@ const OrionClientPage: PageWithLayout<any> = () => {
       openLogPanel(domain, 'client', { domain, clientId: client.client_id })
     },
     [openLogPanel]
+  )
+
+  const handleConnectTerminal = React.useCallback(
+    (client: OrionClient) => {
+      const domain = domainFromClientHostname(client.hostname)
+
+      if (!domain) {
+        return
+      }
+
+      openTerminalPanel(domain, 'client', { domain, clientId: client.client_id })
+    },
+    [openTerminalPanel]
   )
 
   const handleLogsKeyDown = React.useCallback(
@@ -261,16 +312,16 @@ const OrionClientPage: PageWithLayout<any> = () => {
     [copyLogsToClipboard]
   )
 
-  // Fetch client list only while the log panel is closed.
+  // Fetch client list only while panels are closed.
   React.useEffect(() => {
-    if (showingLogs) return
+    if (showingOverlay) return
 
     mutate(requestPayload, {
       onSuccess: (data) => {
         setClientsPage(data)
       }
     })
-  }, [mutate, requestPayload, showingLogs])
+  }, [mutate, requestPayload, showingOverlay])
 
   const total = clientsPage?.total ?? 0
 
@@ -304,12 +355,14 @@ const OrionClientPage: PageWithLayout<any> = () => {
         <title>Orion Client</title>
       </Head>
       {/* AppLayout main is overflow-hidden; this page must own scrolling when the list is visible. */}
-      <div className={`flex h-full min-h-0 flex-col gap-4 p-4 ${showingLogs ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+      <div
+        className={`flex h-full min-h-0 flex-col gap-4 p-4 ${showingOverlay ? 'overflow-hidden' : 'overflow-y-auto'}`}
+      >
         <div className='flex min-w-0 flex-col gap-2'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <h1 className='text-xl font-semibold'>Orion Clients</h1>
-              {!showingLogs ? (
+              {!showingOverlay ? (
                 <UIText tertiary size='text-sm'>
                   Total clients {total}
                 </UIText>
@@ -325,7 +378,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
                   {isStartingRunner ? 'Starting…' : 'Start Runner'}
                 </Button>
               ) : null}
-              {!showingLogs ? (
+              {!showingOverlay ? (
                 <Button
                   variant='plain'
                   iconOnly={<RefreshIcon />}
@@ -337,6 +390,32 @@ const OrionClientPage: PageWithLayout<any> = () => {
               ) : null}
             </div>
           </div>
+
+          {showingTerminal && activeTerminalKey ? (
+            <div
+              ref={terminalPanelRef}
+              className='min-w-0 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900'
+            >
+              <div className='flex items-start justify-between gap-2'>
+                <div className='min-w-0'>
+                  <UIText weight='font-semibold' size='text-sm'>
+                    {terminalSource === 'client' && terminalClientId
+                      ? `Client ${terminalClientId}`
+                      : `Runner ${activeTerminalKey}`}
+                  </UIText>
+                  <UIText size='text-xs' color='text-muted' className='mt-0.5 block'>
+                    Terminal for {terminalDomain ?? activeTerminalKey}
+                  </UIText>
+                </div>
+                <Button variant='plain' size='sm' onClick={handleCloseTerminal}>
+                  Close
+                </Button>
+              </div>
+              <div className='mt-3 min-w-0'>
+                <VmTerminal key={activeTerminalKey} streamKey={activeTerminalKey} height={420} />
+              </div>
+            </div>
+          ) : null}
 
           {showingLogs ? (
             <div
@@ -354,9 +433,25 @@ const OrionClientPage: PageWithLayout<any> = () => {
                     </UIText>
                   ) : null}
                 </div>
-                <Button variant='plain' size='sm' onClick={handleCloseLogs}>
-                  Close
-                </Button>
+                <div className='flex items-center gap-2'>
+                  {isAdmin && activeLogKey ? (
+                    <Button
+                      variant='plain'
+                      size='sm'
+                      onClick={() =>
+                        openTerminalPanel(activeLogKey, logSource === 'client' ? 'client' : 'runner', {
+                          domain: activeDomain,
+                          clientId: logClientId
+                        })
+                      }
+                    >
+                      Open terminal
+                    </Button>
+                  ) : null}
+                  <Button variant='plain' size='sm' onClick={handleCloseLogs}>
+                    Close
+                  </Button>
+                </div>
               </div>
               <div className='mt-1 flex flex-col gap-1'>
                 {(runnerStatus?.domain ?? activeDomain) ? (
@@ -464,10 +559,10 @@ const OrionClientPage: PageWithLayout<any> = () => {
             </div>
           ) : null}
 
-          {!showingLogs ? <div className='border-b' /> : null}
+          {!showingOverlay ? <div className='border-b' /> : null}
         </div>
 
-        {!showingLogs ? (
+        {!showingOverlay ? (
           <>
             <div className='group flex min-h-[35px] items-center rounded-md border border-gray-300 bg-white px-3 shadow-xs transition-all focus-within:border-blue-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-blue-100 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-500'>
               <div className='flex items-center text-gray-400'>
@@ -502,6 +597,8 @@ const OrionClientPage: PageWithLayout<any> = () => {
               onStatusChange={(value: OrionClientStatus | 'all') => setStatusFilter(value)}
               canViewLogs={isAdmin}
               onViewLogs={handleViewClientLogs}
+              canConnectTerminal={isAdmin}
+              onConnectTerminal={handleConnectTerminal}
               statusOptions={[
                 { value: 'all', label: 'All statuses' },
                 { value: 'idle', label: 'Idle' },

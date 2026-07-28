@@ -30,13 +30,15 @@ mv .prettierrc.json .prettierrc_temp.json
 OUT=./gen node api/merge-swagger.js
 
 # generate client types (v13+ requires the `generate` subcommand)
+# NOTE: do not use --module-name-first-tag — STA v13 groups by OpenAPI tags and drops
+# the `v1` module that legacyApiClient.v1.* call sites depend on. Path index 1 yields
+# `v1` for /api/v1/*, and organizations/users/… for /v1/organizations|users/…
 pnpm swagger-typescript-api generate \
   --extract-request-params \
   --extract-request-body \
   --extract-response-body \
   --extract-response-error \
   --module-name-index 1 \
-  --module-name-first-tag true \
   --templates script/swagger-templates \
   --path $SWAGGER_FILE_PATH \
   --output ./packages/types/ \

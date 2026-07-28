@@ -22,6 +22,9 @@ interface ClientsTableProps {
   /** When set, show a per-row action to open that client's runner logs. */
   onViewLogs?: (client: OrionClient) => void
   canViewLogs?: boolean
+  /** When set, show a per-row action to open an interactive VM terminal. */
+  onConnectTerminal?: (client: OrionClient) => void
+  canConnectTerminal?: boolean
   capabilityFilter?: string
   capabilityOptions?: string[]
   onCapabilityChange?: (v: string) => void
@@ -42,7 +45,9 @@ export function ClientsTable({
   onStatusChange,
   statusOptions,
   onViewLogs,
-  canViewLogs = false
+  canViewLogs = false,
+  onConnectTerminal,
+  canConnectTerminal = false
 }: ClientsTableProps) {
   const { resolvedTheme } = useTheme()
   const rows = React.useMemo<UniqueRow[]>(() => {
@@ -54,6 +59,8 @@ export function ClientsTable({
   }, [clients])
 
   const showLogsAction = Boolean(canViewLogs && onViewLogs)
+  const showTerminalAction = Boolean(canConnectTerminal && onConnectTerminal)
+  const showSideActions = showLogsAction || showTerminalAction
 
   const columns = React.useMemo(
     () => [
@@ -61,8 +68,8 @@ export function ClientsTable({
         header: 'Client ID',
         field: 'client_id',
         rowHeader: true,
-        // Original ratios: 18/18/10/18/22/14 (or 16/16/10/16/18/14/10 with Logs)
-        width: colWidth(showLogsAction ? 16 : 18),
+        // Original ratios: 18/18/10/18/22/14 (narrower when action columns present)
+        width: colWidth(showSideActions ? 14 : 18),
         renderCell: (row: Row) => (
           <div className='min-w-0'>
             <UIText weight='font-semibold' className='block truncate text-sm'>
@@ -74,20 +81,20 @@ export function ClientsTable({
       {
         header: 'Hostname',
         field: 'hostname',
-        width: colWidth(showLogsAction ? 16 : 18),
+        width: colWidth(showSideActions ? 14 : 18),
         renderCell: (row: Row) => <div className='min-w-0 truncate'>{row.hostname || '—'}</div>
       },
       { header: 'Version', field: 'orion_version', width: colWidth(10) },
       {
         header: 'Start Time',
         field: 'start_time',
-        width: colWidth(showLogsAction ? 16 : 18),
+        width: colWidth(showSideActions ? 14 : 18),
         renderCell: (row: Row) => <div className='break-words whitespace-normal'>{formatDateTime(row.start_time)}</div>
       },
       {
         header: 'Last Heartbeat',
         field: 'last_heartbeat',
-        width: colWidth(showLogsAction ? 18 : 22),
+        width: colWidth(showSideActions ? 16 : 22),
         renderCell: (row: Row) => (
           <div className='flex min-w-0 flex-col gap-0.5 leading-tight'>
             <div className='break-words whitespace-normal'>{formatDateTime(row.last_heartbeat)}</div>
@@ -110,7 +117,7 @@ export function ClientsTable({
           </Select>
         ),
         field: 'statusDerived',
-        width: colWidth(14),
+        width: colWidth(12),
         renderCell: (row: Row) => <OrionClientStatusCell client={row} />
       },
       ...(showLogsAction
@@ -119,7 +126,7 @@ export function ClientsTable({
               header: 'Logs',
               id: 'logs',
               field: 'client_id',
-              width: colWidth(10),
+              width: colWidth(9),
               renderCell: (row: Row) => (
                 <Button
                   variant='plain'
@@ -132,9 +139,38 @@ export function ClientsTable({
               )
             }
           ]
+        : []),
+      ...(showTerminalAction
+        ? [
+            {
+              header: 'Terminal',
+              id: 'terminal',
+              field: 'client_id',
+              width: colWidth(9),
+              renderCell: (row: Row) => (
+                <Button
+                  variant='plain'
+                  size='sm'
+                  onClick={() => onConnectTerminal?.(row)}
+                  accessibilityLabel={`Open terminal for ${row.client_id}`}
+                >
+                  Terminal
+                </Button>
+              )
+            }
+          ]
         : [])
     ],
-    [onStatusChange, onViewLogs, showLogsAction, statusFilter, statusOptions]
+    [
+      onConnectTerminal,
+      onStatusChange,
+      onViewLogs,
+      showLogsAction,
+      showSideActions,
+      showTerminalAction,
+      statusFilter,
+      statusOptions
+    ]
   )
 
   if (isLoading) {

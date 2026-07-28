@@ -21,14 +21,20 @@ const requestConfigParam = {
 
 const argToTmpl = ({ name, optional, type, defaultValue }) => `${name}${!defaultValue && optional ? '?' : ''}: ${type}${defaultValue ? ` = ${defaultValue}` : ''}`;
 
+// STA v13 always builds requestParams for path and/or query. Path-only routes must stay
+// positional so mono call sites like `.request('note', id)` keep typechecking; path+query
+// and query-only keep the extracted object shape used by apiClient.organizations.*.
+const isPathOnly = pathParams.length > 0 && !query
+
 const rawWrapperArgs = config.extractRequestParams ?
     _.compact([
-        requestParams && {
+        ...(isPathOnly ? pathParams : []),
+        !isPathOnly && requestParams && {
           name: pathParams.length ? `{ ${_.join(pathParamsNames, ", ")}, ...${queryName} }` : queryName,
           optional: false,
           type: getInlineParseContent(requestParams),
         },
-        ...(!requestParams ? pathParams : []),
+        ...(!requestParams && !isPathOnly ? pathParams : []),
         payload,
         requestConfigParam,
     ]) :
@@ -80,12 +86,13 @@ const describeReturnType = () => {
 
 const keyRawWrapperArgs = config.extractRequestParams ?
     _.compact([
-        requestParams && {
+        ...(isPathOnly ? pathParams : []),
+        !isPathOnly && requestParams && {
           name: "params",
           optional: false,
           type: getInlineParseContent(requestParams),
         },
-        ...(!requestParams ? pathParams : []),
+        ...(!requestParams && !isPathOnly ? pathParams : []),
     ]) :
     _.compact([
         ...pathParams,

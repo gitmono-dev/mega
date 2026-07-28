@@ -10,6 +10,9 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
+    // Next apps consume source; declaration emit only surfaces TS2742 for transitive pnpm types (e.g. query-core).
+    "declaration": false,
+    "declarationMap": false,
     "incremental": true,
     "esModuleInterop": true,
     "module": "esnext",

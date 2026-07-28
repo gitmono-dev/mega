@@ -20,8 +20,14 @@ WORKDIR /app
 FROM base AS installer
 ARG TARGETARCH
 ARG TIPTAP_PRIVATE_REGISTRY_KEY
-RUN apt-get update -qq && \
-  apt-get install -y build-essential pkg-config python-is-python3 ca-certificates
+# Debian slim defaults to http://deb.debian.org. Through corporate proxies (NFCLOUD):
+# - plain HTTP hangs
+# - HTTPS works but MITM breaks apt's CA verify
+# Switch to HTTPS and relax peer verify only for this apt fetch.
+RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
+  && apt-get -o Acquire::https::Verify-Peer=false -o Acquire::https::Verify-Host=false update -qq \
+  && apt-get -o Acquire::https::Verify-Peer=false -o Acquire::https::Verify-Host=false install -y \
+    build-essential pkg-config python-is-python3 ca-certificates
 WORKDIR /app
 
 COPY --from=builder /app/out/json/ .
