@@ -177,6 +177,7 @@ Webhook 端点健康检查。
 | --- | --- | --- | --- |
 | `action` | string | 否 | GitHub Actions 事件类型，仅记日志 |
 | `server_ws` | string | 是 | Orion WebSocket URL；**host 为 domain 唯一键** |
+| `retain_antares_mounts` | bool | 否 | 写入 guest `.env` 的 `ORION_RETAIN_ANTARES_MOUNTS`（`true`→`1` / `false`→`0`）；省略则不改 `.env.prod` |
 | `scorpio_base_url` | string | 是 | Scorpio base URL，写入 `scorpio.toml` |
 | `scorpio_lfs_url` | string | 是 | Scorpio LFS URL，写入 `scorpio.toml` |
 | `target` | string | 否 | 仅作日志 / 展示标签（已废弃查表） |
@@ -494,6 +495,13 @@ pub async fn replace_env_vars(
         scorpio_lfs_url
     );
     machine.exec(&cmd).await?;
+
+    // Optional: upsert ORION_RETAIN_ANTARES_MOUNTS when webhook sets retain_antares_mounts
+    if let Some(retain) = target_config.retain_antares_mounts {
+        let value = if retain { "1" } else { "0" };
+        // grep + sed replace, else append
+        let _ = value;
+    }
 
     tracing::info!("[env] Replaced env vars for target: {}", target_name);
     Ok(())

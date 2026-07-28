@@ -20,6 +20,10 @@ pub struct StartRunnerRequest {
     pub image_cpus: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub image_memory_mb: Option<u32>,
+    /// When set, write `ORION_RETAIN_ANTARES_MOUNTS` into the guest `.env`
+    /// (`true`→`1`, `false`→`0`). Omitted → leave `.env.prod` unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub retain_antares_mounts: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

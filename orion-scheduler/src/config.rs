@@ -13,6 +13,10 @@ pub struct TargetConfig {
     pub server_ws: String,
     pub scorpio_base_url: String,
     pub scorpio_lfs_url: String,
+    /// When set, write `ORION_RETAIN_ANTARES_MOUNTS` into the guest `.env`.
+    /// `None` leaves whatever was shipped in `.env.prod` unchanged.
+    #[serde(default)]
+    pub retain_antares_mounts: Option<bool>,
 }
 
 /// Default VM image parameters used when webhook omits image_* fields.
@@ -49,6 +53,8 @@ pub struct Config {
     default_image: DefaultImageConfig,
     /// Max concurrent VMs (by domain). `None` = unlimited.
     max_vms: Option<usize>,
+    /// Default for webhook `retain_antares_mounts` when the field is omitted.
+    retain_antares_mounts: Option<bool>,
 }
 
 /// Expand a leading `~` or `~/` to `$HOME`. Other paths are returned unchanged.
@@ -83,6 +89,7 @@ impl Config {
             ssh_public_key_path,
             default_image,
             max_vms: None,
+            retain_antares_mounts: None,
         }
     }
 
@@ -127,6 +134,7 @@ impl Config {
             ssh_public_key_path,
             default_image: parsed.default_image.unwrap_or_default(),
             max_vms: parsed.max_vms,
+            retain_antares_mounts: parsed.retain_antares_mounts,
         })
     }
 
@@ -152,6 +160,10 @@ impl Config {
 
     pub fn max_vms(&self) -> Option<usize> {
         self.max_vms
+    }
+
+    pub fn retain_antares_mounts(&self) -> Option<bool> {
+        self.retain_antares_mounts
     }
 }
 
@@ -205,6 +217,10 @@ struct ConfigFile {
     default_image: Option<DefaultImageConfig>,
     #[serde(default)]
     max_vms: Option<usize>,
+    /// Optional default for guest `ORION_RETAIN_ANTARES_MOUNTS`.
+    /// Webhook `retain_antares_mounts` overrides when present.
+    #[serde(default)]
+    retain_antares_mounts: Option<bool>,
 }
 
 pub type SharedConfig = Arc<RwLock<Config>>;

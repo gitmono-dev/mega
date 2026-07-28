@@ -35,8 +35,9 @@ curl -i -X POST http://localhost:8080/webhook \
     "image_digest": "sha256:753c28888c9d30fe4baef55c1d1dfa9a39431595eca940b7ad85d78d84f3d7a5",
     "image_disk_gb": 50,
     "image_cpus": 8,
-    "image_memory_mb": 16000
-  }'
+    "image_memory_mb": 16000,
+    "retain_antares_mounts": true
+}'
 # 期望：HTTP 202，body 含 vm_id、domain、status=provisioning
 
 # 列表 / 单机 / 日志
@@ -164,6 +165,26 @@ curl -N 'http://localhost:8080/logs/orion/stream?domain=orion.gitmega.com'
 ```
 
 服务端调试：`RUST_LOG=debug cargo run -p orion-scheduler`；systemd：`journalctl -u orion-scheduler -f`。
+
+### Terminal (WebSocket PTY)
+
+`GET /vms/{id}/terminal` — `{id}` 为 **vm_id 或 domain**（与 logs 相同）。协议：
+
+| 方向 | 帧 | 内容 |
+|------|-----|------|
+| client → server | Binary | stdin |
+| client → server | Text JSON | `{"type":"resize","cols":N,"rows":N}` |
+| server → client | Binary | PTY stdout |
+
+直连 scheduler smoke（VM 须为 Running）：
+
+```bash
+# 交互式：键入会作为 stdin 发送；二进制回显到终端
+websocat -b "ws://127.0.0.1:8080/vms/orion.gitmega.com/terminal"
+
+# 或经 mono（需 admin session cookie）：
+# ws(s)://{mono}/api/v1/orion/runners/{id}/terminal
+```
 
 ### Scorpio
 

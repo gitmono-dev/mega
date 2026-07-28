@@ -4,13 +4,17 @@ use std::{
 };
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{
+        Path, Query, State, WebSocketUpgrade,
+        ws::{Message, WebSocket},
+    },
     http::StatusCode,
     response::{
         IntoResponse, Json,
         sse::{Event, Sse},
     },
 };
+use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 
@@ -79,6 +83,10 @@ pub struct GithubWebhookPayload {
     /// VM memory in MB.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub image_memory_mb: Option<u32>,
+    /// When set, write `ORION_RETAIN_ANTARES_MOUNTS` into the guest `.env`
+    /// (`true`→`1`, `false`→`0`). Omitted → leave `.env.prod` value unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub retain_antares_mounts: Option<bool>,
 }
 
 /// Merge webhook image overrides with scheduler `default_image` config.
@@ -135,6 +143,7 @@ mod merge_tests {
             image_disk_gb: None,
             image_cpus: None,
             image_memory_mb: None,
+            retain_antares_mounts: None,
         };
         let merged = merge_image_params(&payload, &default);
         assert_eq!(merged.path.as_deref(), Some(default.image_path.as_str()));
@@ -162,6 +171,7 @@ mod merge_tests {
             image_disk_gb: Some(64),
             image_cpus: None,
             image_memory_mb: None,
+            retain_antares_mounts: None,
         };
         let merged = merge_image_params(&payload, &default);
         assert_eq!(merged.disk_gb, Some(64));
@@ -309,13 +319,17 @@ pub async fn webhook_post_handler(
         }
     }
 
-    let default_image = state.config.read().await.default_image().clone();
+    let cfg = state.config.read().await;
+    let default_image = cfg.default_image().clone();
+    let config_retain = cfg.retain_antares_mounts();
+    drop(cfg);
     let image_params = merge_image_params(&payload, &default_image);
 
     let target_config = TargetConfig {
         server_ws: payload.server_ws.clone(),
         scorpio_base_url: payload.scorpio_base_url.clone(),
         scorpio_lfs_url: payload.scorpio_lfs_url.clone(),
+        retain_antares_mounts: payload.retain_antares_mounts.or(config_retain),
     };
 
     let vm_id = format!("orion-vm-{}", orion_deployer::chrono_lite_timestamp());
@@ -954,4 +968,125 @@ fn append_logs_section(output: &mut String, title: &str, lines: &[&str]) {
 fn is_noisy_orion_log_line(line: &str) -> bool {
     let lower = line.to_ascii_lowercase();
     lower.contains("sending heartbeat") || lower.contains("orion::ws: sending heartbeat")
+}
+
+/// GET /vms/{id}/terminal — interactive PTY over WebSocket (vm_id or domain).
+///
+/// Protocol (matches moon VmTerminal):
+/// - client → server: binary = stdin; text JSON `{"type":"resize","cols":N,"rows":N}`
+/// - server → client: binary = PTY stdout
+pub async fn terminal_ws_handler(
+    ws: WebSocketUpgrade,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    ws.on_upgrade(move |socket| handle_terminal_socket(socket, state, id))
+}
+
+async fn handle_terminal_socket(socket: WebSocket, state: Arc<AppState>, id: String) {
+    let (mut ws_tx, mut ws_rx) = socket.split();
+
+    let machine = match orion_deployer::resolve_machine_for_handlers(&state, Some(&id)).await {
+        Ok(m) => m,
+        Err(e) => {
+            tracing::warn!("[terminal] resolve VM '{}': {}", id, e);
+            let _ = ws_tx
+                .send(Message::Close(Some(axum::extract::ws::CloseFrame {
+                    code: axum::extract::ws::close_code::AGAIN,
+                    reason: truncate_close_reason(format!("no VM: {e}")).into(),
+                })))
+                .await;
+            return;
+        }
+    };
+
+    let shell = match machine.open_interactive_shell(80, 24).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::warn!("[terminal] open shell for '{}': {}", id, e);
+            let _ = ws_tx
+                .send(Message::Close(Some(axum::extract::ws::CloseFrame {
+                    code: axum::extract::ws::close_code::ERROR,
+                    reason: truncate_close_reason(format!("shell: {e}")).into(),
+                })))
+                .await;
+            return;
+        }
+    };
+
+    let (mut reader, writer) = shell.split();
+    tracing::info!("[terminal] session opened for '{}'", id);
+
+    loop {
+        tokio::select! {
+            msg = ws_rx.next() => {
+                match msg {
+                    Some(Ok(Message::Binary(data))) => {
+                        if let Err(e) = writer.write(&data).await {
+                            tracing::warn!("[terminal] write: {}", e);
+                            break;
+                        }
+                    }
+                    Some(Ok(Message::Text(text))) => {
+                        match serde_json::from_str::<TerminalResizeMsg>(&text) {
+                            Ok(msg) if msg.msg_type == "resize" => {
+                                if let Err(e) = writer.resize(msg.cols, msg.rows).await {
+                                    tracing::warn!("[terminal] resize: {}", e);
+                                    break;
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    Some(Ok(Message::Ping(p))) => {
+                        let _ = ws_tx.send(Message::Pong(p)).await;
+                    }
+                    Some(Ok(Message::Pong(_))) => {}
+                    Some(Ok(Message::Close(_))) | None => break,
+                    Some(Err(e)) => {
+                        tracing::warn!("[terminal] ws recv: {}", e);
+                        break;
+                    }
+                }
+            }
+            chunk = reader.read_chunk() => {
+                match chunk {
+                    Ok(Some(data)) => {
+                        if ws_tx.send(Message::Binary(data.into())).await.is_err() {
+                            break;
+                        }
+                    }
+                    Ok(None) => {
+                        tracing::info!("[terminal] shell exited for '{}'", id);
+                        break;
+                    }
+                    Err(e) => {
+                        tracing::warn!("[terminal] read_chunk: {}", e);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    let _ = writer.close(reader).await;
+    let _ = ws_tx.send(Message::Close(None)).await;
+    tracing::info!("[terminal] session closed for '{}'", id);
+}
+
+#[derive(Deserialize)]
+struct TerminalResizeMsg {
+    #[serde(rename = "type")]
+    msg_type: String,
+    cols: u32,
+    rows: u32,
+}
+
+fn truncate_close_reason(s: String) -> String {
+    const MAX: usize = 120;
+    if s.len() <= MAX {
+        s
+    } else {
+        format!("{}…", &s[..MAX.saturating_sub(1)])
+    }
 }

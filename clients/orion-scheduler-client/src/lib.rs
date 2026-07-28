@@ -1,9 +1,9 @@
-//! HTTP client for orion-scheduler VM provisioning (`/webhook`, `/status`, `/vms/{id}`, logs SSE).
+//! HTTP client for orion-scheduler VM provisioning (`/webhook`, `/status`, `/vms/{id}`, logs SSE, terminal WS).
 
 mod http_client;
 
 use common::config::BuildConfig;
-pub use http_client::OrionSchedulerHttpClient;
+pub use http_client::{OrionSchedulerHttpClient, TerminalWebSocket};
 use serde::{Deserialize, Serialize};
 
 /// Request body for starting a runner VM via scheduler `/webhook`.
@@ -28,6 +28,9 @@ pub struct StartRunnerPayload {
     pub image_cpus: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image_memory_mb: Option<u32>,
+    /// When set, write `ORION_RETAIN_ANTARES_MOUNTS` into the guest `.env`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub retain_antares_mounts: Option<bool>,
 }
 
 /// Response from scheduler `POST /webhook` (async 202, sync 200, conflict 409).
@@ -103,5 +106,10 @@ impl OrionSchedulerClient {
         domain: Option<&str>,
     ) -> anyhow::Result<reqwest::Response> {
         self.http.stream_orion_logs(vm_id, domain).await
+    }
+
+    /// Open a WebSocket PTY session to a Running VM (`GET /vms/{id}/terminal`).
+    pub async fn connect_terminal(&self, id: &str) -> anyhow::Result<TerminalWebSocket> {
+        self.http.connect_terminal(id).await
     }
 }

@@ -368,6 +368,19 @@ pub async fn replace_env_vars_in_vm(
     info!("[env] Executing: {}", sed_cmd);
     machine.exec(&sed_cmd).await?;
 
+    if let Some(retain) = target_config.retain_antares_mounts {
+        let value = if retain { "1" } else { "0" };
+        info!("[env] ORION_RETAIN_ANTARES_MOUNTS -> {}", value);
+        // Upsert: replace existing line or append if missing.
+        let upsert = format!(
+            r#"grep -q '^ORION_RETAIN_ANTARES_MOUNTS=' /home/orion/orion-runner/.env \
+&& sed -i 's|^ORION_RETAIN_ANTARES_MOUNTS=.*|ORION_RETAIN_ANTARES_MOUNTS="{value}"|' /home/orion/orion-runner/.env \
+|| echo 'ORION_RETAIN_ANTARES_MOUNTS="{value}"' >> /home/orion/orion-runner/.env"#
+        );
+        info!("[env] Executing upsert for ORION_RETAIN_ANTARES_MOUNTS");
+        machine.exec(&upsert).await?;
+    }
+
     // Verify replacements
     let verify_env = machine
         .exec("grep SERVER_WS /home/orion/orion-runner/.env")
@@ -384,6 +397,16 @@ pub async fn replace_env_vars_in_vm(
         "[env] scorpio.toml base_url: {}",
         String::from_utf8_lossy(&verify_base_url.stdout).trim()
     );
+
+    if target_config.retain_antares_mounts.is_some() {
+        let verify_retain = machine
+            .exec("grep ORION_RETAIN_ANTARES_MOUNTS /home/orion/orion-runner/.env || true")
+            .await?;
+        info!(
+            "[env] .env ORION_RETAIN_ANTARES_MOUNTS: {}",
+            String::from_utf8_lossy(&verify_retain.stdout).trim()
+        );
+    }
 
     info!(
         "[env] Environment variable replacement completed for target: {}",

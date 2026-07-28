@@ -37,6 +37,7 @@ flowchart LR
   "orion_binary_path": "/home/user/mega/target/debug/orion",
   "ssh_public_key_path": "~/.ssh/orion_vm_access.pub",
   "max_vms": 8,
+  "retain_antares_mounts": false,
   "default_image": {
     "image_path": "~/.local/share/qlean/images/debian-13-buck2/debian-13-buck2.qcow2",
     "image_digest": "sha256:753c28888c9d30fe4baef55c1d1dfa9a39431595eca940b7ad85d78d84f3d7a5",
@@ -48,6 +49,7 @@ flowchart LR
 ```
 
 可选 `max_vms`：并发 VM 上限（按 domain 计数）；省略则不限制。
+可选 `retain_antares_mounts`：webhook 未传该字段时的默认值，写入 guest `.env` 的 `ORION_RETAIN_ANTARES_MOUNTS`。
 
 配置文件路径可通过 `CONFIG_PATH` 环境变量指定（默认：`target_config.json`）。
 
@@ -143,6 +145,7 @@ curl -X POST http://localhost:8080/webhook \
 | `image_disk_gb`   | u32    | 否    | 虚拟机磁盘大小（GB）；未指定时使用 `default_image.image_disk_gb`         |
 | `image_cpus`      | u32    | 否    | 虚拟 CPU 数量；未指定时使用 `default_image.image_cpus`               |
 | `image_memory_mb` | u32    | 否    | 内存大小（MB）；未指定时使用 `default_image.image_memory_mb`           |
+| `retain_antares_mounts` | bool | 否 | 写入 guest `.env` 的 `ORION_RETAIN_ANTARES_MOUNTS`（`true`→`1`，`false`→`0`）；省略则保留 `.env.prod` 原值 |
 
 > `image_path` 与 `image_url` 互斥，不可同时指定。提供镜像参数时 `image_digest` 必须提供（格式：`sha256:...` 或 `sha512:...`）。未传任何 `image_*` 字段时，scheduler 使用 `target_config.json` 中的 `default_image` 块。
 
@@ -237,6 +240,7 @@ sudo bash scripts/build-custom-image.sh
 | `orion_binary_path`   | string | 无默认值（必填）                   | Orion 二进制文件路径                       |
 | `ssh_public_key_path` | string | 无默认值（必填）                   | SSH 公钥路径                            |
 | `max_vms`             | u32    | 无（不限制）                     | 同时跟踪的 domain/VM 上限；超出新 domain 返回 503 |
+| `retain_antares_mounts` | bool | 无（不写入）                   | webhook 省略时的默认；写入 guest `ORION_RETAIN_ANTARES_MOUNTS` |
 | `default_image`       | object | 见模板                          | 默认 VM 镜像参数；webhook 未传 `image_*` 时使用 |
 
 ### `default_image`

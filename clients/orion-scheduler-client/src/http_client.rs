@@ -1,6 +1,13 @@
 use std::time::Duration;
 
 use crate::{SchedulerStatusResponse, StartRunnerPayload, StartRunnerSchedulerResponse};
+use http::header::AUTHORIZATION;
+use tokio_tungstenite::{
+    MaybeTlsStream, WebSocketStream,
+    tungstenite::client::IntoClientRequest,
+};
+
+pub type TerminalWebSocket = WebSocketStream<MaybeTlsStream<tokio::net::TcpStream>>;
 
 #[derive(Clone)]
 pub struct OrionSchedulerHttpClient {
@@ -169,6 +176,54 @@ impl OrionSchedulerHttpClient {
             ))
         }
     }
+
+    /// Open a WebSocket to `GET /vms/{id}/terminal` (vm_id or domain).
+    pub async fn connect_terminal(&self, id: &str) -> anyhow::Result<TerminalWebSocket> {
+        let ws_base = http_to_ws_base(&self.base_url)?;
+        let url = format!("{}/vms/{}/terminal", ws_base, urlencoding_path(id));
+        tracing::info!("Connecting terminal WS: {}", url);
+
+        let mut request = url.into_client_request()?;
+        if !self.token.is_empty() {
+            let value = format!("Bearer {}", self.token);
+            request.headers_mut().insert(
+                AUTHORIZATION,
+                value
+                    .parse()
+                    .map_err(|e| anyhow::anyhow!("invalid Authorization header: {e}"))?,
+            );
+        }
+
+        let (stream, response) = tokio_tungstenite::connect_async(request).await?;
+        let status = response.status();
+        if !status.is_success() && status.as_u16() != 101 {
+            return Err(anyhow::anyhow!(
+                "Scheduler connect_terminal handshake failed: {}",
+                status
+            ));
+        }
+        Ok(stream)
+    }
+}
+
+fn http_to_ws_base(base_url: &str) -> anyhow::Result<String> {
+    let base = base_url.trim_end_matches('/');
+    if let Some(rest) = base.strip_prefix("https://") {
+        Ok(format!("wss://{rest}"))
+    } else if let Some(rest) = base.strip_prefix("http://") {
+        Ok(format!("ws://{rest}"))
+    } else if base.starts_with("ws://") || base.starts_with("wss://") {
+        Ok(base.to_string())
+    } else {
+        Err(anyhow::anyhow!(
+            "unsupported scheduler URL scheme for terminal WS: {base_url}"
+        ))
+    }
+}
+
+/// Encode a single path segment (vm id / domain).
+fn urlencoding_path(value: &str) -> String {
+    urlencoding_query(value)
 }
 
 fn urlencoding_query(value: &str) -> String {
@@ -198,5 +253,17 @@ mod tests {
     fn urlencoding_query_encodes_reserved_bytes() {
         assert_eq!(urlencoding_query("a b"), "a%20b");
         assert_eq!(urlencoding_query("orion.gitmega.com"), "orion.gitmega.com");
+    }
+
+    #[test]
+    fn http_to_ws_base_converts_schemes() {
+        assert_eq!(
+            http_to_ws_base("http://127.0.0.1:8080/").unwrap(),
+            "ws://127.0.0.1:8080"
+        );
+        assert_eq!(
+            http_to_ws_base("https://sched.example.com").unwrap(),
+            "wss://sched.example.com"
+        );
     }
 }

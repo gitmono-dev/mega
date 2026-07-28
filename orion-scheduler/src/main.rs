@@ -135,6 +135,10 @@ async fn main() -> anyhow::Result<()> {
         .route("/status", axum::routing::get(handlers::status_handler))
         .route("/vms/{id}", axum::routing::get(handlers::vm_by_id_handler))
         .route(
+            "/vms/{id}/terminal",
+            axum::routing::get(handlers::terminal_ws_handler),
+        )
+        .route(
             "/logs/orion/stream",
             axum::routing::get(handlers::logs_stream_handler),
         )
