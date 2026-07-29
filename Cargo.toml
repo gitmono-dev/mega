@@ -38,7 +38,7 @@ orion = { path = "orion" }
 orion-client = { path = "clients/orion-client" }
 orion-scheduler-client = { path = "clients/orion-scheduler-client" }
 
-git-internal = "0.8.4"
+git-internal = "0.8.5"
 libvault-core = "0.1.0"
 
 #====
