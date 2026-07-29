@@ -21,6 +21,8 @@ env:
   REPOSITORY: mega/mono-engine
   IMAGE_TAG_BASE: latest
   HARBOR_REGISTRY: registry.xuanwu.openatom.cn
+  # TEMP: skip AWS ECR Public push; Harbor only. Re-enable ECR steps below to restore.
+  PUSH_AWS_ECR: "false"
 
 # Using AWS access key for authentication.
 # actions: write is required for docker buildx --cache-{from,to} type=gha.
@@ -50,9 +52,10 @@ jobs:
         uses: crazy-max/ghaction-github-runtime@v3
 
       # -----------------------------
-      # AWS / ECR Public
+      # AWS / ECR Public (TEMP disabled)
       # -----------------------------
       - name: Configure AWS Credentials
+        if: env.PUSH_AWS_ECR == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -60,6 +63,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Login to Amazon ECR Public
+        if: env.PUSH_AWS_ECR == 'true'
         id: login-ecr-public
         uses: aws-actions/amazon-ecr-login@v2
         with:
@@ -73,23 +77,31 @@ jobs:
           password: ${{ secrets.HARBOR_PASSWORD }}
 
       # -----------------------------
-      # Build & push to ECR + Harbor
+      # Build & push (Harbor; ECR when PUSH_AWS_ECR=true)
       # -----------------------------
-      - name: Build & push image to ECR and Harbor (amd64)
+      - name: Build & push image (amd64)
         env:
           ECR_REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
           IMAGE_TAG_BASE: ${{ env.IMAGE_TAG_BASE }}
+          PUSH_AWS_ECR: ${{ env.PUSH_AWS_ECR }}
         run: |
           set -euo pipefail
 
           ARCH_SUFFIX=amd64
           IMAGE_TAG="${IMAGE_TAG_BASE}-${ARCH_SUFFIX}"
 
-          ECR_IMAGE="$ECR_REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:$IMAGE_TAG"
           HARBOR_IMAGE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}:$IMAGE_TAG"
           CACHE_SCOPE="mono-engine-${ARCH_SUFFIX}"
 
-          echo "ECR_IMAGE=$ECR_IMAGE"
+          TAGS=(-t "$HARBOR_IMAGE")
+          if [ "$PUSH_AWS_ECR" = "true" ]; then
+            ECR_IMAGE="$ECR_REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:$IMAGE_TAG"
+            echo "ECR_IMAGE=$ECR_IMAGE"
+            TAGS+=(-t "$ECR_IMAGE")
+          else
+            echo "TEMP: skipping AWS ECR push (Harbor only)"
+          fi
+
           echo "HARBOR_IMAGE=$HARBOR_IMAGE"
           echo "CACHE_SCOPE=$CACHE_SCOPE"
 
@@ -99,8 +111,7 @@ jobs:
             --provenance=false \
             --sbom=false \
             -f ./mono/Dockerfile \
-            -t "$ECR_IMAGE" \
-            -t "$HARBOR_IMAGE" \
+            "${TAGS[@]}" \
             --push .
 
   manifest:
@@ -110,6 +121,7 @@ jobs:
       contents: read
     steps:
       - name: Configure AWS Credentials
+        if: env.PUSH_AWS_ECR == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -117,6 +129,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Login to Amazon ECR Public
+        if: env.PUSH_AWS_ECR == 'true'
         id: login-ecr-public
         uses: aws-actions/amazon-ecr-login@v2
         with:
@@ -132,9 +145,9 @@ jobs:
       - name: Create & push manifest
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+          PUSH_AWS_ECR: ${{ env.PUSH_AWS_ECR }}
         run: |
           set -euo pipefail
-          IMAGE_BASE="$REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}"
           HARBOR_BASE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}"
           SHORT_SHA="${GITHUB_SHA:0:7}"
           TAG_BASE="${{ env.IMAGE_TAG_BASE }}"
@@ -155,7 +168,12 @@ jobs:
             docker manifest push "$base:$SHORT_SHA"
           }
 
-          push_manifests "$IMAGE_BASE"
+          if [ "$PUSH_AWS_ECR" = "true" ]; then
+            IMAGE_BASE="$REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}"
+            push_manifests "$IMAGE_BASE"
+          else
+            echo "TEMP: skipping AWS ECR manifests (Harbor only)"
+          fi
           push_manifests "$HARBOR_BASE"
 
   deploy-aws:

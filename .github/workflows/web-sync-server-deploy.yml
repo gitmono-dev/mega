@@ -23,6 +23,8 @@ env:
   REPOSITORY: mega/web-sync-server
   IMAGE_TAG: latest
   HARBOR_REGISTRY: registry.xuanwu.openatom.cn
+  # TEMP: skip AWS ECR Public push; Harbor only. Re-enable ECR steps below to restore.
+  PUSH_AWS_ECR: "false"
 
 jobs:
   build-and-push:
@@ -37,6 +39,7 @@ jobs:
           node-version: "26"
 
       - name: Configure AWS Credentials
+        if: env.PUSH_AWS_ECR == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -44,6 +47,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Login to Amazon ECR Public
+        if: env.PUSH_AWS_ECR == 'true'
         id: login-ecr-public
         uses: aws-actions/amazon-ecr-login@v2
         with:
@@ -56,31 +60,34 @@ jobs:
           username: ${{ secrets.HARBOR_USERNAME }}
           password: ${{ secrets.HARBOR_PASSWORD }}
 
-      - name: Build, tag, and push docker image to ECR Public and Harbor
+      - name: Build, tag, and push docker image
         working-directory: moon
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+          PUSH_AWS_ECR: ${{ env.PUSH_AWS_ECR }}
         run: |
           set -euo pipefail
 
-          AWS_IMAGE_BASE="$REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}"
           HARBOR_IMAGE_BASE="${{ env.HARBOR_REGISTRY }}/${{ env.REPOSITORY }}"
           IMAGE_TAG="${{ env.IMAGE_TAG }}"
           SHORT_SHA="${GITHUB_SHA:0:7}"
 
           docker build \
             -f apps/sync-server/Dockerfile \
-            -t "$AWS_IMAGE_BASE:$IMAGE_TAG" .
+            -t "$HARBOR_IMAGE_BASE:$IMAGE_TAG" \
+            -t "$HARBOR_IMAGE_BASE:$SHORT_SHA" \
+            .
 
-          docker tag "$AWS_IMAGE_BASE:$IMAGE_TAG" "$AWS_IMAGE_BASE:$SHORT_SHA"
-          docker tag "$AWS_IMAGE_BASE:$IMAGE_TAG" "$HARBOR_IMAGE_BASE:$IMAGE_TAG"
-          docker tag "$AWS_IMAGE_BASE:$IMAGE_TAG" "$HARBOR_IMAGE_BASE:$SHORT_SHA"
+          if [ "$PUSH_AWS_ECR" = "true" ]; then
+            AWS_IMAGE_BASE="$REGISTRY/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}"
+            docker tag "$HARBOR_IMAGE_BASE:$IMAGE_TAG" "$AWS_IMAGE_BASE:$IMAGE_TAG"
+            docker tag "$HARBOR_IMAGE_BASE:$IMAGE_TAG" "$AWS_IMAGE_BASE:$SHORT_SHA"
+            docker push "$AWS_IMAGE_BASE:$IMAGE_TAG"
+            docker push "$AWS_IMAGE_BASE:$SHORT_SHA"
+          else
+            echo "TEMP: skipping AWS ECR push (Harbor only)"
+          fi
 
-          # Push to AWS ECR Public (latest + commit hash)
-          docker push "$AWS_IMAGE_BASE:$IMAGE_TAG"
-          docker push "$AWS_IMAGE_BASE:$SHORT_SHA"
-
-          # Push to Harbor (latest + commit hash)
           docker push "$HARBOR_IMAGE_BASE:$IMAGE_TAG"
           docker push "$HARBOR_IMAGE_BASE:$SHORT_SHA"
 
