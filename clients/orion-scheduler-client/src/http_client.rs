@@ -3,7 +3,10 @@ use std::time::Duration;
 use http::header::AUTHORIZATION;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, tungstenite::client::IntoClientRequest};
 
-use crate::{SchedulerStatusResponse, StartRunnerPayload, StartRunnerSchedulerResponse};
+use crate::{
+    SchedulerStatusResponse, SchedulerVmListResponse, StartRunnerPayload,
+    StartRunnerSchedulerResponse,
+};
 
 pub type TerminalWebSocket = WebSocketStream<MaybeTlsStream<tokio::net::TcpStream>>;
 
@@ -87,6 +90,7 @@ impl OrionSchedulerHttpClient {
                 phase: Some("no_vm".to_string()),
                 vm_id: Some(vm_id.to_string()),
                 domain: None,
+                target: None,
                 vm_ip: None,
                 uptime_secs: None,
                 log_file: None,
@@ -114,46 +118,48 @@ impl OrionSchedulerHttpClient {
         }
     }
 
-    pub async fn get_status(&self) -> anyhow::Result<SchedulerStatusResponse> {
+    pub async fn list_vms(&self) -> anyhow::Result<SchedulerVmListResponse> {
         let url = format!("{}/status", self.base_url);
         let req = self.client.get(&url).timeout(Duration::from_secs(30));
         let res = self.auth_headers(req).send().await?;
         if res.status().is_success() {
-            // List form — not used by mono GET by id path anymore.
-            let v: serde_json::Value = res.json().await?;
-            if let Some(vms) = v.get("vms").and_then(|x| x.as_array()) {
-                if let Some(first) = vms.first() {
-                    return Ok(serde_json::from_value(first.clone())?);
-                }
-                return Ok(SchedulerStatusResponse {
-                    status: "no_vm".to_string(),
-                    phase: Some("no_vm".to_string()),
-                    vm_id: None,
-                    domain: None,
-                    vm_ip: None,
-                    uptime_secs: None,
-                    log_file: None,
-                    error: None,
-                    image_path: None,
-                    image_digest: None,
-                    image_cpus: None,
-                    image_memory_mb: None,
-                    image_disk_gb: None,
-                    image_name: None,
-                    image_built_at: None,
-                    toolchain_rust: None,
-                    toolchain_buck2: None,
-                    toolchain_python: None,
-                    kernel: None,
-                });
-            }
-            Ok(serde_json::from_value(v)?)
+            Ok(res.json().await?)
         } else {
             Err(anyhow::anyhow!(
-                "Scheduler get_status failed: {}",
+                "Scheduler list_vms failed: {}",
                 res.status()
             ))
         }
+    }
+
+    pub async fn get_status(&self) -> anyhow::Result<SchedulerStatusResponse> {
+        let list = self.list_vms().await?;
+        Ok(list
+            .vms
+            .into_iter()
+            .next()
+            .unwrap_or(SchedulerStatusResponse {
+                status: "no_vm".to_string(),
+                phase: Some("no_vm".to_string()),
+                vm_id: None,
+                domain: None,
+                target: None,
+                vm_ip: None,
+                uptime_secs: None,
+                log_file: None,
+                error: None,
+                image_path: None,
+                image_digest: None,
+                image_cpus: None,
+                image_memory_mb: None,
+                image_disk_gb: None,
+                image_name: None,
+                image_built_at: None,
+                toolchain_rust: None,
+                toolchain_buck2: None,
+                toolchain_python: None,
+                kernel: None,
+            }))
     }
 
     /// Open an SSE stream of live Orion runner logs (`GET /logs/orion/stream`).

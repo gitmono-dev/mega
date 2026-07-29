@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
 
 import type { StartRunnerRequest, StartRunnerResponse } from '@gitmono/types/generated'
@@ -6,7 +6,9 @@ import type { StartRunnerRequest, StartRunnerResponse } from '@gitmono/types/gen
 import { legacyApiClient } from '@/utils/queryClient'
 
 export function usePostStartRunner() {
+  const queryClient = useQueryClient()
   const mutation = legacyApiClient.v1.postApiOrionRunners()
+  const listQuery = legacyApiClient.v1.getApiOrionRunners()
 
   return useMutation<StartRunnerResponse, Error, StartRunnerRequest | void>({
     mutationFn: async (body) => {
@@ -18,6 +20,7 @@ export function usePostStartRunner() {
       return result.data
     },
     onSuccess: (data) => {
+      void queryClient.invalidateQueries({ queryKey: listQuery.baseKey })
       if (data.phase === 'running') {
         toast.success(data.domain ? `Runner already running (${data.domain})` : 'Runner already running')
       } else {

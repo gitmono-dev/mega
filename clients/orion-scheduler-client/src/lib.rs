@@ -57,6 +57,8 @@ pub struct SchedulerStatusResponse {
     #[serde(default)]
     pub domain: Option<String>,
     #[serde(default)]
+    pub target: Option<String>,
+    #[serde(default)]
     pub vm_ip: Option<String>,
     #[serde(default)]
     pub uptime_secs: Option<u64>,
@@ -88,6 +90,16 @@ pub struct SchedulerStatusResponse {
     pub kernel: Option<String>,
 }
 
+/// Response from scheduler `GET /status` (all VMs).
+#[derive(Debug, Clone, Deserialize)]
+pub struct SchedulerVmListResponse {
+    pub status: String,
+    #[serde(default)]
+    pub count: usize,
+    #[serde(default)]
+    pub vms: Vec<SchedulerStatusResponse>,
+}
+
 #[derive(Clone)]
 pub struct OrionSchedulerClient {
     http: OrionSchedulerHttpClient,
@@ -116,9 +128,40 @@ impl OrionSchedulerClient {
         self.http.get_vm_status(vm_id).await
     }
 
-    /// Backward-compatible list/status endpoint.
+    /// Backward-compatible list/status endpoint (returns first VM if any).
     pub async fn get_status(&self) -> anyhow::Result<SchedulerStatusResponse> {
-        self.http.get_status().await
+        let list = self.list_vms().await?;
+        Ok(list
+            .vms
+            .into_iter()
+            .next()
+            .unwrap_or(SchedulerStatusResponse {
+                status: "no_vm".to_string(),
+                phase: Some("no_vm".to_string()),
+                vm_id: None,
+                domain: None,
+                target: None,
+                vm_ip: None,
+                uptime_secs: None,
+                log_file: None,
+                error: None,
+                image_path: None,
+                image_digest: None,
+                image_cpus: None,
+                image_memory_mb: None,
+                image_disk_gb: None,
+                image_name: None,
+                image_built_at: None,
+                toolchain_rust: None,
+                toolchain_buck2: None,
+                toolchain_python: None,
+                kernel: None,
+            }))
+    }
+
+    /// List all VMs tracked by the scheduler (`GET /status`).
+    pub async fn list_vms(&self) -> anyhow::Result<SchedulerVmListResponse> {
+        self.http.list_vms().await
     }
 
     /// Proxy-friendly SSE stream of runner / orion-client startup logs.

@@ -41,6 +41,8 @@ pub struct RunnerStatusResponse {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub domain: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub vm_ip: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub log_file: Option<String>,
@@ -70,4 +72,11 @@ pub struct RunnerStatusResponse {
     pub toolchain_python: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub kernel: Option<String>,
+}
+
+/// List of runner VMs currently tracked by orion-scheduler.
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct RunnerListResponse {
+    pub count: usize,
+    pub runners: Vec<RunnerStatusResponse>,
 }

@@ -8,10 +8,12 @@ use axum::{
     response::{IntoResponse, Response},
     routing::get,
 };
-use ceres::model::orion_runner::{RunnerStatusResponse, StartRunnerRequest, StartRunnerResponse};
+use ceres::model::orion_runner::{
+    RunnerListResponse, RunnerStatusResponse, StartRunnerRequest, StartRunnerResponse,
+};
 use common::config::BuildConfig;
 use futures::{SinkExt, StreamExt, TryStreamExt};
-use orion_scheduler_client::{OrionSchedulerClient, StartRunnerPayload};
+use orion_scheduler_client::{OrionSchedulerClient, SchedulerStatusResponse, StartRunnerPayload};
 use tokio_tungstenite::tungstenite::Message as TungsteniteMessage;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -24,6 +26,7 @@ pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
     OpenApiRouter::new().nest(
         "/orion/runners",
         OpenApiRouter::new()
+            .routes(routes!(list_runners))
             .routes(routes!(start_runner))
             .routes(routes!(stream_runner_logs))
             .routes(routes!(get_runner_status))
@@ -119,6 +122,103 @@ fn is_local_runner_domain(host: &str) -> bool {
         || host.starts_with("127.0.0.1")
         || host.ends_with(".test")
         || host.ends_with(".local")
+}
+
+fn runner_status_from_sched(
+    sched: SchedulerStatusResponse,
+    fallback_id: Option<&str>,
+) -> Option<RunnerStatusResponse> {
+    let phase = sched
+        .phase
+        .clone()
+        .or_else(|| Some(sched.status.clone()))
+        .unwrap_or_else(|| "unknown".to_string());
+    if phase == "no_vm" {
+        return None;
+    }
+    let vm_id = sched.vm_id.or_else(|| fallback_id.map(str::to_string))?;
+    Some(RunnerStatusResponse {
+        vm_id,
+        phase,
+        domain: sched.domain,
+        target: sched.target.filter(|t| !t.is_empty()),
+        vm_ip: sched.vm_ip,
+        log_file: sched.log_file,
+        error: sched.error,
+        uptime_secs: sched.uptime_secs,
+        image_path: sched.image_path,
+        image_digest: sched.image_digest,
+        image_cpus: sched.image_cpus,
+        image_memory_mb: sched.image_memory_mb,
+        image_disk_gb: sched.image_disk_gb,
+        image_name: sched.image_name,
+        image_built_at: sched.image_built_at,
+        toolchain_rust: sched.toolchain_rust,
+        toolchain_buck2: sched.toolchain_buck2,
+        toolchain_python: sched.toolchain_python,
+        kernel: sched.kernel,
+    })
+}
+
+/// List Orion runner VMs currently tracked by orion-scheduler.
+#[utoipa::path(
+    get,
+    path = "/",
+    responses(
+        (status = 200, body = CommonResult<RunnerListResponse>, content_type = "application/json"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - admin only"),
+        (status = 503, description = "Scheduler not configured"),
+        (status = 502, description = "Scheduler unreachable"),
+    ),
+    tag = ORION_RUNNER_TAG
+)]
+async fn list_runners(
+    user: LoginUser,
+    State(state): State<MonoApiServiceState>,
+) -> Result<Json<CommonResult<RunnerListResponse>>, ApiError> {
+    ensure_admin(&state, &user).await?;
+    let client = scheduler_client(&state)?;
+
+    let list = client.list_vms().await.map_err(|e| {
+        ApiError::with_status(
+            StatusCode::BAD_GATEWAY,
+            anyhow!("Scheduler request failed: {}", e),
+        )
+    })?;
+
+    let mut runners: Vec<RunnerStatusResponse> = list
+        .vms
+        .into_iter()
+        .filter_map(|vm| runner_status_from_sched(vm, None))
+        .collect();
+    // Stable order: running first, then provisioning, then failed; domain asc.
+    runners.sort_by(|a, b| {
+        phase_rank(&a.phase)
+            .cmp(&phase_rank(&b.phase))
+            .then_with(|| {
+                a.domain
+                    .as_deref()
+                    .unwrap_or("")
+                    .cmp(b.domain.as_deref().unwrap_or(""))
+            })
+            .then_with(|| a.vm_id.cmp(&b.vm_id))
+    });
+
+    let count = runners.len();
+    Ok(Json(CommonResult::success(Some(RunnerListResponse {
+        count,
+        runners,
+    }))))
+}
+
+fn phase_rank(phase: &str) -> u8 {
+    match phase {
+        "running" => 0,
+        "provisioning" => 1,
+        "failed" => 2,
+        _ => 3,
+    }
 }
 
 /// Start a new Orion runner VM via orion-scheduler.
@@ -239,36 +339,14 @@ async fn get_runner_status(
         )
     })?;
 
-    let phase = sched
-        .phase
-        .clone()
-        .or_else(|| Some(sched.status.clone()))
-        .unwrap_or_else(|| "unknown".to_string());
+    let status = runner_status_from_sched(sched, Some(&id))
+        .ok_or_else(|| ApiError::not_found(anyhow!("Runner VM '{}' not found", id)))?;
 
-    if phase == "no_vm" || sched.vm_id.as_deref() != Some(id.as_str()) {
+    if status.vm_id != id {
         return Err(ApiError::not_found(anyhow!("Runner VM '{}' not found", id)));
     }
 
-    Ok(Json(CommonResult::success(Some(RunnerStatusResponse {
-        vm_id: id,
-        phase,
-        domain: sched.domain,
-        vm_ip: sched.vm_ip,
-        log_file: sched.log_file,
-        error: sched.error,
-        uptime_secs: sched.uptime_secs,
-        image_path: sched.image_path,
-        image_digest: sched.image_digest,
-        image_cpus: sched.image_cpus,
-        image_memory_mb: sched.image_memory_mb,
-        image_disk_gb: sched.image_disk_gb,
-        image_name: sched.image_name,
-        image_built_at: sched.image_built_at,
-        toolchain_rust: sched.toolchain_rust,
-        toolchain_buck2: sched.toolchain_buck2,
-        toolchain_python: sched.toolchain_python,
-        kernel: sched.kernel,
-    }))))
+    Ok(Json(CommonResult::success(Some(status))))
 }
 
 /// Proxy live Orion runner / client startup logs from orion-scheduler as SSE.

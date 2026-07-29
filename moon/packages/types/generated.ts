@@ -3536,8 +3536,9 @@ export type BlameResult = {
 }
 
 /**
- * Response for unauthenticated mega-init bot bootstrap.
+ * Response for mega-init bot bootstrap (`POST /bots/bootstrap-init`).
  *
+ * Requires header `X-Mega-Init-Secret` matching `MEGA_INIT_BOOTSTRAP_SECRET`.
  * `token` is a `bot_` push token returned once; use as Bearer (or Basic password).
  */
 export type BootstrapInitBotResponse = {
@@ -3761,8 +3762,9 @@ export type CommonResultBlameResult = {
 
 export type CommonResultBootstrapInitBotResponse = {
   /**
-   * Response for unauthenticated mega-init bot bootstrap.
+   * Response for mega-init bot bootstrap (`POST /bots/bootstrap-init`).
    *
+   * Requires header `X-Mega-Init-Secret` matching `MEGA_INIT_BOOTSTRAP_SECRET`.
    * `token` is a `bot_` push token returned once; use as Bearer (or Basic password).
    */
   data?: {
@@ -4387,10 +4389,22 @@ export type CommonResultReviewersResponse = {
   req_result: boolean
 }
 
+export type CommonResultRunnerListResponse = {
+  /** List of runner VMs currently tracked by orion-scheduler. */
+  data?: {
+    /** @min 0 */
+    count: number
+    runners: RunnerStatusResponse[]
+  }
+  err_message: string
+  req_result: boolean
+}
+
 export type CommonResultRunnerStatusResponse = {
   data?: {
     domain?: string | null
     error?: string | null
+    image_built_at?: string | null
     /**
      * @format int32
      * @min 0
@@ -4407,12 +4421,12 @@ export type CommonResultRunnerStatusResponse = {
      * @min 0
      */
     image_memory_mb?: number | null
-    image_built_at?: string | null
     image_name?: string | null
     image_path?: string | null
     kernel?: string | null
     log_file?: string | null
     phase: string
+    target?: string | null
     toolchain_buck2?: string | null
     toolchain_python?: string | null
     toolchain_rust?: string | null
@@ -5783,9 +5797,17 @@ export type ReviewersResponse = {
   result: ReviewerInfo[]
 }
 
+/** List of runner VMs currently tracked by orion-scheduler. */
+export type RunnerListResponse = {
+  /** @min 0 */
+  count: number
+  runners: RunnerStatusResponse[]
+}
+
 export type RunnerStatusResponse = {
   domain?: string | null
   error?: string | null
+  image_built_at?: string | null
   /**
    * @format int32
    * @min 0
@@ -5802,12 +5824,12 @@ export type RunnerStatusResponse = {
    * @min 0
    */
   image_memory_mb?: number | null
-  image_built_at?: string | null
   image_name?: string | null
   image_path?: string | null
   kernel?: string | null
   log_file?: string | null
   phase: string
+  target?: string | null
   toolchain_buck2?: string | null
   toolchain_python?: string | null
   toolchain_rust?: string | null
@@ -9370,6 +9392,8 @@ export type PatchApiOrganizationsNotesSyncStateParams = {
 }
 
 export type PatchApiOrganizationsNotesSyncStateData = any
+
+export type GetApiOrionRunnersData = CommonResultRunnerListResponse
 
 export type PostApiOrionRunnersData = CommonResultStartRunnerResponse
 
@@ -19033,11 +19057,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     },
 
     /**
-     * @description Creates the `mega-init` bot if needed and returns a fresh `bot_` token for git HTTP push. Intended for onprem mega-init Job / CronJob.
+     * @description Gated by shared secret `MEGA_INIT_BOOTSTRAP_SECRET` via header `X-Mega-Init-Secret` (not LoginUser — for the onprem mega-init Job / CronJob). Creates the `mega-init` bot if needed and returns a fresh `bot_` token for git HTTP push.
      *
      * @tags Automation & Integrations
      * @name PostApiBotsBootstrapInit
-     * @summary Bootstrap mega-init bot + push token (no auth; same class as merge-no-auth).
+     * @summary Bootstrap mega-init bot + push token.
      * @request POST:/api/v1/bots/bootstrap-init
      */
     postApiBotsBootstrapInit: () => {
@@ -21196,6 +21220,30 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
             method: 'PATCH',
             body: data,
             type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name GetApiOrionRunners
+     * @summary List Orion runner VMs currently tracked by orion-scheduler.
+     * @request GET:/api/v1/orion/runners
+     */
+    getApiOrionRunners: () => {
+      const base = 'GET:/api/v1/orion/runners' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiOrionRunnersData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiOrionRunnersData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiOrionRunnersData>({
+            path: `/api/v1/orion/runners`,
+            method: 'GET',
             format: 'json',
             ...params
           })

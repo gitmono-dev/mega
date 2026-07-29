@@ -15,10 +15,11 @@ import { Button, UIText } from '@gitmono/ui'
 import { RefreshIcon } from '@gitmono/ui/Icons'
 
 import { AppLayout } from '@/components/Layout/AppLayout'
-import { ClientsTable, OrionClient, OrionClientStatus, VmTerminal } from '@/components/OrionClient'
+import { ClientsTable, OrionClient, OrionClientStatus, RunnersTable, VmTerminal } from '@/components/OrionClient'
 import AuthAppProviders from '@/components/Providers/AuthAppProviders'
 import { useAdminCheck } from '@/hooks/admin/useAdminCheck'
 import { usePostOrionClientsInfo } from '@/hooks/OrionClient/OrionClientsInfo'
+import { useGetRunnerList } from '@/hooks/OrionClient/useGetRunnerList'
 import { useGetRunnerStatus } from '@/hooks/OrionClient/useGetRunnerStatus'
 import { usePostStartRunner } from '@/hooks/OrionClient/usePostStartRunner'
 import { useRunnerLogsSSE } from '@/hooks/OrionClient/useRunnerLogsSSE'
@@ -111,6 +112,12 @@ const OrionClientPage: PageWithLayout<any> = () => {
   const isAdmin = adminCheck?.data?.is_admin || false
 
   const { mutate: startRunner, isPending: isStartingRunner } = usePostStartRunner()
+  const {
+    data: runnerList,
+    isLoading: isLoadingRunners,
+    error: runnerListError,
+    refetch: refetchRunners
+  } = useGetRunnerList(isAdmin)
   const runnerStatusVmId = logSource === 'runner' ? activeLogKey : null
   const { data: runnerStatus } = useGetRunnerStatus(runnerStatusVmId, activePhase)
   const { logs: runnerLogs, status: runnerLogsStatus, error: runnerLogsError } = useRunnerLogsSSE(activeLogKey)
@@ -190,12 +197,16 @@ const OrionClientPage: PageWithLayout<any> = () => {
   const handleRefresh = React.useCallback(() => {
     if (showingOverlay) return
 
+    if (isAdmin) {
+      void refetchRunners()
+    }
+
     mutate(requestPayload, {
       onSuccess: (data) => {
         setClientsPage(data)
       }
     })
-  }, [mutate, requestPayload, showingOverlay])
+  }, [isAdmin, mutate, refetchRunners, requestPayload, showingOverlay])
 
   React.useEffect(() => {
     if (!runnerStatus) return
@@ -310,6 +321,23 @@ const OrionClientPage: PageWithLayout<any> = () => {
       }
 
       openTerminalPanel(domain, 'client', { domain, clientId: client.client_id })
+    },
+    [openTerminalPanel]
+  )
+
+  const handleViewRunnerLogs = React.useCallback(
+    (runner: { vm_id: string; domain?: string | null; phase?: string | null }) => {
+      openLogPanel(runner.vm_id, 'runner', {
+        domain: runner.domain ?? null,
+        phase: runner.phase ?? null
+      })
+    },
+    [openLogPanel]
+  )
+
+  const handleConnectRunnerTerminal = React.useCallback(
+    (runner: { vm_id: string; domain?: string | null }) => {
+      openTerminalPanel(runner.vm_id, 'runner', { domain: runner.domain ?? null })
     },
     [openTerminalPanel]
   )
@@ -672,6 +700,17 @@ const OrionClientPage: PageWithLayout<any> = () => {
 
         {!showingOverlay ? (
           <>
+            {isAdmin ? (
+              <RunnersTable
+                runners={runnerList?.runners ?? []}
+                isLoading={isLoadingRunners}
+                errorMessage={runnerListError?.message ?? null}
+                canManage={isAdmin}
+                onViewLogs={handleViewRunnerLogs}
+                onConnectTerminal={handleConnectRunnerTerminal}
+              />
+            ) : null}
+
             <div className='group flex min-h-[35px] items-center rounded-md border border-gray-300 bg-white px-3 shadow-xs transition-all focus-within:border-blue-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-blue-100 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-500'>
               <div className='flex items-center text-gray-400'>
                 <svg
