@@ -91,6 +91,17 @@ impl OrionSchedulerHttpClient {
                 uptime_secs: None,
                 log_file: None,
                 error: Some("VM not found".to_string()),
+                image_path: None,
+                image_digest: None,
+                image_cpus: None,
+                image_memory_mb: None,
+                image_disk_gb: None,
+                image_name: None,
+                image_built_at: None,
+                toolchain_rust: None,
+                toolchain_buck2: None,
+                toolchain_python: None,
+                kernel: None,
             });
         }
         if status.is_success() {
@@ -123,6 +134,17 @@ impl OrionSchedulerHttpClient {
                     uptime_secs: None,
                     log_file: None,
                     error: None,
+                    image_path: None,
+                    image_digest: None,
+                    image_cpus: None,
+                    image_memory_mb: None,
+                    image_disk_gb: None,
+                    image_name: None,
+                    image_built_at: None,
+                    toolchain_rust: None,
+                    toolchain_buck2: None,
+                    toolchain_python: None,
+                    kernel: None,
                 });
             }
             Ok(serde_json::from_value(v)?)

@@ -14,6 +14,101 @@ use crate::{
 
 type ImageSpecBuildResult = (Option<ImageSpec>, Option<u32>, Option<u32>, Option<u32>);
 
+/// Sidecar written by `build-custom-image.sh` next to the qcow2.
+#[derive(Debug, Clone, Default, serde::Deserialize)]
+struct OrionImageInfoFile {
+    #[serde(default)]
+    image_name: Option<String>,
+    #[serde(default)]
+    built_at: Option<String>,
+    #[serde(default)]
+    rust: Option<String>,
+    #[serde(default)]
+    buck2: Option<String>,
+    #[serde(default)]
+    python: Option<String>,
+    #[serde(default)]
+    kernel: Option<String>,
+}
+
+/// Load `*.image-info.json` / `image-info.json` beside a local qcow2 path.
+fn load_image_info_sidecar(image_path: &str) -> OrionImageInfoFile {
+    let expanded = expand_tilde(image_path);
+    let path = PathBuf::from(&expanded);
+    let mut candidates: Vec<PathBuf> = Vec::new();
+    if let Some(parent) = path.parent() {
+        if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+            candidates.push(parent.join(format!("{stem}.image-info.json")));
+        }
+        candidates.push(parent.join("image-info.json"));
+    }
+    for cand in candidates {
+        match std::fs::read_to_string(&cand) {
+            Ok(raw) => match serde_json::from_str::<OrionImageInfoFile>(&raw) {
+                Ok(info) => {
+                    info!(
+                        "[orion-deploy] Loaded image info sidecar: {}",
+                        cand.display()
+                    );
+                    return info;
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        "[orion-deploy] Failed to parse image info {}: {}",
+                        cand.display(),
+                        e
+                    );
+                }
+            },
+            Err(_) => continue,
+        }
+    }
+    OrionImageInfoFile::default()
+}
+
+#[derive(Default)]
+struct VmRuntimeFields {
+    ip: Option<String>,
+    log_file: Option<String>,
+    error: Option<String>,
+}
+
+fn vm_info_from_params(
+    id: &str,
+    domain: &str,
+    label: &str,
+    phase: VmPhase,
+    image_params: &ImageParams,
+    runtime: VmRuntimeFields,
+) -> VmInfo {
+    let sidecar = image_params
+        .path
+        .as_deref()
+        .map(load_image_info_sidecar)
+        .unwrap_or_default();
+    VmInfo {
+        id: id.to_string(),
+        domain: domain.to_string(),
+        target: label.to_string(),
+        phase,
+        ip: runtime.ip,
+        created_at: std::time::Instant::now(),
+        log_file: runtime.log_file,
+        error: runtime.error,
+        image_path: image_params.path.clone(),
+        image_digest: image_params.digest.clone(),
+        image_cpus: image_params.cpus,
+        image_memory_mb: image_params.memory_mb,
+        image_disk_gb: image_params.disk_gb,
+        image_name: sidecar.image_name,
+        image_built_at: sidecar.built_at,
+        toolchain_rust: sidecar.rust,
+        toolchain_buck2: sidecar.buck2,
+        toolchain_python: sidecar.python,
+        kernel: sidecar.kernel,
+    }
+}
+
 /// Validate inline runner environment URLs from the webhook payload.
 pub fn validate_runner_env(
     server_ws: &str,
@@ -114,16 +209,14 @@ async fn handle_update_inner(
         shutdown_domain(state, domain).await?;
     }
 
-    let provisioning_info = VmInfo {
-        id: vm_name.to_string(),
-        domain: domain.to_string(),
-        target: label.to_string(),
-        phase: VmPhase::Provisioning,
-        ip: None,
-        created_at: std::time::Instant::now(),
-        log_file: None,
-        error: None,
-    };
+    let provisioning_info = vm_info_from_params(
+        vm_name,
+        domain,
+        label,
+        VmPhase::Provisioning,
+        &image_params,
+        VmRuntimeFields::default(),
+    );
     state.set_vm_provisioning(provisioning_info).await;
 
     info!("Creating new VM in keep_alive mode: {}", vm_name);
@@ -146,16 +239,18 @@ async fn handle_update_inner(
     let vm_ip = machine.get_ip().await.ok().flatten();
     info!("[orion-deploy] VM IP: {:?}", vm_ip);
 
-    let vm_info = VmInfo {
-        id: vm_name.to_string(),
-        domain: domain.to_string(),
-        target: label.to_string(),
-        phase: VmPhase::Running,
-        ip: vm_ip,
-        created_at: std::time::Instant::now(),
-        log_file: Some(log_file.clone()),
-        error: None,
-    };
+    let vm_info = vm_info_from_params(
+        vm_name,
+        domain,
+        label,
+        VmPhase::Running,
+        &image_params,
+        VmRuntimeFields {
+            ip: vm_ip,
+            log_file: Some(log_file.clone()),
+            ..Default::default()
+        },
+    );
     state.set_vm(vm_info, machine).await;
 
     info!(

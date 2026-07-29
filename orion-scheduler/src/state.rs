@@ -37,6 +37,20 @@ pub struct VmInfo {
     pub log_file: Option<String>,
     /// Error message when phase is Failed
     pub error: Option<String>,
+    /// Local qcow2 path used to create this VM (if any).
+    pub image_path: Option<String>,
+    /// Image digest used at create (`sha256:...`).
+    pub image_digest: Option<String>,
+    pub image_cpus: Option<u32>,
+    pub image_memory_mb: Option<u32>,
+    pub image_disk_gb: Option<u32>,
+    /// From host `*.image-info.json` beside the qcow2 (optional).
+    pub image_name: Option<String>,
+    pub image_built_at: Option<String>,
+    pub toolchain_rust: Option<String>,
+    pub toolchain_buck2: Option<String>,
+    pub toolchain_python: Option<String>,
+    pub kernel: Option<String>,
 }
 
 pub struct VmEntry {
@@ -230,6 +244,17 @@ mod tests {
             created_at: std::time::Instant::now(),
             log_file: None,
             error: None,
+            image_path: None,
+            image_digest: None,
+            image_cpus: None,
+            image_memory_mb: None,
+            image_disk_gb: None,
+            image_name: None,
+            image_built_at: None,
+            toolchain_rust: None,
+            toolchain_buck2: None,
+            toolchain_python: None,
+            kernel: None,
         }
     }
 

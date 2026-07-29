@@ -56,27 +56,52 @@ BASE_CHECKSUM_URL="${BASE_MIRROR_URL%/}/SHA512SUMS"
 
 IMAGE_SIZE="15G"
 
-RUST_VERSION="1.96.0"
+RUST_VERSION="1.97.1"
 RUST_ARCH="x86_64-unknown-linux-gnu"
+# CN rustup dist mirror (RUSTUP_DIST_SERVER). Xuanwu mirrors .tar.xz reliably;
+# undated /dist/rust-*.tar.* and .tar.gz often 404 — we use the dated xz path
+# from channel-rust-${RUST_VERSION}.toml. Override for the official CDN:
+#   RUSTUP_DIST_SERVER=https://static.rust-lang.org sudo -E bash scripts/build-custom-image.sh
+# Docs: https://xuanwu.openatom.cn/guide/quick-start/install.html
+RUSTUP_DIST_SERVER="${RUSTUP_DIST_SERVER:-https://mirror.xuanwu.openatom.cn}"
+# Optional offline overrides. If either is unset, both date + xz_hash are
+# resolved from ${RUSTUP_DIST_SERVER}/dist/channel-rust-${RUST_VERSION}.toml
+# so bumping RUST_VERSION alone is enough (avoids 404 from a stale date dir).
+RUST_DIST_DATE="${RUST_DIST_DATE:-}"
+RUST_SHA256="${RUST_SHA256:-}"
 # Host-side cache for the Rust toolchain tarball. Pre-place the file here to
 # skip the download (useful when the network is flaky/blocked):
-#   curl -fL -o /tmp/rust-1.96.0-x86_64-unknown-linux-gnu.tar.gz "$RUST_TARBALL_URL"
-RUST_TARBALL="/tmp/rust-${RUST_VERSION}-${RUST_ARCH}.tar.gz"
-RUST_TARBALL_URL="https://static.rust-lang.org/dist/rust-${RUST_VERSION}-${RUST_ARCH}.tar.gz"
+#   curl -fL -o /tmp/rust-1.97.1-x86_64-unknown-linux-gnu.tar.xz "$RUST_TARBALL_URL"
+# Truncated/corrupt caches are detected via SHA256 and re-downloaded.
+RUST_TARBALL="/tmp/rust-${RUST_VERSION}-${RUST_ARCH}.tar.xz"
+RUST_TARBALL_URL=""  # set by resolve_rust_channel
 
 BUCK2_VERSION="2026-04-15"
-BUCK2_ARCH="x86_64-unknown-linux-musl"
-BUCK2_URL="https://github.com/facebook/buck2/releases/download/${BUCK2_VERSION}/buck2-${BUCK2_ARCH}.zst"
-# Host-side cache for the buck2 archive. Pre-place the file here to skip the
-# in-chroot GitHub download entirely (useful when GitHub is flaky/blocked):
-#   curl -fL -o /tmp/buck2-x86_64-unknown-linux-musl.zst "$BUCK2_URL"
-BUCK2_TARBALL="/tmp/buck2-${BUCK2_ARCH}.zst"
+BUCK2_ARCH="x86_64-unknown-linux-gnu"
+# Label recorded in orion-image-info.json (release tag, not just the date).
+BUCK2_LABEL="scorpiofs-execvp-2026-04-15"
+# BUCK2_URL="https://github.com/facebook/buck2/releases/download/${BUCK2_VERSION}/buck2-${BUCK2_ARCH}.zst"
+BUCK2_URL="https://github.com/Ivanbeethoven/buck2/releases/download/${BUCK2_LABEL}/buck2-${BUCK2_ARCH}.zst"
+
+# Persistent host-side cache (NOT /tmp — systemd-tmpfiles / reboots clear that).
+# Lives next to apt caches under /var/cache/orion-image and is never deleted by
+# this script after a successful download. Override with BUCK2_CACHE_DIR=...
+BUCK2_CACHE_DIR="${BUCK2_CACHE_DIR:-/var/cache/orion-image/buck2}"
+BUCK2_TARBALL="${BUCK2_CACHE_DIR}/buck2-${BUCK2_ARCH}.zst"
 # Host-side apt caches, bind-mounted into the chroot so repeated image builds
 # reuse already-downloaded indexes and .deb packages. They live on the host and
 # are unmounted before the image is sealed, so cached data is NOT baked into the
 # final image. Override with APT_LISTS_DIR / APT_CACHE_DIR.
 APT_LISTS_DIR="${APT_LISTS_DIR:-/var/cache/orion-image/apt-lists}"
 APT_CACHE_DIR="${APT_CACHE_DIR:-/var/cache/orion-image/apt-archives}"
+# CN apt mirrors written into the image before chroot apt-get. Official
+# deb.debian.org is often too slow from CN build hosts (apt appears "stuck").
+# Override, e.g.:
+#   APT_MIRROR=https://mirrors.aliyun.com/debian \
+#   APT_SECURITY_MIRROR=https://mirrors.aliyun.com/debian-security \
+#     sudo -E bash scripts/build-custom-image.sh
+APT_MIRROR="${APT_MIRROR:-https://mirrors.ustc.edu.cn/debian}"
+APT_SECURITY_MIRROR="${APT_SECURITY_MIRROR:-https://mirrors.ustc.edu.cn/debian-security}"
 
 # CPython tarball for prelude remote_python_toolchain / toolchains//:cpython_archive.
 # Baked into a local GitHub HTTPS mirror (see chroot) so buck2 http_archive keeps
@@ -113,6 +138,7 @@ fix_qlean_ownership() {
 # ============================================================================
 MOUNT_DIR=""
 BUILD_STAGE="init"
+CLEANUP_RUNNING=0
 
 log_stage() {
     BUILD_STAGE="$1"
@@ -123,21 +149,95 @@ log_cmd() {
     echo "[build-custom-image] \$ $*"
 }
 
+# Unmount image tree safely. Never `rm -rf` the mount dir while /proc|/sys|/dev
+# are still bind-mounted — that prints endless "Operation not permitted" under
+# proc and can wedge the host. Prefer lazy umount if busy after Ctrl-C.
+unmount_image_tree() {
+    local root="$1"
+    local sub tries
+
+    [ -n "$root" ] && [ -d "$root" ] || return 0
+
+    # Drop processes still in the chroot (apt-get, etc.) so umount can succeed.
+    if command -v fuser >/dev/null 2>&1; then
+        sudo fuser -km "$root" >/dev/null 2>&1 || true
+        sleep 0.5
+    fi
+
+    for sub in var/lib/apt/lists var/cache/apt/archives proc sys dev; do
+        if mountpoint -q "$root/$sub" 2>/dev/null; then
+            sudo umount "$root/$sub" 2>/dev/null || sudo umount -l "$root/$sub" 2>/dev/null || true
+        fi
+    done
+
+    # Any nested mounts left under $root (e.g. unexpected bind)?
+    if command -v findmnt >/dev/null 2>&1; then
+        findmnt -Rnn -o TARGET --target "$root" 2>/dev/null \
+            | awk -v r="$root" '$0 != r { print }' \
+            | sort -r \
+            | while IFS= read -r tgt; do
+                sudo umount "$tgt" 2>/dev/null || sudo umount -l "$tgt" 2>/dev/null || true
+              done
+    fi
+
+    if mountpoint -q "$root" 2>/dev/null; then
+        for tries in 1 2 3 4 5; do
+            sudo umount "$root" 2>/dev/null && break
+            sudo umount -l "$root" 2>/dev/null && break
+            sleep 1
+        done
+    fi
+
+    if mountpoint -q "$root" 2>/dev/null; then
+        echo "[build-custom-image] WARNING: $root still mounted; NOT removing dir (avoid rm -rf on /proc)" >&2
+        findmnt -R "$root" 2>/dev/null || true
+        return 1
+    fi
+
+    rmdir "$root" 2>/dev/null || true
+    return 0
+}
+
+# Disconnect NBD and drop any leftover qemu-nbd holding this image's write lock.
+release_nbd() {
+    local img="${1:-}"
+    if [ -n "$img" ]; then
+        local pids
+        pids=$(ps -eo pid=,args= | awk -v img="$img" '
+            $0 ~ /qemu-nbd/ && index($0, img) { print $1 }
+        ')
+        if [ -n "$pids" ]; then
+            echo "[build-custom-image] Killing stale qemu-nbd for $img: $pids"
+            # shellcheck disable=SC2086
+            sudo kill $pids 2>/dev/null || true
+            sleep 1
+            # shellcheck disable=SC2086
+            sudo kill -9 $pids 2>/dev/null || true
+        fi
+    fi
+    sudo qemu-nbd --disconnect "$NBD_DEV" 2>/dev/null || true
+}
+
 cleanup() {
     local rc=$?
+    # Re-entrant: a second Ctrl-C while umount is in progress must not start
+    # another cleanup (or worse, an rm) on a half-unmounted tree.
+    if [ "$CLEANUP_RUNNING" -ne 0 ]; then
+        return
+    fi
+    CLEANUP_RUNNING=1
+    # Ignore further INT/TERM during cleanup so we finish umounts.
+    trap '' INT TERM HUP
     set +e
     if [ $rc -ne 0 ]; then
         echo "[build-custom-image] FAILED with exit code $rc (stage: ${BUILD_STAGE:-unknown})" >&2
     fi
     if [ -n "$MOUNT_DIR" ]; then
         echo "[build-custom-image] cleanup: unmounting $MOUNT_DIR (stage was: ${BUILD_STAGE:-unknown})"
-        for sub in var/lib/apt/lists var/cache/apt/archives proc sys dev; do
-            mountpoint -q "$MOUNT_DIR/$sub" && sudo umount "$MOUNT_DIR/$sub"
-        done
-        mountpoint -q "$MOUNT_DIR" && sudo umount "$MOUNT_DIR"
-        [ -d "$MOUNT_DIR" ] && rmdir "$MOUNT_DIR" 2>/dev/null
+        unmount_image_tree "$MOUNT_DIR" || true
+        MOUNT_DIR=""
     fi
-    sudo qemu-nbd --disconnect "$NBD_DEV" 2>/dev/null
+    release_nbd "${CUSTOM_IMAGE:-}"
     exit $rc
 }
 trap cleanup EXIT INT TERM HUP
@@ -199,6 +299,17 @@ INITRD=$(ls "$BASE_DIR"/initrd.img-* 2>/dev/null | head -n1 || true)
 
 mkdir -p "$IMAGE_DIR"
 
+# Recover from a previous Ctrl-C that left bind mounts behind. Never rm -rf
+# those dirs while /proc is still mounted.
+if compgen -G '/tmp/custom-image-mnt.*' >/dev/null 2>&1; then
+    echo "[build-custom-image] Cleaning stale mount dirs under /tmp/custom-image-mnt.*"
+    for stale in /tmp/custom-image-mnt.*; do
+        [ -d "$stale" ] || continue
+        unmount_image_tree "$stale" || true
+    done
+fi
+release_nbd "$CUSTOM_IMAGE"
+
 # ============================================================================
 # Stage 1: Copy + resize qcow2
 # ============================================================================
@@ -212,31 +323,167 @@ qemu-img resize "$CUSTOM_IMAGE" "$IMAGE_SIZE"
 # ============================================================================
 # Stage 2: Download Rust on host (avoids needing DNS inside chroot)
 # ============================================================================
-if [ ! -f "$RUST_TARBALL" ]; then
-    echo "[build-custom-image] Downloading Rust ${RUST_VERSION}..."
-    curl -fsSL -o "$RUST_TARBALL" "$RUST_TARBALL_URL"
+# Xuanwu (and most rustup mirrors) require /dist/YYYY-MM-DD/rust-VER-ARCH.tar.xz.
+# Resolve that date + xz_hash from the channel manifest so RUST_VERSION bumps
+# don't leave a stale RUST_DIST_DATE and 404.
+resolve_rust_channel() {
+    local channel_url="${RUSTUP_DIST_SERVER%/}/dist/channel-rust-${RUST_VERSION}.toml"
+    local channel_file tmp_date tmp_hash
+
+    if [ -n "$RUST_DIST_DATE" ] && [ -n "$RUST_SHA256" ]; then
+        RUST_TARBALL_URL="${RUSTUP_DIST_SERVER%/}/dist/${RUST_DIST_DATE}/rust-${RUST_VERSION}-${RUST_ARCH}.tar.xz"
+        echo "[build-custom-image] Using overridden Rust dist: ${RUST_TARBALL_URL}"
+        return 0
+    fi
+
+    echo "[build-custom-image] Resolving Rust ${RUST_VERSION} channel: ${channel_url}"
+    channel_file=$(mktemp)
+    if ! curl -fsSL --connect-timeout 20 --max-time 60 --retry 3 \
+            -o "$channel_file" "$channel_url"; then
+        rm -f "$channel_file"
+        echo "[build-custom-image] ERROR: failed to fetch Rust channel from $channel_url" >&2
+        exit 56
+    fi
+
+    # Read from a file (not a pipe): under `set -o pipefail`, feeding the
+    # whole channel through a pipe and exiting early triggers SIGPIPE 141.
+    tmp_date=$(awk '
+        /^date = "/ {
+            sub(/^date = "/, "")
+            sub(/"$/, "")
+            print
+            exit
+        }
+    ' "$channel_file")
+    tmp_hash=$(awk -v arch="$RUST_ARCH" '
+        $0 == "[pkg.rust.target." arch "]" { p = 1; next }
+        /^\[/ { p = 0 }
+        p && /^xz_hash = "/ {
+            sub(/^xz_hash = "/, "")
+            sub(/"$/, "")
+            print
+            exit
+        }
+    ' "$channel_file")
+    rm -f "$channel_file"
+
+    if [ -z "$tmp_date" ] || [ -z "$tmp_hash" ]; then
+        echo "[build-custom-image] ERROR: could not parse date/xz_hash for ${RUST_ARCH} from $channel_url" >&2
+        exit 1
+    fi
+
+    RUST_DIST_DATE="${RUST_DIST_DATE:-$tmp_date}"
+    RUST_SHA256="${RUST_SHA256:-$tmp_hash}"
+    RUST_TARBALL_URL="${RUSTUP_DIST_SERVER%/}/dist/${RUST_DIST_DATE}/rust-${RUST_VERSION}-${RUST_ARCH}.tar.xz"
+    echo "[build-custom-image] Rust dist date=${RUST_DIST_DATE} sha256=${RUST_SHA256}"
+    echo "[build-custom-image] Rust URL: ${RUST_TARBALL_URL}"
+}
+
+# Reuse a cached archive only if SHA256 matches. A flaky download can leave a
+# truncated archive that still passes `[ -f ]` and then fails later in chroot.
+verify_rust_tarball() {
+    local actual
+    actual=$(sha256sum "$RUST_TARBALL" | awk '{ print $1 }')
+    if [ "$RUST_SHA256" = "$actual" ]; then
+        return 0
+    fi
+    echo "[build-custom-image] Rust tarball checksum mismatch (will re-download)" >&2
+    echo "[build-custom-image]   expected: $RUST_SHA256" >&2
+    echo "[build-custom-image]   actual:   $actual" >&2
+    echo "[build-custom-image]   size:     $(du -sh "$RUST_TARBALL" | cut -f1) ($(stat -c%s "$RUST_TARBALL") bytes)" >&2
+    return 1
+}
+
+download_rust_tarball() {
+    echo "[build-custom-image] Downloading Rust ${RUST_VERSION} from ${RUSTUP_DIST_SERVER}..."
+    # Resume + retries: toolchain mirrors can still truncate mid-transfer on
+    # flaky links (same class of failure as GitHub TLS resets for buck2).
+    if ! curl -fL --connect-timeout 30 --retry 5 --retry-delay 3 --retry-all-errors \
+            -C - -o "$RUST_TARBALL" "$RUST_TARBALL_URL"; then
+        rm -f "$RUST_TARBALL"
+        echo "[build-custom-image] ERROR: failed to download Rust from $RUST_TARBALL_URL" >&2
+        echo "[build-custom-image] Pre-download it manually then re-run, e.g.:" >&2
+        echo "[build-custom-image]   curl -fL -o $RUST_TARBALL \"$RUST_TARBALL_URL\"" >&2
+        exit 56
+    fi
     echo "[build-custom-image] Rust tarball downloaded: $(du -sh "$RUST_TARBALL" | cut -f1)"
-else
+}
+
+resolve_rust_channel
+
+if [ -f "$RUST_TARBALL" ] && verify_rust_tarball; then
     echo "[build-custom-image] Using cached Rust tarball: $(du -sh "$RUST_TARBALL" | cut -f1)"
+else
+    rm -f "$RUST_TARBALL"
+    download_rust_tarball
+    if ! verify_rust_tarball; then
+        rm -f "$RUST_TARBALL"
+        echo "[build-custom-image] ERROR: Rust tarball checksum mismatch after download" >&2
+        exit 1
+    fi
 fi
 
 # ============================================================================
 # Stage 2b: Download buck2 on host (avoids needing reliable network in chroot)
 # ============================================================================
-# Reuse a manually pre-downloaded archive if present at $BUCK2_TARBALL.
-if [ ! -f "$BUCK2_TARBALL" ]; then
-    echo "[build-custom-image] Downloading buck2 ${BUCK2_VERSION}..."
+# Cache under $BUCK2_CACHE_DIR (durable). On success the file is kept forever by
+# this script — only replace it when missing/corrupt. Partial downloads go to
+# a sibling .partial file so a failed curl never clobbers a good cache.
+mkdir -p "$BUCK2_CACHE_DIR"
+# One-time migrate from the old /tmp location if present.
+for _old_buck2 in \
+    "/tmp/buck2-${BUCK2_ARCH}.zst" \
+    "/tmp/buck2-x86_64-unknown-linux-musl.zst" \
+    "/tmp/buck2-x86_64-unknown-linux-gnu.zst"; do
+    if [ ! -f "$BUCK2_TARBALL" ] && [ -s "$_old_buck2" ]; then
+        echo "[build-custom-image] Migrating buck2 cache $_old_buck2 -> $BUCK2_TARBALL"
+        cp -a "$_old_buck2" "$BUCK2_TARBALL"
+        break
+    fi
+done
+unset _old_buck2
+
+verify_buck2_tarball() {
+    [ -s "$BUCK2_TARBALL" ] || return 1
+    if command -v zstd >/dev/null 2>&1; then
+        zstd -t "$BUCK2_TARBALL" >/dev/null 2>&1 || return 1
+    fi
+    return 0
+}
+
+download_buck2_tarball() {
+    local part="${BUCK2_TARBALL}.partial"
+    echo "[build-custom-image] Downloading buck2 ${BUCK2_VERSION} -> $BUCK2_TARBALL"
+    rm -f "$part"
     if ! curl -fL --connect-timeout 30 --retry 5 --retry-delay 3 --retry-all-errors \
-            -C - -o "$BUCK2_TARBALL" "$BUCK2_URL"; then
-        rm -f "$BUCK2_TARBALL"
+            -C - -o "$part" "$BUCK2_URL"; then
+        rm -f "$part"
         echo "[build-custom-image] ERROR: failed to download buck2 from $BUCK2_URL" >&2
         echo "[build-custom-image] Pre-download it manually then re-run, e.g.:" >&2
-        echo "[build-custom-image]   curl -fL -o $BUCK2_TARBALL \"$BUCK2_URL\"" >&2
+        echo "[build-custom-image]   sudo mkdir -p $BUCK2_CACHE_DIR" >&2
+        echo "[build-custom-image]   sudo curl -fL -o $BUCK2_TARBALL \"$BUCK2_URL\"" >&2
         exit 56
     fi
-    echo "[build-custom-image] buck2 downloaded: $(du -sh "$BUCK2_TARBALL" | cut -f1)"
+    if ! [ -s "$part" ]; then
+        rm -f "$part"
+        echo "[build-custom-image] ERROR: buck2 download empty: $part" >&2
+        exit 1
+    fi
+    if command -v zstd >/dev/null 2>&1 && ! zstd -t "$part" >/dev/null 2>&1; then
+        rm -f "$part"
+        echo "[build-custom-image] ERROR: buck2 archive failed zstd integrity check" >&2
+        exit 1
+    fi
+    mv -f "$part" "$BUCK2_TARBALL"
+    chmod 644 "$BUCK2_TARBALL" 2>/dev/null || true
+    echo "[build-custom-image] buck2 cached: $(du -sh "$BUCK2_TARBALL" | cut -f1) -> $BUCK2_TARBALL"
+}
+
+if verify_buck2_tarball; then
+    echo "[build-custom-image] Using cached buck2 archive: $(du -sh "$BUCK2_TARBALL" | cut -f1) ($BUCK2_TARBALL)"
 else
-    echo "[build-custom-image] Using cached buck2 archive: $(du -sh "$BUCK2_TARBALL" | cut -f1)"
+    rm -f "$BUCK2_TARBALL"
+    download_buck2_tarball
 fi
 
 # ============================================================================
@@ -284,18 +531,18 @@ if [ ! -e "$NBD_DEV" ]; then
     echo "[build-custom-image] Loading NBD kernel module..."
     sudo modprobe nbd max_part=8
     if ! wait_for "$NBD_DEV" 20; then
-        echo "[build-custom-image] ERROR: $NBD_DEV not found after loading module"
+        echo "[build-custom-image] ERROR: $NBD_DEV not found after loading module" >&2
         exit 1
     fi
 fi
 
 echo "[build-custom-image] Connecting NBD device..."
-sudo qemu-nbd --disconnect "$NBD_DEV" 2>/dev/null || true
+release_nbd "$CUSTOM_IMAGE"
 sudo qemu-nbd -c "$NBD_DEV" "$CUSTOM_IMAGE"
 
 sudo udevadm settle
 if ! wait_for "$NBD_PART" 40; then
-    echo "[build-custom-image] ERROR: $NBD_PART did not appear"
+    echo "[build-custom-image] ERROR: $NBD_PART did not appear" >&2
     exit 1
 fi
 
@@ -347,17 +594,33 @@ sudo mkdir -p "$MOUNT_DIR/var/lib/apt/lists" "$MOUNT_DIR/var/cache/apt/archives/
 sudo mount --bind "$APT_LISTS_DIR" "$MOUNT_DIR/var/lib/apt/lists"
 sudo mount --bind "$APT_CACHE_DIR" "$MOUNT_DIR/var/cache/apt/archives"
 
+# Point the image at a CN Debian mirror before chroot apt-get. Debian 13 cloud
+# images use mirror+file:///etc/apt/mirrors/*.list (not classic sources.list).
+if [ -d "$MOUNT_DIR/etc/apt/mirrors" ]; then
+    echo "[build-custom-image] Configuring apt mirrors:"
+    echo "[build-custom-image]   debian:          $APT_MIRROR"
+    echo "[build-custom-image]   debian-security: $APT_SECURITY_MIRROR"
+    printf '%s\n' "$APT_MIRROR" | sudo tee "$MOUNT_DIR/etc/apt/mirrors/debian.list" >/dev/null
+    printf '%s\n' "$APT_SECURITY_MIRROR" | sudo tee "$MOUNT_DIR/etc/apt/mirrors/debian-security.list" >/dev/null
+fi
+# Avoid hanging forever on flaky links during apt-get update/install.
+sudo tee "$MOUNT_DIR/etc/apt/apt.conf.d/80orion-retries" >/dev/null <<'APT_CONF'
+Acquire::Retries "5";
+Acquire::http::Timeout "30";
+Acquire::https::Timeout "30";
+APT_CONF
+
 # Copy Rust tarball into the image's /tmp before entering chroot
-sudo cp "$RUST_TARBALL" "$MOUNT_DIR/tmp/rust.tar.gz"
+sudo cp "$RUST_TARBALL" "$MOUNT_DIR/tmp/rust.tar.xz"
 # Copy buck2 archive in too so the chroot reuses it instead of hitting GitHub.
 sudo cp "$BUCK2_TARBALL" "$MOUNT_DIR/tmp/buck2.zst"
 # Copy cpython_archive tarball for the in-image GitHub mirror (toolchains unchanged).
 sudo cp "$CPYTHON_TARBALL" "$MOUNT_DIR/tmp/cpython.tar.gz"
 
 # Resolve github.com while the host still has normal DNS (chroot will point it at 127.0.0.1).
-GITHUB_UPSTREAM_IP=$(getent ahostsv4 github.com 2>/dev/null | awk '{print $1; exit}')
-if [ -z "$GITHUB_UPSTREAM_IP" ]; then
-    GITHUB_UPSTREAM_IP="140.82.121.3"
+GITHUB_UPSTREAM_IP=$(getent ahostsv4 github.com 2>/dev/null | awk '{ print $1; exit }')
+if [ -z "$GITHUB_UPSTREAM_IP" ] || [ "$GITHUB_UPSTREAM_IP" = "127.0.0.1" ]; then
+    GITHUB_UPSTREAM_IP="20.205.243.166"
     echo "[build-custom-image] WARNING: could not resolve github.com; using fallback ${GITHUB_UPSTREAM_IP}"
 else
     echo "[build-custom-image] github.com upstream IP for mirror proxy: ${GITHUB_UPSTREAM_IP}"
@@ -396,15 +659,18 @@ echo "=== [chroot] Disk space before install ==="
 df -h /
 
 echo "=== [chroot] Extracting Rust toolchain ==="
-tar -xzf /tmp/rust.tar.gz -C /tmp/
+tar -xJf /tmp/rust.tar.xz -C /tmp/
 bash /tmp/rust-*/install.sh --destdir="" --prefix=/root/.cargo --without=rust-docs
-rm -rf /tmp/rust.tar.gz /tmp/rust-*
+rm -rf /tmp/rust.tar.xz /tmp/rust-*
 
 ln -sf /root/.cargo/bin/rustc /usr/local/bin/rustc
 ln -sf /root/.cargo/bin/cargo /usr/local/bin/cargo
 echo "=== [chroot] Rust version: $(/root/.cargo/bin/rustc --version) ==="
 
 echo "=== [chroot] Installing apt packages ==="
+echo "=== [chroot] apt mirrors: ==="
+cat /etc/apt/mirrors/debian.list 2>/dev/null || true
+cat /etc/apt/mirrors/debian-security.list 2>/dev/null || true
 apt-get update
 apt-get install -y \
     clang lld pkg-config protobuf-compiler zstd fuse curl git nginx \
@@ -571,7 +837,9 @@ echo "=== [chroot] Cleaning temp files (host apt caches kept) ==="
 # unmounted (not copied) before the image is sealed, so it doesn't end up in
 # the final image anyway.
 rm -f /var/cache/apt/*.bin
-rm -rf /tmp/* /var/tmp/*
+# Only clear known scratch files — never `rm -rf /tmp/*` from the host against
+# a still-mounted image tree (bind-mounted /proc cannot be deleted that way).
+rm -rf /tmp/rust-* /tmp/*.tar.* /tmp/*.zst /tmp/*.gz /var/tmp/* 2>/dev/null || true
 rm -f /usr/sbin/policy-rc.d
 
 echo "=== [chroot] Clearing cloud-init state ==="
@@ -614,35 +882,46 @@ if [ "$TEE_RC" -ne 0 ]; then
 fi
 echo "[build-custom-image] chroot install OK"
 
+# Write image metadata into the still-mounted guest (and later onto the host
+# beside the published qcow2). Scheduler reads the host sidecar at VM create.
+write_orion_image_info() {
+    local dest="$1"
+    local built_at kernel_ver
+    built_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    kernel_ver=""
+    if [ -n "${KERNEL:-}" ]; then
+        kernel_ver=$(basename "$KERNEL" | sed 's/^vmlinuz-//')
+    fi
+    cat > "$dest" <<INFO_EOF
+{
+  "image_name": "${IMAGE_NAME}",
+  "built_at": "${built_at}",
+  "rust": "${RUST_VERSION}",
+  "buck2": "${BUCK2_LABEL}",
+  "python": "${CPYTHON_VERSION}",
+  "kernel": "${kernel_ver}"
+}
+INFO_EOF
+    echo "[build-custom-image] Wrote image info: $dest"
+    cat "$dest"
+}
+
+echo "[build-custom-image] Writing /etc/orion-image-info.json into guest..."
+write_orion_image_info "$MOUNT_DIR/etc/orion-image-info.json"
+
 # ============================================================================
 # Stage 5: Unmount, disconnect, then compact the qcow2
 # ============================================================================
 log_stage "5-unmount-compact"
-echo "[build-custom-image] Unmounting chroot bind mounts..."
-for _sub in var/lib/apt/lists var/cache/apt/archives proc sys dev; do
-    log_cmd umount "$MOUNT_DIR/$_sub"
-    if ! sudo umount "$MOUNT_DIR/$_sub"; then
-        echo "[build-custom-image] ERROR: umount $MOUNT_DIR/$_sub failed (exit $?)" >&2
-        mountpoint "$MOUNT_DIR/$_sub" 2>/dev/null || true
-        exit 1
-    fi
-done
-
-echo "[build-custom-image] Unmounting image..."
-log_cmd umount "$MOUNT_DIR"
-if ! sudo umount "$MOUNT_DIR"; then
-    echo "[build-custom-image] ERROR: umount $MOUNT_DIR failed (exit $?)" >&2
-    mountpoint "$MOUNT_DIR" 2>/dev/null || true
+echo "[build-custom-image] Unmounting image tree..."
+if ! unmount_image_tree "$MOUNT_DIR"; then
+    echo "[build-custom-image] ERROR: failed to unmount $MOUNT_DIR" >&2
     exit 1
 fi
-rmdir "$MOUNT_DIR"
 MOUNT_DIR=""
 
 log_cmd qemu-nbd --disconnect "$NBD_DEV"
-if ! sudo qemu-nbd --disconnect "$NBD_DEV"; then
-    echo "[build-custom-image] ERROR: qemu-nbd --disconnect $NBD_DEV failed (exit $?)" >&2
-    exit 1
-fi
+release_nbd "$CUSTOM_IMAGE"
 echo "[build-custom-image] NBD disconnected"
 
 UNCOMPACT_SIZE=$(du -sh "$CUSTOM_IMAGE" | cut -f1)
@@ -743,6 +1022,10 @@ JSON_EOF
     fi
     echo "[build-custom-image] JSON updated: $(cat "$PUBLISHED_JSON")"
 fi
+
+# Host sidecar next to the subdir build and the flat published qcow2.
+write_orion_image_info "$IMAGE_DIR/image-info.json"
+write_orion_image_info "$OUTPUT_DIR/${IMAGE_NAME}.image-info.json"
 
 if [ -z "${NEW_DIGEST:-}" ]; then
     NEW_DIGEST=$(sha256sum "$CUSTOM_IMAGE" | awk '{print $1}')

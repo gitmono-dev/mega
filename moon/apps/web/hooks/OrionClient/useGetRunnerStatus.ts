@@ -5,7 +5,7 @@ import type { RunnerStatusResponse } from '@gitmono/types/generated'
 import { legacyApiClient } from '@/utils/queryClient'
 
 export function useGetRunnerStatus(vmId: string | null, phase: string | null) {
-  const shouldPoll = !!vmId && phase === 'provisioning'
+  const shouldPoll = !!vmId && (phase === 'provisioning' || phase === 'running')
   const query = legacyApiClient.v1.getApiOrionRunnersById()
 
   return useQuery<RunnerStatusResponse, Error>({
@@ -19,7 +19,8 @@ export function useGetRunnerStatus(vmId: string | null, phase: string | null) {
       return result.data
     },
     enabled: !!vmId,
-    refetchInterval: shouldPoll ? 5000 : false,
+    // Provisioning needs frequent polls; running only for uptime refresh.
+    refetchInterval: shouldPoll ? (phase === 'running' ? 15000 : 5000) : false,
     staleTime: 0
   })
 }

@@ -257,6 +257,17 @@ async fn get_runner_status(
         log_file: sched.log_file,
         error: sched.error,
         uptime_secs: sched.uptime_secs,
+        image_path: sched.image_path,
+        image_digest: sched.image_digest,
+        image_cpus: sched.image_cpus,
+        image_memory_mb: sched.image_memory_mb,
+        image_disk_gb: sched.image_disk_gb,
+        image_name: sched.image_name,
+        image_built_at: sched.image_built_at,
+        toolchain_rust: sched.toolchain_rust,
+        toolchain_buck2: sched.toolchain_buck2,
+        toolchain_python: sched.toolchain_python,
+        kernel: sched.kernel,
     }))))
 }
 

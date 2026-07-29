@@ -41,6 +41,17 @@ function domainFromClientHostname(hostname: string): string | null {
   }
 }
 
+function formatUptime(totalSecs: number): string {
+  const secs = Math.max(0, Math.floor(totalSecs))
+  const h = Math.floor(secs / 3600)
+  const m = Math.floor((secs % 3600) / 60)
+  const s = secs % 60
+
+  if (h > 0) return `${h}h ${m}m ${s}s`
+  if (m > 0) return `${m}m ${s}s`
+  return `${s}s`
+}
+
 /** True when the log panel is only showing a VM wait placeholder (no real log lines yet). */
 function isVmWaitingLog(logs: string): boolean {
   const trimmed = logs.trim()
@@ -491,6 +502,57 @@ const OrionClientPage: PageWithLayout<any> = () => {
                 {runnerStatus?.vm_ip ? (
                   <UIText size='text-sm' color='text-muted'>
                     VM IP: {runnerStatus.vm_ip}
+                  </UIText>
+                ) : null}
+                {runnerStatus?.image_name || runnerStatus?.image_digest ? (
+                  <UIText size='text-sm' color='text-muted'>
+                    Image: {runnerStatus.image_name ?? 'unknown'}
+                    {runnerStatus.image_digest
+                      ? ` (${runnerStatus.image_digest.replace(/^sha256:/, '').slice(0, 12)})`
+                      : ''}
+                  </UIText>
+                ) : null}
+                {runnerStatus?.image_built_at ? (
+                  <UIText size='text-sm' color='text-muted'>
+                    Built: {runnerStatus.image_built_at}
+                  </UIText>
+                ) : null}
+                {runnerStatus?.image_cpus != null ||
+                runnerStatus?.image_memory_mb != null ||
+                runnerStatus?.image_disk_gb != null ? (
+                  <UIText size='text-sm' color='text-muted'>
+                    Resources:{' '}
+                    {[
+                      runnerStatus.image_cpus != null ? `${runnerStatus.image_cpus} vCPU` : null,
+                      runnerStatus.image_memory_mb != null
+                        ? `${Math.round(runnerStatus.image_memory_mb / 1024)} GiB RAM`
+                        : null,
+                      runnerStatus.image_disk_gb != null ? `${runnerStatus.image_disk_gb} GiB disk` : null
+                    ]
+                      .filter(Boolean)
+                      .join(' / ')}
+                  </UIText>
+                ) : null}
+                {runnerStatus?.toolchain_rust || runnerStatus?.toolchain_buck2 || runnerStatus?.toolchain_python ? (
+                  <UIText size='text-sm' color='text-muted'>
+                    Toolchains:{' '}
+                    {[
+                      runnerStatus.toolchain_rust ? `rust ${runnerStatus.toolchain_rust}` : null,
+                      runnerStatus.toolchain_buck2 ? `buck2 ${runnerStatus.toolchain_buck2}` : null,
+                      runnerStatus.toolchain_python ? `python ${runnerStatus.toolchain_python}` : null
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </UIText>
+                ) : null}
+                {runnerStatus?.kernel ? (
+                  <UIText size='text-sm' color='text-muted'>
+                    Kernel: {runnerStatus.kernel}
+                  </UIText>
+                ) : null}
+                {runnerStatus?.uptime_secs != null ? (
+                  <UIText size='text-sm' color='text-muted'>
+                    Uptime: {formatUptime(runnerStatus.uptime_secs)}
                   </UIText>
                 ) : null}
                 {runnerStatus?.log_file ? (

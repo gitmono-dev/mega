@@ -64,6 +64,28 @@ pub struct SchedulerStatusResponse {
     pub log_file: Option<String>,
     #[serde(default)]
     pub error: Option<String>,
+    #[serde(default)]
+    pub image_path: Option<String>,
+    #[serde(default)]
+    pub image_digest: Option<String>,
+    #[serde(default)]
+    pub image_cpus: Option<u32>,
+    #[serde(default)]
+    pub image_memory_mb: Option<u32>,
+    #[serde(default)]
+    pub image_disk_gb: Option<u32>,
+    #[serde(default)]
+    pub image_name: Option<String>,
+    #[serde(default)]
+    pub image_built_at: Option<String>,
+    #[serde(default)]
+    pub toolchain_rust: Option<String>,
+    #[serde(default)]
+    pub toolchain_buck2: Option<String>,
+    #[serde(default)]
+    pub toolchain_python: Option<String>,
+    #[serde(default)]
+    pub kernel: Option<String>,
 }
 
 #[derive(Clone)]

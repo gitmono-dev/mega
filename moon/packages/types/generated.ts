@@ -4391,8 +4391,31 @@ export type CommonResultRunnerStatusResponse = {
   data?: {
     domain?: string | null
     error?: string | null
+    /**
+     * @format int32
+     * @min 0
+     */
+    image_cpus?: number | null
+    image_digest?: string | null
+    /**
+     * @format int32
+     * @min 0
+     */
+    image_disk_gb?: number | null
+    /**
+     * @format int32
+     * @min 0
+     */
+    image_memory_mb?: number | null
+    image_built_at?: string | null
+    image_name?: string | null
+    image_path?: string | null
+    kernel?: string | null
     log_file?: string | null
     phase: string
+    toolchain_buck2?: string | null
+    toolchain_python?: string | null
+    toolchain_rust?: string | null
     /**
      * @format int64
      * @min 0
@@ -5763,8 +5786,31 @@ export type ReviewersResponse = {
 export type RunnerStatusResponse = {
   domain?: string | null
   error?: string | null
+  /**
+   * @format int32
+   * @min 0
+   */
+  image_cpus?: number | null
+  image_digest?: string | null
+  /**
+   * @format int32
+   * @min 0
+   */
+  image_disk_gb?: number | null
+  /**
+   * @format int32
+   * @min 0
+   */
+  image_memory_mb?: number | null
+  image_built_at?: string | null
+  image_name?: string | null
+  image_path?: string | null
+  kernel?: string | null
   log_file?: string | null
   phase: string
+  toolchain_buck2?: string | null
+  toolchain_python?: string | null
+  toolchain_rust?: string | null
   /**
    * @format int64
    * @min 0

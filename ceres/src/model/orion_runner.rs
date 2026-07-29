@@ -48,4 +48,26 @@ pub struct RunnerStatusResponse {
     pub error: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub uptime_secs: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image_path: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image_digest: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image_cpus: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image_memory_mb: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image_disk_gb: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image_built_at: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toolchain_rust: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toolchain_buck2: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toolchain_python: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kernel: Option<String>,
 }

@@ -207,7 +207,18 @@ fn vm_json(vm: &crate::state::VmInfo) -> serde_json::Value {
         "vm_ip": vm.ip,
         "uptime_secs": uptime_secs,
         "log_file": vm.log_file,
-        "error": vm.error
+        "error": vm.error,
+        "image_path": vm.image_path,
+        "image_digest": vm.image_digest,
+        "image_cpus": vm.image_cpus,
+        "image_memory_mb": vm.image_memory_mb,
+        "image_disk_gb": vm.image_disk_gb,
+        "image_name": vm.image_name,
+        "image_built_at": vm.image_built_at,
+        "toolchain_rust": vm.toolchain_rust,
+        "toolchain_buck2": vm.toolchain_buck2,
+        "toolchain_python": vm.toolchain_python,
+        "kernel": vm.kernel,
     })
 }
 
