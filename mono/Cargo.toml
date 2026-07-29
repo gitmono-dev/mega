@@ -84,6 +84,3 @@ mimalloc = { workspace = true }
 [dev-dependencies]
 tempfile = { workspace = true }
 jupiter-migrate = { workspace = true }
-
-[target.'cfg(target_os = "linux")'.dev-dependencies]
-qlean = { git = "https://github.com/benjamin-747/qlean.git", rev = "c3bf91e0f4020b580fd5bfe5d3d7d22bc3754651" }

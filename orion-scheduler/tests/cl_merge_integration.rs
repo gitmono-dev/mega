@@ -22,11 +22,11 @@
 //! ```bash
 //! # Run test (note the --ignored flag)
 //! # No need to build mono - binary is extracted from ECR image
-//! cargo test -p mono --test cl_merge_integration -- --ignored --nocapture
+//! cargo test -p orion-scheduler --test cl_merge_integration -- --ignored --nocapture
 //!
 //! # Override the default ECR image (optional)
 //! MEGA_ECR_IMAGE=public.ecr.aws/m8q5m4u3/mega/mono-engine:latest-amd64 \
-//!   cargo test -p mono --test cl_merge_integration -- --ignored --nocapture
+//!   cargo test -p orion-scheduler --test cl_merge_integration -- --ignored --nocapture
 //! ```
 //!
 //! ## Test Design

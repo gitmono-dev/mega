@@ -21,9 +21,9 @@ async-stream = { workspace = true }
 url = { workspace = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-# Git dep (not path): Docker/CI workspaces cannot see a sibling ../../qlean checkout.
-# Pin the InteractiveShell PTY API (0.3.1); crates.io is still at 0.3.0.
-qlean = { git = "https://github.com/benjamin-747/qlean.git", rev = "c3bf91e0f4020b580fd5bfe5d3d7d22bc3754651" }
+qlean = { version = "0.3.1" }
 
 [dev-dependencies]
 anyhow = { workspace = true }
+common = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }

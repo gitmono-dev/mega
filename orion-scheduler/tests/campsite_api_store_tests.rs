@@ -20,7 +20,7 @@
 //! ## Running the Test
 //!
 //! ```bash
-//! cargo test -p mono --test campsite_api_store_tests -- --ignored --nocapture
+//! cargo test -p orion-scheduler --test campsite_api_store_tests -- --ignored --nocapture
 //! ```
 //!
 //! ## Test Design

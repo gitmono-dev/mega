@@ -21,7 +21,7 @@
 //!
 //! ```bash
 //! # Run test (note the --ignored flag)
-//! cargo test -p mono --test login_user_extractor_tests -- --ignored --nocapture
+//! cargo test -p orion-scheduler --test login_user_extractor_tests -- --ignored --nocapture
 //! ```
 //!
 //! ## Test Design

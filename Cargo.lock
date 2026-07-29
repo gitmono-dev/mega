@@ -1442,7 +1442,7 @@ dependencies = [
  "chrono",
  "common",
  "futures",
- "git-internal 0.8.4",
+ "git-internal 0.8.5",
  "hex",
  "io-orbit",
  "jupiter",
@@ -1671,7 +1671,7 @@ dependencies = [
  "config",
  "directories",
  "envsubst",
- "git-internal 0.8.4",
+ "git-internal 0.8.5",
  "idgenerator",
  "pgp",
  "redis",
@@ -3333,7 +3333,7 @@ dependencies = [
  "memchr",
  "natord",
  "num_cpus",
- "path-absolutize",
+ "path-absolutize 3.1.1",
  "rayon",
  "sea-orm 1.1.20",
  "serde",
@@ -3353,9 +3353,9 @@ dependencies = [
 
 [[package]]
 name = "git-internal"
-version = "0.8.4"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8af3835c86ce290f8e29c89aec05c044301fc85ac7532dcc86416e193a33630"
+checksum = "12cc02fd83b0fa7dff557b1ed4a6095b027083af2f6d84244fb6813da7caaaae"
 dependencies = [
  "ahash 0.8.12",
  "async-trait",
@@ -3378,7 +3378,7 @@ dependencies = [
  "memchr",
  "natord",
  "num_cpus",
- "path-absolutize",
+ "path-absolutize 4.0.1",
  "rayon",
  "ring",
  "rkyv 0.8.17",
@@ -4346,7 +4346,7 @@ dependencies = [
  "chrono",
  "common",
  "futures",
- "git-internal 0.8.4",
+ "git-internal 0.8.5",
  "hex",
  "hmac 0.13.0",
  "idgenerator",
@@ -5085,7 +5085,7 @@ dependencies = [
  "common",
  "ctrlc",
  "futures",
- "git-internal 0.8.4",
+ "git-internal 0.8.5",
  "http",
  "jemallocator",
  "jupiter",
@@ -5096,7 +5096,6 @@ dependencies = [
  "orion-client",
  "orion-scheduler-client",
  "percent-encoding",
- "qlean",
  "rand 0.10.2",
  "regex",
  "reqwest 0.13.4",
@@ -5650,6 +5649,7 @@ dependencies = [
  "anyhow",
  "async-stream",
  "axum",
+ "common",
  "futures-util",
  "qlean",
  "serde",
@@ -5981,7 +5981,16 @@ version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4af381fe79fa195b4909485d99f73a80792331df0625188e707854f0b3383f5"
 dependencies = [
- "path-dedot",
+ "path-dedot 3.1.1",
+]
+
+[[package]]
+name = "path-absolutize"
+version = "4.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f808742975794703469f67a28dd14b1d1009a1743c18b0353b4b951dbb0068ad"
+dependencies = [
+ "path-dedot 4.0.1",
 ]
 
 [[package]]
@@ -5992,6 +6001,12 @@ checksum = "07ba0ad7e047712414213ff67533e6dd477af0a4e1d14fb52343e53d30ea9397"
 dependencies = [
  "once_cell",
 ]
+
+[[package]]
+name = "path-dedot"
+version = "4.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "03351d0f1c066c114015408dc6a3e101f080fc03ef9d8d799aa58ec760cac5a6"
 
 [[package]]
 name = "pathdiff"
@@ -6649,7 +6664,8 @@ dependencies = [
 [[package]]
 name = "qlean"
 version = "0.3.1"
-source = "git+https://github.com/benjamin-747/qlean.git?rev=c3bf91e0f4020b580fd5bfe5d3d7d22bc3754651#c3bf91e0f4020b580fd5bfe5d3d7d22bc3754651"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a77496c2bb51caa26294b6f836c61f5b548e9a6f3eb554b891d1e95ede7b8ef"
 dependencies = [
  "anyhow",
  "console",
