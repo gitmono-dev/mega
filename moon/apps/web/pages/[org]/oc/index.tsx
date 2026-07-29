@@ -15,7 +15,13 @@ import { Button, UIText } from '@gitmono/ui'
 import { RefreshIcon } from '@gitmono/ui/Icons'
 
 import { AppLayout } from '@/components/Layout/AppLayout'
-import { ClientsTable, OrionClient, OrionClientStatus, RunnersTable, VmTerminal } from '@/components/OrionClient'
+import {
+  domainFromClientHostname,
+  OrionClient,
+  OrionClientStatus,
+  RunnersTable,
+  VmTerminal
+} from '@/components/OrionClient'
 import AuthAppProviders from '@/components/Providers/AuthAppProviders'
 import { useAdminCheck } from '@/hooks/admin/useAdminCheck'
 import { usePostOrionClientsInfo } from '@/hooks/OrionClient/OrionClientsInfo'
@@ -24,23 +30,6 @@ import { useGetRunnerStatus } from '@/hooks/OrionClient/useGetRunnerStatus'
 import { usePostStartRunner } from '@/hooks/OrionClient/usePostStartRunner'
 import { useRunnerLogsSSE } from '@/hooks/OrionClient/useRunnerLogsSSE'
 import { PageWithLayout } from '@/utils/types'
-
-/** Client `hostname` is the WS URL (e.g. wss://orion.example/ws); scheduler keys VMs by that host. */
-function domainFromClientHostname(hostname: string): string | null {
-  const raw = hostname.trim()
-
-  if (!raw) return null
-
-  try {
-    const url = new URL(raw.includes('://') ? raw : `ws://${raw}`)
-
-    return url.hostname || null
-  } catch {
-    const host = raw.split('/')[0]?.split(':')[0]
-
-    return host || null
-  }
-}
 
 function formatUptime(totalSecs: number): string {
   const secs = Math.max(0, Math.floor(totalSecs))
@@ -81,8 +70,6 @@ type TerminalPanelSource = 'runner' | 'client'
 
 const OrionClientPage: PageWithLayout<any> = () => {
   const { resolvedTheme } = useTheme()
-  const [hostnameInput, setHostnameInput] = React.useState<string>('')
-  const [debouncedHostname, setDebouncedHostname] = React.useState<string>('')
   const [statusFilter, setStatusFilter] = React.useState<OrionClientStatus | 'all'>('all')
   const [currentPage, setCurrentPage] = React.useState<number>(1)
   /** Stream key for scheduler logs: VM id (after Start Runner) or domain host (from client list). */
@@ -103,7 +90,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
   const logsFollowRef = React.useRef(true)
   const runnerLogsRef = React.useRef('')
 
-  const perPage = 8
+  const perPage = 50
   const showingLogs = Boolean(activeLogKey)
   const showingTerminal = Boolean(activeTerminalKey)
   const showingOverlay = showingLogs || showingTerminal
@@ -156,21 +143,8 @@ const OrionClientPage: PageWithLayout<any> = () => {
     return () => window.cancelAnimationFrame(id)
   }, [runnerLogs])
 
-  React.useEffect(() => {
-    const handle = setTimeout(() => {
-      setDebouncedHostname(hostnameInput)
-    }, 500)
-
-    return () => clearTimeout(handle)
-  }, [hostnameInput])
-
   const requestPayload = React.useMemo<PageParamsOrionClientQuery>(() => {
-    const text = debouncedHostname.trim()
     const additional: PageParamsOrionClientQuery['additional'] = {}
-
-    if (text !== '') {
-      additional.hostname = text
-    }
 
     if (statusFilter === 'idle') {
       additional.status = CoreWorkerStatus.Idle
@@ -192,7 +166,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
       pagination: { page: currentPage, per_page: perPage },
       additional
     }
-  }, [currentPage, debouncedHostname, perPage, statusFilter])
+  }, [currentPage, perPage, statusFilter])
 
   const handleRefresh = React.useCallback(() => {
     if (showingOverlay) return
@@ -393,7 +367,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
 
   React.useEffect(() => {
     setCurrentPage(1)
-  }, [hostnameInput, statusFilter])
+  }, [statusFilter])
 
   React.useEffect(() => {
     setCurrentPage((p) => Math.min(Math.max(1, p), pageCount))
@@ -411,6 +385,19 @@ const OrionClientPage: PageWithLayout<any> = () => {
     }))
   }, [clientsPage])
 
+  const statusOptions = React.useMemo(
+    () => [
+      { value: 'all' as const, label: 'All clients' },
+      { value: 'idle' as const, label: 'Idle' },
+      { value: 'busy' as const, label: 'Busy' },
+      { value: 'downloading' as const, label: 'Downloading' },
+      { value: 'running' as const, label: 'Building' },
+      { value: 'error' as const, label: 'Error' },
+      { value: 'offline' as const, label: 'Offline' }
+    ],
+    []
+  )
+
   return (
     <>
       <Head>
@@ -423,12 +410,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
         <div className='flex min-w-0 flex-col gap-2'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
-              <h1 className='text-xl font-semibold'>Orion Clients</h1>
-              {!showingOverlay ? (
-                <UIText tertiary size='text-sm'>
-                  Total clients {total}
-                </UIText>
-              ) : null}
+              <h1 className='text-xl font-semibold'>Orion</h1>
             </div>
             <div className='flex flex-wrap items-center gap-2'>
               {isAdmin ? (
@@ -446,7 +428,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
                   iconOnly={<RefreshIcon />}
                   accessibilityLabel='Refresh'
                   onClick={handleRefresh}
-                  disabled={isPending}
+                  disabled={isPending || (isAdmin && isLoadingRunners)}
                   tooltip='Refresh'
                 />
               ) : null}
@@ -700,68 +682,20 @@ const OrionClientPage: PageWithLayout<any> = () => {
 
         {!showingOverlay ? (
           <>
-            {isAdmin ? (
-              <RunnersTable
-                runners={runnerList?.runners ?? []}
-                isLoading={isLoadingRunners}
-                errorMessage={runnerListError?.message ?? null}
-                canManage={isAdmin}
-                onViewLogs={handleViewRunnerLogs}
-                onConnectTerminal={handleConnectRunnerTerminal}
-              />
-            ) : null}
-
-            <div className='group flex min-h-[35px] items-center rounded-md border border-gray-300 bg-white px-3 shadow-xs transition-all focus-within:border-blue-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-blue-100 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-500'>
-              <div className='flex items-center text-gray-400'>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  className='h-4 w-4'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    d='M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z'
-                  />
-                </svg>
-              </div>
-              <input
-                type='text'
-                value={hostnameInput}
-                onChange={(e) => setHostnameInput(e.target.value)}
-                placeholder='Search by Hostname'
-                className='w-full flex-1 border-none bg-transparent text-sm text-gray-700 ring-0 outline-hidden placeholder:text-gray-400 focus:ring-0 focus:outline-hidden dark:text-gray-100 dark:placeholder:text-gray-500'
-              />
-            </div>
-
-            <ClientsTable
+            <RunnersTable
+              runners={isAdmin ? (runnerList?.runners ?? []) : []}
               clients={clients}
-              isLoading={isPending}
+              isLoading={isPending || (isAdmin && isLoadingRunners)}
+              errorMessage={[runnerListError?.message, error?.message].filter(Boolean).join(' · ') || null}
               statusFilter={statusFilter}
               onStatusChange={(value: OrionClientStatus | 'all') => setStatusFilter(value)}
-              canViewLogs={isAdmin}
-              onViewLogs={handleViewClientLogs}
-              canConnectTerminal={isAdmin}
-              onConnectTerminal={handleConnectTerminal}
-              statusOptions={[
-                { value: 'all', label: 'All statuses' },
-                { value: 'idle', label: 'Idle' },
-                { value: 'busy', label: 'Busy' },
-                { value: 'downloading', label: '\u00A0\u00A0Downloading source' },
-                { value: 'running', label: '\u00A0\u00A0Running build' },
-                { value: 'error', label: 'Error' },
-                { value: 'offline', label: 'Lost / Offline' }
-              ]}
+              statusOptions={statusOptions}
+              canManage={isAdmin}
+              onViewRunnerLogs={handleViewRunnerLogs}
+              onConnectRunnerTerminal={handleConnectRunnerTerminal}
+              onViewClientLogs={handleViewClientLogs}
+              onConnectClientTerminal={handleConnectTerminal}
             />
-
-            {error ? (
-              <UIText tertiary size='text-sm'>
-                Failed to load Orion clients: {error.message}
-              </UIText>
-            ) : null}
 
             {pageCount > 1 ? (
               <div className='flex w-full justify-center pt-2'>
