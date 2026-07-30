@@ -7740,9 +7740,9 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scorpiofs"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cdb7184ebd1e1329f143d95f1388e6b61f9fa057eba671467035a559a73c9d1c"
+checksum = "5805127aaaff2b35f99b008a5b9570257ea69ee2f181c2154ea9b30d73e2d416"
 dependencies = [
  "async-recursion",
  "async-trait",

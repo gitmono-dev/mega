@@ -37,4 +37,4 @@ serial_test = { workspace = true }
 tempfile = { workspace = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-scorpiofs = "0.3.0"
+scorpiofs = "0.4.0"
