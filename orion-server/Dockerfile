@@ -3,7 +3,7 @@
 # NOTE: This stage is intentionally identical to `mono/Dockerfile`'s chef stage
 # (same base image, WORKDIR, cargo-chef version) so BuildKit can share the
 # resulting layer between the two demo images.
-FROM rust:1.96.0 AS chef
+FROM rust:1.97.1 AS chef
 
 ARG CARGO_CHEF_VERSION=0.1.77
 

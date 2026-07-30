@@ -96,9 +96,7 @@ const FileTree = ({ treeData, treeDataLoading, onFileClick }: FileTreeProps) => 
           onExpandedItemsChange={handleNodeToggle}
           expansionTrigger='iconContainer'
           sx={{ flexGrow: 1, width: '100%', overflow: 'auto' }}
-          slots={{
-            item: (itemProps) => <CustomTreeItem {...itemProps} />
-          }}
+          slots={{ item: CustomTreeItem }}
         />
       )}
     </>

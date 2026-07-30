@@ -23,6 +23,13 @@ interface CustomTreeItemProps
   onLabelClick?: (path: string, isDirectory: boolean) => void
 }
 
+// Must live outside the component — defining styled() during render creates a new
+// component type every time and remounts the subtree (visible tree "jump").
+const StyledGroupTransition = styled(TreeItemGroupTransition)(({ theme }) => ({
+  marginLeft: 15,
+  borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`
+}))
+
 // Custom tree structure node component, used to render elements such as icons and labels for each node
 export const CustomTreeItem = React.forwardRef(function CustomTreeItem(
   props: CustomTreeItemProps,
@@ -54,11 +61,6 @@ export const CustomTreeItem = React.forwardRef(function CustomTreeItem(
   } else {
     icon = getIconFromFileType(item.content_type, false)
   }
-
-  const StyledGroupTransition = styled(TreeItemGroupTransition)(({ theme }) => ({
-    marginLeft: 15,
-    borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`
-  }))
 
   return (
     <TreeItemProvider {...getContextProviderProps()}>

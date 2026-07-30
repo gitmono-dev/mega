@@ -91,6 +91,7 @@ function BlobPage() {
               flexShrink: 0,
               borderRadius: 8,
               overflow: 'auto',
+              overflowAnchor: 'none',
               paddingRight: '8px'
             }}
             className='bg-primary'

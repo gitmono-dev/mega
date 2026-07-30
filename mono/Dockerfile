@@ -1,6 +1,6 @@
 # ────── Stage 0: Chef ──────
 # Downloads and installs cargo-chef (prebuilt binary, no Rust compilation needed).
-FROM rust:1.96.0 AS chef
+FROM rust:1.97.1 AS chef
 
 ARG CARGO_CHEF_VERSION=0.1.77
 

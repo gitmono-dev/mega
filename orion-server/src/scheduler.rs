@@ -45,7 +45,7 @@ impl Default for TaskQueueConfig {
     fn default() -> Self {
         Self {
             max_queue_size: 1000,
-            max_wait_time: Duration::from_secs(30), // Fail builds with no worker after 30s
+            max_wait_time: Duration::from_secs(3600), // Fail builds with no worker after 60 minutes
             cleanup_interval: Duration::from_secs(10), // Scan for expired builds every 10 seconds
         }
     }
@@ -76,6 +76,14 @@ impl TaskQueue {
 
         self.queue_v2.push_back(task);
         Ok(())
+    }
+
+    /// Put a previously dequeued task back at the front of the queue.
+    ///
+    /// Used when dispatch races and no idle worker remains; does not enforce
+    /// `max_queue_size` so a capacity fill cannot drop an already-accepted build.
+    pub fn requeue_front_v2(&mut self, task: PendingBuildEventV2) {
+        self.queue_v2.push_front(task);
     }
 
     /// Clean up expired queued builds (v2)
@@ -349,25 +357,84 @@ impl TaskScheduler {
             .await;
     }
 
-    /// Immediately finalize a build that cannot be scheduled because no worker is
-    /// available, marking it `Interrupted` with an explanatory log. Used instead
-    /// of queuing the build when there are no idle workers, so the UI shows a
-    /// clear terminal state (retryable) rather than a build stuck in the queue.
-    pub async fn fail_unschedulable_build(&self, build_event_id: Uuid, task_id: Uuid, repo: &str) {
-        self.finalize_interrupted_build(
-            build_event_id,
-            task_id,
-            repo,
-            "No build worker is currently available; build marked as Interrupted.\n",
-        )
-        .await;
+    /// Finalize an in-flight build when its worker is gone (WS disconnect, heartbeat
+    /// timeout, etc.). Removes the build from `active_builds` and marks it Interrupted.
+    ///
+    /// No-op when the worker was not `Busy`. Idempotent with other finalize paths via
+    /// [`BuildEventsRepo::mark_interrupted`].
+    pub async fn handle_worker_gone(&self, worker: WorkerInfo, reason: &str) {
+        let Some((build_id, removed)) = take_busy_active_build(&self.active_builds, &worker.status)
+        else {
+            return;
+        };
+
+        tracing::warn!(
+            "Worker gone ({reason}) while busy with build {build_id}; marking as Interrupted"
+        );
+
+        let (task_id, repo) = if let Some(info) = removed {
+            (info.event_payload.task_id, info.event_payload.repo)
+        } else {
+            let build_uuid = match build_id.parse::<Uuid>() {
+                Ok(uuid) => uuid,
+                Err(_) => {
+                    tracing::warn!("Invalid build id {build_id} when handling gone worker");
+                    return;
+                }
+            };
+            match BuildEventsRepo::find_by_id(&self.conn, build_uuid).await {
+                Ok(Some(event)) => {
+                    let repo = match OrionTasksRepo::find_by_id(&self.conn, event.task_id).await {
+                        Ok(Some(task)) => task.repo_name,
+                        Ok(None) => {
+                            tracing::warn!(
+                                "Task {} not found for build {} when handling gone worker",
+                                event.task_id,
+                                build_id
+                            );
+                            return;
+                        }
+                        Err(e) => {
+                            tracing::error!(
+                                "Failed to load task for build {build_id} when handling gone worker: {e}"
+                            );
+                            return;
+                        }
+                    };
+                    (event.task_id, repo)
+                }
+                Ok(None) => {
+                    tracing::warn!("Build event {build_id} not found when handling gone worker");
+                    return;
+                }
+                Err(e) => {
+                    tracing::error!(
+                        "Failed to fetch build event {build_id} when handling gone worker: {e}"
+                    );
+                    return;
+                }
+            }
+        };
+
+        let build_uuid = match build_id.parse::<Uuid>() {
+            Ok(uuid) => uuid,
+            Err(_) => {
+                tracing::warn!("Invalid build id {build_id} when finalizing gone-worker build");
+                return;
+            }
+        };
+
+        let message =
+            format!("Worker {reason} while build was in progress; marked as Interrupted.\n");
+        self.finalize_interrupted_build(build_uuid, task_id, &repo, &message)
+            .await;
     }
 
     /// Core, idempotent build finalization: atomically claim the interrupt
     /// transition, then (only if we won the claim) persist an explanatory log
     /// line, mark the local log complete, upload it, and move the task's targets
     /// to `Interrupted`.
-    async fn finalize_interrupted_build(
+    pub(crate) async fn finalize_interrupted_build(
         &self,
         build_event_id: Uuid,
         task_id: Uuid,
@@ -568,14 +635,29 @@ impl TaskScheduler {
     /// dead-worker check only covers currently-registered workers.
     pub async fn reconcile_orphaned_builds_on_startup(&self) {
         let now = chrono::Utc::now().with_timezone(&FixedOffset::east_opt(0).unwrap());
+        self.reconcile_orphaned_builds(
+            now,
+            "Build server restarted while this build was in progress; marked as Interrupted.\n",
+            "Startup reconciliation",
+        )
+        .await;
+    }
 
-        let orphaned = match BuildEventsRepo::list_unfinished_before(&self.conn, now).await {
+    /// Finalize unfinished builds that this process is not tracking in
+    /// `active_builds` and that started before `cutoff`.
+    ///
+    /// Used at startup (immediate) and periodically (with a grace cutoff) so
+    /// Building orphans left by WS disconnect / crash are not stuck forever.
+    pub async fn reconcile_orphaned_builds(
+        &self,
+        cutoff: chrono::DateTime<FixedOffset>,
+        message: &str,
+        log_label: &str,
+    ) {
+        let orphaned = match BuildEventsRepo::list_unfinished_before(&self.conn, cutoff).await {
             Ok(builds) => builds,
             Err(e) => {
-                tracing::error!(
-                    "Startup reconciliation failed to list unfinished builds: {}",
-                    e
-                );
+                tracing::error!("{log_label} failed to list unfinished builds: {e}");
                 return;
             }
         };
@@ -585,7 +667,7 @@ impl TaskScheduler {
         }
 
         tracing::warn!(
-            "Startup reconciliation: finalizing {} orphaned unfinished build(s)",
+            "{log_label}: scanning {} unfinished build(s) older than cutoff",
             orphaned.len()
         );
 
@@ -599,7 +681,7 @@ impl TaskScheduler {
                 Ok(Some(task)) => task.repo_name,
                 Ok(None) => {
                     tracing::warn!(
-                        "Startup reconciliation skipping build {} because task {} no longer exists",
+                        "{log_label} skipping build {} because task {} no longer exists",
                         build.id,
                         build.task_id
                     );
@@ -607,7 +689,7 @@ impl TaskScheduler {
                 }
                 Err(e) => {
                     tracing::error!(
-                        "Startup reconciliation failed to load task {} for build {}: {}",
+                        "{log_label} failed to load task {} for build {}: {}",
                         build.task_id,
                         build.id,
                         e
@@ -617,17 +699,12 @@ impl TaskScheduler {
             };
 
             tracing::warn!(
-                "Startup reconciliation: marking orphaned build {}/{} as interrupted",
+                "{log_label}: marking orphaned build {}/{} as interrupted",
                 build.task_id,
                 build.id
             );
-            self.finalize_interrupted_build(
-                build.id,
-                build.task_id,
-                &repo,
-                "Build server restarted while this build was in progress; marked as Interrupted.\n",
-            )
-            .await;
+            self.finalize_interrupted_build(build.id, build.task_id, &repo, message)
+                .await;
         }
     }
 
@@ -723,15 +800,26 @@ impl TaskScheduler {
             }
         }
 
-        // Dispatch tasks concurrently
+        // Dispatch tasks concurrently; on failure put the build back at the front
+        // so a race for idle workers cannot silently drop queued work.
         if !tasks_to_dispatch.is_empty() {
             let dispatch_futures: Vec<_> = tasks_to_dispatch
                 .into_iter()
                 .map(|task| {
                     let scheduler = self.clone();
                     tokio::spawn(async move {
-                        if let Err(e) = scheduler.dispatch_task_v2(task).await {
-                            tracing::error!("Failed to dispatch queued task: {}", e);
+                        if let Err(e) = scheduler.dispatch_task_v2(task.clone()).await {
+                            tracing::warn!(
+                                "Failed to dispatch queued task {}/{}; re-queuing: {}",
+                                task.event_payload.task_id,
+                                task.event_payload.build_event_id,
+                                e
+                            );
+                            {
+                                let mut queue = scheduler.pending_tasks.lock().await;
+                                queue.requeue_front_v2(task);
+                            }
+                            scheduler.notify_task_available();
                         }
                     })
                 })
@@ -785,6 +873,21 @@ impl TaskScheduler {
             started_at: start_at,
         };
 
+        // Create WebSocket message
+        let msg = WSMessage::TaskBuild {
+            build_id: pending_build_event.event_payload.build_event_id.to_string(),
+            repo: pending_build_event.event_payload.repo.clone(),
+            cl_link: pending_build_event.event_payload.cl_link.to_string(),
+            changes: pending_build_event.changes.clone(),
+        };
+
+        // Claim + send *before* DB state updates so a failed claim can safely
+        // re-queue without leaving the target stuck in `Building`.
+        // Register the build before sending TaskBuild so early TaskBuildOutput
+        // lines from the worker are not dropped (ws_handler only publishes logs
+        // when active_builds contains the build_id).
+        self.claim_worker_for_build(&chosen_id, build_info, msg)?;
+
         // Ensure a per-build target history row exists for this build/target.
         let _ = callisto::target_state_histories::ActiveModel {
             id: Set(Uuid::now_v7()),
@@ -805,19 +908,6 @@ impl TaskScheduler {
             .exec(&self.conn)
             .await;
 
-        // Create WebSocket message
-        let msg = WSMessage::TaskBuild {
-            build_id: pending_build_event.event_payload.build_event_id.to_string(),
-            repo: pending_build_event.event_payload.repo,
-            cl_link: pending_build_event.event_payload.cl_link.to_string(),
-            changes: pending_build_event.changes.clone(),
-        };
-
-        // Register the build *before* sending TaskBuild so early TaskBuildOutput lines
-        // from the worker are not dropped (ws_handler only publishes logs when
-        // active_builds contains the build_id). Guard is dropped inside the helper
-        // before any further awaits in the caller.
-        self.claim_worker_for_build(&chosen_id, build_info, msg)?;
         tracing::info!(
             "Queued task {}/{} dispatched to worker {}",
             pending_build_event.event_payload.task_id,
@@ -886,6 +976,24 @@ impl TaskScheduler {
                 }
 
                 cleanup_scheduler.cleanup_stale_queued_builds().await;
+
+                // Building orphans not tracked in active_builds (e.g. WS disconnect
+                // before this fix, or a missed finalize). Grace = max_wait_time.
+                let max_wait_time = {
+                    let queue = cleanup_scheduler.pending_tasks.lock().await;
+                    queue.config.max_wait_time
+                };
+                let cutoff = (chrono::Utc::now()
+                    - chrono::Duration::from_std(max_wait_time)
+                        .unwrap_or_else(|_| chrono::Duration::seconds(30)))
+                .with_timezone(&FixedOffset::east_opt(0).unwrap());
+                cleanup_scheduler
+                    .reconcile_orphaned_builds(
+                        cutoff,
+                        "Build is no longer tracked by this server; marked as Interrupted.\n",
+                        "Periodic orphan reconciliation",
+                    )
+                    .await;
             }
         });
 
@@ -899,6 +1007,20 @@ impl TaskScheduler {
             }
         }
     }
+}
+
+/// If `status` is [`WorkerStatus::Busy`], remove that build from `active_builds`.
+///
+/// Returns `(build_id, removed BuildInfo)` when Busy; `None` for Idle/Error/Lost.
+pub(crate) fn take_busy_active_build(
+    active_builds: &DashMap<String, BuildInfo>,
+    status: &WorkerStatus,
+) -> Option<(String, Option<BuildInfo>)> {
+    let WorkerStatus::Busy { build_id, .. } = status else {
+        return None;
+    };
+    let info = active_builds.remove(build_id).map(|(_, v)| v);
+    Some((build_id.clone(), info))
 }
 
 /// Register `build_info` on `chosen_id` and send `msg`.
@@ -1009,6 +1131,98 @@ mod tests {
         assert!(queue.enqueue_v2(task).is_err());
     }
 
+    #[test]
+    fn test_default_max_wait_time_is_60_minutes() {
+        let config = TaskQueueConfig::default();
+        assert_eq!(config.max_wait_time, Duration::from_secs(3600));
+    }
+
+    #[test]
+    fn test_requeue_front_preserves_fifo_order_and_bypasses_capacity() {
+        let config = TaskQueueConfig {
+            max_queue_size: 1,
+            max_wait_time: Duration::from_secs(3600),
+            cleanup_interval: Duration::from_secs(10),
+        };
+        let mut queue = TaskQueue::new(config);
+
+        let first = PendingBuildEventV2 {
+            event_payload: BuildEventPayload::new(
+                Uuid::now_v7(),
+                Uuid::now_v7(),
+                "first".to_string(),
+                "repo/a".to_string(),
+                0,
+            ),
+            targets: vec![],
+            changes: vec![],
+            created_at: Instant::now(),
+        };
+        let second = PendingBuildEventV2 {
+            event_payload: BuildEventPayload::new(
+                Uuid::now_v7(),
+                Uuid::now_v7(),
+                "second".to_string(),
+                "repo/b".to_string(),
+                0,
+            ),
+            targets: vec![],
+            changes: vec![],
+            created_at: Instant::now(),
+        };
+        let first_id = first.event_payload.build_event_id;
+        let second_id = second.event_payload.build_event_id;
+
+        assert!(queue.enqueue_v2(second).is_ok());
+        // Capacity is full; requeue_front must still accept a previously dequeued task.
+        queue.requeue_front_v2(first);
+
+        let stats = queue.get_stats();
+        assert_eq!(stats.total_queued, 2);
+        assert_eq!(
+            queue
+                .queue_v2
+                .front()
+                .map(|t| t.event_payload.build_event_id),
+            Some(first_id)
+        );
+        assert_eq!(
+            queue
+                .queue_v2
+                .back()
+                .map(|t| t.event_payload.build_event_id),
+            Some(second_id)
+        );
+    }
+
+    #[test]
+    fn test_cleanup_expired_respects_max_wait_time() {
+        let config = TaskQueueConfig {
+            max_queue_size: 10,
+            max_wait_time: Duration::from_millis(1),
+            cleanup_interval: Duration::from_secs(10),
+        };
+        let mut queue = TaskQueue::new(config);
+
+        let task = PendingBuildEventV2 {
+            event_payload: BuildEventPayload::new(
+                Uuid::now_v7(),
+                Uuid::now_v7(),
+                "stale".to_string(),
+                "repo".to_string(),
+                0,
+            ),
+            targets: vec![],
+            changes: vec![],
+            created_at: Instant::now() - Duration::from_millis(5),
+        };
+        assert!(queue.enqueue_v2(task).is_ok());
+
+        let expired = queue.cleanup_expired_v2();
+        assert_eq!(expired.len(), 1);
+        assert_eq!(queue.get_stats().total_queued, 0);
+    }
+
     /// Regression: after claim+send, the workers DashMap shard must be free so
     /// concurrent heartbeats / health checks / clients-info cannot block the
     /// runtime (the old retry path held `get_mut` across DB `.await`).
@@ -1082,5 +1296,67 @@ mod tests {
             rx.try_recv(),
             Ok(WSMessage::TaskBuild { build_id, .. }) if build_id == build_event_id.to_string()
         ));
+    }
+
+    #[test]
+    fn take_busy_active_build_clears_map_when_busy() {
+        let build_event_id = Uuid::now_v7();
+        let build_id = build_event_id.to_string();
+        let active_builds = DashMap::new();
+        active_builds.insert(
+            build_id.clone(),
+            BuildInfo {
+                event_payload: BuildEventPayload::new(
+                    build_event_id,
+                    Uuid::now_v7(),
+                    "cl".to_string(),
+                    "/repo".to_string(),
+                    0,
+                ),
+                target_id: Uuid::now_v7(),
+                target_path: "//".to_string(),
+                changes: vec![],
+                started_at: chrono::Utc::now(),
+                worker_id: "w1".to_string(),
+            },
+        );
+
+        let status = WorkerStatus::Busy {
+            build_id: build_id.clone(),
+            phase: None,
+        };
+        let taken = take_busy_active_build(&active_builds, &status);
+        assert!(taken.is_some());
+        let (id, info) = taken.unwrap();
+        assert_eq!(id, build_id);
+        assert!(info.is_some());
+        assert!(!active_builds.contains_key(&build_id));
+    }
+
+    #[test]
+    fn take_busy_active_build_idle_is_noop() {
+        let build_event_id = Uuid::now_v7();
+        let build_id = build_event_id.to_string();
+        let active_builds = DashMap::new();
+        active_builds.insert(
+            build_id.clone(),
+            BuildInfo {
+                event_payload: BuildEventPayload::new(
+                    build_event_id,
+                    Uuid::now_v7(),
+                    "cl".to_string(),
+                    "/repo".to_string(),
+                    0,
+                ),
+                target_id: Uuid::now_v7(),
+                target_path: "//".to_string(),
+                changes: vec![],
+                started_at: chrono::Utc::now(),
+                worker_id: "w1".to_string(),
+            },
+        );
+
+        assert!(take_busy_active_build(&active_builds, &WorkerStatus::Idle).is_none());
+        assert!(active_builds.contains_key(&build_id));
     }
 }

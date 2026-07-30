@@ -109,6 +109,7 @@ function TreeDetailPage() {
     flexShrink: 0,
     height: 'calc(100vh - 96px)',
     overflow: 'auto',
+    overflowAnchor: 'none' as const,
     paddingRight: '8px'
   }
 

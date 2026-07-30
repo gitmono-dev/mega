@@ -20,14 +20,20 @@ import { CustomLabel } from './CustomLabel'
 import { getIconFromFileType, MuiTreeNode } from './TreeUtils'
 
 interface CustomTreeItemProps
-  extends Omit<UseTreeItemParameters, 'rootRef'>, Omit<React.HTMLAttributes<HTMLLIElement>, 'onFocus'> {
-  onLabelClick?: (path: string, isDirectory: boolean) => void
-  loadingDirectories?: Set<string>
-}
+  extends Omit<UseTreeItemParameters, 'rootRef'>, Omit<React.HTMLAttributes<HTMLLIElement>, 'onFocus'> {}
+
+export const LoadingDirectoriesContext = React.createContext<Set<string>>(new Set())
+
+// Must live outside the component — defining styled() during render creates a new
+// component type every time and remounts the subtree (visible tree "jump").
+const StyledGroupTransition = styled(TreeItemGroupTransition)(({ theme }) => ({
+  marginLeft: 15,
+  borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`
+}))
 
 // Custom tree structure node component, used to render elements such as icons and labels for each node
 export const CustomTreeItem = React.forwardRef(function CustomTreeItem(
-  { loadingDirectories, ...props }: CustomTreeItemProps,
+  props: CustomTreeItemProps,
   ref: React.Ref<HTMLLIElement>
 ) {
   const { id, itemId, label, disabled, children, ...other } = props
@@ -43,6 +49,7 @@ export const CustomTreeItem = React.forwardRef(function CustomTreeItem(
   } = useTreeItem({ id, itemId, children, label, disabled, rootRef: ref })
 
   const item = useTreeItemModel<MuiTreeNode>(itemId)!
+  const loadingDirectories = React.useContext(LoadingDirectoriesContext)
 
   // If it is a placeholder node, no content is rendered
   if (item.isPlaceholder) {
@@ -58,12 +65,7 @@ export const CustomTreeItem = React.forwardRef(function CustomTreeItem(
   }
 
   // Check if the current node is loading
-  const isNodeLoading = loadingDirectories?.has(item.path)
-
-  const StyledGroupTransition = styled(TreeItemGroupTransition)(({ theme }) => ({
-    marginLeft: 15,
-    borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`
-  }))
+  const isNodeLoading = loadingDirectories.has(item.path)
 
   return (
     <TreeItemProvider {...getContextProviderProps()}>

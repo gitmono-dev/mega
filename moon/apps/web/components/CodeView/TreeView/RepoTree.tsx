@@ -12,7 +12,7 @@ import { useGetTree } from '@/hooks/useGetTree'
 import { legacyApiClient } from '@/utils/queryClient'
 
 import { expandedNodesAtom, treeAllDataAtom } from './codeTreeAtom'
-import { CustomTreeItem } from './CustomTreeItem'
+import { CustomTreeItem, LoadingDirectoriesContext } from './CustomTreeItem'
 import {
   convertToTreeData,
   findNode,
@@ -186,17 +186,22 @@ const RepoTree = ({ onCommitInfoChange }: { onCommitInfoChange?: Function }) => 
     [router, scope, version, expandedNodes, setExpandedNodes]
   )
 
-  const handleFocusItem = (_e: React.SyntheticEvent | null, itemId: string) => {
-    const item = apiRef.current!.getItem(itemId)
+  // Navigate on click, not focus — focus also fires after remount/selection and
+  // would re-trigger router.push + scrollIntoView, making the tree jump.
+  const handleItemClick = useCallback(
+    (_e: React.SyntheticEvent | null, itemId: string) => {
+      const item = apiRef.current!.getItem(itemId)
 
-    if (item.content_type) {
-      handleLabelClick(item.path, item.content_type === 'directory')
-      apiRef.current?.setItemSelection({
-        itemId,
-        keepExistingSelection: false
-      })
-    }
-  }
+      if (item.content_type) {
+        handleLabelClick(item.path, item.content_type === 'directory')
+        apiRef.current?.setItemSelection({
+          itemId,
+          keepExistingSelection: false
+        })
+      }
+    },
+    [handleLabelClick, apiRef]
+  )
 
   useEffect(() => {
     if (basePath) {
@@ -232,7 +237,7 @@ const RepoTree = ({ onCommitInfoChange }: { onCommitInfoChange?: Function }) => 
   const showInitialSkeleton = (isTreeLoading || loadingDirectories.has(basePath)) && treeAllData?.length === 0
 
   return (
-    <>
+    <LoadingDirectoriesContext.Provider value={loadingDirectories}>
       {showInitialSkeleton ? (
         <Box sx={{ display: 'flex', paddingLeft: '16px' }}>
           <Skeleton width='200px' height='30px' />
@@ -241,17 +246,16 @@ const RepoTree = ({ onCommitInfoChange }: { onCommitInfoChange?: Function }) => 
         <RichTreeView
           apiRef={apiRef}
           items={treeAllData}
-          onItemFocus={handleFocusItem}
+          onItemClick={handleItemClick}
           expandedItems={expandedNodes}
           onExpandedItemsChange={handleNodeToggle}
           expansionTrigger='iconContainer'
-          sx={{ height: 'fit-content', flexGrow: 1, width: '100%', overflow: 'auto' }}
-          slots={{
-            item: (itemProps) => <CustomTreeItem {...itemProps} loadingDirectories={loadingDirectories} />
-          }}
+          sx={{ height: 'fit-content', flexGrow: 1, width: '100%', overflow: 'auto', overflowAnchor: 'none' }}
+          // Stable slot reference — an inline render fn remounts every item on each parent render.
+          slots={{ item: CustomTreeItem }}
         />
       )}
-    </>
+    </LoadingDirectoriesContext.Provider>
   )
 }
 

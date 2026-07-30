@@ -75,9 +75,14 @@ async fn handle_socket(socket: WebSocket, who: SocketAddr, state: AppState) {
         }
     }
 
-    if let Some(id) = &worker_id {
+    if let Some(id) = worker_id {
         tracing::info!("Cleaning up for worker: {id} from {who}.");
-        state.scheduler.workers.remove(id);
+        if let Some((_, info)) = state.scheduler.workers.remove(&id) {
+            state
+                .scheduler
+                .handle_worker_gone(info, "disconnected")
+                .await;
+        }
     } else {
         tracing::info!("Cleaning up unregistered connection from {who}.");
     }
@@ -296,11 +301,11 @@ async fn process_message(
             }
         }
         Message::Close(_) => {
-            if let Some(id) = worker_id.take()
-                && let Some(mut worker) = state.scheduler.workers.get_mut(&id)
-            {
-                worker.status = WorkerStatus::Lost;
-            }
+            // Do not clear worker_id or overwrite Busy → Lost here: the outer
+            // handle_socket cleanup removes the worker and finalizes any in-flight
+            // build via handle_worker_gone. Overwriting Busy would lose build_id
+            // and leave the build stuck as Building forever.
+            tracing::info!("WebSocket Close from {who}");
             return ControlFlow::Break(());
         }
         _ => {}

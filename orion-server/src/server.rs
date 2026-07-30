@@ -1,7 +1,6 @@
 use std::{env, net::SocketAddr, path::PathBuf, sync::Arc, time::Duration};
 
 use axum::{Router, routing::get};
-use chrono::{FixedOffset, Utc};
 use common::{
     config::{
         Config,
@@ -25,11 +24,6 @@ use crate::{
     log::{
         log_service::LogService,
         store::{LogStore, io_orbit_store::IoOrbitLogStore, local_log_store, noop_log_store},
-    },
-    model::target_state::TargetState,
-    repository::{
-        build_events_repo::BuildEventsRepo, build_targets_repo::BuildTargetsRepo,
-        target_state_histories_repo::TargetStateHistoriesRepo,
     },
 };
 
@@ -223,12 +217,10 @@ pub async fn start_server() {
 }
 
 /// Background task that monitors worker health and handles timeouts
-/// Removes dead workers and marks their tasks as interrupted
+/// Removes dead workers and marks their in-flight builds as interrupted
 async fn start_health_check_task(state: AppState) {
     let health_check_interval = Duration::from_secs(30);
     let worker_timeout = Duration::from_secs(90);
-    let utc_offset =
-        FixedOffset::east_opt(0).unwrap_or_else(|| unreachable!("UTC offset must be valid"));
 
     tracing::info!(
         "Health check task started. Interval: {:?}, Worker timeout: {:?}",
@@ -258,112 +250,13 @@ async fn start_health_check_task(state: AppState) {
 
         tracing::warn!("Found dead workers: {:?}", dead_workers);
 
-        // Remove dead workers and handle their tasks
         for worker_id in dead_workers {
             if let Some((_, worker_info)) = state.scheduler.workers.remove(&worker_id) {
                 tracing::info!("Removed dead worker: {}", worker_id);
-
-                // If worker was busy, mark task as interrupted
-                if let crate::scheduler::WorkerStatus::Busy { build_id, .. } = worker_info.status {
-                    tracing::warn!(
-                        "Worker {} was busy with task {}. Marking task as Interrupted.",
-                        worker_id,
-                        build_id
-                    );
-                    state.scheduler.active_builds.remove(&build_id);
-
-                    let build_uuid = match build_id.parse::<uuid::Uuid>() {
-                        Ok(uuid) => uuid,
-                        Err(_) => {
-                            tracing::warn!(
-                                "Invalid build id {} when marking interrupted",
-                                build_id
-                            );
-                            continue;
-                        }
-                    };
-
-                    let end_at = Utc::now().with_timezone(&utc_offset);
-                    if let Err(e) =
-                        BuildEventsRepo::mark_interrupted(build_uuid, end_at, &state.conn).await
-                    {
-                        tracing::error!(
-                            "Failed to mark build event {} interrupted: {}",
-                            build_id,
-                            e
-                        );
-                    }
-
-                    // Keep target-level state consistent with interrupted build state.
-                    let task_id = match BuildEventsRepo::find_by_id(&state.conn, build_uuid).await {
-                        Ok(Some(build_event)) => build_event.task_id,
-                        Ok(None) => {
-                            tracing::warn!(
-                                "Build event {} not found when syncing interrupted target state",
-                                build_id
-                            );
-                            continue;
-                        }
-                        Err(e) => {
-                            tracing::error!(
-                                "Failed to fetch build event {} when syncing target state: {}",
-                                build_id,
-                                e
-                            );
-                            continue;
-                        }
-                    };
-
-                    let targets = match BuildTargetsRepo::list_by_task_id(&state.conn, task_id)
-                        .await
-                    {
-                        Ok(targets) => targets,
-                        Err(e) => {
-                            tracing::error!(
-                                "Failed to list targets for task {} when handling dead worker {}: {}",
-                                task_id,
-                                worker_id,
-                                e
-                            );
-                            continue;
-                        }
-                    };
-
-                    for target in targets {
-                        if let Err(e) = BuildTargetsRepo::update_latest_state(
-                            &state.conn,
-                            target.id,
-                            TargetState::Interrupted,
-                        )
-                        .await
-                        {
-                            tracing::error!(
-                                "Failed to update target {} to Interrupted for build {}: {}",
-                                target.id,
-                                build_id,
-                                e
-                            );
-                            continue;
-                        }
-
-                        if let Err(e) = TargetStateHistoriesRepo::upsert_state(
-                            &state.conn,
-                            target.id,
-                            build_uuid,
-                            TargetState::Interrupted.to_string(),
-                            end_at,
-                        )
-                        .await
-                        {
-                            tracing::error!(
-                                "Failed to upsert interrupted history for target {} build {}: {}",
-                                target.id,
-                                build_id,
-                                e
-                            );
-                        }
-                    }
-                }
+                state
+                    .scheduler
+                    .handle_worker_gone(worker_info, "heartbeat timed out")
+                    .await;
             }
         }
     }
