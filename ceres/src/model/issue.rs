@@ -28,6 +28,10 @@ pub struct ItemRes {
     pub labels: Vec<LabelItem>,
     pub assignees: Vec<String>,
     pub comment_num: usize,
+    /// Aggregated Orion build status for this CL (latest task), if any.
+    /// Issue list leaves this unset/`null`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_status: Option<String>,
 }
 
 impl From<ItemDetails> for ItemRes {
@@ -47,6 +51,7 @@ impl From<ItemDetails> for ItemRes {
                 labels: value.labels.into_iter().map(|m| m.into()).collect(),
                 assignees: value.assignees,
                 comment_num: value.comment_num,
+                build_status: None,
             },
             ItemKind::Cl(model) => Self {
                 id: model.id,
@@ -62,6 +67,7 @@ impl From<ItemDetails> for ItemRes {
                 labels: value.labels.into_iter().map(|m| m.into()).collect(),
                 assignees: value.assignees,
                 comment_num: value.comment_num,
+                build_status: None,
             },
         }
     }
@@ -71,6 +77,15 @@ impl ItemRes {
     pub fn apply_bot_flags(items: &mut [Self], bot_names: &HashSet<String>) {
         for item in items {
             item.author_is_bot = bot_names.contains(&item.author) || item.author == "system";
+        }
+    }
+
+    pub fn apply_build_statuses(
+        items: &mut [Self],
+        statuses: &std::collections::HashMap<String, String>,
+    ) {
+        for item in items {
+            item.build_status = statuses.get(&item.link).cloned();
         }
     }
 }

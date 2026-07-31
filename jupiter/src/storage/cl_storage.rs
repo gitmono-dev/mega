@@ -447,4 +447,74 @@ impl ClStorage {
         self.batch_save_model(save_models).await?;
         Ok(())
     }
+
+    /// For each CL link, resolve the latest Orion task and aggregate its
+    /// `build_targets.latest_state` with Checks-compatible worst-wins priority:
+    /// Failed > Interrupted > Building > Pending/Uninitialized > Completed.
+    pub async fn latest_build_status_by_cl_links(
+        &self,
+        links: &[String],
+    ) -> Result<HashMap<String, String>, MegaError> {
+        if links.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let tasks = callisto::orion_tasks::Entity::find()
+            .filter(callisto::orion_tasks::Column::Cl.is_in(links.to_vec()))
+            .order_by_desc(callisto::orion_tasks::Column::CreatedAt)
+            .all(self.get_connection())
+            .await?;
+
+        // First row per CL wins (already ordered by created_at DESC).
+        let mut latest_task_by_cl: HashMap<String, uuid::Uuid> = HashMap::new();
+        for task in tasks {
+            latest_task_by_cl.entry(task.cl).or_insert(task.id);
+        }
+
+        if latest_task_by_cl.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let task_ids: Vec<uuid::Uuid> = latest_task_by_cl.values().copied().collect();
+        let targets = callisto::build_targets::Entity::find()
+            .filter(callisto::build_targets::Column::TaskId.is_in(task_ids))
+            .all(self.get_connection())
+            .await?;
+
+        let mut states_by_task: HashMap<uuid::Uuid, Vec<String>> = HashMap::new();
+        for target in targets {
+            states_by_task
+                .entry(target.task_id)
+                .or_default()
+                .push(target.latest_state);
+        }
+
+        let mut result = HashMap::new();
+        for (cl, task_id) in latest_task_by_cl {
+            if let Some(states) = states_by_task.get(&task_id)
+                && let Some(status) = aggregate_target_states(states)
+            {
+                result.insert(cl, status);
+            }
+        }
+        Ok(result)
+    }
+}
+
+/// Worst-wins aggregation matching Checks UI `getTaskStatus` priority.
+fn aggregate_target_states(states: &[String]) -> Option<String> {
+    if states.is_empty() {
+        return None;
+    }
+    let priority = |s: &str| -> u8 {
+        match s {
+            "Failed" => 0,
+            "Interrupted" => 1,
+            "Building" => 2,
+            "Pending" | "Uninitialized" => 3,
+            "Completed" => 4,
+            _ => 3,
+        }
+    };
+    states.iter().min_by_key(|s| priority(s.as_str())).cloned()
 }

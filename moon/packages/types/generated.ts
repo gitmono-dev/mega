@@ -3963,6 +3963,11 @@ export type CommonResultCommonPageItemRes = {
       author: string
       /** True when `author` matches a registered bot. */
       author_is_bot?: boolean
+      /**
+       * Aggregated Orion build status for this CL (latest task), if any.
+       * Issue list leaves this unset/`null`.
+       */
+      build_status?: string | null
       /** @format int64 */
       closed_at?: number | null
       /** @min 0 */
@@ -5309,6 +5314,11 @@ export type ItemRes = {
   author: string
   /** True when `author` matches a registered bot. */
   author_is_bot?: boolean
+  /**
+   * Aggregated Orion build status for this CL (latest task), if any.
+   * Issue list leaves this unset/`null`.
+   */
+  build_status?: string | null
   /** @format int64 */
   closed_at?: number | null
   /** @min 0 */

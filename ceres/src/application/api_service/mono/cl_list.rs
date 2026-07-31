@@ -24,6 +24,21 @@ impl ClApplicationService {
             .bot_names_among(&names)
             .await?;
         ItemRes::apply_bot_flags(&mut items, &bot_names);
+
+        let links: Vec<String> = items.iter().map(|i| i.link.clone()).collect();
+        match self
+            .storage()
+            .cl_service
+            .cl_store()
+            .latest_build_status_by_cl_links(&links)
+            .await
+        {
+            Ok(statuses) => ItemRes::apply_build_statuses(&mut items, &statuses),
+            Err(e) => {
+                tracing::warn!("Failed to load CL build statuses for list: {e}");
+            }
+        }
+
         Ok(CommonPage { items, total })
     }
 

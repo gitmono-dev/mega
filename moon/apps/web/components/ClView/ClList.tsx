@@ -1,12 +1,15 @@
 import React, { forwardRef, memo, ReactNode } from 'react'
 
 import { PostApiIssueListData } from '@gitmono/types'
-import { Button, ChatBubbleIcon, Command, ConditionalWrap, LoadingSpinner, useCommand } from '@gitmono/ui'
+import { Button, ChatBubbleIcon, Command, ConditionalWrap, LoadingSpinner, Tooltip, useCommand } from '@gitmono/ui'
 
 import { MemberHoverAvatarList } from '@/components/Issues/MemberHoverAvatarList'
 import { SubjectCommand } from '@/components/Subject/SubjectCommand'
 import { BreadcrumbTitlebarContainer } from '@/components/Titlebar/BreadcrumbTitlebar'
 import { getFontColor } from '@/utils/getFontColor'
+
+import { identifyStatus } from './components/Checks/cpns/identifyStatus'
+import { Status } from './components/Checks/cpns/store'
 
 export function List<T>({
   lists,
@@ -196,9 +199,21 @@ export const ItemLabels = ({ item }: { item: ItemsType[number] }) => {
 }
 
 export const ItemRightIcons = ({ item }: { item: ItemsType[number] }) => {
+  const buildStatus = item.build_status
+  const statusEnum =
+    buildStatus && Object.values(Status).includes(buildStatus as Status) ? (buildStatus as Status) : null
+
   return (
     // <div className='mr-10 flex w-fit items-center justify-between gap-10'>
     <div className='flex items-center gap-4'>
+      {statusEnum ? (
+        <Tooltip label={statusEnum}>
+          <span className='flex items-center' aria-label={`Build ${statusEnum}`}>
+            {identifyStatus(statusEnum)}
+          </span>
+        </Tooltip>
+      ) : null}
+
       <div
         style={{
           visibility: `${item.comment_num === 0 ? 'hidden' : 'unset'}`

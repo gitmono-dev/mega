@@ -8,6 +8,7 @@ import { LoadingSpinner } from '@gitmono/ui/Spinner'
 import { usePostRetryBuild } from '@/hooks/SSE/usePostRetryBuild'
 
 import { TERMINAL_BUILD_STATUSES } from '../hooks/logUtils'
+import { identifyStatus } from './identifyStatus'
 import { BuildDTO, getLatestBuildId, isTaskQueued, Status, TaskInfoDTO } from './store'
 
 /**
@@ -371,24 +372,4 @@ const TaskItem = memo(function TaskItem({
   )
 })
 
-export const identifyStatus = (status: Status[keyof Status]) => {
-  switch (status) {
-    case Status.Completed:
-      return <CheckIcon size={14} className='text-green-700 dark:text-green-400' />
-    case Status.Failed:
-      return <XIcon size={14} className='text-red-600 dark:text-red-400' />
-    case Status.Interrupted:
-      return <XIcon size={14} className='text-orange-600 dark:text-orange-400' />
-    case Status.Building:
-      return <LoadingSpinner />
-    case Status.Pending:
-      return <LoadingSpinner />
-    case Status.Uninitialized:
-      return <LoadingSpinner />
-    case Status.NotFound:
-      return <LoadingSpinner />
-
-    default:
-      return <XIcon size={14} className='text-red-600 dark:text-red-400' />
-  }
-}
+export { identifyStatus } from './identifyStatus'
