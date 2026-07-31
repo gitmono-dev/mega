@@ -7756,7 +7756,7 @@ dependencies = [
  "dashmap 6.2.1",
  "env_logger",
  "futures",
- "git-internal 0.4.1",
+ "git-internal 0.8.5",
  "hex",
  "libc",
  "libfuse-fs",
