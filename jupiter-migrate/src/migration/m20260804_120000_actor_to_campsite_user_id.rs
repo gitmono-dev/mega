@@ -84,10 +84,8 @@ async fn up_postgres(manager: &SchemaManager<'_>) -> Result<(), DbErr> {
     .await?;
 
     // --- access_token ---
-    db.execute_unprepared(
-        r#"ALTER TABLE access_token RENAME COLUMN username TO campsite_user_id"#,
-    )
-    .await?;
+    db.execute_unprepared(r#"ALTER TABLE access_token RENAME COLUMN username TO campsite_user_id"#)
+        .await?;
 
     // --- ssh_keys ---
     db.execute_unprepared(r#"ALTER TABLE ssh_keys RENAME COLUMN username TO campsite_user_id"#)
@@ -143,7 +141,9 @@ async fn up_sqlite(manager: &SchemaManager<'_>) -> Result<(), DbErr> {
         .alter_table(
             Table::alter()
                 .table(Alias::new("access_token"))
-                .add_column_if_not_exists(ColumnDef::new(Alias::new("github_login")).string().null())
+                .add_column_if_not_exists(
+                    ColumnDef::new(Alias::new("github_login")).string().null(),
+                )
                 .to_owned(),
         )
         .await?;
@@ -152,7 +152,9 @@ async fn up_sqlite(manager: &SchemaManager<'_>) -> Result<(), DbErr> {
         .alter_table(
             Table::alter()
                 .table(Alias::new("mega_cl_reviewer"))
-                .add_column_if_not_exists(ColumnDef::new(Alias::new("github_login")).string().null())
+                .add_column_if_not_exists(
+                    ColumnDef::new(Alias::new("github_login")).string().null(),
+                )
                 .to_owned(),
         )
         .await?;
