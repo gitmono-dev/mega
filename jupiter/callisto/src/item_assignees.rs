@@ -12,7 +12,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub item_id: i64,
     #[sea_orm(primary_key, auto_increment = false)]
-    pub assignnee_id: String,
+    pub campsite_user_id: String,
     pub item_type: String,
 }
 

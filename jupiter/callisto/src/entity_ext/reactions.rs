@@ -32,7 +32,7 @@ impl reactions::Model {
         content: Option<String>,
         subject_id: i64,
         subject_type: &str,
-        username: &str,
+        campsite_user_id: &str,
     ) -> Self {
         let now = chrono::Utc::now().naive_utc();
         Self {
@@ -44,7 +44,7 @@ impl reactions::Model {
             subject_id,
             subject_type: subject_type.to_owned(),
             organization_membership_id: None,
-            username: username.to_owned(),
+            campsite_user_id: campsite_user_id.to_owned(),
             discarded_at: None,
         }
     }

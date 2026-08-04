@@ -5,19 +5,26 @@ import { ReviewerInfo } from '@gitmono/types'
 
 import { useAvatars } from '@/components/Issues/utils/sideEffect'
 
-type MegaAvatar = ReturnType<typeof useAvatars>[number] & { username?: string }
+type MegaAvatar = ReturnType<typeof useAvatars>[number] & {
+  id?: string
+  username?: string
+  github_login?: string
+}
 
 function avatarApiIdentity(item: ItemInput): string | undefined {
   const mega = item as MegaAvatar
-  // Prefer Campsite username for API identity; SelectPanel text may be github_login.
+  // Persist campsite_user_id.
 
-  if (typeof mega.username === 'string' && mega.username) return mega.username
+  if (typeof mega.id === 'string' && mega.id) return mega.id
+  if (typeof item.id === 'string' && item.id) return item.id
+  if (typeof mega.github_login === 'string' && mega.github_login) return mega.github_login
   if (typeof item.text === 'string' && item.text) return item.text
+  if (typeof mega.username === 'string' && mega.username) return mega.username
   return undefined
 }
 
 function avatarMatchesHandle(user: MegaAvatar, handle: string) {
-  return user.text === handle || user.username === handle
+  return user.id === handle || user.text === handle || user.github_login === handle || user.username === handle
 }
 
 export const useReviewerSelector = ({
@@ -29,7 +36,7 @@ export const useReviewerSelector = ({
   reviewRequest: (selected: string[]) => void
   avatars: ReturnType<typeof useAvatars>
 }) => {
-  const initialReviewers = useMemo(() => reviewers.map((item) => item.username), [reviewers])
+  const initialReviewers = useMemo(() => reviewers.map((item) => item.campsite_user_id || item.username), [reviewers])
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const shouldFetch = useRef(false)
   const [open, setOpen] = useState(false)

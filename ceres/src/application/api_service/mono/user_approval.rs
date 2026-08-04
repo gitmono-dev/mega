@@ -12,7 +12,6 @@ use crate::model::user::UserApprovalStatusRes;
 impl UserApplicationService {
     pub async fn get_or_init_user_approval_status(
         &self,
-        username: &str,
         campsite_user_id: &str,
         display_name: &str,
         email: &str,
@@ -20,14 +19,11 @@ impl UserApplicationService {
         self.ctx
             .storage()
             .user_approval_storage()
-            .get_or_create(
-                username,
-                UserApprovalProfile {
-                    campsite_user_id: campsite_user_id.to_string(),
-                    display_name: display_name.to_string(),
-                    email: email.to_string(),
-                },
-            )
+            .get_or_create(UserApprovalProfile {
+                campsite_user_id: campsite_user_id.to_string(),
+                display_name: display_name.to_string(),
+                email: email.to_string(),
+            })
             .await
     }
 
@@ -45,25 +41,25 @@ impl UserApplicationService {
 
     pub async fn approve_user(
         &self,
-        username: &str,
+        campsite_user_id: &str,
         reviewed_by: &str,
     ) -> Result<user_approval_status::Model, MegaError> {
         self.ctx
             .storage()
             .user_approval_storage()
-            .set_status(username, APPROVAL_STATUS_APPROVED, reviewed_by)
+            .set_status(campsite_user_id, APPROVAL_STATUS_APPROVED, reviewed_by)
             .await
     }
 
     pub async fn reject_user(
         &self,
-        username: &str,
+        campsite_user_id: &str,
         reviewed_by: &str,
     ) -> Result<user_approval_status::Model, MegaError> {
         self.ctx
             .storage()
             .user_approval_storage()
-            .set_status(username, APPROVAL_STATUS_REJECTED, reviewed_by)
+            .set_status(campsite_user_id, APPROVAL_STATUS_REJECTED, reviewed_by)
             .await
     }
 }
@@ -71,7 +67,8 @@ impl UserApplicationService {
 impl From<user_approval_status::Model> for UserApprovalStatusRes {
     fn from(value: user_approval_status::Model) -> Self {
         Self {
-            username: value.username,
+            // API compat: `username` mirrors campsite_user_id after username column drop.
+            username: value.campsite_user_id.clone(),
             campsite_user_id: value.campsite_user_id,
             display_name: value.display_name,
             email: value.email,

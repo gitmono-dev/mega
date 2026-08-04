@@ -55,13 +55,13 @@ impl Related<crate::mega_conversation::Entity> for Entity {
 }
 
 impl mega_issue::Model {
-    pub fn new(title: String, author: String) -> Self {
+    pub fn new(title: String, campsite_user_id: String) -> Self {
         let now = chrono::Utc::now().naive_utc();
         Self {
             id: generate_id(),
             link: generate_link(),
             title,
-            author,
+            campsite_user_id,
             status: "open".to_owned(),
             created_at: now,
             updated_at: now,

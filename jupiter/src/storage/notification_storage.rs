@@ -47,7 +47,7 @@ impl NotificationStorage {
         username: &str,
     ) -> Result<Option<user_notification_settings::Model>, sea_orm::DbErr> {
         user_notification_settings::Entity::find()
-            .filter(user_notification_settings::Column::Username.eq(username))
+            .filter(user_notification_settings::Column::CampsiteUserId.eq(username))
             .one(self.db())
             .await
     }
@@ -66,7 +66,7 @@ impl NotificationStorage {
             model.update(self.db()).await?;
         } else {
             user_notification_settings::ActiveModel {
-                username: Set(username.to_string()),
+                campsite_user_id: Set(username.to_string()),
                 email: Set(email.to_string()),
                 enabled: Set(true),
                 delivery_mode: Set("realtime".to_string()),
@@ -87,7 +87,7 @@ impl NotificationStorage {
         event_type_code: &str,
     ) -> Result<Option<user_notification_preferences::Model>, sea_orm::DbErr> {
         user_notification_preferences::Entity::find()
-            .filter(user_notification_preferences::Column::Username.eq(username))
+            .filter(user_notification_preferences::Column::CampsiteUserId.eq(username))
             .filter(user_notification_preferences::Column::EventTypeCode.eq(event_type_code))
             .one(self.db())
             .await
@@ -108,7 +108,7 @@ impl NotificationStorage {
             model.update(self.db()).await?;
         } else {
             user_notification_preferences::ActiveModel {
-                username: Set(username.to_string()),
+                campsite_user_id: Set(username.to_string()),
                 event_type_code: Set(event_type_code.to_string()),
                 enabled: Set(enabled),
                 created_at: Set(now),
@@ -126,7 +126,7 @@ impl NotificationStorage {
         username: &str,
     ) -> Result<Vec<user_notification_preferences::Model>, sea_orm::DbErr> {
         user_notification_preferences::Entity::find()
-            .filter(user_notification_preferences::Column::Username.eq(username))
+            .filter(user_notification_preferences::Column::CampsiteUserId.eq(username))
             .all(self.db())
             .await
     }
@@ -204,7 +204,7 @@ impl NotificationStorage {
 
         email_jobs::ActiveModel {
             id: Default::default(),
-            username: Set(username.to_string()),
+            campsite_user_id: Set(username.to_string()),
             to_email: Set(to_email.to_string()),
             event_type_code: Set(event_type_code.to_string()),
             subject: Set(subject.to_string()),

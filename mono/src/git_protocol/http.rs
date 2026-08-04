@@ -139,7 +139,21 @@ async fn git_receive_pack_auth(
         return Ok(false);
     };
 
-    let username = user.username;
+    let Ok(campsite_user_id) = user.require_campsite_user_id() else {
+        tracing::warn!(
+            "git receive-pack rejected: access token missing campsite_user_id; regenerate token"
+        );
+        return Ok(false);
+    };
+    if user.require_github_login().is_err() {
+        tracing::warn!(
+            campsite_user_id = %campsite_user_id,
+            "git receive-pack rejected: access token missing github_login; regenerate token after GitHub login"
+        );
+        return Ok(false);
+    }
+    // Push actor persisted on CLs is campsite_user_id (not github_login).
+    let username = campsite_user_id.to_string();
     pack_protocol.auth.username = Some(username.clone());
     pack_protocol.auth.authenticated_user = Some(PushUserInfo { username });
     Ok(true)

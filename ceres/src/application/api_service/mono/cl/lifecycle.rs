@@ -162,7 +162,7 @@ impl ClApplicationService {
 
         // Attribute the merge to the CL author (e.g. mega-init bot), not a
         // synthetic "system" user — so the timeline can show a bot badge/avatar.
-        let merge_actor = model.username.clone();
+        let merge_actor = model.campsite_user_id.clone();
         self.merge_cl(&merge_actor, model.clone()).await?;
         if let Some(updated_model) = cl_storage.get_cl(link).await? {
             dispatch_cl_webhook(self.storage(), WebhookEvent::ClMerged, &updated_model);
@@ -346,9 +346,9 @@ async fn enqueue_cl_comment_notifications(
         .await?;
 
     let mut recipients: HashSet<String> = HashSet::new();
-    recipients.insert(cl.username);
+    recipients.insert(cl.campsite_user_id);
     for r in reviewers {
-        recipients.insert(r.username);
+        recipients.insert(r.campsite_user_id);
     }
     recipients.remove(actor_username);
 

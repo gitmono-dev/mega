@@ -13,7 +13,10 @@ use ceres::model::{
 use common::errors::MegaError;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::api::{MonoApiServiceState, api_doc::CL_TAG, error::ApiError, oauth::model::LoginUser};
+use crate::api::{
+    MonoApiServiceState, api_common::identity::collaboration_actor, api_doc::CL_TAG,
+    error::ApiError, oauth::model::LoginUser,
+};
 
 const ERR_CL_NOT_READY_FOR_REVIEW: &str = "CL is not ready for review";
 
@@ -47,18 +50,27 @@ async fn add_reviewers(
     state: State<MonoApiServiceState>,
     Json(payload): Json<ReviewerPayload>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
+
+    // Frontend sends campsite_user_ids in reviewer_usernames; github_login is unknown here.
+    let reviewers: Vec<(String, Option<String>)> = payload
+        .reviewer_usernames
+        .iter()
+        .cloned()
+        .map(|id| (id, None))
+        .collect();
+
     state
         .services()
         .reviewer()
-        .add_reviewers(&link, payload.reviewer_usernames.clone())
+        .add_reviewers(&link, reviewers)
         .await?;
 
-    // Audit log
     tracing::info!(
         "[Audit] event=reviewer_added cl_link={} reviewers={:?} actor={}",
         link,
         payload.reviewer_usernames,
-        user.username
+        actor
     );
 
     for reviewer in payload.reviewer_usernames {
@@ -67,11 +79,8 @@ async fn add_reviewers(
             .conversation()
             .add_conversation(
                 &link,
-                &user.username,
-                Some(format!(
-                    "{} assigned a new reviewer {}",
-                    user.username, reviewer
-                )),
+                actor,
+                Some(format!("{} assigned a new reviewer {}", actor, reviewer)),
                 ConvType::Comment,
             )
             .await?;
@@ -98,18 +107,19 @@ async fn remove_reviewers(
     state: State<MonoApiServiceState>,
     Json(payload): Json<ReviewerPayload>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
+
     state
         .services()
         .reviewer()
         .remove_reviewers(&link, &payload.reviewer_usernames)
         .await?;
 
-    // Audit log
     tracing::info!(
         "[Audit] event=reviewer_removed cl_link={} reviewers={:?} actor={}",
         link,
         payload.reviewer_usernames,
-        user.username
+        actor
     );
 
     for reviewer in &payload.reviewer_usernames {
@@ -118,8 +128,8 @@ async fn remove_reviewers(
             .conversation()
             .add_conversation(
                 &link,
-                &user.username,
-                Some(format!("{} removed reviewer {}", user.username, reviewer)),
+                actor,
+                Some(format!("{} removed reviewer {}", actor, reviewer)),
                 ConvType::Comment,
             )
             .await?;
@@ -167,6 +177,8 @@ async fn reviewer_approve(
     state: State<MonoApiServiceState>,
     Json(payload): Json<ChangeReviewerStatePayload>,
 ) -> Result<Json<CommonResult<()>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
+
     if state
         .services()
         .conversation()
@@ -182,7 +194,7 @@ async fn reviewer_approve(
     state
         .services()
         .reviewer()
-        .reviewer_change_state(&link, &user.username, payload.approved)
+        .reviewer_change_state(&link, actor, payload.approved)
         .await?;
 
     state
@@ -190,8 +202,8 @@ async fn reviewer_approve(
         .conversation()
         .add_conversation(
             &link,
-            &user.username,
-            Some(format!("{} approved the CL", user.username)),
+            actor,
+            Some(format!("{} approved the CL", actor)),
             ConvType::Approve,
         )
         .await?;
@@ -219,13 +231,15 @@ async fn review_resolve(
     Path(link): Path<String>,
     Json(payload): Json<ChangeReviewStatePayload>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
-    let res = state
+    let actor = collaboration_actor(&user)?;
+
+    let is_reviewer = state
         .services()
         .reviewer()
-        .is_reviewer(&link, &user.username)
+        .is_reviewer(&link, actor)
         .await?;
 
-    if !res {
+    if !is_reviewer {
         return Err(ApiError::from(MegaError::Other(
             "Only reviewer can resolve the review comments".to_string(),
         )));
@@ -242,8 +256,8 @@ async fn review_resolve(
         .conversation()
         .add_conversation(
             &link,
-            &user.username,
-            Some(format!("{} resolved a review", user.username)),
+            actor,
+            Some(format!("{} resolved a review", actor)),
             ConvType::Comment,
         )
         .await?;

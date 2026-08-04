@@ -19,6 +19,7 @@ pub mod build_triggers;
 pub mod check_result;
 pub mod cla_sign_status;
 pub mod commit_auths;
+pub mod data_backfill_ledger;
 pub mod dynamic_sidebar;
 pub mod email_jobs;
 pub mod entity_ext;

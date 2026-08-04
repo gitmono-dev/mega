@@ -96,14 +96,14 @@ export const MergeSection = React.memo<MergeSectionProps>(
       statusNode = (
         <div className='flex items-center text-yellow-700'>
           <WarningTriangleIcon className='mr-3 h-5 w-5' />
-          <span className='font-semibold'>Merging is blocked - Waiting for reviewers approval</span>
+          <span className='font-semibold'>Merging is blocked - Waiting for reviewer approval</span>
         </div>
       )
     } else {
       statusNode = (
         <div className='flex items-center text-green-700'>
           <CheckCircleIcon className='mr-3 h-5 w-5' />
-          <span className='font-semibold'>Ready to merge - All reviewers approved</span>
+          <span className='font-semibold'>Ready to merge - Reviewer approved</span>
         </div>
       )
     }

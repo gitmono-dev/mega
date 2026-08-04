@@ -11,16 +11,12 @@ pub async fn ensure_admin(state: &MonoApiServiceState, user: &LoginUser) -> Resu
     let admin = state.services().admin();
     let cedar_id = user.cedar_user_id();
 
-    // Prefer GitHub login (cedar_user_id). Also accept Campsite username while
-    // `.mega_cedar.json` is still migrating from username → github_login.
-    if admin.check_is_admin(cedar_id).await?
-        || (cedar_id != user.username.as_str() && admin.check_is_admin(&user.username).await?)
-    {
+    if admin.check_is_admin(cedar_id).await? {
         return Ok(());
     }
 
     tracing::warn!(
-        actor = %user.username,
+        campsite_user_id = %user.campsite_user_id,
         cedar_user_id = %cedar_id,
         github_login = ?user.github_login,
         "admin check failed: access forbidden"

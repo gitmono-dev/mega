@@ -16,7 +16,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{
     MonoApiServiceState,
-    api_common::{self},
+    api_common::{self, identity::collaboration_actor},
     api_doc::CL_TAG,
     error::ApiError,
     oauth::model::LoginUser,
@@ -63,11 +63,8 @@ async fn reopen_cl(
     Path(link): Path<String>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
-    state
-        .services()
-        .cl()
-        .reopen_cl(&link, &user.username)
-        .await?;
+    let actor = collaboration_actor(&user)?;
+    state.services().cl().reopen_cl(&link, actor).await?;
     Ok(Json(CommonResult::success(None)))
 }
 
@@ -88,11 +85,8 @@ async fn close_cl(
     Path(link): Path<String>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
-    state
-        .services()
-        .cl()
-        .close_cl(&link, &user.username)
-        .await?;
+    let actor = collaboration_actor(&user)?;
+    state.services().cl().close_cl(&link, actor).await?;
     Ok(Json(CommonResult::success(None)))
 }
 
@@ -113,11 +107,8 @@ async fn merge(
     Path(link): Path<String>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
-    state
-        .services()
-        .cl()
-        .merge_open_cl(&user.username, &link)
-        .await?;
+    let actor = collaboration_actor(&user)?;
+    state.services().cl().merge_open_cl(actor, &link).await?;
     Ok(Json(CommonResult::success(None)))
 }
 
@@ -183,10 +174,11 @@ async fn cl_detail(
     Path(link): Path<String>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<CLDetailRes>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let cl_details = state
         .services()
         .cl()
-        .get_cl_details(&link, user.username)
+        .get_cl_details(&link, actor.to_string())
         .await?;
     Ok(Json(CommonResult::success(Some(cl_details))))
 }
@@ -314,10 +306,11 @@ async fn update_branch(
     Path(link): Path<String>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let new_head = state
         .services()
         .cl()
-        .update_branch_with_webhook(&user.username, &link)
+        .update_branch_with_webhook(actor, &link)
         .await?;
     Ok(Json(CommonResult::success(Some(new_head))))
 }
@@ -361,10 +354,11 @@ async fn save_comment(
     state: State<MonoApiServiceState>,
     Json(payload): Json<ContentPayload>,
 ) -> Result<Json<CommonResult<()>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     state
         .services()
         .cl()
-        .save_cl_comment(&link, &user.username, &payload.content)
+        .save_cl_comment(&link, actor, &payload.content)
         .await?;
     api_common::comment::check_comment_ref(user, state, &payload.content, &link).await
 }
@@ -451,10 +445,11 @@ async fn update_cl_status(
     state: State<MonoApiServiceState>,
     Json(payload): Json<UpdateClStatusPayload>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     state
         .services()
         .cl()
-        .update_cl_status(&link, &user.username, &payload)
+        .update_cl_status(&link, actor, &payload)
         .await?;
     Ok(Json(CommonResult::success(None)))
 }

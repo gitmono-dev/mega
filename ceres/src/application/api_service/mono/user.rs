@@ -42,11 +42,15 @@ impl UserApplicationService {
         Ok(keys.into_iter().map(|k| k.into()).collect())
     }
 
-    pub async fn generate_user_token(&self, username: String) -> Result<String, MegaError> {
+    pub async fn generate_user_token(
+        &self,
+        campsite_user_id: String,
+        github_login: Option<String>,
+    ) -> Result<String, MegaError> {
         self.ctx
             .storage()
             .user_storage()
-            .generate_token(username)
+            .generate_token(campsite_user_id, github_login)
             .await
     }
 

@@ -18,7 +18,11 @@ use russh::keys::{HashAlg, parse_public_key_base64};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{
-    MonoApiServiceState, api_doc::USER_TAG, error::ApiError, oauth::model::LoginUser,
+    MonoApiServiceState,
+    api_common::identity::{collaboration_actor, collaboration_github_login},
+    api_doc::USER_TAG,
+    error::ApiError,
+    oauth::model::LoginUser,
 };
 
 pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
@@ -65,6 +69,7 @@ async fn add_key(
     state: State<MonoApiServiceState>,
     Json(json): Json<AddSSHKey>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let campsite_user_id = collaboration_actor(&user)?.to_string();
     let ssh_parts: Vec<&str> = json.ssh_key.split_whitespace().collect();
     let key = parse_public_key_base64(
         ssh_parts
@@ -83,7 +88,7 @@ async fn add_key(
         .services()
         .user()
         .save_ssh_key(
-            user.username,
+            campsite_user_id,
             &title,
             &json.ssh_key,
             &key.fingerprint(HashAlg::Sha256).to_string(),
@@ -109,10 +114,11 @@ async fn remove_key(
     state: State<MonoApiServiceState>,
     Path(key_id): Path<i64>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let campsite_user_id = collaboration_actor(&user)?.to_string();
     state
         .services()
         .user()
-        .delete_ssh_key(user.username, key_id)
+        .delete_ssh_key(campsite_user_id, key_id)
         .await?;
     Ok(Json(CommonResult::success(None)))
 }
@@ -130,10 +136,11 @@ async fn list_key(
     user: LoginUser,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<Vec<ListSSHKey>>>, ApiError> {
+    let campsite_user_id = collaboration_actor(&user)?.to_string();
     let res = state
         .services()
         .user()
-        .list_user_ssh_keys(user.username)
+        .list_user_ssh_keys(campsite_user_id)
         .await?;
     Ok(Json(CommonResult::success(Some(res))))
 }
@@ -151,10 +158,12 @@ async fn generate_token(
     user: LoginUser,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let campsite_user_id = collaboration_actor(&user)?.to_string();
+    let github_login = collaboration_github_login(&user)?.to_string();
     let res = state
         .services()
         .user()
-        .generate_user_token(user.username)
+        .generate_user_token(campsite_user_id, Some(github_login))
         .await?;
     Ok(Json(CommonResult::success(Some(res))))
 }
@@ -176,10 +185,11 @@ async fn remove_token(
     state: State<MonoApiServiceState>,
     Path(key_id): Path<i64>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let campsite_user_id = collaboration_actor(&user)?.to_string();
     state
         .services()
         .user()
-        .delete_user_token(user.username, key_id)
+        .delete_user_token(campsite_user_id, key_id)
         .await?;
     Ok(Json(CommonResult::success(None)))
 }
@@ -197,10 +207,11 @@ async fn list_token(
     user: LoginUser,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<Vec<ListToken>>>, ApiError> {
+    let campsite_user_id = collaboration_actor(&user)?.to_string();
     let data = state
         .services()
         .user()
-        .list_user_tokens(user.username)
+        .list_user_tokens(campsite_user_id)
         .await?;
     Ok(Json(CommonResult::success(Some(data))))
 }
@@ -236,10 +247,11 @@ async fn get_notification_config(
     user: LoginUser,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<UserNotificationConfig>>, ApiError> {
+    let campsite_user_id = collaboration_actor(&user)?;
     let config = state
         .services()
         .user()
-        .get_user_notification_config(&user.username, &user.email)
+        .get_user_notification_config(campsite_user_id, &user.email)
         .await?;
 
     Ok(Json(CommonResult::success(Some(config))))
@@ -258,10 +270,11 @@ async fn update_notification_config(
     state: State<MonoApiServiceState>,
     Json(payload): Json<UpdateUserNotificationConfig>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let campsite_user_id = collaboration_actor(&user)?;
     state
         .services()
         .user()
-        .update_user_notification_config(&user.username, &user.email, payload)
+        .update_user_notification_config(campsite_user_id, &user.email, payload)
         .await?;
 
     Ok(Json(CommonResult::success(None)))
@@ -289,14 +302,16 @@ async fn get_cla_sign_status(
     user: LoginUser,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<ClaSignStatusRes>>, ApiError> {
+    let campsite_user_id = collaboration_actor(&user)?;
     let (cla_signed, cla_signed_at) = state
         .services()
         .user()
-        .get_or_init_cla_sign_status(&user.username)
+        .get_or_init_cla_sign_status(campsite_user_id)
         .await?;
 
     let res = ClaSignStatusRes {
-        username: user.username,
+        // API compat: username mirrors campsite_user_id after column drop.
+        username: campsite_user_id.to_string(),
         cla_signed,
         cla_signed_at: cla_signed_at.map(|dt| dt.and_utc().timestamp()),
     };
@@ -316,14 +331,15 @@ async fn change_sign_status(
     user: LoginUser,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<ClaSignStatusRes>>, ApiError> {
+    let campsite_user_id = collaboration_actor(&user)?;
     let (cla_signed, cla_signed_at) = state
         .services()
         .user()
-        .change_cla_sign_status(&user.username)
+        .change_cla_sign_status(campsite_user_id)
         .await?;
 
     let res = ClaSignStatusRes {
-        username: user.username,
+        username: campsite_user_id.to_string(),
         cla_signed,
         cla_signed_at: cla_signed_at.map(|dt| dt.and_utc().timestamp()),
     };
@@ -386,15 +402,17 @@ async fn get_user_approval_status(
     user: LoginUser,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<UserApprovalStatusRes>>, ApiError> {
+    let campsite_user_id = collaboration_actor(&user)?;
+    let display_name = user
+        .github_login
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .unwrap_or(campsite_user_id);
     let model = state
         .services()
         .user()
-        .get_or_init_user_approval_status(
-            &user.username,
-            &user.campsite_user_id,
-            &user.username,
-            &user.email,
-        )
+        .get_or_init_user_approval_status(campsite_user_id, display_name, &user.email)
         .await?;
 
     Ok(Json(CommonResult::success(Some(

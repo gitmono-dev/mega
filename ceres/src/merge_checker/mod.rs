@@ -99,9 +99,7 @@ impl CheckType {
             CheckType::CiStatus => {
                 "Verify that all required continuous integration pipelines have passed"
             }
-            CheckType::CodeReview => {
-                "Ensure the required reviewers have approved the merge request"
-            }
+            CheckType::CodeReview => "Ensure at least one reviewer has approved the merge request",
             CheckType::ClaSign => {
                 "Report whether the CL author has signed CLA (advisory; does not block merge)"
             }

@@ -56,7 +56,7 @@ impl IssueStorage {
             )
             .filter(mega_issue::Column::Status.eq(params.status))
             .apply_if(params.author, |q, author| {
-                q.filter(mega_issue::Column::Author.eq(author))
+                q.filter(mega_issue::Column::CampsiteUserId.eq(author))
             })
             .filter(cond)
             .distinct()
@@ -332,20 +332,20 @@ impl IssueStorage {
         if !to_remove.is_empty() {
             item_assignees::Entity::delete_many()
                 .filter(item_assignees::Column::ItemId.eq(item_id))
-                .filter(item_assignees::Column::AssignneeId.is_in(to_remove.clone()))
+                .filter(item_assignees::Column::CampsiteUserId.is_in(to_remove.clone()))
                 .exec(&txn)
                 .await?;
         }
 
         if !to_add.is_empty() {
             let mut new_item = Vec::new();
-            for assignnee_id in to_add.clone() {
+            for campsite_user_id in to_add.clone() {
                 new_item.push(
                     item_assignees::Model {
                         created_at: chrono::Utc::now().naive_utc(),
                         updated_at: chrono::Utc::now().naive_utc(),
                         item_id,
-                        assignnee_id,
+                        campsite_user_id,
                         item_type: item_type.clone(),
                     }
                     .into_active_model(),

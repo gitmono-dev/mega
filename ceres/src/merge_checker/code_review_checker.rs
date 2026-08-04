@@ -37,7 +37,7 @@ impl Checker for CodeReviewChecker {
         match approved {
             Ok(_) => {
                 res.status = crate::merge_checker::ConditionResult::PASSED;
-                res.message = String::from("All reviewers have approved the CL.");
+                res.message = String::from("At least one reviewer has approved the CL.");
             }
 
             Err(e) => {
@@ -64,17 +64,14 @@ impl CodeReviewChecker {
             .list_reviewers(cl_link)
             .await?;
 
-        let mut err_message = String::new();
-        for reviewer in reviewers {
-            if !reviewer.approved {
-                let msg = format!("Reviewer {} has not approved the CL.\n", reviewer.id);
-                err_message = err_message + &msg;
-            }
+        // No assigned reviewers → nothing to gate on.
+        // Otherwise any single approval is enough to pass.
+        if reviewers.is_empty() || reviewers.iter().any(|reviewer| reviewer.approved) {
+            return Ok(());
         }
 
-        if !err_message.is_empty() {
-            return Err(MegaError::Other(err_message));
-        }
-        Ok(())
+        Err(MegaError::Other(
+            "No reviewer has approved the CL.".to_string(),
+        ))
     }
 }

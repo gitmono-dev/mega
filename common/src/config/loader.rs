@@ -15,6 +15,9 @@ use crate::{
 pub enum ConfigSource {
     Cli,
     Env,
+    /// `config/config.local.toml` under the current working directory
+    CwdLocal,
+    /// `config/config.toml` under the current working directory
     Cwd,
     Global,
     DefaultGenerated,
@@ -59,11 +62,8 @@ impl ConfigLoader {
             });
         }
 
-        if let Some(path) = Self::cwd_config_path()? {
-            return Ok(LoadedConfig {
-                path,
-                source: ConfigSource::Cwd,
-            });
+        if let Some(loaded) = Self::cwd_config()? {
+            return Ok(loaded);
         }
 
         if let Some(path) = Self::global_config_path()? {
@@ -80,10 +80,23 @@ impl ConfigLoader {
         })
     }
 
-    fn cwd_config_path() -> Result<Option<PathBuf>> {
+    /// Prefer `config/config.local.toml`, then fall back to `config/config.toml`.
+    fn cwd_config() -> Result<Option<LoadedConfig>> {
         let cwd = env::current_dir().context("failed to get current dir")?;
+
+        let local = cwd.join("config/config.local.toml");
+        if local.exists() {
+            return Ok(Some(LoadedConfig {
+                path: local,
+                source: ConfigSource::CwdLocal,
+            }));
+        }
+
         let path = cwd.join("config/config.toml");
-        Ok(path.exists().then_some(path))
+        Ok(path.exists().then_some(LoadedConfig {
+            path,
+            source: ConfigSource::Cwd,
+        }))
     }
 
     fn global_config_path() -> Result<Option<PathBuf>> {

@@ -206,6 +206,9 @@ async fn shutdown_signal(token: CancellationToken) {
 pub async fn start_http(ctx: AppContext, options: CommonHttpOptions) {
     let CommonHttpOptions { host, port } = options.clone();
 
+    // Automatic identity backfill (handle → campsite_user_id); non-blocking.
+    crate::backfill::spawn_actor_identity_backfill(ctx.storage.clone());
+
     let middleware = tower::util::MapRequestLayer::new(rewrite_lfs_request_uri::<Body>);
 
     let shutdown_token = CancellationToken::new();

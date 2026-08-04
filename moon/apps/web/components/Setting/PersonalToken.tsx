@@ -10,6 +10,7 @@ import { useDeleteTokenById } from '@/hooks/useDeleteTokenById'
 import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
 import { useGetTokenList } from '@/hooks/useGetTokenList'
 import { usePostTokenGenerate } from '@/hooks/usePostTokenGenerate'
+import { megaUserHandle } from '@/utils/megaUser'
 import { legacyApiClient } from '@/utils/queryClient'
 
 const TokenItem = ({ item }: { item: ListToken }) => {
@@ -130,8 +131,8 @@ const PersonalToken = () => {
           <p className='text-sm text-green-800 dark:text-green-200'>Your new token has been generated.</p>
           <div className='mt-3 flex flex-col gap-2'>
             <div>
-              <span className='text-sm font-medium text-green-700 dark:text-green-300'>Username:</span>
-              <CopySpace copyText={currentUser.username} />
+              <span className='text-sm font-medium text-green-700 dark:text-green-300'>GitHub login:</span>
+              <CopySpace copyText={megaUserHandle(currentUser)} />
             </div>
             <div>
               <span className='text-sm font-medium text-green-700 dark:text-green-300'>Token:</span>

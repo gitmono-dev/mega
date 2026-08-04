@@ -17,6 +17,8 @@ cargo run --bin mono -- service multi http ssh
 
 Config: `--config path/to/config.toml` or `MEGA_CONFIG` env var.
 
+When neither is set, mono loads from the current working directory: `config/config.local.toml` if it exists (gitignored local override), otherwise `config/config.toml`. See [config/config.local.toml.example](../config/config.local.toml.example).
+
 ## Layout
 
 | Path | Role |

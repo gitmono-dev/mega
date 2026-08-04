@@ -12,7 +12,8 @@ use ceres::model::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{
-    MonoApiServiceState, api_common, api_doc::ISSUE_TAG, error::ApiError, oauth::model::LoginUser,
+    MonoApiServiceState, api_common, api_common::identity::collaboration_actor, api_doc::ISSUE_TAG,
+    error::ApiError, oauth::model::LoginUser,
 };
 
 pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
@@ -74,10 +75,11 @@ async fn issue_detail(
     Path(link): Path<String>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<IssueDetailRes>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let issue_details = state
         .services()
         .issue()
-        .get_issue_details(&link, user.username)
+        .get_issue_details(&link, actor.to_string())
         .await?;
     Ok(Json(CommonResult::success(Some(issue_details))))
 }
@@ -97,20 +99,16 @@ async fn new_issue(
     state: State<MonoApiServiceState>,
     Json(json): Json<NewIssue>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let res = state
         .services()
         .issue()
-        .save_issue(&user.username, &json.title)
+        .save_issue(actor, &json.title)
         .await?;
     state
         .services()
         .conversation()
-        .add_conversation(
-            &res.link,
-            &user.username,
-            Some(json.description),
-            ConvType::Comment,
-        )
+        .add_conversation(&res.link, actor, Some(json.description), ConvType::Comment)
         .await?;
     Ok(Json(CommonResult::success(None)))
 }
@@ -132,14 +130,15 @@ async fn close_issue(
     Path(link): Path<String>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     state.services().issue().close_issue(&link).await?;
     state
         .services()
         .conversation()
         .add_conversation(
             &link,
-            &user.username,
-            Some(format!("{} closed this", user.username)),
+            actor,
+            Some(format!("{} closed this", actor)),
             ConvType::Closed,
         )
         .await?;
@@ -163,14 +162,15 @@ async fn reopen_issue(
     Path(link): Path<String>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     state.services().issue().reopen_issue(&link).await?;
     state
         .services()
         .conversation()
         .add_conversation(
             &link,
-            &user.username,
-            Some(format!("{} reopen this", user.username)),
+            actor,
+            Some(format!("{} reopen this", actor)),
             ConvType::Closed,
         )
         .await?;
@@ -196,12 +196,13 @@ async fn save_comment(
     state: State<MonoApiServiceState>,
     Json(payload): Json<ContentPayload>,
 ) -> Result<Json<CommonResult<()>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     state
         .services()
         .conversation()
         .add_conversation(
             &link,
-            &user.username,
+            actor,
             Some(payload.content.clone()),
             ConvType::Comment,
         )

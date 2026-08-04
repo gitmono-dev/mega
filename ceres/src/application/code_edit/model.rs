@@ -120,7 +120,12 @@ pub(crate) trait Director<T: ApiHandler + Clone> {
             let reviewer_service = self.get_review_service(storage).await?;
 
             if let Err(e) = reviewer_service
-                .assign_system_reviewers(&cl.link, &policy_contents, &changed_files)
+                .assign_system_reviewers(
+                    &cl.link,
+                    &policy_contents,
+                    &changed_files,
+                    &std::collections::HashMap::new(),
+                )
                 .await
             {
                 tracing::warn!("Failed to assign Cedar reviewers: {}", e);
@@ -128,7 +133,12 @@ pub(crate) trait Director<T: ApiHandler + Clone> {
 
             // Resync reviewers when existing CL updates policy files
             if let Err(e) = reviewer_service
-                .sync_system_reviewers(&cl.link, &policy_contents, &changed_files)
+                .sync_system_reviewers(
+                    &cl.link,
+                    &policy_contents,
+                    &changed_files,
+                    &std::collections::HashMap::new(),
+                )
                 .await
             {
                 tracing::warn!("Failed to resync Cedar reviewers: {}", e);
@@ -463,7 +473,7 @@ mod tests {
             to_hash: to_hash.to_string(),
             created_at: chrono::Utc::now().naive_utc(),
             updated_at: chrono::Utc::now().naive_utc(),
-            username: "tester".to_string(),
+            campsite_user_id: "tester".to_string(),
             base_branch: "main".to_string(),
         }
     }

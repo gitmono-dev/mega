@@ -4,7 +4,7 @@ impl mega_code_review_comment::Model {
     pub fn new(
         thread_id: i64,
         parent_id: Option<i64>,
-        user_name: String,
+        campsite_user_id: String,
         content: Option<String>,
     ) -> Self {
         let now = chrono::Utc::now().naive_utc();
@@ -13,7 +13,7 @@ impl mega_code_review_comment::Model {
             id: generate_id(),
             thread_id,
             parent_id,
-            user_name,
+            campsite_user_id,
             content,
             created_at: now,
             updated_at: now,

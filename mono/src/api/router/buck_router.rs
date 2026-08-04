@@ -13,7 +13,8 @@ use ceres::model::buck::*;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{
-    MonoApiServiceState, api_doc::BUCK_TAG, error::ApiError, oauth::model::LoginUser,
+    MonoApiServiceState, api_common::identity::collaboration_actor, api_doc::BUCK_TAG,
+    error::ApiError, oauth::model::LoginUser,
 };
 
 pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
@@ -48,9 +49,10 @@ async fn create_session(
     state: State<MonoApiServiceState>,
     Json(payload): Json<CreateSessionPayload>,
 ) -> Result<Json<CommonResult<SessionResponse>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let service_resp = state
         .git()
-        .create_buck_session(&user.username, &payload.path)
+        .create_buck_session(actor, &payload.path)
         .await?;
 
     let response = SessionResponse {
@@ -88,9 +90,10 @@ async fn upload_manifest(
     state: State<MonoApiServiceState>,
     Json(payload): Json<ManifestPayload>,
 ) -> Result<Json<CommonResult<ManifestResponse>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let response = state
         .git()
-        .process_buck_manifest(&user.username, &cl_link, payload)
+        .process_buck_manifest(actor, &cl_link, payload)
         .await
         .map_err(ApiError::from)?;
 
@@ -122,6 +125,7 @@ async fn upload_file(
     headers: HeaderMap,
     req: Request<Body>,
 ) -> Result<Json<CommonResult<FileUploadResponse>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     use axum::body::to_bytes;
     use percent_encoding::percent_decode_str;
 
@@ -152,7 +156,7 @@ async fn upload_file(
                 "Buck upload rate limited: cl_link={}, file_size={}, user={}, error={}",
                 cl_link,
                 file_size,
-                user.username,
+                actor,
                 e
             );
             ApiError::from(e)
@@ -163,7 +167,7 @@ async fn upload_file(
         cl_link,
         file_size,
         _large_file_permit.is_some(),
-        user.username
+        actor
     );
 
     // Validate Content-Type (must be present and application/octet-stream)
@@ -201,7 +205,7 @@ async fn upload_file(
     let svc_resp = state
         .git()
         .upload_buck_file(
-            &user.username,
+            actor,
             &cl_link,
             &file_path,
             file_size,
@@ -249,10 +253,11 @@ async fn complete_upload(
     state: State<MonoApiServiceState>,
     payload: Option<Json<CompletePayload>>,
 ) -> Result<Json<CommonResult<CompleteResponse>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let payload = payload.map(|p| p.0).unwrap_or(CompletePayload {});
     let response = state
         .git()
-        .complete_buck_upload(&user.username, &cl_link, payload)
+        .complete_buck_upload(actor, &cl_link, payload)
         .await
         .map_err(ApiError::from)?;
 

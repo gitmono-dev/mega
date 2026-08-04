@@ -66,9 +66,9 @@ pub async fn on_cl_comment_created(
     let reviewers = reviewer_stg.list_reviewers(cl_link).await?;
 
     let mut recipients: HashSet<String> = HashSet::new();
-    recipients.insert(cl.username);
+    recipients.insert(cl.campsite_user_id);
     for r in reviewers {
-        recipients.insert(r.username);
+        recipients.insert(r.campsite_user_id);
     }
     recipients.remove(actor_username);
 
@@ -145,7 +145,7 @@ mod tests {
             to_hash: Set("b".to_string()),
             created_at: Set(now),
             updated_at: Set(now),
-            username: Set("alice".to_string()),
+            campsite_user_id: Set("alice".to_string()),
             base_branch: Set("main".to_string()),
         }
         .insert(&db)
@@ -155,7 +155,8 @@ mod tests {
         mega_cl_reviewer::ActiveModel {
             id: Set(1),
             cl_link: Set("CL1".to_string()),
-            username: Set("bob".to_string()),
+            campsite_user_id: Set("bob".to_string()),
+            github_login: Set(Some("bob".to_string())),
             approved: Set(false),
             system_required: Set(false),
             created_at: Set(now),
@@ -186,14 +187,14 @@ mod tests {
         assert_eq!(jobs.len(), 2);
 
         let alice_job = email_jobs::Entity::find()
-            .filter(email_jobs::Column::Username.eq("alice"))
+            .filter(email_jobs::Column::CampsiteUserId.eq("alice"))
             .one(&db)
             .await
             .unwrap();
         assert!(alice_job.is_some());
 
         let bob_job = email_jobs::Entity::find()
-            .filter(email_jobs::Column::Username.eq("bob"))
+            .filter(email_jobs::Column::CampsiteUserId.eq("bob"))
             .one(&db)
             .await
             .unwrap();
@@ -223,7 +224,7 @@ mod tests {
             to_hash: Set("b".to_string()),
             created_at: Set(now),
             updated_at: Set(now),
-            username: Set("alice".to_string()),
+            campsite_user_id: Set("alice".to_string()),
             base_branch: Set("main".to_string()),
         }
         .insert(&db)

@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "user_notification_preferences")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub username: String,
+    pub campsite_user_id: String,
     #[sea_orm(primary_key, auto_increment = false)]
     pub event_type_code: String,
     pub enabled: bool,
@@ -24,8 +24,8 @@ pub struct Model {
     pub notification_event_types: BelongsTo<super::notification_event_types::Entity>,
     #[sea_orm(
         belongs_to,
-        from = "username",
-        to = "username",
+        from = "campsite_user_id",
+        to = "campsite_user_id",
         on_update = "Cascade",
         on_delete = "Cascade"
     )]

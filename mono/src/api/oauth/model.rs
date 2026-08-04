@@ -13,7 +13,6 @@ pub struct CampsiteUserJson {
 impl From<CampsiteUserJson> for LoginUser {
     fn from(value: CampsiteUserJson) -> Self {
         Self {
-            username: value.username,
             email: value.email.unwrap_or_default(),
             avatar_url: value.avatar_url,
             campsite_user_id: value.id,
@@ -49,7 +48,6 @@ impl From<TinyshipAuthUserJson> for LoginUser {
     fn from(value: TinyshipAuthUserJson) -> Self {
         Self {
             campsite_user_id: value.id,
-            username: value.name,
             email: value.email.unwrap_or_default(),
             avatar_url: value.image.unwrap_or_default(),
             github_login: None,
@@ -60,7 +58,6 @@ impl From<TinyshipAuthUserJson> for LoginUser {
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct LoginUser {
     pub campsite_user_id: String,
-    pub username: String,
     /// GitHub login when Campsite authenticated via GitHub; used as Cedar User euid.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub github_login: Option<String>,
@@ -75,6 +72,25 @@ impl LoginUser {
             .as_deref()
             .map(str::trim)
             .filter(|s| !s.is_empty())
-            .unwrap_or(self.username.as_str())
+            .unwrap_or("")
+    }
+
+    /// Campsite public user id required for mono persistence.
+    pub fn require_campsite_user_id(&self) -> Result<&str, &'static str> {
+        let id = self.campsite_user_id.trim();
+        if id.is_empty() {
+            Err("Campsite user id required. Please re-login.")
+        } else {
+            Ok(id)
+        }
+    }
+
+    /// GitHub login required for Cedar / display / reviewer.github_login.
+    pub fn require_github_login(&self) -> Result<&str, &'static str> {
+        self.github_login
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .ok_or("GitHub login required. Please re-login with GitHub.")
     }
 }

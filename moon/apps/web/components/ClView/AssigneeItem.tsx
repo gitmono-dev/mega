@@ -1,6 +1,6 @@
 import { ConditionalWrap } from '@gitmono/ui/utils'
 
-import { useGetOrganizationMember } from '@/hooks/useGetOrganizationMember'
+import { useMemberByActor } from '@/hooks/useMemberByActor'
 import { megaUserHandle } from '@/utils/megaUser'
 
 import { MemberHovercard } from '../InlinePost/MemberHovercard'
@@ -13,7 +13,7 @@ import { ReopenItemProps } from './ReopenItem'
 const AssigneeItem = ({ conv }: ReopenItemProps) => {
   const match = conv.comment?.match(/\["(.*?)"\]/) ?? ''
   const comment = conv.comment?.split(' ') ?? []
-  const { data: member } = useGetOrganizationMember({ username: conv.username })
+  const { data: member } = useMemberByActor(conv.username)
   const profileUsername = member?.user.username || conv.username
   const displayName = megaUserHandle(member?.user, conv.username)
 

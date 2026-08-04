@@ -8,7 +8,8 @@ use ceres::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{
-    MonoApiServiceState, api_doc::REPO_TAG, error::ApiError, oauth::model::LoginUser,
+    MonoApiServiceState, api_common::identity::collaboration_actor, api_doc::REPO_TAG,
+    error::ApiError, oauth::model::LoginUser,
 };
 
 pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
@@ -35,6 +36,7 @@ async fn clone_third_party_repo(
     state: State<MonoApiServiceState>,
     Json(payload): Json<CloneRepoPayload>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let path = MonoServiceLogic::validate_github_sync_path(&payload.path)?;
     let path = PathBuf::from(path);
     state
@@ -45,7 +47,7 @@ async fn clone_third_party_repo(
             &payload.owner,
             &payload.repo,
             path,
-            &user.username,
+            actor,
         )
         .await?;
 

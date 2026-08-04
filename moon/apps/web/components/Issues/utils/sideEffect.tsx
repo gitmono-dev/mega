@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import type { SelectPanelItemInput as ItemInput } from '@primer/react'
 import { useAtom } from 'jotai'
 
-import { LabelItem } from '@gitmono/types'
+import { LabelItem, SyncOrganizationMember } from '@gitmono/types'
 
 import { MemberAvatar } from '@/components/MemberAvatar'
 import { useScope } from '@/contexts/scope'
@@ -19,9 +19,11 @@ export const useAvatars = ({ preferGithubLogin = false }: { preferGithubLogin?: 
     () =>
       members?.map((i) => ({
         groupId: 'end',
+        // Campsite public id — mono persistence key.
+        id: i.user.id,
         text: preferGithubLogin ? megaUserHandle(i.user) : i.user.username,
-        // Campsite username kept for matching legacy CL/reviewer records.
         username: i.user.username,
+        github_login: i.user.github_login?.trim() || undefined,
         leadingVisual: () => <MemberAvatar size='sm' member={i} />
       })) || [],
     [members, preferGithubLogin]
@@ -34,13 +36,14 @@ export const splitFun = (el: React.ReactNode): string[] => {
     .filter((n) => n.length > 0)
 }
 
-export const useMemberMap = () => {
+export const useMemberMap = (): Map<string, SyncOrganizationMember> => {
   const { members } = useSyncedMembers()
 
   return useMemo(() => {
-    const map = new Map()
+    const map = new Map<string, SyncOrganizationMember>()
 
     members?.forEach((i) => {
+      map.set(i.user.id, i)
       map.set(i.user.username, i)
       const github = i.user.github_login?.trim()
 
@@ -91,18 +94,26 @@ export const useLabelMap = () => {
 
 // assignees逻辑
 
-type MegaAvatarItem = ReturnType<typeof useAvatars>[number] & { username?: string }
+type MegaAvatarItem = ReturnType<typeof useAvatars>[number] & {
+  id?: string
+  username?: string
+  github_login?: string
+}
 
 function avatarApiIdentity(item: ItemInput): string | undefined {
   const mega = item as MegaAvatarItem
+  // Persist campsite_user_id.
 
-  if (typeof mega.username === 'string' && mega.username) return mega.username
+  if (typeof mega.id === 'string' && mega.id) return mega.id
+  if (typeof item.id === 'string' && item.id) return item.id
+  if (typeof mega.github_login === 'string' && mega.github_login) return mega.github_login
   if (typeof item.text === 'string' && item.text) return item.text
+  if (typeof mega.username === 'string' && mega.username) return mega.username
   return undefined
 }
 
 function avatarMatchesStoredHandle(avatar: MegaAvatarItem, handle: string) {
-  return avatar.text === handle || avatar.username === handle
+  return avatar.id === handle || avatar.text === handle || avatar.github_login === handle || avatar.username === handle
 }
 
 export const useAssigneesSelector = ({

@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 
 import { LoadingSpinner } from '@gitmono/ui'
 
+import { useAdminCheck } from '@/hooks/admin/useAdminCheck'
 import { useAdminList } from '@/hooks/admin/useAdminList'
 import { useGenerateMegaCedar } from '@/hooks/admin/useGenerateMegaCedar'
 import { useGetSyncMembers } from '@/hooks/useGetSyncMembers'
@@ -59,7 +60,17 @@ export function MegaCedarAdminPicker({ fileContent, onContentGenerated, disabled
     enabled: true
   })
 
-  const { data: adminListData, isLoading: isAdminListLoading } = useAdminList()
+  const { data: adminCheck, isLoading: isAdminCheckLoading } = useAdminCheck()
+  const isMonoAdmin = adminCheck?.data?.is_admin === true
+  const canUseAdminApis = !isAdminCheckLoading && isMonoAdmin
+
+  const {
+    data: adminListData,
+    isLoading: isAdminListLoading,
+    isError: isAdminListError,
+    error: adminListError
+  } = useAdminList({ enabled: canUseAdminApis })
+
   const generateCedar = useGenerateMegaCedar()
 
   const parsedAdmins = useMemo(() => parseAdminsFromCedarContent(fileContent), [fileContent])
@@ -73,16 +84,31 @@ export function MegaCedarAdminPicker({ fileContent, onContentGenerated, disabled
       return
     }
 
-    if (!isAdminListLoading && adminListData?.data?.admins) {
-      setSelectedAdmins([...(adminListData.data.admins || [])].sort())
+    if (isAdminCheckLoading) return
+
+    if (!canUseAdminApis) {
       initializedRef.current = true
+      return
     }
-  }, [parsedAdmins, adminListData, isAdminListLoading])
+
+    if (isAdminListLoading) return
+
+    if (adminListData?.data?.admins) {
+      setSelectedAdmins([...(adminListData.data.admins || [])].sort())
+    }
+
+    initializedRef.current = true
+  }, [parsedAdmins, adminListData, isAdminListLoading, canUseAdminApis, isAdminCheckLoading])
 
   const regenerateContent = useCallback(
     async (admins: string[]) => {
       if (admins.length === 0) {
         toast.error('Select at least one admin')
+        return
+      }
+
+      if (!isMonoAdmin) {
+        toast.error('Admin access required to regenerate .mega_cedar.json')
         return
       }
 
@@ -99,11 +125,16 @@ export function MegaCedarAdminPicker({ fileContent, onContentGenerated, disabled
         // apiErrorToast handles the error
       }
     },
-    [generateCedar, onContentGenerated]
+    [generateCedar, onContentGenerated, isMonoAdmin]
   )
 
   const handleToggle = useCallback(
     (username: string) => {
+      if (!isMonoAdmin) {
+        toast.error('Admin access required to regenerate .mega_cedar.json')
+        return
+      }
+
       setSelectedAdmins((prev) => {
         const next = prev.includes(username) ? prev.filter((u) => u !== username) : [...prev, username].sort()
 
@@ -116,10 +147,15 @@ export function MegaCedarAdminPicker({ fileContent, onContentGenerated, disabled
         return next
       })
     },
-    [regenerateContent]
+    [regenerateContent, isMonoAdmin]
   )
 
-  const isLoading = isMembersLoading || isAdminListLoading
+  const isLoading = isMembersLoading || isAdminCheckLoading || (canUseAdminApis && isAdminListLoading)
+  const adminForbidden =
+    (!isAdminCheckLoading && !isMonoAdmin) ||
+    (isAdminListError &&
+      adminListError instanceof Error &&
+      (adminListError.name === 'ForbiddenError' || /admin access required/i.test(adminListError.message)))
 
   return (
     <div className='border-b border-[#d0d9e0] bg-[#f9fbfd] px-4 py-3'>
@@ -137,6 +173,16 @@ export function MegaCedarAdminPicker({ fileContent, onContentGenerated, disabled
           </div>
         )}
       </div>
+
+      {adminForbidden && (
+        <div className='mb-3 rounded-md border border-amber-200 bg-amber-50 p-3'>
+          <p className='text-sm font-medium text-amber-900'>Admin access required</p>
+          <p className='mt-1 text-xs text-amber-800'>
+            You can view the current admin list from the file, but regenerating{' '}
+            <code className='rounded bg-amber-100 px-1'>.mega_cedar.json</code> requires mono admin permission.
+          </p>
+        </div>
+      )}
 
       {membersError && (
         <div className='mb-3 rounded-md border border-red-200 bg-red-50 p-3'>
@@ -157,7 +203,7 @@ export function MegaCedarAdminPicker({ fileContent, onContentGenerated, disabled
         onChange={(e) => setMemberSearchQuery(e.target.value)}
         className='mb-3 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden'
         placeholder='Search members by name or username...'
-        disabled={disabled || !!membersError || generateCedar.isPending}
+        disabled={disabled || !!membersError || generateCedar.isPending || adminForbidden}
       />
 
       <div className='max-h-48 overflow-y-auto rounded-md border border-gray-200 bg-white'>
@@ -179,13 +225,13 @@ export function MegaCedarAdminPicker({ fileContent, onContentGenerated, disabled
                   key={member.user.id}
                   className={`flex cursor-pointer items-center px-3 py-2 transition-colors hover:bg-gray-50 ${
                     isSelected ? 'bg-blue-50' : ''
-                  } ${disabled || generateCedar.isPending ? 'pointer-events-none opacity-60' : ''}`}
+                  } ${disabled || generateCedar.isPending || adminForbidden ? 'pointer-events-none opacity-60' : ''}`}
                 >
                   <input
                     type='checkbox'
                     checked={isSelected}
                     onChange={() => handleToggle(cedarId)}
-                    disabled={disabled || generateCedar.isPending}
+                    disabled={disabled || generateCedar.isPending || adminForbidden}
                     className='mr-3 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
                   />
                   <img

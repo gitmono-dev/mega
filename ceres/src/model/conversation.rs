@@ -27,7 +27,7 @@ impl ConversationItem {
     ) -> Self {
         let mut item = Self {
             id: conversation.id,
-            username: conversation.username,
+            username: conversation.campsite_user_id,
             is_bot: false,
             conv_type: conversation.conv_type.into(),
             comment: conversation.comment,
@@ -62,10 +62,10 @@ impl ConversationItem {
                         custom_content: String::new(),
                     });
                 entry.reactions_count += 1;
-                if r.username == username {
+                if r.campsite_user_id == username {
                     entry.viewer_reaction_id = r.public_id.clone();
                 }
-                entry.tooltip.push(r.username.clone());
+                entry.tooltip.push(r.campsite_user_id.clone());
             }
         }
 

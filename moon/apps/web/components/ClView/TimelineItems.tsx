@@ -94,7 +94,9 @@ const TimelineItems = React.memo<{
         let children
         let isOver = false
 
-        const isCurrentReviewer = reviewers.some((r) => r.username === conv.username)
+        const isCurrentReviewer = reviewers.some(
+          (r) => r.campsite_user_id === conv.username || r.username === conv.username
+        )
 
         switch (conv.conv_type) {
           case 'Comment':

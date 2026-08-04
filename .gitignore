@@ -58,6 +58,9 @@ orion-server/docker-compose.override.yml
 # local dev environment
 /scripts/dev/.env
 
+# local mono config override (preferred over config/config.toml when present)
+/config/config.local.toml
+
 .buildx-cache
 
 # Claude Code configuration and cache

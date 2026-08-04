@@ -61,11 +61,13 @@ pub async fn login_user_from_mono_access_token(
     user_storage: &UserStorage,
     token: &str,
 ) -> Result<Option<LoginUser>, MegaError> {
-    let Some(username) = user_storage.find_user_by_token(token).await? else {
+    let Some((campsite_user_id, github_login)) = user_storage.find_user_by_token(token).await?
+    else {
         return Ok(None);
     };
     Ok(Some(LoginUser {
-        username,
+        campsite_user_id,
+        github_login: github_login.filter(|s| !s.trim().is_empty()),
         ..Default::default()
     }))
 }

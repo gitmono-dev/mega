@@ -44,7 +44,7 @@ impl ClStorage {
     ) -> Result<Option<mega_cl::Model>, MegaError> {
         let model = mega_cl::Entity::find()
             .filter(mega_cl::Column::Path.eq(path))
-            .filter(mega_cl::Column::Username.eq(username))
+            .filter(mega_cl::Column::CampsiteUserId.eq(username))
             .filter(mega_cl::Column::Status.eq(MergeStatusEnum::Open))
             .one(self.get_connection())
             .await
@@ -105,7 +105,7 @@ impl ClStorage {
             )
             .filter(mega_cl::Column::Status.is_in(status))
             .apply_if(params.author, |q, author| {
-                q.filter(mega_cl::Column::Username.eq(author))
+                q.filter(mega_cl::Column::CampsiteUserId.eq(author))
             })
             .filter(cond)
             .distinct();
@@ -217,7 +217,7 @@ impl ClStorage {
         let assignee = mega_cl::Entity::find()
             .filter(mega_cl::Column::Link.eq(link))
             .find_with_related(item_assignees::Entity)
-            .filter(item_assignees::Column::AssignneeId.eq(username))
+            .filter(item_assignees::Column::CampsiteUserId.eq(username))
             .all(self.get_connection())
             .await?;
         if assignee.is_empty() {

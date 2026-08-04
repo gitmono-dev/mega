@@ -13,7 +13,7 @@ import { RichTextRenderer } from '@/components/RichTextRenderer'
 import { usePostClReviewResolve } from '@/hooks/CL/usePostClReviewResolve'
 import { usePostComment } from '@/hooks/issues/usePostComment'
 import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
-import { useGetOrganizationMember } from '@/hooks/useGetOrganizationMember'
+import { useMemberByActor } from '@/hooks/useMemberByActor'
 import { useUploadHelpers } from '@/hooks/useUploadHelpers'
 import { apiErrorToast } from '@/utils/apiErrorToast'
 import { megaUserHandle, megaUserHandlesMatch } from '@/utils/megaUser'
@@ -46,7 +46,7 @@ interface ReviewCommentProps {
 const ReviewComment = React.memo<ReviewCommentProps>(
   ({ reviewers, conv, id, whoamI, editorRef }: ReviewCommentProps) => {
     const isBot = !!conv.is_bot
-    const { data: member } = useGetOrganizationMember({ username: conv.username, enabled: !isBot })
+    const { data: member } = useMemberByActor(conv.username, !isBot)
     const { data: currentUser } = useGetCurrentUser()
     const profileUsername = member?.user.username || conv.username
     const displayName = megaUserHandle(member?.user, conv.username) || conv.username
@@ -67,7 +67,7 @@ const ReviewComment = React.memo<ReviewCommentProps>(
       if (!currentUser) {
         return false
       }
-      return reviewers.some((r) => megaUserHandlesMatch(r.username, currentUser))
+      return reviewers.some((r) => megaUserHandlesMatch(r.campsite_user_id || r.username, currentUser))
     }, [currentUser, reviewers])
 
     useEffect(() => {

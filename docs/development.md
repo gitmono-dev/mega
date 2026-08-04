@@ -20,7 +20,8 @@ cargo build -p mono
 
 Default config: [config/config.toml](../config/config.toml).
 
-- **Path:** `./config.toml` in the working directory, or `--config /path/to/config.toml`
+- **Path discovery (cwd):** `config/config.local.toml` if present, otherwise `config/config.toml`. Copy the default file to `config.local.toml` for personal overrides (gitignored).
+- **Explicit path:** `--config /path/to/config.toml` or `MEGA_CONFIG`
 - **Environment:** `MEGA_*` overrides nested keys with `__` (e.g. `MEGA_LOG__LEVEL` → `log.level`)
 - **Substitution:** `${base_dir}` and `${key.subkey}` in string values (see `common/src/config.rs`)
 

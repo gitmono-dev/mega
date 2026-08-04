@@ -662,6 +662,10 @@ pub struct OauthConfig {
     pub allowed_cors_origins: Vec<String>,
     #[serde(default = "default_campsite_api_session_cookie")]
     pub campsite_api_session_cookie: String,
+    /// Shared secret for Campsite `internal/member_identities` (mono startup backfill).
+    /// Empty = skip automatic identity backfill.
+    #[serde(default)]
+    pub mega_internal_secret: String,
 }
 
 pub const DEFAULT_CAMPSITE_API_SESSION_COOKIE: &str = "_campsite_api_session";
@@ -694,6 +698,7 @@ impl Default for OauthConfig {
             .map(|s| s.to_string())
             .collect(),
             campsite_api_session_cookie: default_campsite_api_session_cookie(),
+            mega_internal_secret: String::new(),
         }
     }
 }

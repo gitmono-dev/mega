@@ -80,7 +80,7 @@ impl CodeReviewApplicationService {
             .await?
             .ok_or_else(|| MegaError::NotFound("Comment not found".to_string()))?;
 
-        if comment.user_name != username {
+        if comment.campsite_user_id != username {
             return Err(MegaError::Other(
                 "Cannot update others' comments".to_string(),
             ));
@@ -143,7 +143,7 @@ impl CodeReviewApplicationService {
             .await?
             .ok_or_else(|| MegaError::NotFound("Comment not found".to_string()))?;
 
-        if comment.user_name != username {
+        if comment.campsite_user_id != username {
             return Err(MegaError::Other(
                 "Cannot update others' comments".to_string(),
             ));

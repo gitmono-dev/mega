@@ -3225,6 +3225,7 @@ export type FigmaKeyPair = {
 }
 
 export type AddMembersRequest = {
+  /** Campsite public user ids (field name kept for API compat). */
   usernames: string[]
 }
 
@@ -3922,6 +3923,7 @@ export type CommonResultCommonPageGroupMemberResponse = {
       id: number
       /** @format int64 */
       joined_at: number
+      /** Campsite public user id (field name kept for API compat). */
       username: string
     }[]
     /**
@@ -4744,6 +4746,7 @@ export type CommonResultVecGroupMemberResponse = {
     id: number
     /** @format int64 */
     joined_at: number
+    /** Campsite public user id (field name kept for API compat). */
     username: string
   }[]
   err_message: string
@@ -5248,6 +5251,7 @@ export type GroupMemberResponse = {
   id: number
   /** @format int64 */
   joined_at: number
+  /** Campsite public user id (field name kept for API compat). */
   username: string
 }
 
@@ -5795,7 +5799,10 @@ export type ResponseObject = {
 
 export type ReviewerInfo = {
   approved: boolean
+  campsite_user_id: string
+  github_login?: string | null
   system_required: boolean
+  /** Display name: github_login if present, else campsite_user_id (API compat). */
   username: string
 }
 
@@ -8719,7 +8726,7 @@ export type DeleteApiAdminGroupsMembersByUsernameParams = {
    * @format int64
    */
   groupId: number
-  /** Username */
+  /** Campsite user id of the member */
   username: string
 }
 
@@ -8779,28 +8786,28 @@ export type GetApiAdminUserApprovalsParams = {
 export type GetApiAdminUserApprovalsData = CommonResultUserApprovalListRes
 
 export type PostApiAdminUserApprovalsApproveParams = {
-  /** Username to approve */
+  /** Campsite user id to approve */
   username: string
 }
 
 export type PostApiAdminUserApprovalsApproveData = CommonResultUserApprovalStatusRes
 
 export type PostApiAdminUserApprovalsRejectParams = {
-  /** Username to reject */
+  /** Campsite user id to reject */
   username: string
 }
 
 export type PostApiAdminUserApprovalsRejectData = CommonResultUserApprovalStatusRes
 
 export type GetApiAdminUsersGroupsParams = {
-  /** Username */
+  /** Campsite user id */
   username: string
 }
 
 export type GetApiAdminUsersGroupsData = CommonResultUserGroupsResponse
 
 export type GetApiAdminUsersPermissionsByResourceIdParams = {
-  /** Username */
+  /** Campsite user id */
   username: string
   /** Resource type, currently only `note` */
   resourceType: string

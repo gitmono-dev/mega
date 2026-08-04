@@ -159,13 +159,52 @@ export const ssrApiClient = new Api({
   }
 })
 
+/**
+ * Mono returns CommonResult `{ err_message, ... }` on errors, while the shared
+ * HttpClient reads Campsite-style `{ message, code }`. Remap so ApiError.message
+ * (and toasts) surface the real reason — e.g. 403 "Admin access required".
+ */
+async function monoFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const response = await fetch(input, init)
+
+  if (response.ok || response.status === 204) {
+    return response
+  }
+
+  const contentType = response.headers.get('content-type') || ''
+
+  if (!contentType.includes('application/json')) {
+    return response
+  }
+
+  try {
+    const data = await response.json()
+    const message =
+      (typeof data?.message === 'string' && data.message) ||
+      (typeof data?.err_message === 'string' && data.err_message) ||
+      'Something went wrong'
+    const code =
+      (typeof data?.code === 'string' && data.code) ||
+      (response.status === 403 ? 'forbidden' : response.status === 401 ? 'unauthorized' : '')
+
+    return new Response(JSON.stringify({ ...data, message, code }), {
+      status: response.status,
+      statusText: response.statusText,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  } catch {
+    return response
+  }
+}
+
 export const legacyApiClient = new Api({
   baseUrl: MONO_API_URL,
   baseApiParams: {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     format: 'json'
-  }
+  },
+  customFetch: monoFetch
 })
 export const orionApiClient = new Api({
   baseUrl: ORION_API_URL,

@@ -13,7 +13,7 @@ export function ReviewerSection({ required, actual }: ReviewerSectionProps) {
       <div className='flex items-center p-3 text-green-700 dark:text-green-400'>
         <CheckCircleIcon className='mr-3 h-5 w-5' />
         <div>
-          <span className='font-semibold'>All required reviewers have approved</span>
+          <span className='font-semibold'>A required reviewer has approved</span>
         </div>
       </div>
     )

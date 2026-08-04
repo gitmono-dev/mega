@@ -5,7 +5,7 @@ use std::{
 
 use common::config::Config;
 use io_orbit::factory::MegaObjectStorageWrapper;
-#[cfg(feature = "migrate")]
+#[cfg(any(test, feature = "migrate"))]
 use jupiter_migrate::apply_migrations;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use tracing::log;
@@ -32,6 +32,7 @@ use crate::{
         code_review_thread_storage::CodeReviewThreadStorage,
         commit_binding_storage::CommitBindingStorage,
         conversation_storage::ConversationStorage,
+        data_backfill_storage::DataBackfillStorage,
         dynamic_sidebar_storage::DynamicSidebarStorage,
         git_db_storage::GitDbStorage,
         gpg_storage::GpgStorage,
@@ -84,6 +85,7 @@ pub async fn test_storage(temp_dir: impl AsRef<Path>) -> Storage {
         issue_storage: IssueStorage { base: base.clone() },
         vault_storage: VaultStorage { base: base.clone() },
         conversation_storage: ConversationStorage { base: base.clone() },
+        data_backfill_storage: DataBackfillStorage { base: base.clone() },
         note_storage: NoteStorage { base: base.clone() },
         commit_binding_storage: CommitBindingStorage { base: base.clone() },
         reviewer_storage: ClReviewerStorage { base: base.clone() },
@@ -99,7 +101,9 @@ pub async fn test_storage(temp_dir: impl AsRef<Path>) -> Storage {
         audit_storage: AuditStorage { base: base.clone() },
     };
 
-    #[cfg(feature = "migrate")]
+    // Unit tests always migrate (jupiter-migrate is a dev-dependency).
+    // Production callers enable the `migrate` feature explicitly.
+    #[cfg(any(test, feature = "migrate"))]
     apply_migrations(&connection, true).await.unwrap();
 
     let webhook_service = WebhookService::mock(svc.webhook_storage.clone());

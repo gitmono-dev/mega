@@ -31,6 +31,7 @@ pub struct GroupResponse {
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct AddMembersRequest {
+    /// Campsite public user ids (field name kept for API compat).
     pub usernames: Vec<String>,
 }
 
@@ -38,6 +39,7 @@ pub struct AddMembersRequest {
 pub struct GroupMemberResponse {
     pub id: i64,
     pub group_id: i64,
+    /// Campsite public user id (field name kept for API compat).
     pub username: String,
     pub joined_at: i64,
 }
@@ -160,7 +162,7 @@ impl From<mega_group_member::Model> for GroupMemberResponse {
         Self {
             id: value.id,
             group_id: value.group_id,
-            username: value.username,
+            username: value.campsite_user_id,
             joined_at: value.joined_at.and_utc().timestamp(),
         }
     }

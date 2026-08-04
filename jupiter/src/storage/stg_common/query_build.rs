@@ -13,7 +13,7 @@ pub fn filter_by_labels(cond: Condition, labels: Option<Vec<i64>>) -> Condition 
 
 pub fn filter_by_assignees(cond: Condition, assignees: Option<Vec<String>>) -> Condition {
     if let Some(value) = assignees {
-        cond.add(item_assignees::Column::AssignneeId.is_in(value))
+        cond.add(item_assignees::Column::CampsiteUserId.is_in(value))
     } else {
         cond
     }

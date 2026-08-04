@@ -1,0 +1,8 @@
+# Local mono config override.
+#
+# Copy this file (or config/config.toml) to config/config.local.toml.
+# When present, ConfigLoader prefers config.local.toml over config.toml.
+# config.local.toml is gitignored — keep personal paths/secrets there.
+#
+# Example:
+#   cp config/config.toml config/config.local.toml

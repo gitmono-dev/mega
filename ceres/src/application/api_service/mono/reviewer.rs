@@ -4,7 +4,13 @@ use super::context::ReviewerApplicationService;
 use crate::model::change_list::{ReviewerInfo, ReviewersResponse};
 
 impl ReviewerApplicationService {
-    pub async fn add_reviewers(&self, link: &str, reviewers: Vec<String>) -> Result<(), MegaError> {
+    /// `reviewers` are `(campsite_user_id, github_login)` pairs.
+    /// Mono may pass `(id, None)` when the frontend only has campsite ids.
+    pub async fn add_reviewers(
+        &self,
+        link: &str,
+        reviewers: Vec<(String, Option<String>)>,
+    ) -> Result<(), MegaError> {
         self.ctx
             .storage()
             .reviewer_storage()
@@ -33,7 +39,12 @@ impl ReviewerApplicationService {
             .await?
             .into_iter()
             .map(|r| ReviewerInfo {
-                username: r.username,
+                campsite_user_id: r.campsite_user_id.clone(),
+                github_login: r.github_login.clone(),
+                username: r
+                    .github_login
+                    .clone()
+                    .unwrap_or_else(|| r.campsite_user_id.clone()),
                 approved: r.approved,
                 system_required: r.system_required,
             })
@@ -44,21 +55,21 @@ impl ReviewerApplicationService {
     pub async fn reviewer_change_state(
         &self,
         link: &str,
-        username: &str,
+        campsite_user_id: &str,
         approved: bool,
     ) -> Result<(), MegaError> {
         self.ctx
             .storage()
             .reviewer_storage()
-            .reviewer_change_state(link, username, approved)
+            .reviewer_change_state(link, campsite_user_id, approved)
             .await
     }
 
-    pub async fn is_reviewer(&self, link: &str, username: &str) -> Result<bool, MegaError> {
+    pub async fn is_reviewer(&self, link: &str, campsite_user_id: &str) -> Result<bool, MegaError> {
         self.ctx
             .storage()
             .reviewer_storage()
-            .is_reviewer(link, username)
+            .is_reviewer(link, campsite_user_id)
             .await
     }
 }

@@ -10,7 +10,8 @@ use ceres::model::code_review::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{
-    MonoApiServiceState, api_doc::CODE_REVIEW_TAG, error::ApiError, oauth::model::LoginUser,
+    MonoApiServiceState, api_common::identity::collaboration_actor, api_doc::CODE_REVIEW_TAG,
+    error::ApiError, oauth::model::LoginUser,
 };
 
 pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
@@ -71,10 +72,11 @@ async fn initialize_code_review_comment(
     state: State<MonoApiServiceState>,
     Json(paload): Json<InitializeCommentRequest>,
 ) -> Result<Json<CommonResult<ThreadReviewResponse>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let thread = state
         .services()
         .code_review()
-        .create_code_review_comment(&link, user.username, paload)
+        .create_code_review_comment(&link, actor.to_string(), paload)
         .await?;
 
     Ok(Json(CommonResult::success(Some(thread))))
@@ -98,10 +100,11 @@ async fn reply_code_review_comment(
     state: State<MonoApiServiceState>,
     Json(payload): Json<CommentReplyRequest>,
 ) -> Result<Json<CommonResult<CommentReviewResponse>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let comment = state
         .services()
         .code_review()
-        .reply_code_review_comment(thread_id, user.username, payload)
+        .reply_code_review_comment(thread_id, actor.to_string(), payload)
         .await?;
 
     Ok(Json(CommonResult::success(Some(comment))))
@@ -125,10 +128,11 @@ async fn update_code_review_comment(
     state: State<MonoApiServiceState>,
     Json(payload): Json<UpdateCommentRequest>,
 ) -> Result<Json<CommonResult<CommentReviewResponse>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let comment = state
         .services()
         .code_review()
-        .update_code_review_comment(comment_id, &user.username, payload)
+        .update_code_review_comment(comment_id, actor, payload)
         .await?;
 
     Ok(Json(CommonResult::success(Some(comment))))
@@ -226,10 +230,11 @@ async fn delete_code_review_comment(
     Path(comment_id): Path<i64>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     state
         .services()
         .code_review()
-        .delete_code_review_comment(comment_id, &user.username)
+        .delete_code_review_comment(comment_id, actor)
         .await?;
 
     Ok(Json(CommonResult::success(None)))

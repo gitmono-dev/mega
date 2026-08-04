@@ -14,7 +14,8 @@ use ceres::application::build_trigger::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{
-    MonoApiServiceState, api_doc::BUILD_TRIGGER_TAG, error::ApiError, oauth::model::LoginUser,
+    MonoApiServiceState, api_common::identity::collaboration_actor, api_doc::BUILD_TRIGGER_TAG,
+    error::ApiError, oauth::model::LoginUser,
 };
 
 pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
@@ -49,9 +50,10 @@ async fn create_trigger(
     state: State<MonoApiServiceState>,
     Json(req): Json<CreateTriggerRequest>,
 ) -> Result<Json<CommonResult<TriggerResponse>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let service = state.services().build_trigger();
     let response = service
-        .create_manual_trigger(req.repo_path, req.ref_name, req.params, user.username)
+        .create_manual_trigger(req.repo_path, req.ref_name, req.params, actor.to_string())
         .await?;
     Ok(Json(CommonResult::success(Some(response))))
 }
@@ -143,7 +145,8 @@ async fn retry_trigger(
     state: State<MonoApiServiceState>,
     Path(id): Path<i64>,
 ) -> Result<Json<CommonResult<TriggerResponse>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let service = state.services().build_trigger();
-    let response = service.retry_trigger(id, user.username).await?;
+    let response = service.retry_trigger(id, actor.to_string()).await?;
     Ok(Json(CommonResult::success(Some(response))))
 }

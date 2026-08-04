@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "user_approval_status")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub username: String,
     pub campsite_user_id: String,
     pub display_name: String,
     pub email: String,

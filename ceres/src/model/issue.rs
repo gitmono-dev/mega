@@ -42,7 +42,7 @@ impl From<ItemDetails> for ItemRes {
                 link: model.link,
                 title: model.title,
                 status: model.status.to_string(),
-                author: model.author,
+                author: model.campsite_user_id,
                 author_is_bot: false,
                 open_timestamp: model.created_at.and_utc().timestamp(),
                 merge_timestamp: None,
@@ -58,7 +58,7 @@ impl From<ItemDetails> for ItemRes {
                 link: model.link,
                 title: model.title,
                 status: format!("{:?}", model.status),
-                author: model.username,
+                author: model.campsite_user_id,
                 author_is_bot: false,
                 open_timestamp: model.created_at.and_utc().timestamp(),
                 merge_timestamp: model.merge_date.map(|dt| dt.and_utc().timestamp()),
@@ -118,7 +118,7 @@ impl From<IssueDetails> for IssueDetailRes {
             link: value.issue.link,
             title: value.issue.title,
             status: value.issue.status.to_string(),
-            author: value.issue.author.clone(),
+            author: value.issue.campsite_user_id.clone(),
             author_is_bot: false,
             open_timestamp: value.issue.created_at.and_utc().timestamp(),
             conversations: value
@@ -130,7 +130,7 @@ impl From<IssueDetails> for IssueDetailRes {
             assignees: value
                 .assignees
                 .into_iter()
-                .map(|x| x.assignnee_id)
+                .map(|x| x.campsite_user_id)
                 .collect(),
         }
     }

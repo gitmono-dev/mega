@@ -75,7 +75,10 @@ impl IssueApplicationService {
         let issue_storage = self.ctx.storage().issue_service.issue_store();
 
         let old_models = issue_storage.find_item_exist_assignees(item_id).await?;
-        let old_ids: HashSet<String> = old_models.iter().map(|m| m.assignnee_id.clone()).collect();
+        let old_ids: HashSet<String> = old_models
+            .iter()
+            .map(|m| m.campsite_user_id.clone())
+            .collect();
         let new_ids: HashSet<String> = assignees.iter().cloned().collect();
 
         let to_add: Vec<String> = new_ids.difference(&old_ids).cloned().collect();

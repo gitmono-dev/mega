@@ -10,6 +10,7 @@ import { useGetMergeBox } from '@/components/ClBox/hooks/useGetMergeBox'
 import { useGetClReviewers } from '@/hooks/CL/useGetClReviewers'
 import { usePostClReviewerApprove } from '@/hooks/CL/usePostClReviewerApprove'
 import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
+import { megaUserHandlesMatch } from '@/utils/megaUser'
 import { legacyApiClient } from '@/utils/queryClient'
 
 import { ChecksSection } from './ChecksSection'
@@ -29,13 +30,14 @@ export const MergeBox = React.memo<{ prId: string; status?: string; author?: str
   const queryClient = useQueryClient()
   const { reviewers, isLoading: isReviewerLoading } = useGetClReviewers(id)
 
-  const required: number = useMemo(() => reviewers.length, [reviewers])
+  // At least one approval is enough when reviewers are assigned.
+  const required: number = useMemo(() => (reviewers.length > 0 ? 1 : 0), [reviewers])
   const actual: number = useMemo(() => reviewers.filter((i) => i.approved).length, [reviewers])
   const isAllReviewerApproved: boolean = useMemo(() => actual >= required, [actual, required])
 
   let isNowUserApprove: boolean | undefined = undefined
   const { data } = useGetCurrentUser()
-  const find_user = reviewers.find((i) => i.username === data?.username)
+  const find_user = reviewers.find((i) => megaUserHandlesMatch(i.campsite_user_id || i.username, data))
 
   if (find_user) {
     isNowUserApprove = find_user.approved
@@ -66,7 +68,7 @@ export const MergeBox = React.memo<{ prId: string; status?: string; author?: str
   const claCondition = additionalChecks.find((c) => c.type === CheckType.ClaSign)
   const claCheck = claCondition ? claCondition.result === ConditionResult.PASSED : true
 
-  const isClAuthor = data?.username === author
+  const isClAuthor = megaUserHandlesMatch(author, data)
 
   return (
     <div className='flex'>

@@ -9,10 +9,11 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: i64,
-    pub username: String,
+    pub campsite_user_id: String,
     #[sea_orm(column_type = "Text")]
     pub token: String,
     pub created_at: DateTime,
+    pub github_login: Option<String>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

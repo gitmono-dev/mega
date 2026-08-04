@@ -36,7 +36,7 @@ impl From<mega_cl::Model> for ClInfoDto {
             to_hash: value.to_hash,
             created_at: value.created_at,
             updated_at: value.updated_at,
-            username: value.username,
+            username: value.campsite_user_id,
         }
     }
 }

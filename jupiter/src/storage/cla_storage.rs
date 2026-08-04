@@ -45,7 +45,7 @@ impl ClaStorage {
     ) -> Result<cla_sign_status::Model, MegaError> {
         let now = chrono::Utc::now().naive_utc();
         let model = cla_sign_status::ActiveModel {
-            username: Set(username.to_string()),
+            campsite_user_id: Set(username.to_string()),
             cla_signed: Set(false),
             cla_signed_at: Set(None),
             created_at: Set(now),
@@ -55,7 +55,7 @@ impl ClaStorage {
         Self::handle_record_not_inserted(
             cla_sign_status::Entity::insert(model)
                 .on_conflict(
-                    OnConflict::column(cla_sign_status::Column::Username)
+                    OnConflict::column(cla_sign_status::Column::CampsiteUserId)
                         .do_nothing()
                         .to_owned(),
                 )
@@ -80,7 +80,7 @@ impl ClaStorage {
         let now = chrono::Utc::now().naive_utc();
 
         let active_model = cla_sign_status::ActiveModel {
-            username: Set(username.to_string()),
+            campsite_user_id: Set(username.to_string()),
             cla_signed: Set(true),
             cla_signed_at: Set(Some(now)),
             created_at: Set(now),
@@ -90,7 +90,7 @@ impl ClaStorage {
         Self::handle_record_not_inserted(
             cla_sign_status::Entity::insert(active_model)
                 .on_conflict(
-                    OnConflict::column(cla_sign_status::Column::Username)
+                    OnConflict::column(cla_sign_status::Column::CampsiteUserId)
                         .do_nothing()
                         .to_owned(),
                 )
@@ -102,7 +102,7 @@ impl ClaStorage {
             .col_expr(cla_sign_status::Column::ClaSigned, Expr::value(true))
             .col_expr(cla_sign_status::Column::ClaSignedAt, Expr::value(now))
             .col_expr(cla_sign_status::Column::UpdatedAt, Expr::value(now))
-            .filter(cla_sign_status::Column::Username.eq(username))
+            .filter(cla_sign_status::Column::CampsiteUserId.eq(username))
             .filter(cla_sign_status::Column::ClaSigned.eq(false))
             .exec(self.get_connection())
             .await?;
@@ -129,8 +129,8 @@ impl ClaStorage {
 
         let signed_users: Vec<String> = cla_sign_status::Entity::find()
             .select_only()
-            .column(cla_sign_status::Column::Username)
-            .filter(cla_sign_status::Column::Username.is_in(usernames.iter().cloned()))
+            .column(cla_sign_status::Column::CampsiteUserId)
+            .filter(cla_sign_status::Column::CampsiteUserId.is_in(usernames.iter().cloned()))
             .filter(cla_sign_status::Column::ClaSigned.eq(true))
             .into_tuple::<String>()
             .all(self.get_connection())

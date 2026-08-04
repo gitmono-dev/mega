@@ -456,7 +456,7 @@ impl From<mega_cl::Model> for TriggerContext {
         TriggerContext {
             trigger_type: BuildTriggerType::WebEdit,
             trigger_source: TriggerSource::User,
-            triggered_by: Some(cl.username),
+            triggered_by: Some(cl.campsite_user_id),
             repo_path: cl.path.clone(),
             cl_path: Some(cl.path),
             from_hash: cl.from_hash,

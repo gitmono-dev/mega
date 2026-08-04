@@ -17,7 +17,7 @@ pub struct Model {
     pub comment: Option<String>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
-    pub username: String,
+    pub campsite_user_id: String,
     pub resolved: Option<bool>,
 }
 

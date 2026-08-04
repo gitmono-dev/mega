@@ -23,7 +23,7 @@ pub struct Model {
     pub to_hash: String,
     pub created_at: DateTime,
     pub updated_at: DateTime,
-    pub username: String,
+    pub campsite_user_id: String,
     pub base_branch: String,
 }
 

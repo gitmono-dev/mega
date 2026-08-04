@@ -66,7 +66,10 @@ where
 
     for (model, assignees) in item_assignees {
         let id = T::get_id(&model);
-        let assignees = assignees.iter().map(|m| m.assignnee_id.clone()).collect();
+        let assignees = assignees
+            .iter()
+            .map(|m| m.campsite_user_id.clone())
+            .collect();
         if let Some(entry) = result.get_mut(&id) {
             entry.assignees = assignees;
         } else {
@@ -103,7 +106,7 @@ mod tests {
             created_at: chrono::Utc::now().naive_utc(),
             updated_at: chrono::Utc::now().naive_utc(),
             closed_at: None,
-            author: String::from("benjamin_747"),
+            campsite_user_id: String::from("benjamin_747"),
         };
 
         let label = label::Model {
@@ -117,7 +120,7 @@ mod tests {
 
         let assignee = item_assignees::Model {
             item_id: 1,
-            assignnee_id: "alice".to_string(),
+            campsite_user_id: "alice".to_string(),
             created_at: chrono::Utc::now().naive_utc(),
             updated_at: chrono::Utc::now().naive_utc(),
             item_type: String::from("issue"),
@@ -130,7 +133,7 @@ mod tests {
             comment: None,
             created_at: chrono::Utc::now().naive_utc(),
             updated_at: chrono::Utc::now().naive_utc(),
-            username: String::from("benjamin_747"),
+            campsite_user_id: String::from("benjamin_747"),
             resolved: None,
         };
 

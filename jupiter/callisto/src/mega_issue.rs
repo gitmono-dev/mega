@@ -16,7 +16,7 @@ pub struct Model {
     pub created_at: DateTime,
     pub updated_at: DateTime,
     pub closed_at: Option<DateTime>,
-    pub author: String,
+    pub campsite_user_id: String,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

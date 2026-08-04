@@ -4,7 +4,7 @@ import { useQueries } from '@tanstack/react-query'
 import { ConversationItem } from '@gitmono/types/generated'
 import { ConditionalWrap } from '@gitmono/ui'
 
-import { useGetOrganizationMember } from '@/hooks/useGetOrganizationMember'
+import { useMemberByActor } from '@/hooks/useMemberByActor'
 import { getFontColor } from '@/utils/getFontColor'
 import { megaUserHandle } from '@/utils/megaUser'
 import { legacyApiClient } from '@/utils/queryClient'
@@ -19,7 +19,7 @@ interface LabelItemProps {
 }
 
 function LabelItem({ conv }: LabelItemProps) {
-  const { data: member } = useGetOrganizationMember({ username: conv.username })
+  const { data: member } = useMemberByActor(conv.username)
   const profileUsername = member?.user.username || conv.username
   const displayName = megaUserHandle(member?.user, conv.username)
   const comment = conv.comment?.split(' ') ?? []

@@ -16,7 +16,7 @@ pub struct Model {
     pub subject_id: i64,
     pub subject_type: String,
     pub organization_membership_id: Option<i64>,
-    pub username: String,
+    pub campsite_user_id: String,
     pub discarded_at: Option<DateTime>,
 }
 

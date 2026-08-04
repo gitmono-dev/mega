@@ -55,7 +55,7 @@ impl mega_conversation::Model {
         link: &str,
         conv_type: ConvTypeEnum,
         comment: Option<String>,
-        username: &str,
+        campsite_user_id: &str,
     ) -> Self {
         let now = chrono::Utc::now().naive_utc();
         let resolved = if conv_type == ConvTypeEnum::Review {
@@ -71,7 +71,7 @@ impl mega_conversation::Model {
             comment,
             created_at: now,
             updated_at: now,
-            username: username.to_owned(),
+            campsite_user_id: campsite_user_id.to_owned(),
             resolved,
         }
     }

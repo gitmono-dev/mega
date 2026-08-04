@@ -72,7 +72,7 @@ impl From<&mega_cl::Model> for ClPayload {
             link: model.link.clone(),
             title: model.title.clone(),
             author: AuthorPayload {
-                name: model.username.clone(),
+                name: model.campsite_user_id.clone(),
             },
             status: merge_status_to_str(&model.status).to_string(),
             path: model.path.clone(),
@@ -629,7 +629,7 @@ mod tests {
             to_hash: "def".to_string(),
             created_at: DateTime::from_timestamp(0, 0).unwrap().naive_utc(),
             updated_at: DateTime::from_timestamp(0, 0).unwrap().naive_utc(),
-            username: "alice".to_string(),
+            campsite_user_id: "alice".to_string(),
         };
 
         let payload = ClPayload::from(&model);

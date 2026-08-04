@@ -2,7 +2,10 @@ use api_model::common::CommonResult;
 use axum::{Json, extract::State};
 use ceres::model::{change_list::AssigneeUpdatePayload, label::LabelUpdatePayload};
 
-use crate::api::{MonoApiServiceState, error::ApiError, oauth::model::LoginUser};
+use crate::api::{
+    MonoApiServiceState, api_common::identity::collaboration_actor, error::ApiError,
+    oauth::model::LoginUser,
+};
 
 pub async fn label_update(
     user: LoginUser,
@@ -10,6 +13,7 @@ pub async fn label_update(
     payload: LabelUpdatePayload,
     item_type: String,
 ) -> Result<Json<CommonResult<()>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let LabelUpdatePayload {
         label_ids,
         link,
@@ -19,7 +23,7 @@ pub async fn label_update(
     state
         .services()
         .issue()
-        .update_item_labels(&user.username, item_id, &item_type, label_ids, &link)
+        .update_item_labels(actor, item_id, &item_type, label_ids, &link)
         .await?;
 
     Ok(Json(CommonResult::success(None)))
@@ -31,6 +35,7 @@ pub async fn assignees_update(
     payload: AssigneeUpdatePayload,
     item_type: String,
 ) -> Result<Json<CommonResult<()>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let AssigneeUpdatePayload {
         assignees,
         link,
@@ -40,7 +45,7 @@ pub async fn assignees_update(
     state
         .services()
         .issue()
-        .update_item_assignees(&user.username, item_id, &item_type, assignees, &link)
+        .update_item_assignees(actor, item_id, &item_type, assignees, &link)
         .await?;
 
     Ok(Json(CommonResult::success(None)))

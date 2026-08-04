@@ -6,6 +6,8 @@ SeaORM database migrations for Mega, extracted from `jupiter` so day-to-day `car
 
 `mono` enables `jupiter/migrate`. On startup, `Storage::new` calls `jupiter_migrate::apply_migrations` automatically (`jupiter/src/storage/init.rs`). No separate `init` CLI step is required.
 
+After schema migrations, mono HTTP boot may run **application data backfills** (e.g. actor handle → `campsite_user_id`) using Campsite `internal/member_identities` and `data_backfill_ledger`. Deploy campsite-api with `MEGA_INTERNAL_SECRET` before mono with `MEGA_OAUTH__MEGA_INTERNAL_SECRET`.
+
 Crates that need a migrated DB in tests should enable `jupiter/migrate` or `ceres` feature `migrate`.
 
 ## Generate a new migration

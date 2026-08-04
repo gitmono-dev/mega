@@ -26,6 +26,7 @@ import { useUploadHelpers } from '@/hooks/useUploadHelpers'
 import { apiErrorToast } from '@/utils/apiErrorToast'
 import { trimHtml } from '@/utils/trimHtml'
 
+import { ActorAvatar } from '../ActorAvatar'
 import TimelineItems from '../ClView/TimelineItems'
 import { MemberAvatar } from '../MemberAvatar'
 import { BadgeItem } from './IssueNewPage'
@@ -455,13 +456,18 @@ export default function IssueDetailPage({ link }: { link: string }) {
 
                     return (
                       <>
-                        {names.map((i, index) => (
-                          // eslint-disable-next-line react/no-array-index-key
-                          <div key={index} className='mb-4 flex items-center gap-2 px-4 text-sm text-gray-500'>
-                            <MemberAvatar size='sm' member={memberMap.get(i)} />
-                            <span>{i}</span>
-                          </div>
-                        ))}
+                        {names.map((i, index) => {
+                          const member = memberMap.get(i)
+                          const displayName = member?.user?.github_login?.trim() || member?.user?.username || i
+
+                          return (
+                            // eslint-disable-next-line react/no-array-index-key
+                            <div key={index} className='mb-4 flex items-center gap-2 px-4 text-sm text-gray-500'>
+                              <ActorAvatar size='sm' member={member} username={displayName} />
+                              <span>{displayName}</span>
+                            </div>
+                          )
+                        })}
                       </>
                     )
                   }}

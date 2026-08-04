@@ -1,4 +1,5 @@
 pub mod api;
+pub mod backfill;
 pub mod bootstrap;
 pub mod cli;
 mod commands;

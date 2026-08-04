@@ -69,7 +69,7 @@ impl From<CLDetails> for CLDetailRes {
             link: value.cl.link,
             title: value.cl.title,
             status: value.cl.status.into(),
-            author: value.cl.username.clone(),
+            author: value.cl.campsite_user_id.clone(),
             author_is_bot: false,
             open_timestamp: value.cl.created_at.and_utc().timestamp(),
             merge_timestamp: value.cl.merge_date.map(|dt| dt.and_utc().timestamp()),
@@ -82,7 +82,7 @@ impl From<CLDetails> for CLDetailRes {
             assignees: value
                 .assignees
                 .into_iter()
-                .map(|x| x.assignnee_id)
+                .map(|x| x.campsite_user_id)
                 .collect(),
             path: value.cl.path,
         }
@@ -349,6 +349,9 @@ pub struct SetSystemReviewersPayload {
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
 pub struct ReviewerInfo {
+    pub campsite_user_id: String,
+    pub github_login: Option<String>,
+    /// Display name: github_login if present, else campsite_user_id (API compat).
     pub username: String,
     pub approved: bool,
     pub system_required: bool,

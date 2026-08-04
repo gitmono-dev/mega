@@ -9,7 +9,7 @@ import { Button, ConditionalWrap, FaceSmilePlusIcon, PicturePlusIcon, UIText } f
 import { EMPTY_HTML } from '@/atoms/markdown'
 import { RichTextRenderer } from '@/components/RichTextRenderer'
 import { usePostComment } from '@/hooks/issues/usePostComment'
-import { useGetOrganizationMember } from '@/hooks/useGetOrganizationMember'
+import { useMemberByActor } from '@/hooks/useMemberByActor'
 import { useUploadHelpers } from '@/hooks/useUploadHelpers'
 import { apiErrorToast } from '@/utils/apiErrorToast'
 import { megaUserHandle } from '@/utils/megaUser'
@@ -39,7 +39,7 @@ interface CommentProps {
 
 const Comment = React.memo<CommentProps>(({ conv, id, whoamI, editorRef }: CommentProps) => {
   const isBot = !!conv.is_bot
-  const { data: member } = useGetOrganizationMember({ username: conv.username, enabled: !isBot })
+  const { data: member } = useMemberByActor(conv.username, !isBot)
   const profileUsername = member?.user.username || conv.username
   const displayName = megaUserHandle(member?.user, conv.username) || conv.username
 

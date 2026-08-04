@@ -29,14 +29,14 @@ impl UserStorage {
 
     pub async fn save_ssh_key(
         &self,
-        username: String,
+        campsite_user_id: String,
         title: &str,
         ssh_key: &str,
         finger: &str,
     ) -> Result<(), MegaError> {
         let model = ssh_keys::Model {
             id: generate_id(),
-            username,
+            campsite_user_id,
             title: title.to_owned(),
             ssh_key: ssh_key.to_owned(),
             finger: finger.to_owned(),
@@ -47,18 +47,21 @@ impl UserStorage {
         Ok(())
     }
 
-    pub async fn list_user_ssh(&self, username: String) -> Result<Vec<ssh_keys::Model>, MegaError> {
+    pub async fn list_user_ssh(
+        &self,
+        campsite_user_id: String,
+    ) -> Result<Vec<ssh_keys::Model>, MegaError> {
         let res: Vec<ssh_keys::Model> = ssh_keys::Entity::find()
-            .filter(ssh_keys::Column::Username.eq(username))
+            .filter(ssh_keys::Column::CampsiteUserId.eq(campsite_user_id))
             .all(self.get_connection())
             .await?;
         Ok(res)
     }
 
-    pub async fn delete_ssh_key(&self, username: String, id: i64) -> Result<(), MegaError> {
+    pub async fn delete_ssh_key(&self, campsite_user_id: String, id: i64) -> Result<(), MegaError> {
         let res = ssh_keys::Entity::find()
             .filter(ssh_keys::Column::Id.eq(id))
-            .filter(ssh_keys::Column::Username.eq(username))
+            .filter(ssh_keys::Column::CampsiteUserId.eq(campsite_user_id))
             .one(self.get_connection())
             .await?;
         if let Some(model) = res {
@@ -78,11 +81,16 @@ impl UserStorage {
         Ok(res)
     }
 
-    pub async fn generate_token(&self, username: String) -> Result<String, MegaError> {
+    pub async fn generate_token(
+        &self,
+        campsite_user_id: String,
+        github_login: Option<String>,
+    ) -> Result<String, MegaError> {
         let token_str = Uuid::new_v4().to_string();
         let model = access_token::Model {
             id: generate_id(),
-            username,
+            campsite_user_id,
+            github_login,
             token: token_str.clone(),
             created_at: chrono::Utc::now().naive_utc(),
         };
@@ -91,10 +99,10 @@ impl UserStorage {
         Ok(token_str.to_owned())
     }
 
-    pub async fn delete_token(&self, username: String, id: i64) -> Result<(), MegaError> {
+    pub async fn delete_token(&self, campsite_user_id: String, id: i64) -> Result<(), MegaError> {
         let res = access_token::Entity::find()
             .filter(access_token::Column::Id.eq(id))
-            .filter(access_token::Column::Username.eq(username))
+            .filter(access_token::Column::CampsiteUserId.eq(campsite_user_id))
             .one(self.get_connection())
             .await?;
         if let Some(model) = res {
@@ -105,18 +113,22 @@ impl UserStorage {
 
     pub async fn list_token(
         &self,
-        username: String,
+        campsite_user_id: String,
     ) -> Result<Vec<access_token::Model>, MegaError> {
         let res = access_token::Entity::find()
-            .filter(access_token::Column::Username.eq(username))
+            .filter(access_token::Column::CampsiteUserId.eq(campsite_user_id))
             .all(self.get_connection())
             .await?;
         Ok(res)
     }
 
-    pub async fn check_token(&self, username: &str, token: &str) -> Result<bool, MegaError> {
+    pub async fn check_token(
+        &self,
+        campsite_user_id: &str,
+        token: &str,
+    ) -> Result<bool, MegaError> {
         let res = access_token::Entity::find()
-            .filter(access_token::Column::Username.eq(username))
+            .filter(access_token::Column::CampsiteUserId.eq(campsite_user_id))
             .filter(access_token::Column::Token.eq(token))
             .one(self.get_connection())
             .await?;
@@ -126,13 +138,20 @@ impl UserStorage {
         }
     }
 
-    pub async fn find_user_by_token(&self, token: &str) -> Result<Option<String>, MegaError> {
+    /// Returns `(campsite_user_id, github_login)` for a valid access token.
+    pub async fn find_user_by_token(
+        &self,
+        token: &str,
+    ) -> Result<Option<(String, Option<String>)>, MegaError> {
         let res = access_token::Entity::find()
             .filter(access_token::Column::Token.eq(token))
             .one(self.get_connection())
             .await?;
         match res {
-            Some(token_model) => Ok(Some(token_model.username)),
+            Some(token_model) => Ok(Some((
+                token_model.campsite_user_id,
+                token_model.github_login,
+            ))),
             None => Ok(None),
         }
     }

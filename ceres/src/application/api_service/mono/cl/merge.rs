@@ -29,7 +29,8 @@ use crate::{
 impl ClApplicationService {
     // This function is intended to be called before merging a CL to ensure it meets all required checks.
     pub(crate) async fn ensure_cl_mergeable(&self, cl: &mega_cl::Model) -> Result<(), MegaError> {
-        let check_reg = CheckerRegistry::new(self.storage().clone().into(), cl.username.clone());
+        let check_reg =
+            CheckerRegistry::new(self.storage().clone().into(), cl.campsite_user_id.clone());
         check_reg.run_checks(cl.clone().into()).await?;
 
         let required_check_types = self

@@ -103,7 +103,7 @@ impl ConversationStorage {
     ) -> Result<(), MegaError> {
         let _ = reactions::Entity::delete_many()
             .filter(reactions::Column::PublicId.eq(pub_reaction_id))
-            .filter(reactions::Column::Username.eq(username))
+            .filter(reactions::Column::CampsiteUserId.eq(username))
             .exec(self.get_connection())
             .await?;
         Ok(())

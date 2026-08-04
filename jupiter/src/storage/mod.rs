@@ -11,6 +11,7 @@ pub mod code_review_comment_storage;
 pub mod code_review_thread_storage;
 pub mod commit_binding_storage;
 pub mod conversation_storage;
+pub mod data_backfill_storage;
 pub mod dynamic_sidebar_storage;
 pub mod git_db_storage;
 pub mod gpg_storage;
@@ -56,6 +57,7 @@ use crate::{
         code_review_thread_storage::CodeReviewThreadStorage,
         commit_binding_storage::CommitBindingStorage,
         conversation_storage::ConversationStorage,
+        data_backfill_storage::DataBackfillStorage,
         dynamic_sidebar_storage::DynamicSidebarStorage,
         git_db_storage::GitDbStorage,
         gpg_storage::GpgStorage,
@@ -87,6 +89,7 @@ pub struct AppService {
     pub cl_storage: ClStorage,
     pub issue_storage: IssueStorage,
     pub conversation_storage: ConversationStorage,
+    pub data_backfill_storage: DataBackfillStorage,
     pub note_storage: NoteStorage,
     pub commit_binding_storage: CommitBindingStorage,
     pub reviewer_storage: ClReviewerStorage,
@@ -122,6 +125,7 @@ impl AppService {
             cl_storage: ClStorage { base: mock.clone() },
             issue_storage: IssueStorage { base: mock.clone() },
             conversation_storage: ConversationStorage { base: mock.clone() },
+            data_backfill_storage: DataBackfillStorage { base: mock.clone() },
             note_storage: NoteStorage { base: mock.clone() },
             commit_binding_storage: CommitBindingStorage { base: mock.clone() },
             reviewer_storage: ClReviewerStorage { base: mock.clone() },
@@ -175,6 +179,7 @@ impl Storage {
         let issue_storage = IssueStorage { base: base.clone() };
         let vault_storage = VaultStorage { base: base.clone() };
         let conversation_storage = ConversationStorage { base: base.clone() };
+        let data_backfill_storage = DataBackfillStorage { base: base.clone() };
         let object_store = ObjectStorageFactory::build(&config.object_storage).await?;
         let lfs_service = LfsService {
             lfs_storage: lfs_db_storage.clone(),
@@ -244,6 +249,7 @@ impl Storage {
             cl_storage: cl_storage.clone(),
             issue_storage,
             conversation_storage,
+            data_backfill_storage,
             note_storage,
             commit_binding_storage,
             reviewer_storage,
@@ -419,6 +425,10 @@ impl Storage {
 
     pub fn conversation_storage(&self) -> ConversationStorage {
         self.app_service.conversation_storage.clone()
+    }
+
+    pub fn data_backfill_storage(&self) -> DataBackfillStorage {
+        self.app_service.data_backfill_storage.clone()
     }
 
     pub fn note_storage(&self) -> NoteStorage {

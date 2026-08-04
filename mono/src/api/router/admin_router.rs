@@ -26,8 +26,11 @@ use ceres::model::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{
-    MonoApiServiceState, api_common::group_permission::ensure_admin, api_doc::USER_TAG,
-    error::ApiError, oauth::model::LoginUser,
+    MonoApiServiceState,
+    api_common::{group_permission::ensure_admin, identity::collaboration_actor},
+    api_doc::USER_TAG,
+    error::ApiError,
+    oauth::model::LoginUser,
 };
 
 /// Build the admin router.
@@ -62,27 +65,14 @@ async fn is_admin_me(
 ) -> Result<Json<CommonResult<IsAdminResponse>>, ApiError> {
     let admin = state.services().admin();
     let cedar_id = user.cedar_user_id();
-    // Prefer GitHub login; also accept Campsite username during migration.
     // On config/load failure (e.g. missing `.mega_cedar.json`), treat as non-admin
     // so AccountApprovalGuard can still honor an approved user_approval_status.
     let is_admin = match admin.check_is_admin(cedar_id).await {
-        Ok(true) => true,
-        Ok(false) if cedar_id != user.username.as_str() => admin
-            .check_is_admin(&user.username)
-            .await
-            .unwrap_or_else(|e| {
-                tracing::warn!(
-                    error = %e,
-                    actor = %user.username,
-                    "admin check failed; treating as non-admin"
-                );
-                false
-            }),
-        Ok(false) => false,
+        Ok(v) => v,
         Err(e) => {
             tracing::warn!(
                 error = %e,
-                actor = %user.username,
+                campsite_user_id = %user.campsite_user_id,
                 cedar_user_id = %cedar_id,
                 "admin check failed; treating as non-admin"
             );
@@ -215,7 +205,7 @@ async fn list_user_approvals(
     post,
     path = "/user-approvals/{username}/approve",
     params(
-        ("username" = String, Path, description = "Username to approve")
+        ("username" = String, Path, description = "Campsite user id to approve")
     ),
     responses(
         (status = 200, body = CommonResult<UserApprovalStatusRes>),
@@ -230,11 +220,13 @@ async fn approve_user(
     Path(username): Path<String>,
 ) -> Result<Json<CommonResult<UserApprovalStatusRes>>, ApiError> {
     ensure_admin(&state, &user).await?;
+    // Path `username` is the target campsite_user_id; reviewed_by is the admin's campsite id.
+    let reviewed_by = collaboration_actor(&user)?;
 
     let model = state
         .services()
         .user()
-        .approve_user(&username, &user.username)
+        .approve_user(&username, reviewed_by)
         .await?;
 
     Ok(Json(CommonResult::success(Some(
@@ -247,7 +239,7 @@ async fn approve_user(
     post,
     path = "/user-approvals/{username}/reject",
     params(
-        ("username" = String, Path, description = "Username to reject")
+        ("username" = String, Path, description = "Campsite user id to reject")
     ),
     responses(
         (status = 200, body = CommonResult<UserApprovalStatusRes>),
@@ -262,11 +254,12 @@ async fn reject_user(
     Path(username): Path<String>,
 ) -> Result<Json<CommonResult<UserApprovalStatusRes>>, ApiError> {
     ensure_admin(&state, &user).await?;
+    let reviewed_by = collaboration_actor(&user)?;
 
     let model = state
         .services()
         .user()
-        .reject_user(&username, &user.username)
+        .reject_user(&username, reviewed_by)
         .await?;
 
     Ok(Json(CommonResult::success(Some(

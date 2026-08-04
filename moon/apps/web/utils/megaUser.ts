@@ -12,14 +12,13 @@ export function megaUserHandle(
   return fallback
 }
 
-/** True when a stored CL/reviewer handle matches this user (username or github_login). */
+/** True when a stored campsite_user_id matches this user. */
 export function megaUserHandlesMatch(
   stored: string | null | undefined,
-  user?: { username?: string | null; github_login?: string | null } | null
+  user?: { id?: string | null; username?: string | null; github_login?: string | null } | null
 ): boolean {
   if (!stored || !user) return false
-  if (stored === user.username) return true
-  const github = user.github_login?.trim()
-
-  return !!github && stored === github
+  if (user.id && stored === user.id) return true
+  // Transitional: pre-backfill rows may still hold github_login / username strings.
+  return stored === megaUserHandle(user) || (!!user.username && stored === user.username)
 }

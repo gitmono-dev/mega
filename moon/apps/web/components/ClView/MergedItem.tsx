@@ -4,7 +4,7 @@ import { ConditionalWrap, Link } from '@gitmono/ui'
 import { ActorAvatar } from '@/components/ActorAvatar'
 import { BotBadge } from '@/components/BotBadge'
 import { useScope } from '@/contexts/scope'
-import { useGetOrganizationMember } from '@/hooks/useGetOrganizationMember'
+import { useMemberByActor } from '@/hooks/useMemberByActor'
 import { megaUserHandle } from '@/utils/megaUser'
 
 import { MemberHovercard } from '../InlinePost/MemberHovercard'
@@ -28,7 +28,7 @@ function queueHref(scope: unknown): string | null {
 
 const MergedItem = ({ conv }: MergedItemProps) => {
   const isBot = !!conv.is_bot
-  const { data: member } = useGetOrganizationMember({ username: conv.username, enabled: !isBot })
+  const { data: member } = useMemberByActor(conv.username, !isBot)
   const { scope } = useScope()
   const profileUsername = member?.user.username || conv.username
   const displayName = megaUserHandle(member?.user, conv.username) || conv.username

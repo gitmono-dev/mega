@@ -54,7 +54,7 @@ import_dir = "/third-party"
 
 # Set System Admin(s) in directory init, these users will be added to the admin group
 # Supports multiple admins: admin = ["user1", "user2", "user3"]
-admin = ["benjamin_747"]
+admin = ["benjamin-747"]
 
 # Set serveral root dirs in directory init
 root_dirs = ["third-party", "project", "doc", "release", "model", "toolchains"]
@@ -170,12 +170,16 @@ tinyship_api_domain = "https://libra.tools"
 # Which auth API to use when loading users (campsite or tinyship)
 api_store_backend = "campsite"
 
+# Shared secret for Campsite GET /v1/organizations/mega/internal/member_identities
+# (mono startup actor identity backfill). Empty skips the backfill.
+mega_internal_secret = ""
 
 # allowed cors origins
 allowed_cors_origins = [
     "http://local.gitmega.com",
     "https://app.gitmega.com",
     "http://app.gitmono.test",
+    "http://app.gitmono.local"
 ]
 
 [blame]

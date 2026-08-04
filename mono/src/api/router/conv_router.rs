@@ -7,7 +7,8 @@ use ceres::model::conversation::{ContentPayload, ReactionRequest};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{
-    MonoApiServiceState, api_doc::CONV_TAG, error::ApiError, oauth::model::LoginUser,
+    MonoApiServiceState, api_common::identity::collaboration_actor, api_doc::CONV_TAG,
+    error::ApiError, oauth::model::LoginUser,
 };
 
 pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
@@ -40,6 +41,7 @@ async fn comment_reactions(
     state: State<MonoApiServiceState>,
     Json(payload): Json<ReactionRequest>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     state
         .services()
         .conversation()
@@ -47,7 +49,7 @@ async fn comment_reactions(
             Some(payload.content),
             comment_id,
             &payload.comment_type,
-            &user.username,
+            actor,
         )
         .await?;
     Ok(Json(CommonResult::success(None)))
@@ -70,10 +72,11 @@ async fn delete_comment_reaction(
     Path(id): Path<String>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     state
         .services()
         .conversation()
-        .delete_comment_reaction(&id, &user.username)
+        .delete_comment_reaction(&id, actor)
         .await?;
     Ok(Json(CommonResult::success(None)))
 }

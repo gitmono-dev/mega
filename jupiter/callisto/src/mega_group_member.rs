@@ -12,7 +12,7 @@ pub struct Model {
     #[sea_orm(unique_key = "idx_group_member_unique")]
     pub group_id: i64,
     #[sea_orm(unique_key = "idx_group_member_unique")]
-    pub username: String,
+    pub campsite_user_id: String,
     pub joined_at: DateTime,
     #[sea_orm(
         belongs_to,

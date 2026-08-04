@@ -128,7 +128,7 @@ async fn get_group(
         .await?
         .ok_or_else(|| {
             tracing::warn!(
-                actor = %user.username,
+                campsite_user_id = %user.campsite_user_id,
                 group_id,
                 "group.get failed: group not found"
             );
@@ -248,7 +248,7 @@ async fn add_group_members(
     path = "/groups/{group_id}/members/{username}",
     params(
         ("group_id" = i64, Path, description = "Group ID"),
-        ("username" = String, Path, description = "Username")
+        ("username" = String, Path, description = "Campsite user id of the member")
     ),
     responses(
         (status = 200, body = CommonResult<RemoveMemberResponse>),
@@ -264,6 +264,7 @@ async fn remove_group_member(
     Path((group_id, username)): Path<(i64, String)>,
 ) -> Result<Json<CommonResult<RemoveMemberResponse>>, ApiError> {
     ensure_admin(&state, &user).await?;
+    // Path `username` is campsite_user_id.
     let removed = state
         .services()
         .admin()
@@ -467,7 +468,7 @@ async fn delete_resource_permissions(
     get,
     path = "/users/{username}/groups",
     params(
-        ("username" = String, Path, description = "Username")
+        ("username" = String, Path, description = "Campsite user id")
     ),
     responses(
         (status = 200, body = CommonResult<UserGroupsResponse>),
@@ -483,6 +484,7 @@ async fn get_user_groups(
 ) -> Result<Json<CommonResult<UserGroupsResponse>>, ApiError> {
     ensure_admin(&state, &user).await?;
 
+    // Path `username` is campsite_user_id.
     let groups = state.services().admin().get_user_groups(&username).await?;
     let groups = groups.into_iter().map(Into::into).collect();
 
@@ -496,7 +498,7 @@ async fn get_user_groups(
     get,
     path = "/users/{username}/permissions/{resource_type}/{resource_id}",
     params(
-        ("username" = String, Path, description = "Username"),
+        ("username" = String, Path, description = "Campsite user id"),
         ("resource_type" = String, Path, description = "Resource type, currently only `note`"),
         ("resource_id" = String, Path, description = "Resource ID")
     ),
@@ -518,6 +520,7 @@ async fn get_user_effective_permission(
     let (resource_type_value, resource_id) =
         resolve_resource_context(&state, resource_type.as_str(), &resource_id).await?;
 
+    // Path `username` is campsite_user_id.
     let effective = state
         .services()
         .admin()

@@ -98,7 +98,7 @@ impl UserApplicationService {
             .get_open_cls()
             .await?
             .into_iter()
-            .filter(|cl| cl.username == username)
+            .filter(|cl| cl.campsite_user_id == username)
             .collect::<Vec<_>>();
         if open_cls.is_empty() {
             return Ok(());

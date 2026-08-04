@@ -10,11 +10,12 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: i64,
     pub approved: bool,
-    pub username: String,
+    pub campsite_user_id: String,
     pub cl_link: String,
     pub created_at: DateTime,
     pub updated_at: DateTime,
     pub system_required: bool,
+    pub github_login: Option<String>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

@@ -4,7 +4,10 @@ use api_model::common::CommonResult;
 use axum::{Json, extract::State};
 use regex::Regex;
 
-use crate::api::{MonoApiServiceState, error::ApiError, oauth::model::LoginUser};
+use crate::api::{
+    MonoApiServiceState, api_common::identity::collaboration_actor, error::ApiError,
+    oauth::model::LoginUser,
+};
 
 pub fn parse_data_id(comment: &str) -> HashSet<String> {
     let data_id = Regex::new(r#"data-id="([A-Za-z0-9]+)""#).unwrap();
@@ -21,13 +24,13 @@ pub async fn check_comment_ref(
     comment: &str,
     source_link: &str,
 ) -> Result<Json<CommonResult<()>>, ApiError> {
+    let actor = collaboration_actor(&user)?;
     let links = parse_data_id(comment);
-    let username = user.username;
     for ref_link in links {
         state
             .services()
             .conversation()
-            .add_issue_mention_reference(source_link, &ref_link, &username)
+            .add_issue_mention_reference(source_link, &ref_link, actor)
             .await?;
     }
 

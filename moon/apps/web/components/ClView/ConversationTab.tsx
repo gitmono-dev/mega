@@ -213,12 +213,22 @@ export const ConversationTab = React.memo<ConversationTabProps>(
               <div className='pointer-events-none'>
                 {names.map((i) => {
                   const member = memberMap.get(i)
-                  const displayName = member?.user?.github_login?.trim() || member?.user?.username || i
                   const reviewer =
-                    reviewers.find((r) => r.username === i) ||
-                    reviewers.find((r) => r.username === member?.user?.username)
+                    reviewers.find((r) => r.campsite_user_id === i || r.username === i) ||
+                    reviewers.find(
+                      (r) =>
+                        r.campsite_user_id === member?.user?.id ||
+                        r.username === member?.user?.username ||
+                        r.github_login === member?.user?.github_login
+                    )
+                  const displayName =
+                    reviewer?.github_login?.trim() ||
+                    member?.user?.github_login?.trim() ||
+                    member?.user?.username ||
+                    reviewer?.username ||
+                    i
                   const isApproved = reviewer?.approved ?? false
-                  const deleteUsername = reviewer?.username || member?.user?.username || i
+                  const deleteUsername = reviewer?.campsite_user_id || reviewer?.username || member?.user?.id || i
 
                   return (
                     <div key={i} className='text-tertiary mb-4 flex items-center gap-2 px-4 text-sm'>

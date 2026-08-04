@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "cla_sign_status")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub username: String,
+    pub campsite_user_id: String,
     pub cla_signed: bool,
     pub cla_signed_at: Option<DateTime>,
     pub created_at: DateTime,

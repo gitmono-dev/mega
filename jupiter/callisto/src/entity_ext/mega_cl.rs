@@ -59,7 +59,7 @@ impl mega_cl::Model {
         base_branch: String,
         from_hash: String,
         to_hash: String,
-        username: String,
+        campsite_user_id: String,
     ) -> Self {
         let now = chrono::Utc::now().naive_utc();
         Self {
@@ -74,7 +74,7 @@ impl mega_cl::Model {
             base_branch,
             from_hash,
             to_hash,
-            username,
+            campsite_user_id,
         }
     }
 
@@ -85,7 +85,7 @@ impl mega_cl::Model {
         link: String,
         base_branch: String,
         from_hash: String,
-        username: String,
+        campsite_user_id: String,
     ) -> Self {
         let now = chrono::Utc::now().naive_utc();
         Self {
@@ -100,7 +100,7 @@ impl mega_cl::Model {
             base_branch,
             from_hash,
             to_hash: String::new(),
-            username,
+            campsite_user_id,
         }
     }
 }

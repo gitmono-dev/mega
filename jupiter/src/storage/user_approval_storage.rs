@@ -43,10 +43,10 @@ impl UserApprovalStorage {
 
     pub async fn get(
         &self,
-        username: &str,
+        campsite_user_id: &str,
     ) -> Result<Option<user_approval_status::Model>, MegaError> {
         Ok(
-            user_approval_status::Entity::find_by_id(username.to_string())
+            user_approval_status::Entity::find_by_id(campsite_user_id.to_string())
                 .one(self.get_connection())
                 .await?,
         )
@@ -55,13 +55,12 @@ impl UserApprovalStorage {
     /// Create a pending row if missing; refresh profile fields if already present.
     pub async fn get_or_create(
         &self,
-        username: &str,
         profile: UserApprovalProfile,
     ) -> Result<user_approval_status::Model, MegaError> {
         let now = chrono::Utc::now().naive_utc();
+        let campsite_user_id = profile.campsite_user_id.clone();
         let model = user_approval_status::ActiveModel {
-            username: Set(username.to_string()),
-            campsite_user_id: Set(profile.campsite_user_id.clone()),
+            campsite_user_id: Set(campsite_user_id.clone()),
             display_name: Set(profile.display_name.clone()),
             email: Set(profile.email.clone()),
             status: Set(APPROVAL_STATUS_PENDING.to_string()),
@@ -74,7 +73,7 @@ impl UserApprovalStorage {
         Self::handle_record_not_inserted(
             user_approval_status::Entity::insert(model)
                 .on_conflict(
-                    OnConflict::column(user_approval_status::Column::Username)
+                    OnConflict::column(user_approval_status::Column::CampsiteUserId)
                         .do_nothing()
                         .to_owned(),
                 )
@@ -85,10 +84,6 @@ impl UserApprovalStorage {
         // Keep profile fields fresh for list display
         user_approval_status::Entity::update_many()
             .col_expr(
-                user_approval_status::Column::CampsiteUserId,
-                Expr::value(profile.campsite_user_id),
-            )
-            .col_expr(
                 user_approval_status::Column::DisplayName,
                 Expr::value(profile.display_name),
             )
@@ -97,11 +92,11 @@ impl UserApprovalStorage {
                 Expr::value(profile.email),
             )
             .col_expr(user_approval_status::Column::UpdatedAt, Expr::value(now))
-            .filter(user_approval_status::Column::Username.eq(username))
+            .filter(user_approval_status::Column::CampsiteUserId.eq(&campsite_user_id))
             .exec(self.get_connection())
             .await?;
 
-        self.get(username)
+        self.get(&campsite_user_id)
             .await?
             .ok_or_else(|| MegaError::Other("Failed to get or create user approval status".into()))
     }
@@ -125,7 +120,7 @@ impl UserApprovalStorage {
 
     pub async fn set_status(
         &self,
-        username: &str,
+        campsite_user_id: &str,
         status: &str,
         reviewed_by: &str,
     ) -> Result<user_approval_status::Model, MegaError> {
@@ -140,11 +135,10 @@ impl UserApprovalStorage {
 
         let now = chrono::Utc::now().naive_utc();
 
-        // Ensure row exists so approve/reject of unknown usernames still works for listed users
-        let existing = self.get(username).await?;
+        let existing = self.get(campsite_user_id).await?;
         if existing.is_none() {
             return Err(MegaError::Other(format!(
-                "User approval record not found for `{username}`"
+                "User approval record not found for `{campsite_user_id}`"
             )));
         }
 
@@ -156,11 +150,11 @@ impl UserApprovalStorage {
             )
             .col_expr(user_approval_status::Column::ReviewedAt, Expr::value(now))
             .col_expr(user_approval_status::Column::UpdatedAt, Expr::value(now))
-            .filter(user_approval_status::Column::Username.eq(username))
+            .filter(user_approval_status::Column::CampsiteUserId.eq(campsite_user_id))
             .exec(self.get_connection())
             .await?;
 
-        self.get(username)
+        self.get(campsite_user_id)
             .await?
             .ok_or_else(|| MegaError::Other("Failed to update user approval status".into()))
     }

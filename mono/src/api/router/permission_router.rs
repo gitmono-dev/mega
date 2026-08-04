@@ -8,8 +8,9 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{
     MonoApiServiceState,
-    api_common::group_permission::{
-        build_user_effective_permission_response, resolve_resource_context,
+    api_common::{
+        group_permission::{build_user_effective_permission_response, resolve_resource_context},
+        identity::collaboration_actor,
     },
     api_doc::GROUP_PERMISSION_TAG,
     error::ApiError,
@@ -43,7 +44,7 @@ async fn get_my_permission(
     State(state): State<MonoApiServiceState>,
     Path((resource_type, resource_id)): Path<(String, String)>,
 ) -> Result<Json<CommonResult<UserEffectivePermissionResponse>>, ApiError> {
-    let actor = user.username;
+    let actor = collaboration_actor(&user)?.to_string();
 
     let (resource_type_value, normalized_id) =
         resolve_resource_context(&state, &resource_type, &resource_id).await?;

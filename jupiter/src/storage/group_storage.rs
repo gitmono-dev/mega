@@ -162,14 +162,14 @@ impl GroupStorage {
             .map(|username| mega_group_member::ActiveModel {
                 id: Set(generate_id()),
                 group_id: Set(group_id),
-                username: Set(username.clone()),
+                campsite_user_id: Set(username.clone()),
                 joined_at: Set(now),
             })
             .collect::<Vec<_>>();
 
         let on_conflict = OnConflict::columns([
             mega_group_member::Column::GroupId,
-            mega_group_member::Column::Username,
+            mega_group_member::Column::CampsiteUserId,
         ])
         .do_nothing()
         .to_owned();
@@ -190,7 +190,7 @@ impl GroupStorage {
 
         Ok(mega_group_member::Entity::find()
             .filter(mega_group_member::Column::GroupId.eq(group_id))
-            .filter(mega_group_member::Column::Username.is_in(usernames))
+            .filter(mega_group_member::Column::CampsiteUserId.is_in(usernames))
             .order_by_asc(mega_group_member::Column::JoinedAt)
             .all(self.get_connection())
             .await?)
@@ -203,7 +203,7 @@ impl GroupStorage {
     ) -> Result<bool, MegaError> {
         let result = mega_group_member::Entity::delete_many()
             .filter(mega_group_member::Column::GroupId.eq(group_id))
-            .filter(mega_group_member::Column::Username.eq(username))
+            .filter(mega_group_member::Column::CampsiteUserId.eq(username))
             .exec(self.get_connection())
             .await?;
 
@@ -229,7 +229,7 @@ impl GroupStorage {
         Ok(mega_group_member::Entity::find()
             .select_only()
             .column(mega_group_member::Column::GroupId)
-            .filter(mega_group_member::Column::Username.eq(username))
+            .filter(mega_group_member::Column::CampsiteUserId.eq(username))
             .into_tuple::<i64>()
             .all(self.get_connection())
             .await?)

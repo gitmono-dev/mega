@@ -102,7 +102,7 @@ mod tests {
         .expect("insert event type");
 
         user_notification_settings::ActiveModel {
-            username: Set("alice".to_owned()),
+            campsite_user_id: Set("alice".to_owned()),
             email: Set("alice@example.com".to_owned()),
             enabled: Set(true),
             delivery_mode: Set("realtime".to_owned()),
@@ -114,7 +114,7 @@ mod tests {
         .expect("insert user settings");
 
         user_notification_preferences::ActiveModel {
-            username: Set("alice".to_owned()),
+            campsite_user_id: Set("alice".to_owned()),
             event_type_code: Set("cl.comment.created".to_owned()),
             enabled: Set(false),
             created_at: Set(now),
@@ -125,7 +125,7 @@ mod tests {
         .expect("insert user preference");
 
         let res = user_notification_preferences::ActiveModel {
-            username: Set("alice".to_owned()),
+            campsite_user_id: Set("alice".to_owned()),
             event_type_code: Set("does.not.exist".to_owned()),
             enabled: Set(true),
             created_at: Set(now),
@@ -137,7 +137,7 @@ mod tests {
 
         email_jobs::ActiveModel {
             id: Default::default(),
-            username: Set("alice".to_owned()),
+            campsite_user_id: Set("alice".to_owned()),
             to_email: Set("alice@example.com".to_owned()),
             event_type_code: Set("cl.comment.created".to_owned()),
             subject: Set("Test".to_owned()),
@@ -157,7 +157,7 @@ mod tests {
 
         let res = email_jobs::ActiveModel {
             id: Default::default(),
-            username: Set("alice".to_owned()),
+            campsite_user_id: Set("alice".to_owned()),
             to_email: Set("alice@example.com".to_owned()),
             event_type_code: Set("does.not.exist".to_owned()),
             subject: Set("Test".to_owned()),
