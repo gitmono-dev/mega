@@ -16,6 +16,7 @@ import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
 import { useUpdateBlob } from '@/hooks/useUpdateBlob'
 import { getLanguageForFile } from '@/utils/shikiLanguageFallback'
 
+import { CedarPoliciesReviewerPicker } from './CedarPoliciesReviewerPicker'
 import { MegaCedarAdminPicker } from './MegaCedarAdminPicker'
 
 type ShikiLine = Array<{ content: string; color?: string }>
@@ -31,6 +32,15 @@ type ViewMode = 'edit' | 'preview'
 
 function isMegaCedarJsonFile(name: string, path: string) {
   return name === '.mega_cedar.json' || path.endsWith('/.mega_cedar.json') || path === '.mega_cedar.json'
+}
+
+function isCedarPoliciesFile(name: string, path: string) {
+  return (
+    name === 'policies.cedar' ||
+    path.endsWith('/.cedar/policies.cedar') ||
+    path === '.cedar/policies.cedar' ||
+    path.endsWith('/policies.cedar')
+  )
 }
 
 export default function BlobEditor({ fileContent, filePath, fileName, onCancel }: BlobEditorProps) {
@@ -79,6 +89,7 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
   }, [pathSegments, editedFileName])
 
   const showCedarAdminPicker = isMegaCedarJsonFile(editedFileName, fullEditedPath)
+  const showCedarPoliciesPicker = isCedarPoliciesFile(editedFileName, fullEditedPath)
 
   const detectedLanguage = useMemo(() => getLanguageForFile(editedFileName), [editedFileName])
 
@@ -411,6 +422,15 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
         {showCedarAdminPicker && viewMode === 'edit' && (
           <MegaCedarAdminPicker
             fileContent={fileContent}
+            onContentGenerated={handleCedarContentGenerated}
+            disabled={updateBlobMutation.isPending}
+          />
+        )}
+
+        {showCedarPoliciesPicker && viewMode === 'edit' && (
+          <CedarPoliciesReviewerPicker
+            filePath={fullEditedPath}
+            fileContent={content}
             onContentGenerated={handleCedarContentGenerated}
             disabled={updateBlobMutation.isPending}
           />

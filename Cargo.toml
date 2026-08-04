@@ -38,7 +38,7 @@ orion = { path = "orion" }
 orion-client = { path = "clients/orion-client" }
 orion-scheduler-client = { path = "clients/orion-scheduler-client" }
 
-git-internal = "0.8.5"
+git-internal = "0.8.6"
 libvault-core = "0.1.0"
 
 #====
@@ -50,7 +50,7 @@ tracing = "0.1.44"
 tracing-subscriber = "0.3.23"
 tracing-appender = "0.2.5"
 thiserror = "2.0.19"
-clap = "4.6.4"
+clap = "4.6.5"
 
 #====
 tokio = "1.53.1"
@@ -63,11 +63,11 @@ futures = "0.3.33"
 futures-util = "0.3.33"
 axum = { version = "0.8.9", features = ["macros", "json"] }
 axum-extra = "0.12.6"
-russh = "0.62.4"
+russh = "0.62.5"
 tower-http = "0.7.0"
 tower = "0.5.3"
 tower-sessions = { version = "0.15", features = ["memory-store"] }
-time = { version = "0.3.54", features = ["serde"] }
+time = { version = "0.3.55", features = ["serde"] }
 lettre = { version = "0.11", default-features = false, features = [
   "builder",
   "smtp-transport",
@@ -77,8 +77,8 @@ lettre = { version = "0.11", default-features = false, features = [
   "rustls-platform-verifier",
 ] }
 #====
-sea-orm = "2.0.0"
-sea-orm-migration = "2.0.0"
+sea-orm = "2.0.1"
+sea-orm-migration = "2.0.1"
 
 #====
 rand = "0.10.2"
