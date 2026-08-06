@@ -67,7 +67,7 @@ test_user_token = "mega"
 ## Mega treats files under this directory as import repo and other directories as monorepo
 import_dir = "/third-party"
 
-# Set System Admin in directory init, replace the admin's github username here
+# System admin GitHub logins (init + always treated as admin at runtime)
 admin = "admin"
 
 # Set serveral root dirs in directory init

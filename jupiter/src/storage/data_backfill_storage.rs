@@ -155,21 +155,72 @@ impl DataBackfillStorage {
                 let i = esc(id);
                 let login_sql = github.map(esc).unwrap_or_default();
 
+                // Tables where campsite_user_id is the sole PK: drop the handle
+                // row when the target id already exists, then rename remaining.
+                for table in [
+                    "cla_sign_status",
+                    "user_approval_status",
+                    "user_notification_settings",
+                    "user_notification_preferences",
+                ] {
+                    affected += exec_unprepared(
+                        &txn,
+                        &format!(
+                            r#"
+                            DELETE FROM {table}
+                             WHERE campsite_user_id = '{h}'
+                               AND EXISTS (
+                                 SELECT 1 FROM {table} AS keep
+                                  WHERE keep.campsite_user_id = '{i}'
+                               )
+                            "#
+                        ),
+                    )
+                    .await?;
+                    affected += exec_unprepared(
+                        &txn,
+                        &format!(
+                            "UPDATE {table} SET campsite_user_id = '{i}' WHERE campsite_user_id = '{h}'"
+                        ),
+                    )
+                    .await?;
+                }
+
+                // Composite PK (item_id, campsite_user_id).
+                affected += exec_unprepared(
+                    &txn,
+                    &format!(
+                        r#"
+                        DELETE FROM item_assignees AS old_row
+                         WHERE old_row.campsite_user_id = '{h}'
+                           AND EXISTS (
+                             SELECT 1 FROM item_assignees AS new_row
+                              WHERE new_row.item_id = old_row.item_id
+                                AND new_row.item_type = old_row.item_type
+                                AND new_row.campsite_user_id = '{i}'
+                           )
+                        "#
+                    ),
+                )
+                .await?;
+                affected += exec_unprepared(
+                    &txn,
+                    &format!(
+                        "UPDATE item_assignees SET campsite_user_id = '{i}' WHERE campsite_user_id = '{h}'"
+                    ),
+                )
+                .await?;
+
                 for table in [
                     "mega_cl",
                     "mega_issue",
                     "mega_conversation",
                     "reactions",
-                    "item_assignees",
                     "mega_code_review_comment",
                     "access_token",
                     "ssh_keys",
-                    "cla_sign_status",
-                    "user_notification_settings",
-                    "user_notification_preferences",
                     "email_jobs",
                     "mega_group_member",
-                    "user_approval_status",
                 ] {
                     affected += exec_unprepared(
                         &txn,

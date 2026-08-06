@@ -71,7 +71,7 @@ impl ClReviewerStorage {
                     MegaError::Other(format!("fail to find reviewer {}", campsite_user_id))
                 })?
                 .ok_or_else(|| {
-                    MegaError::Other(format!("reviewer {} not found", campsite_user_id))
+                    MegaError::NotFound(format!("reviewer {} not found", campsite_user_id))
                 })?
                 .into_active_model();
 
@@ -201,7 +201,7 @@ impl ClReviewerStorage {
                 tracing::error!("{}", e);
                 MegaError::Other(format!("fail to find reviewer {}", campsite_user_id))
             })?
-            .ok_or_else(|| MegaError::Other(format!("reviewer {} not found", campsite_user_id)))?
+            .ok_or_else(|| MegaError::NotFound(format!("reviewer {} not found", campsite_user_id)))?
             .into_active_model();
 
         rev.approved = Set(approved);

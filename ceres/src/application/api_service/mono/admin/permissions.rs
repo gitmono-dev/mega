@@ -1,13 +1,16 @@
 //! Global admin permission operations.
 //!
-//! This module provides admin permission checking for the monorepo system.
-//! All admin permissions are defined in a single `.mega_cedar.json` file
-//! located in the root directory (`/`).
+//! Effective admins are the **union** of:
+//! - `monorepo.admin` in mega config (always applied; used at monorepo init and at runtime)
+//! - users in the root `/.mega_cedar.json` admin group
 //!
 //! # Design
-//! - A single global admin list applies to the entire monorepo
-//! - The admin configuration file is stored at `/.mega_cedar.json`
-//! - Redis caching is used to avoid repeated file parsing
+//! - Config admins are checked on every request (not baked into Redis), so they
+//!   remain valid even when Cedar/Redis is stale or missing
+//! - Cedar-derived admins are Redis-cached (TTL 10 minutes) to avoid re-parsing
+//!   `.mega_cedar.json`
+
+use std::collections::BTreeSet;
 
 use common::errors::MegaError;
 use git_internal::internal::object::tree::Tree;
@@ -15,36 +18,65 @@ use jupiter::{redis::AsyncCommands, utils::converter::FromMegaModel};
 
 use crate::application::api_service::mono::context::AdminApplicationService;
 
-/// Cache TTL for admin list (10 minutes).
+/// Cache TTL for Cedar admin list (10 minutes).
 pub const ADMIN_CACHE_TTL: u64 = 600;
 
 /// The Cedar entity file name in root directory.
 pub const ADMIN_FILE: &str = ".mega_cedar.json";
 
-/// Redis cache key suffix for admin list.
+/// Redis cache key suffix for Cedar admin list (config admins are merged at read time).
 const ADMIN_CACHE_KEY_SUFFIX: &str = "admin:list";
 
 impl AdminApplicationService {
-    /// Check if a user is an admin.
+    /// Check if a user is an admin (config `monorepo.admin` or Cedar).
     pub async fn check_is_admin(&self, username: &str) -> Result<bool, MegaError> {
+        let username = username.trim();
+        if username.is_empty() {
+            return Ok(false);
+        }
         let admins = self.get_effective_admins().await?;
-        Ok(admins.contains(&username.to_string()))
+        Ok(admins.iter().any(|a| a == username))
     }
 
-    /// Retrieve all admin usernames.
+    /// Retrieve all effective admin identities (config ∪ Cedar), sorted uniquely.
     pub async fn get_all_admins(&self) -> Result<Vec<String>, MegaError> {
         self.get_effective_admins().await
     }
 
-    /// Get admins from cache or storage.
-    /// This method first attempts to read from Redis cache. On cache miss,
-    /// it loads the admin list from the `.mega_cedar.json` file and caches
-    /// the result.
+    /// GitHub logins (or Cedar euids) listed under `[monorepo] admin` in config.
+    fn config_admins(&self) -> Vec<String> {
+        self.ctx
+            .storage()
+            .config()
+            .monorepo
+            .admin
+            .iter()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect()
+    }
+
+    /// Merge Cedar admins with config admins (sorted, unique).
+    fn merge_with_config_admins(&self, cedar_admins: Vec<String>) -> Vec<String> {
+        let mut set: BTreeSet<String> = cedar_admins.into_iter().collect();
+        for admin in self.config_admins() {
+            set.insert(admin);
+        }
+        set.into_iter().collect()
+    }
+
+    /// Get effective admins: Redis/Cedar list ∪ `monorepo.admin`.
     ///
-    /// If `.mega_cedar.json` (or root refs) are missing, returns an empty list
-    /// so callers can fall through to other authz paths (e.g. user approval)
-    /// instead of hard-failing the request.
+    /// Config admins are always merged after cache/file load so a stale Redis
+    /// Cedar list cannot drop configured admins. If `.mega_cedar.json` is
+    /// missing, config admins alone still apply.
     async fn get_effective_admins(&self) -> Result<Vec<String>, MegaError> {
+        let cedar_admins = self.get_cedar_admins().await?;
+        Ok(self.merge_with_config_admins(cedar_admins))
+    }
+
+    /// Cedar-only admin list (cached). Does not include config admins.
+    async fn get_cedar_admins(&self) -> Result<Vec<String>, MegaError> {
         if let Ok(admins) = self.get_admins_from_cache().await {
             return Ok(admins);
         }
@@ -54,7 +86,7 @@ impl AdminApplicationService {
             Err(e) if is_admin_config_unavailable(&e) => {
                 tracing::warn!(
                     error = %e,
-                    "Admin config unavailable; treating as empty admin list"
+                    "Admin Cedar config unavailable; using monorepo.admin from config only"
                 );
                 return Ok(Vec::new());
             }
@@ -70,7 +102,7 @@ impl AdminApplicationService {
         Ok(admins)
     }
 
-    /// Invalidate the admin list cache.
+    /// Invalidate the Cedar admin list cache.
     /// This should be called when the `.mega_cedar.json` file is modified.
     pub async fn invalidate_admin_cache(&self) {
         let mut conn = self.ctx.git_object_cache().connection.clone();

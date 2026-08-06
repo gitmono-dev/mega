@@ -52,7 +52,8 @@ sqlx_logging = false
 ## Mega treats files under this directory as import repo and other directories as monorepo
 import_dir = "/third-party"
 
-# Set System Admin(s) in directory init, these users will be added to the admin group
+# System admin GitHub logins. Used when initializing /.mega_cedar.json and
+# always treated as admins at runtime (union with Cedar admin group).
 # Supports multiple admins: admin = ["user1", "user2", "user3"]
 admin = ["benjamin-747"]
 
