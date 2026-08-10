@@ -197,13 +197,19 @@ async fn reviewer_approve(
         .reviewer_change_state(&link, actor, payload.approved)
         .await?;
 
+    let display = user
+        .github_login
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .unwrap_or(actor);
     state
         .services()
         .conversation()
         .add_conversation(
             &link,
             actor,
-            Some(format!("{} approved the CL", actor)),
+            Some(format!("{} approved the CL", display)),
             ConvType::Approve,
         )
         .await?;

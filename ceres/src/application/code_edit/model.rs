@@ -175,6 +175,21 @@ async fn load_github_login_map(storage: &Storage) -> HashMap<String, String> {
     map
 }
 
+/// Prefer github_login for human-readable conversation text; persist actor remains campsite id.
+async fn resolve_actor_display_name(storage: &Storage, campsite_user_id: &str) -> String {
+    let id = campsite_user_id.trim();
+    if id.is_empty() {
+        return campsite_user_id.to_string();
+    }
+    match storage.user_storage().github_login_to_campsite_ids().await {
+        Ok(map) => map
+            .into_iter()
+            .find_map(|(login, mapped_id)| (mapped_id == id).then_some(login))
+            .unwrap_or_else(|| id.to_string()),
+        Err(_) => id.to_string(),
+    }
+}
+
 async fn fetch_campsite_github_login_map(
     storage: &Storage,
 ) -> Result<HashMap<String, String>, MegaError> {
@@ -341,6 +356,7 @@ impl<
     ) -> Result<(), MegaError> {
         let cl_stg = storage.cl_storage();
         let comment_stg = storage.conversation_storage();
+        let display_name = resolve_actor_display_name(storage, username).await;
 
         let from_same = cl.from_hash == from_hash;
         let to_same = cl.to_hash == to_hash;
@@ -355,7 +371,7 @@ impl<
                     .add_conversation(
                         &cl.link,
                         username,
-                        Some(self.formator.format(&cl, from_hash, to_hash, username)),
+                        Some(self.formator.format(&cl, from_hash, to_hash, &display_name)),
                         ConvTypeEnum::Comment,
                     )
                     .await?;
@@ -409,12 +425,13 @@ impl<
             )
             .await?;
         self.assign_reviewer(storage, &cl).await?;
+        let display_name = resolve_actor_display_name(storage, username).await;
         storage
             .conversation_storage()
             .add_conversation(
                 &cl.link,
                 username,
-                Some(self.formator.format(&cl, from_hash, to_hash, username)),
+                Some(self.formator.format(&cl, from_hash, to_hash, &display_name)),
                 ConvTypeEnum::Comment,
             )
             .await?;
@@ -448,6 +465,15 @@ impl<
                 }
                 let cl_model = fresh_or_fallback_cl(cl, fresh, to_hash);
                 self.sync_cl_ref(storage, &cl_model, to_hash).await?;
+                // Re-resolve Cedar system reviewers so transitional github_login
+                // keys are replaced with campsite public ids on subsequent pushes.
+                if let Err(e) = self.assign_reviewer(storage, &cl_model).await {
+                    tracing::warn!(
+                        cl_link = %cl_model.link,
+                        error = %e,
+                        "Failed to resync system reviewers on CL update"
+                    );
+                }
                 Ok(cl_model)
             }
             None => Ok(self

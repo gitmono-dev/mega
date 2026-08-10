@@ -31,6 +31,34 @@ impl ReviewerApplicationService {
     }
 
     pub async fn list_reviewers(&self, link: &str) -> Result<ReviewersResponse, MegaError> {
+        // Heal transitional github_login-keyed system reviewers when the page loads.
+        // Prefer access_token mappings (public ids) over reviewer-table hints.
+        let mut login_to_id = self
+            .ctx
+            .storage()
+            .reviewer_storage()
+            .github_login_to_campsite_ids()
+            .await
+            .unwrap_or_default();
+        if let Ok(from_tokens) = self
+            .ctx
+            .storage()
+            .user_storage()
+            .github_login_to_campsite_ids()
+            .await
+        {
+            login_to_id.extend(from_tokens);
+        }
+        if let Err(e) = self
+            .ctx
+            .storage()
+            .reviewer_storage()
+            .remap_transitional_reviewers(link, &login_to_id)
+            .await
+        {
+            tracing::warn!(cl_link = %link, error = %e, "Failed to remap transitional reviewers");
+        }
+
         let reviewers = self
             .ctx
             .storage()
