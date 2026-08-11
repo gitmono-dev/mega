@@ -102,9 +102,13 @@ jobs:
             echo "TEMP: skipping AWS ECR push (Harbor only)"
           fi
 
+          BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
           docker buildx build \
             --platform "$PLATFORM" \
             --build-arg TIPTAP_PRIVATE_REGISTRY_KEY="$TIPTAP_PRIVATE_REGISTRY_KEY" \
+            --build-arg GIT_SHA="${GITHUB_SHA}" \
+            --build-arg BUILD_TIME="${BUILD_TIME}" \
             --cache-from type=gha,scope=mega-ui \
             --cache-to type=gha,mode=max,scope=mega-ui \
             --provenance=false \

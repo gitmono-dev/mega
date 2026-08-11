@@ -78,9 +78,3 @@ export enum NotificationName {
   DailyDigest = 'daily_digest',
   ProjectReminder = 'project_reminder'
 }
-
-export interface Changelog {
-  title: string
-  slug: string
-  published_at: string
-}

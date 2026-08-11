@@ -20,6 +20,9 @@ WORKDIR /app
 FROM base AS installer
 ARG TARGETARCH
 ARG TIPTAP_PRIVATE_REGISTRY_KEY
+# Baked into the client bundle at next build (not runtime-injected).
+ARG GIT_SHA=dev
+ARG BUILD_TIME=
 # Debian slim defaults to http://deb.debian.org. Through corporate proxies (NFCLOUD):
 # - plain HTTP hangs
 # - HTTPS works but MITM breaks apt's CA verify
@@ -50,6 +53,10 @@ COPY --from=builder /app/out/full/ .
 # per-environment values at container start by docker-entrypoint.sh.
 RUN rm -f /app/apps/web/.env.local \
   && cp /app/apps/web/.env.runtime /app/apps/web/.env.production
+
+# Image identity: short/full git SHA + UTC build time for sidebar version display.
+ENV NEXT_PUBLIC_APP_VERSION=${GIT_SHA}
+ENV NEXT_PUBLIC_APP_BUILD_TIME=${BUILD_TIME}
 
 RUN --mount=type=cache,id=mega-ui-next-${TARGETARCH},target=/app/apps/web/.next/cache,sharing=locked \
     --mount=type=cache,id=mega-ui-turbo-${TARGETARCH},target=/app/.turbo,sharing=locked \
