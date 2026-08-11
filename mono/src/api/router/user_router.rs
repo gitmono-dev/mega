@@ -403,19 +403,19 @@ async fn get_user_approval_status(
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<UserApprovalStatusRes>>, ApiError> {
     let campsite_user_id = collaboration_actor(&user)?;
-    let display_name = user
+    let github_login = user
         .github_login
         .as_deref()
         .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .unwrap_or(campsite_user_id);
+        .filter(|s| !s.is_empty());
+    let display_name = github_login.unwrap_or(campsite_user_id);
     let model = state
         .services()
         .user()
-        .get_or_init_user_approval_status(campsite_user_id, display_name, &user.email)
+        .get_or_init_user_approval_status(campsite_user_id, display_name, &user.email, github_login)
         .await?;
 
     Ok(Json(CommonResult::success(Some(
-        UserApprovalStatusRes::from(model),
+        state.services().user().to_approval_status_res(model).await,
     ))))
 }

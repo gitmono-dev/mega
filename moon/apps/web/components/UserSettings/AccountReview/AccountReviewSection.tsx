@@ -116,6 +116,7 @@ export function AccountReviewSection() {
               <ReviewRow
                 key={user.username}
                 user={user}
+                users={users}
                 approving={approve.isPending}
                 rejecting={reject.isPending}
                 onApprove={() => approve.mutate(user.username)}
@@ -131,14 +132,32 @@ export function AccountReviewSection() {
 
 interface ReviewRowProps {
   user: UserApprovalStatusRes
+  users: UserApprovalStatusRes[]
   approving: boolean
   rejecting: boolean
   onApprove: () => void
   onReject: () => void
 }
 
-function ReviewRow({ user, approving, rejecting, onApprove, onReject }: ReviewRowProps) {
+function reviewedByLabel(reviewedBy: string, users: UserApprovalStatusRes[]) {
+  const match = users.find(
+    (candidate) => candidate.campsite_user_id === reviewedBy || candidate.username === reviewedBy
+  )
+
+  if (match?.display_name?.trim()) {
+    return match.display_name.trim()
+  }
+
+  if (match?.username && match.username !== match.campsite_user_id) {
+    return match.username
+  }
+
+  return reviewedBy
+}
+
+function ReviewRow({ user, users, approving, rejecting, onApprove, onReject }: ReviewRowProps) {
   const displayName = user.display_name || user.username
+  const reviewer = user.reviewed_by ? reviewedByLabel(user.reviewed_by, users) : null
 
   return (
     <TableRow>
@@ -158,13 +177,11 @@ function ReviewRow({ user, approving, rejecting, onApprove, onReject }: ReviewRo
                 {statusLabel(user.status)}
               </span>
             </div>
-            <UIText tertiary>
-              @{user.username} · {user.email}
-            </UIText>
+            <UIText tertiary>{user.email}</UIText>
             <UIText tertiary className='text-xs'>
               Registered {formatDate(user.registered_at)}
               {user.reviewed_at ? ` · Reviewed ${formatDate(user.reviewed_at)}` : ''}
-              {user.reviewed_by ? ` by @${user.reviewed_by}` : ''}
+              {reviewer ? ` by @${reviewer}` : ''}
             </UIText>
           </div>
         </div>

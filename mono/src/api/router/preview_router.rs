@@ -16,7 +16,10 @@ use ceres::model::{
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::api::{MonoApiServiceState, api_doc::CODE_PREVIEW, error::ApiError};
+use crate::api::{
+    MonoApiServiceState, api_common::identity::collaboration_actor, api_doc::CODE_PREVIEW,
+    error::ApiError, oauth::model::LoginUser,
+};
 
 async fn upsert_commit_binding(
     state: &MonoApiServiceState,
@@ -36,6 +39,14 @@ async fn upsert_commit_binding(
         .upsert_commit_binding(commit_id, final_username.clone(), final_username.is_none())
         .await?;
     Ok(())
+}
+
+/// Web edits persist the session campsite public id as CL author.
+fn resolve_edit_author(
+    user: &LoginUser,
+    _client_author: Option<String>,
+) -> Result<String, ApiError> {
+    Ok(collaboration_actor(user)?.to_string())
 }
 
 pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
@@ -88,9 +99,11 @@ async fn get_blob_string(
     tag = CODE_PREVIEW
 )]
 async fn create_entry(
+    user: LoginUser,
     state: State<MonoApiServiceState>,
-    Json(json): Json<CreateEntryInfo>,
+    Json(mut json): Json<CreateEntryInfo>,
 ) -> Result<Json<CommonResult<CreateEntryResult>>, ApiError> {
+    json.author_username = Some(resolve_edit_author(&user, json.author_username.take())?);
     let handler = state.api_handler(json.path.as_ref()).await?;
     let result = handler.create_monorepo_entry(json.clone()).await?;
 
@@ -371,9 +384,11 @@ async fn preview_diff(
     tag = CODE_PREVIEW
 )]
 async fn save_edit(
+    user: LoginUser,
     state: State<MonoApiServiceState>,
-    Json(payload): Json<EditFilePayload>,
+    Json(mut payload): Json<EditFilePayload>,
 ) -> Result<Json<CommonResult<EditFileResult>>, ApiError> {
+    payload.author_username = Some(resolve_edit_author(&user, payload.author_username.take())?);
     let handler = state.api_handler(payload.path.as_ref()).await?;
     let res = handler.save_file_edit(payload.clone()).await?;
 

@@ -16,6 +16,7 @@ pub mod buck_session_file;
 pub mod build_events;
 pub mod build_targets;
 pub mod build_triggers;
+pub mod campsite_member_identity;
 pub mod check_result;
 pub mod cla_sign_status;
 pub mod commit_auths;

@@ -1,14 +1,15 @@
-//! Automatic handle → campsite_user_id backfill on mono startup.
+//! Automatic Campsite member identity sync + handle → campsite_user_id backfill.
 //!
-//! Fetches org=mega member identities from Campsite
-//! `GET /v1/organizations/mega/internal/member_identities` using
-//! `X-Mega-Internal-Secret`, then applies SQL updates via
-//! [`jupiter::storage::data_backfill_storage`].
+//! On every mono boot (when `mega_internal_secret` is set):
+//! 1. Fetch org=mega `internal/member_identities`
+//! 2. UPSERT into local `campsite_member_identity` (for display / alias resolution)
+//! 3. Run one-shot actor remapping backfill if not yet completed
 
 use std::time::Instant;
 
 use jupiter::storage::{
     Storage,
+    campsite_member_identity_storage::MemberIdentityProfile,
     data_backfill_storage::{BACKFILL_ACTOR_CAMPSITE_USER_ID_V1, MemberIdentityMapping},
 };
 use serde::Deserialize;
@@ -24,26 +25,51 @@ struct CampsiteMemberIdentity {
     username: String,
     #[serde(default)]
     github_login: Option<String>,
+    #[serde(default)]
+    display_name: Option<String>,
+    #[serde(default)]
+    email: Option<String>,
 }
 
-/// Spawn non-blocking backfill after Storage is ready. Failures are logged;
-/// ledger stays `failed`/`pending` so the next boot retries.
+/// Spawn non-blocking identity sync + optional remapping backfill after Storage is ready.
 pub fn spawn_actor_identity_backfill(storage: Storage) {
     tokio::spawn(async move {
-        if let Err(e) = run_actor_identity_backfill(storage).await {
-            error!(error = %e, "actor identity backfill failed (will retry on next boot)");
+        if let Err(e) = run_member_identity_sync_and_backfill(storage).await {
+            error!(error = %e, "member identity sync/backfill failed (will retry on next boot)");
         }
     });
 }
 
-async fn run_actor_identity_backfill(storage: Storage) -> anyhow::Result<()> {
+async fn run_member_identity_sync_and_backfill(storage: Storage) -> anyhow::Result<()> {
     let config = storage.config();
     let secret = config.oauth.mega_internal_secret.trim();
     if secret.is_empty() {
-        warn!("oauth.mega_internal_secret unset; skipping automatic actor identity backfill");
+        warn!("oauth.mega_internal_secret unset; skipping member identity sync/backfill");
         return Ok(());
     }
 
+    let started = Instant::now();
+    let identities = fetch_member_identities(&config.oauth.campsite_api_domain, secret).await?;
+
+    let profiles = identities_to_profiles(&identities);
+    let synced = storage
+        .campsite_member_identity_storage()
+        .upsert_many(&profiles)
+        .await?;
+    info!(
+        synced,
+        elapsed_ms = started.elapsed().as_millis() as u64,
+        "campsite_member_identity directory synced from Campsite"
+    );
+
+    run_actor_remap_backfill_if_needed(&storage, &identities).await?;
+    Ok(())
+}
+
+async fn run_actor_remap_backfill_if_needed(
+    storage: &Storage,
+    identities: &[CampsiteMemberIdentity],
+) -> anyhow::Result<()> {
     let ledger = storage.data_backfill_storage();
     if let Some(row) = ledger.get(BACKFILL_ACTOR_CAMPSITE_USER_ID_V1).await?
         && row.status == "completed"
@@ -64,14 +90,33 @@ async fn run_actor_identity_backfill(storage: Storage) -> anyhow::Result<()> {
     }
 
     let started = Instant::now();
-    match fetch_and_apply(&storage, &config.oauth.campsite_api_domain, secret).await {
-        Ok((mappings, affected)) => {
+    let mappings: Vec<MemberIdentityMapping> = identities
+        .iter()
+        .filter(|i| !i.campsite_user_id.trim().is_empty())
+        .map(|i| MemberIdentityMapping {
+            campsite_user_id: i.campsite_user_id.trim().to_string(),
+            username: i.username.clone(),
+            github_login: i
+                .github_login
+                .as_deref()
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(|s| s.to_string()),
+        })
+        .collect();
+
+    match storage
+        .data_backfill_storage()
+        .apply_member_identity_mappings(&mappings)
+        .await
+    {
+        Ok(affected) => {
             ledger
                 .mark_completed(BACKFILL_ACTOR_CAMPSITE_USER_ID_V1)
                 .await?;
             info!(
                 backfill = BACKFILL_ACTOR_CAMPSITE_USER_ID_V1,
-                mappings,
+                mappings = mappings.len(),
                 rows_affected = affected,
                 elapsed_ms = started.elapsed().as_millis() as u64,
                 "actor identity backfill completed"
@@ -83,16 +128,15 @@ async fn run_actor_identity_backfill(storage: Storage) -> anyhow::Result<()> {
             let _ = ledger
                 .mark_failed(BACKFILL_ACTOR_CAMPSITE_USER_ID_V1, &msg)
                 .await;
-            Err(e)
+            Err(e.into())
         }
     }
 }
 
-async fn fetch_and_apply(
-    storage: &Storage,
+async fn fetch_member_identities(
     api_base: &str,
     secret: &str,
-) -> anyhow::Result<(usize, u64)> {
+) -> anyhow::Result<Vec<CampsiteMemberIdentity>> {
     let url = format!(
         "{}/v1/organizations/{}/internal/member_identities",
         api_base.trim_end_matches('/'),
@@ -113,28 +157,46 @@ async fn fetch_and_apply(
         anyhow::bail!("campsite member_identities HTTP {status}: {body}");
     }
 
-    let identities: Vec<CampsiteMemberIdentity> = resp
-        .json()
+    resp.json()
         .await
-        .map_err(|e| anyhow::anyhow!("parse member_identities JSON: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("parse member_identities JSON: {e}"))
+}
 
-    let mappings: Vec<MemberIdentityMapping> = identities
-        .into_iter()
+fn identities_to_profiles(identities: &[CampsiteMemberIdentity]) -> Vec<MemberIdentityProfile> {
+    identities
+        .iter()
         .filter(|i| !i.campsite_user_id.trim().is_empty())
-        .map(|i| MemberIdentityMapping {
-            campsite_user_id: i.campsite_user_id.trim().to_string(),
-            username: i.username,
-            github_login: i
+        .map(|i| {
+            let github_login = i
                 .github_login
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty()),
+                .as_deref()
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(|s| s.to_string());
+            let username = i.username.trim().to_string();
+            MemberIdentityProfile {
+                campsite_user_id: i.campsite_user_id.trim().to_string(),
+                username: if !username.is_empty() {
+                    username
+                } else {
+                    github_login.clone().unwrap_or_default()
+                },
+                github_login,
+                display_name: i
+                    .display_name
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                    .unwrap_or("")
+                    .to_string(),
+                email: i
+                    .email
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                    .unwrap_or("")
+                    .to_string(),
+            }
         })
-        .collect();
-
-    let count = mappings.len();
-    let affected = storage
-        .data_backfill_storage()
-        .apply_member_identity_mappings(&mappings)
-        .await?;
-    Ok((count, affected))
+        .collect()
 }

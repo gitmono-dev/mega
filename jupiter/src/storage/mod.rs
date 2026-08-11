@@ -4,6 +4,7 @@ pub mod base_storage;
 pub mod bots_storage;
 pub mod buck_storage;
 pub mod build_trigger_storage;
+pub mod campsite_member_identity_storage;
 pub mod cl_reviewer_storage;
 pub mod cl_storage;
 pub mod cla_storage;
@@ -50,6 +51,7 @@ use crate::{
         bots_storage::BotsStorage,
         buck_storage::BuckStorage,
         build_trigger_storage::BuildTriggerStorage,
+        campsite_member_identity_storage::CampsiteMemberIdentityStorage,
         cl_reviewer_storage::ClReviewerStorage,
         cl_storage::ClStorage,
         cla_storage::ClaStorage,
@@ -83,6 +85,7 @@ pub struct AppService {
     pub lfs_db_storage: LfsDbStorage,
     pub cla_storage: ClaStorage,
     pub user_approval_storage: UserApprovalStorage,
+    pub campsite_member_identity_storage: CampsiteMemberIdentityStorage,
     pub user_storage: UserStorage,
     pub group_storage: GroupStorage,
     pub vault_storage: VaultStorage,
@@ -119,6 +122,7 @@ impl AppService {
             lfs_db_storage: LfsDbStorage { base: mock.clone() },
             cla_storage: ClaStorage { base: mock.clone() },
             user_approval_storage: UserApprovalStorage { base: mock.clone() },
+            campsite_member_identity_storage: CampsiteMemberIdentityStorage { base: mock.clone() },
             user_storage: UserStorage { base: mock.clone() },
             group_storage: GroupStorage { base: mock.clone() },
             vault_storage: VaultStorage { base: mock.clone() },
@@ -173,6 +177,7 @@ impl Storage {
         let lfs_db_storage = LfsDbStorage { base: base.clone() };
         let cla_storage = ClaStorage { base: base.clone() };
         let user_approval_storage = UserApprovalStorage { base: base.clone() };
+        let campsite_member_identity_storage = CampsiteMemberIdentityStorage { base: base.clone() };
         let user_storage = UserStorage { base: base.clone() };
         let group_storage = GroupStorage { base: base.clone() };
         let cl_storage = ClStorage { base: base.clone() };
@@ -243,6 +248,7 @@ impl Storage {
             lfs_db_storage,
             cla_storage,
             user_approval_storage,
+            campsite_member_identity_storage,
             user_storage,
             group_storage,
             vault_storage,
@@ -405,6 +411,10 @@ impl Storage {
 
     pub fn user_approval_storage(&self) -> UserApprovalStorage {
         self.app_service.user_approval_storage.clone()
+    }
+
+    pub fn campsite_member_identity_storage(&self) -> CampsiteMemberIdentityStorage {
+        self.app_service.campsite_member_identity_storage.clone()
     }
 
     pub fn group_storage(&self) -> GroupStorage {

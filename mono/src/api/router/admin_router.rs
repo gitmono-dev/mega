@@ -23,6 +23,7 @@ use ceres::model::{
     admin::{AdminListResponse, GenerateCedarRequest, GenerateCedarResponse, IsAdminResponse},
     user::{ListUserApprovalsQuery, UserApprovalListRes, UserApprovalStatusRes},
 };
+use jupiter::storage::campsite_member_identity_storage::MemberIdentityProfile;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{
@@ -32,6 +33,22 @@ use crate::api::{
     error::ApiError,
     oauth::model::LoginUser,
 };
+
+fn reviewer_identity_profile(user: &LoginUser, reviewed_by: &str) -> MemberIdentityProfile {
+    let github_login = user
+        .github_login
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string());
+    MemberIdentityProfile {
+        campsite_user_id: reviewed_by.to_string(),
+        username: github_login.clone().unwrap_or_default(),
+        github_login: github_login.clone(),
+        display_name: github_login.unwrap_or_default(),
+        email: user.email.clone(),
+    }
+}
 
 /// Build the admin router.
 pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
@@ -189,11 +206,8 @@ async fn list_user_approvals(
     let items = state
         .services()
         .user()
-        .list_user_approvals(Some(status), limit)
-        .await?
-        .into_iter()
-        .map(UserApprovalStatusRes::from)
-        .collect();
+        .list_user_approval_responses(Some(status), limit)
+        .await?;
 
     Ok(Json(CommonResult::success(Some(UserApprovalListRes {
         items,
@@ -222,16 +236,15 @@ async fn approve_user(
     ensure_admin(&state, &user).await?;
     // Path `username` is the target campsite_user_id; reviewed_by is the admin's campsite id.
     let reviewed_by = collaboration_actor(&user)?;
+    let reviewer = reviewer_identity_profile(&user, reviewed_by);
 
-    let model = state
+    let res = state
         .services()
         .user()
-        .approve_user(&username, reviewed_by)
+        .approve_user_response(&username, reviewed_by, reviewer)
         .await?;
 
-    Ok(Json(CommonResult::success(Some(
-        UserApprovalStatusRes::from(model),
-    ))))
+    Ok(Json(CommonResult::success(Some(res))))
 }
 
 /// POST /api/v1/admin/user-approvals/{username}/reject
@@ -255,14 +268,13 @@ async fn reject_user(
 ) -> Result<Json<CommonResult<UserApprovalStatusRes>>, ApiError> {
     ensure_admin(&state, &user).await?;
     let reviewed_by = collaboration_actor(&user)?;
+    let reviewer = reviewer_identity_profile(&user, reviewed_by);
 
-    let model = state
+    let res = state
         .services()
         .user()
-        .reject_user(&username, reviewed_by)
+        .reject_user_response(&username, reviewed_by, reviewer)
         .await?;
 
-    Ok(Json(CommonResult::success(Some(
-        UserApprovalStatusRes::from(model),
-    ))))
+    Ok(Json(CommonResult::success(Some(res))))
 }

@@ -23,7 +23,7 @@ export function SidebarAppVersion() {
 
   return (
     <Tooltip label={tooltip} side='top' align='end'>
-      <span className='text-tertiary hover:text-secondary select-none px-1 font-mono text-[11px] tabular-nums'>
+      <span className='text-tertiary hover:text-secondary px-1 font-mono text-[11px] tabular-nums select-none'>
         {label}
       </span>
     </Tooltip>

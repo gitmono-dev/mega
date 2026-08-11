@@ -46,7 +46,8 @@ const NewCodeView = ({ currentPath = '', onClose, defaultType = 'file' }: NewCod
         is_directory: fileType === 'folder',
         content: fileType === 'file' ? content : '',
         author_email: currentUser?.email,
-        author_username: currentUser?.username,
+        // Persist campsite public id (not Campsite username / github login).
+        author_username: currentUser?.id,
         mode: 'force_create',
         skip_build: skipBuild
       },

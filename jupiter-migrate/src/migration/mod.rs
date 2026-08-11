@@ -103,6 +103,7 @@ mod m20260720_060000_rename_webhook_event_type_underscores;
 mod m20260723_080000_cla_sign_check_not_required;
 mod m20260804_120000_actor_to_campsite_user_id;
 mod m20260804_130000_data_backfill_ledger;
+mod m20260811_100000_create_campsite_member_identity;
 mod runner;
 pub use runner::apply_migrations;
 
@@ -193,6 +194,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260723_080000_cla_sign_check_not_required::Migration),
             Box::new(m20260804_120000_actor_to_campsite_user_id::Migration),
             Box::new(m20260804_130000_data_backfill_ledger::Migration),
+            Box::new(m20260811_100000_create_campsite_member_identity::Migration),
         ]
     }
 }

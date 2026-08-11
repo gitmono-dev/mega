@@ -196,7 +196,8 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
         content: content,
         commit_message: commitMessage,
         author_email: currentUser?.email,
-        author_username: currentUser?.username,
+        // Persist campsite public id (not Campsite username / github login).
+        author_username: currentUser?.id,
         mode: 'force_create',
         skip_build: skipBuild
       })
@@ -218,7 +219,7 @@ export default function BlobEditor({ fileContent, filePath, fileName, onCancel }
     content,
     commitMessage,
     currentUser?.email,
-    currentUser?.username,
+    currentUser?.id,
     skipBuild,
     onCancel
   ])

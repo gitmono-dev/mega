@@ -8,7 +8,6 @@ use jupiter::{
     storage::{Storage, mono_storage::MonoStorage},
     utils::converter::FromMegaModel,
 };
-use serde::Deserialize;
 
 use crate::{
     application::{
@@ -140,15 +139,8 @@ pub(crate) trait Director<T: ApiHandler + Clone> {
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct CampsiteMemberIdentity {
-    campsite_user_id: String,
-    #[serde(default)]
-    github_login: Option<String>,
-}
-
-/// Resolve Cedar github logins → campsite public ids from local tables and,
-/// when configured, Campsite `internal/member_identities`.
+/// Resolve Cedar github logins → campsite public ids from local tables
+/// (`access_token`, reviewers, `campsite_member_identity`).
 async fn load_github_login_map(storage: &Storage) -> HashMap<String, String> {
     let mut map = HashMap::new();
 
@@ -165,79 +157,30 @@ async fn load_github_login_map(storage: &Storage) -> HashMap<String, String> {
         Err(e) => tracing::warn!(error = %e, "failed to load github_login map from reviewers"),
     }
 
-    match fetch_campsite_github_login_map(storage).await {
-        Ok(from_campsite) => map.extend(from_campsite),
+    match storage.campsite_member_identity_storage().list_all().await {
+        Ok(rows) => {
+            for row in rows {
+                if let Some(login) = row
+                    .github_login
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                {
+                    map.insert(login.to_string(), row.campsite_user_id);
+                }
+            }
+        }
         Err(e) => {
-            tracing::debug!(error = %e, "campsite member_identities unavailable for reviewer map")
+            tracing::debug!(error = %e, "local campsite_member_identity unavailable for reviewer map")
         }
     }
 
     map
 }
 
-/// Prefer github_login for human-readable conversation text; persist actor remains campsite id.
+/// Prefer local identity label for human-readable conversation text; persist actor remains campsite id.
 async fn resolve_actor_display_name(storage: &Storage, campsite_user_id: &str) -> String {
-    let id = campsite_user_id.trim();
-    if id.is_empty() {
-        return campsite_user_id.to_string();
-    }
-    match storage.user_storage().github_login_to_campsite_ids().await {
-        Ok(map) => map
-            .into_iter()
-            .find_map(|(login, mapped_id)| (mapped_id == id).then_some(login))
-            .unwrap_or_else(|| id.to_string()),
-        Err(_) => id.to_string(),
-    }
-}
-
-async fn fetch_campsite_github_login_map(
-    storage: &Storage,
-) -> Result<HashMap<String, String>, MegaError> {
-    let config = storage.config();
-    let secret = config.oauth.mega_internal_secret.trim();
-    let api_base = config.oauth.campsite_api_domain.trim();
-    if secret.is_empty() || api_base.is_empty() {
-        return Ok(HashMap::new());
-    }
-
-    let url = format!(
-        "{}/v1/organizations/mega/internal/member_identities",
-        api_base.trim_end_matches('/')
-    );
-    let client = reqwest::Client::builder()
-        .no_proxy()
-        .build()
-        .map_err(|e| MegaError::Other(e.to_string()))?;
-    let resp = client
-        .get(&url)
-        .header("X-Mega-Internal-Secret", secret)
-        .send()
-        .await
-        .map_err(|e| MegaError::Other(format!("campsite member_identities request failed: {e}")))?;
-    if !resp.status().is_success() {
-        let status = resp.status();
-        let body = resp.text().await.unwrap_or_default();
-        return Err(MegaError::Other(format!(
-            "campsite member_identities HTTP {status}: {body}"
-        )));
-    }
-    let identities: Vec<CampsiteMemberIdentity> = resp
-        .json()
-        .await
-        .map_err(|e| MegaError::Other(format!("parse member_identities JSON: {e}")))?;
-
-    let mut map = HashMap::new();
-    for identity in identities {
-        let id = identity.campsite_user_id.trim();
-        let Some(login) = identity.github_login.as_deref().map(str::trim) else {
-            continue;
-        };
-        if id.is_empty() || login.is_empty() {
-            continue;
-        }
-        map.insert(login.to_string(), id.to_string());
-    }
-    Ok(map)
+    crate::application::member_identity::display_label_for_actor(storage, campsite_user_id).await
 }
 
 fn cl_with_latest_to_hash(mut cl: mega_cl::Model, to_hash: &str) -> mega_cl::Model {

@@ -3,7 +3,7 @@ use std::ops::Deref;
 use callisto::cla_sign_status;
 use common::errors::MegaError;
 use sea_orm::{
-    ColumnTrait, DbErr, EntityTrait, QueryFilter, QuerySelect, Set, prelude::Expr,
+    ColumnTrait, DbErr, EntityTrait, PaginatorTrait, QueryFilter, QuerySelect, Set, prelude::Expr,
     sea_query::OnConflict,
 };
 
@@ -74,6 +74,19 @@ impl ClaStorage {
             .await?
             .map(|status| status.cla_signed)
             .unwrap_or(false))
+    }
+
+    /// True if any of the given actor keys has `cla_signed = true`.
+    pub async fn any_signed(&self, actors: &[String]) -> Result<bool, MegaError> {
+        if actors.is_empty() {
+            return Ok(false);
+        }
+        let count = cla_sign_status::Entity::find()
+            .filter(cla_sign_status::Column::CampsiteUserId.is_in(actors.iter().cloned()))
+            .filter(cla_sign_status::Column::ClaSigned.eq(true))
+            .count(self.get_connection())
+            .await?;
+        Ok(count > 0)
     }
 
     pub async fn sign(&self, username: &str) -> Result<cla_sign_status::Model, MegaError> {

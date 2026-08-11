@@ -6,7 +6,7 @@ use futures::{StreamExt, stream};
 use io_orbit::object_storage::{ObjectKey, ObjectMeta, ObjectNamespace};
 
 use super::context::UserApplicationService;
-use crate::merge_checker::CheckerRegistry;
+use crate::{application::member_identity, merge_checker::CheckerRegistry};
 
 const CLA_CONTENT_OBJECT_KEY: &str = "cla/content/current.txt";
 
@@ -21,6 +21,20 @@ impl UserApplicationService {
             .cla_storage()
             .get_or_create_status(username)
             .await?;
+        // Heal transitional CL authors (username/github_login) after a public-id sign.
+        if model.cla_signed {
+            let aliases = member_identity::aliases_for_actor(self.ctx.storage(), username).await;
+            if let Err(e) = self
+                .refresh_checks_for_open_cls_by_author_aliases(&aliases)
+                .await
+            {
+                tracing::warn!(
+                    error = %e,
+                    username,
+                    "failed to refresh CLA checks for open CLs after status read"
+                );
+            }
+        }
         Ok((model.cla_signed, model.cla_signed_at))
     }
 
@@ -85,11 +99,21 @@ impl UserApplicationService {
         username: &str,
     ) -> Result<(bool, Option<chrono::NaiveDateTime>), MegaError> {
         let model = self.ctx.storage().cla_storage().sign(username).await?;
-        self.refresh_checks_for_open_cls_by_author(username).await?;
+        let aliases = member_identity::aliases_for_actor(self.ctx.storage(), username).await;
+        self.refresh_checks_for_open_cls_by_author_aliases(&aliases)
+            .await?;
         Ok((model.cla_signed, model.cla_signed_at))
     }
 
-    async fn refresh_checks_for_open_cls_by_author(&self, username: &str) -> Result<(), MegaError> {
+    async fn refresh_checks_for_open_cls_by_author_aliases(
+        &self,
+        aliases: &[String],
+    ) -> Result<(), MegaError> {
+        if aliases.is_empty() {
+            return Ok(());
+        }
+        let alias_set: std::collections::HashSet<&str> =
+            aliases.iter().map(String::as_str).collect();
         let open_cls = self
             .ctx
             .storage()
@@ -98,14 +122,20 @@ impl UserApplicationService {
             .get_open_cls()
             .await?
             .into_iter()
-            .filter(|cl| cl.campsite_user_id == username)
+            .filter(|cl| alias_set.contains(cl.campsite_user_id.as_str()))
             .collect::<Vec<_>>();
         if open_cls.is_empty() {
             return Ok(());
         }
 
-        let check_reg =
-            CheckerRegistry::new(self.ctx.storage().clone().into(), username.to_string());
+        // CheckerRegistry username is only used for logging / non-CLA checks context;
+        // prefer the canonical (first) alias when available.
+        let actor = aliases
+            .first()
+            .map(String::as_str)
+            .unwrap_or_default()
+            .to_string();
+        let check_reg = CheckerRegistry::new(self.ctx.storage().clone().into(), actor);
         for cl in open_cls {
             check_reg.run_checks(cl.into()).await?;
         }

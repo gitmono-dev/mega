@@ -6,7 +6,10 @@ use jupiter::{model::cl_dto::ClInfoDto, storage::Storage};
 use serde::Deserialize;
 use serde_json::Value;
 
-use crate::merge_checker::{CheckResult, CheckType, Checker, ConditionResult};
+use crate::{
+    application::member_identity,
+    merge_checker::{CheckResult, CheckType, Checker, ConditionResult},
+};
 
 pub struct ClaSignChecker {
     pub storage: Arc<Storage>,
@@ -33,12 +36,8 @@ impl Checker for ClaSignChecker {
             message: String::new(),
         };
 
-        match self
-            .storage
-            .cla_service
-            .get_or_create_status(&params.username)
-            .await
-        {
+        let aliases = member_identity::aliases_for_actor(&self.storage, &params.username).await;
+        match self.storage.cla_storage().any_signed(&aliases).await {
             Ok(true) => {
                 res.status = ConditionResult::PASSED;
                 res.message = "CLA signed".to_string();
