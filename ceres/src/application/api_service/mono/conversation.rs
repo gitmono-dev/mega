@@ -1,9 +1,12 @@
 use common::errors::MegaError;
 
 use super::context::ConversationApplicationService;
-use crate::model::{
-    change_list::MergeStatus,
-    conversation::{ConvType, ReferenceType},
+use crate::{
+    application::member_identity::display_label_for_actor,
+    model::{
+        change_list::MergeStatus,
+        conversation::{ConvType, ReferenceType},
+    },
 };
 
 impl ConversationApplicationService {
@@ -22,6 +25,19 @@ impl ConversationApplicationService {
             .await
     }
 
+    /// System timeline event: persist actor as campsite public id, comment uses display label.
+    pub async fn add_system_event(
+        &self,
+        link: &str,
+        actor: &str,
+        phrase: &str,
+        conv_type: ConvType,
+    ) -> Result<i64, MegaError> {
+        let display = display_label_for_actor(self.ctx.storage(), actor).await;
+        self.add_conversation(link, actor, Some(format!("{display} {phrase}")), conv_type)
+            .await
+    }
+
     pub async fn add_issue_mention_reference(
         &self,
         source_link: &str,
@@ -34,13 +50,8 @@ impl ConversationApplicationService {
             .issue_store()
             .add_reference(source_link, ref_link, ReferenceType::Mention.into())
             .await?;
-        self.add_conversation(
-            ref_link,
-            username,
-            Some(format!("{username} mentioned this on")),
-            ConvType::Mention,
-        )
-        .await?;
+        self.add_system_event(ref_link, username, "mentioned this on", ConvType::Mention)
+            .await?;
         Ok(())
     }
 

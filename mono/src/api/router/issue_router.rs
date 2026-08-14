@@ -135,12 +135,7 @@ async fn close_issue(
     state
         .services()
         .conversation()
-        .add_conversation(
-            &link,
-            actor,
-            Some(format!("{} closed this", actor)),
-            ConvType::Closed,
-        )
+        .add_system_event(&link, actor, "closed this", ConvType::Closed)
         .await?;
     Ok(Json(CommonResult::success(None)))
 }
@@ -167,12 +162,7 @@ async fn reopen_issue(
     state
         .services()
         .conversation()
-        .add_conversation(
-            &link,
-            actor,
-            Some(format!("{} reopen this", actor)),
-            ConvType::Closed,
-        )
+        .add_system_event(&link, actor, "reopen this", ConvType::Reopen)
         .await?;
     Ok(Json(CommonResult::success(None)))
 }

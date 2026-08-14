@@ -4,7 +4,7 @@ import { ConditionalWrap } from '@gitmono/ui'
 import { ActorAvatar } from '@/components/ActorAvatar'
 import { BotBadge } from '@/components/BotBadge'
 import { useMemberByActor } from '@/hooks/useMemberByActor'
-import { megaUserHandle } from '@/utils/megaUser'
+import { megaUserHandle, systemEventPhrase } from '@/utils/megaUser'
 
 import { MemberHovercard } from '../InlinePost/MemberHovercard'
 import HandleTime from './components/HandleTime'
@@ -19,6 +19,7 @@ const EditItem = ({ conv }: EditItemProps) => {
   const { data: member } = useMemberByActor(conv.username, !isBot)
   const profileUsername = member?.user.username || conv.username
   const displayName = megaUserHandle(member?.user, conv.username) || conv.username
+  const phrase = systemEventPhrase(conv.comment, conv.username, 'updated this')
 
   return (
     <>
@@ -38,14 +39,9 @@ const EditItem = ({ conv }: EditItemProps) => {
           </ConditionalWrap>
         </div>
         <div className='flex flex-wrap items-center gap-1.5'>
-          {!conv.comment && (
-            <>
-              <span className='font-semibold'>{displayName}</span>
-              {isBot && <BotBadge size='sm' />}
-            </>
-          )}
-          <span>{conv.comment}</span>
-          {!!conv.comment && isBot && <BotBadge size='sm' />}
+          <span className='font-semibold'>{displayName}</span>
+          {isBot && <BotBadge size='sm' />}
+          <span>{phrase}</span>
         </div>
         <div className='text-sm text-gray-500 hover:text-gray-700'>
           <HandleTime created_at={conv.created_at} />

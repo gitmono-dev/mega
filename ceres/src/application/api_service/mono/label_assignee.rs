@@ -5,6 +5,7 @@ use common::errors::MegaError;
 use jupiter::model::common::LabelAssigneeParams;
 
 use super::context::IssueApplicationService;
+use crate::application::member_identity::display_label_for_actor;
 
 impl IssueApplicationService {
     pub async fn update_item_labels(
@@ -33,6 +34,8 @@ impl IssueApplicationService {
             .modify_labels(to_add.clone(), to_remove.clone(), params)
             .await?;
 
+        let display = display_label_for_actor(self.ctx.storage(), username).await;
+
         if !to_remove.is_empty() {
             self.ctx
                 .storage()
@@ -41,7 +44,7 @@ impl IssueApplicationService {
                 .add_conversation(
                     link,
                     username,
-                    Some(format!("{username} removed {to_remove:?}")),
+                    Some(format!("{display} removed {to_remove:?}")),
                     ConvTypeEnum::Label,
                 )
                 .await?;
@@ -55,7 +58,7 @@ impl IssueApplicationService {
                 .add_conversation(
                     link,
                     username,
-                    Some(format!("{username} added {to_add:?}")),
+                    Some(format!("{display} added {to_add:?}")),
                     ConvTypeEnum::Label,
                 )
                 .await?;
@@ -93,6 +96,8 @@ impl IssueApplicationService {
             .modify_assignees(to_add.clone(), to_remove.clone(), params)
             .await?;
 
+        let display = display_label_for_actor(self.ctx.storage(), username).await;
+
         if !to_remove.is_empty() {
             self.ctx
                 .storage()
@@ -101,7 +106,7 @@ impl IssueApplicationService {
                 .add_conversation(
                     link,
                     username,
-                    Some(format!("{username} unassigned {to_remove:?}")),
+                    Some(format!("{display} unassigned {to_remove:?}")),
                     ConvTypeEnum::Assignee,
                 )
                 .await?;
@@ -115,7 +120,7 @@ impl IssueApplicationService {
                 .add_conversation(
                     link,
                     username,
-                    Some(format!("{username} assigned {to_add:?}")),
+                    Some(format!("{display} assigned {to_add:?}")),
                     ConvTypeEnum::Assignee,
                 )
                 .await?;

@@ -9,6 +9,7 @@ use jupiter::model::cl_dto::CLDetails;
 use crate::{
     application::{
         api_service::mono::ClApplicationService,
+        member_identity::display_label_for_actor,
         webhook::{WebhookEvent, dispatch_cl_webhook},
     },
     model::change_list::{CLDetailRes, Condition, MergeBoxRes, UpdateClStatusPayload},
@@ -66,7 +67,7 @@ impl ClApplicationService {
         Ok(detail)
     }
 
-    pub async fn reopen_cl(&self, link: &str, username: &str) -> Result<(), MegaError> {
+    pub async fn reopen_cl(&self, link: &str, actor: &str) -> Result<(), MegaError> {
         let cl_storage = self.storage().cl_service.cl_store();
         let model = cl_storage
             .get_cl(link)
@@ -79,13 +80,14 @@ impl ClApplicationService {
 
         let link = model.link.clone();
         cl_storage.reopen_cl(model.clone()).await?;
+        let display = display_label_for_actor(self.storage(), actor).await;
         self.storage()
             .cl_service
             .conversation_store()
             .add_conversation(
                 &link,
-                username,
-                Some(format!("{username} reopen this")),
+                actor,
+                Some(format!("{display} reopen this")),
                 ConvTypeEnum::Reopen,
             )
             .await?;
@@ -96,7 +98,7 @@ impl ClApplicationService {
         Ok(())
     }
 
-    pub async fn close_cl(&self, link: &str, username: &str) -> Result<(), MegaError> {
+    pub async fn close_cl(&self, link: &str, actor: &str) -> Result<(), MegaError> {
         let cl_storage = self.storage().cl_service.cl_store();
         let model = cl_storage
             .get_cl(link)
@@ -109,13 +111,14 @@ impl ClApplicationService {
 
         let link = model.link.clone();
         cl_storage.close_cl(model.clone()).await?;
+        let display = display_label_for_actor(self.storage(), actor).await;
         self.storage()
             .cl_service
             .conversation_store()
             .add_conversation(
                 &link,
-                username,
-                Some(format!("{username} closed this")),
+                actor,
+                Some(format!("{display} closed this")),
                 ConvTypeEnum::Closed,
             )
             .await?;
@@ -126,7 +129,7 @@ impl ClApplicationService {
         Ok(())
     }
 
-    pub async fn merge_open_cl(&self, username: &str, link: &str) -> Result<(), MegaError> {
+    pub async fn merge_open_cl(&self, actor: &str, link: &str) -> Result<(), MegaError> {
         let cl_storage = self.storage().cl_service.cl_store();
         let model = cl_storage
             .get_cl(link)
@@ -138,7 +141,7 @@ impl ClApplicationService {
         }
 
         if model.status == MergeStatusEnum::Open {
-            self.merge_cl(username, model.clone()).await?;
+            self.merge_cl(actor, model.clone()).await?;
             if let Some(updated_model) = cl_storage.get_cl(link).await? {
                 dispatch_cl_webhook(self.storage(), WebhookEvent::ClMerged, &updated_model);
             }
@@ -199,13 +202,13 @@ impl ClApplicationService {
     pub async fn save_cl_comment(
         &self,
         link: &str,
-        username: &str,
+        actor: &str,
         content: &str,
     ) -> Result<(), MegaError> {
         let conv_type = if self
             .storage()
             .reviewer_storage()
-            .is_reviewer(link, username)
+            .is_reviewer(link, actor)
             .await?
         {
             ConvTypeEnum::Review
@@ -216,10 +219,10 @@ impl ClApplicationService {
         self.storage()
             .cl_service
             .conversation_store()
-            .add_conversation(link, username, Some(content.to_string()), conv_type)
+            .add_conversation(link, actor, Some(content.to_string()), conv_type)
             .await?;
 
-        if let Err(e) = enqueue_cl_comment_notifications(self, username, link, content).await {
+        if let Err(e) = enqueue_cl_comment_notifications(self, actor, link, content).await {
             tracing::warn!("failed to enqueue cl comment notifications: {e}");
         }
 
@@ -244,7 +247,7 @@ impl ClApplicationService {
     pub async fn update_cl_status(
         &self,
         link: &str,
-        username: &str,
+        actor: &str,
         payload: &UpdateClStatusPayload,
     ) -> Result<(), MegaError> {
         let cl_storage = self.storage().cl_service.cl_store();
@@ -268,13 +271,14 @@ impl ClApplicationService {
                 cl_storage
                     .update_cl_status(model.clone(), new_status.clone())
                     .await?;
+                let display = display_label_for_actor(self.storage(), actor).await;
                 self.storage()
                     .cl_service
                     .conversation_store()
                     .add_conversation(
                         link,
-                        username,
-                        Some(format!("{username} marked this as ready for review")),
+                        actor,
+                        Some(format!("{display} marked this as ready for review")),
                         ConvTypeEnum::Review,
                     )
                     .await?;
@@ -286,13 +290,14 @@ impl ClApplicationService {
                 cl_storage
                     .update_cl_status(model.clone(), new_status.clone())
                     .await?;
+                let display = display_label_for_actor(self.storage(), actor).await;
                 self.storage()
                     .cl_service
                     .conversation_store()
                     .add_conversation(
                         link,
-                        username,
-                        Some(format!("{username} marked this as draft")),
+                        actor,
+                        Some(format!("{display} marked this as draft")),
                         ConvTypeEnum::Draft,
                     )
                     .await?;
@@ -311,10 +316,10 @@ impl ClApplicationService {
 
     pub async fn update_branch_with_webhook(
         &self,
-        username: &str,
+        actor: &str,
         link: &str,
     ) -> Result<String, MegaError> {
-        let new_head = self.update_branch(username, link).await?;
+        let new_head = self.update_branch(actor, link).await?;
         if let Some(cl_model) = self.storage().cl_service.cl_store().get_cl(link).await? {
             dispatch_cl_webhook(self.storage(), WebhookEvent::ClUpdated, &cl_model);
         }
@@ -326,7 +331,7 @@ const EVENT_CL_COMMENT_CREATED: &str = "cl.comment.created";
 
 async fn enqueue_cl_comment_notifications(
     service: &ClApplicationService,
-    actor_username: &str,
+    actor: &str,
     cl_link: &str,
     comment_text: &str,
 ) -> Result<(), MegaError> {
@@ -350,7 +355,7 @@ async fn enqueue_cl_comment_notifications(
     for r in reviewers {
         recipients.insert(r.campsite_user_id);
     }
-    recipients.remove(actor_username);
+    recipients.remove(actor);
 
     for username in recipients {
         if !notif_stg
@@ -366,9 +371,9 @@ async fn enqueue_cl_comment_notifications(
         };
 
         let subject = format!("New comment on CL {cl_link}");
-        let body_text = format!("{actor_username} commented on {cl_link}: {comment_text}");
+        let body_text = format!("{actor} commented on {cl_link}: {comment_text}");
         let body_html = format!(
-            "<p><b>{actor_username}</b> commented on <b>{cl_link}</b>:</p><p>{}</p>",
+            "<p><b>{actor}</b> commented on <b>{cl_link}</b>:</p><p>{}</p>",
             escape_html(comment_text)
         );
 
