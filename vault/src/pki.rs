@@ -16,7 +16,7 @@ impl VaultCore {
     /// Initialize the Vault CA
     async fn init_ca(&self) {
         // err = not found
-        if self.read_api("pki/ca/pem").await.is_err() {
+        if self.read_api("pki/ca/tls/pem").await.is_err() {
             self.config_ca().await;
             self.generate_root(false).await;
             self.config_role(json!({
@@ -67,7 +67,7 @@ impl VaultCore {
 
         self.write_api(
             format!(
-                "pki/root/generate/{}",
+                "pki/root/tls/generate/{}",
                 if exported { "exported" } else { "internal" }
             )
             .as_str(),
@@ -105,7 +105,7 @@ impl VaultCore {
             .clone();
 
         // config role
-        self.write_api(format!("pki/roles/{ROLE}"), Some(role_data))
+        self.write_api(format!("pki/roles/tls/{ROLE}"), Some(role_data))
             .await
             .expect("Failed to configure role");
     }
@@ -121,7 +121,7 @@ impl VaultCore {
             .clone();
 
         // issue cert
-        let resp = self.write_api(format!("pki/issue/{ROLE}"), Some(issue_data));
+        let resp = self.write_api(format!("pki/issue/tls/{ROLE}"), Some(issue_data));
         let resp_body = resp.await.unwrap();
         let cert_data = resp_body.unwrap().data.unwrap();
 
@@ -164,7 +164,7 @@ impl VaultCore {
 
     /// Get root certificate of CA
     pub async fn get_root_cert(&self) -> String {
-        let resp_ca_pem = self.read_api("pki/ca/pem").await.unwrap().unwrap();
+        let resp_ca_pem = self.read_api("pki/ca/tls/pem").await.unwrap().unwrap();
         let ca_data = resp_ca_pem.data.unwrap();
 
         ca_data["certificate"].as_str().unwrap().to_owned()
@@ -239,11 +239,11 @@ mod tests_raw {
 
         // config role
         assert!(
-            test_write_api(core, "pki/roles/test", true, Some(role_data))
+            test_write_api(core, "pki/roles/tls/test", true, Some(role_data))
                 .await
                 .is_ok()
         );
-        let resp = test_read_api(core, "pki/roles/test", true).await;
+        let resp = test_read_api(core, "pki/roles/tls/test", true).await;
         assert!(resp.as_ref().unwrap().is_some());
         let resp = resp.unwrap();
         assert!(resp.is_some());
@@ -281,7 +281,7 @@ mod tests_raw {
         let resp = test_write_api(
             core,
             format!(
-                "pki/root/generate/{}",
+                "pki/root/tls/generate/{}",
                 if exported { "exported" } else { "internal" }
             )
             .as_str(),
@@ -298,7 +298,7 @@ mod tests_raw {
         assert!(data.is_some());
         let key_data = data.unwrap();
 
-        let resp_ca_pem = test_read_api(core, "pki/ca/pem", true).await;
+        let resp_ca_pem = test_read_api(core, "pki/ca/tls/pem", true).await;
         let resp_ca_pem_cert_data = resp_ca_pem.unwrap().unwrap().data.unwrap();
 
         let ca_cert = X509::from_pem(
@@ -353,7 +353,7 @@ mod tests_raw {
         .clone();
 
         // issue cert
-        let resp = test_write_api(core, "pki/issue/test", true, Some(issue_data)).await;
+        let resp = test_write_api(core, "pki/issue/tls/test", true, Some(issue_data)).await;
         assert!(resp.is_ok());
         let resp_body = resp.unwrap();
         assert!(resp_body.is_some());
@@ -414,7 +414,7 @@ mod tests_raw {
             hex::encode(authority_key_id.unwrap().as_slice())
         );
 
-        let resp_ca_pem = test_read_api(core, "pki/ca/pem", true).await;
+        let resp_ca_pem = test_read_api(core, "pki/ca/tls/pem", true).await;
         let resp_ca_pem_cert_data = resp_ca_pem.unwrap().unwrap().data.unwrap();
 
         let ca_cert = X509::from_pem(
