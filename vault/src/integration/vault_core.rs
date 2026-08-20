@@ -3,7 +3,7 @@ use std::{path::PathBuf, sync::Arc};
 use async_trait::async_trait;
 use common::errors::MegaError;
 use jupiter::storage::Storage;
-use libvault_core::{RustyVault, logical::Response, storage::Backend};
+use libvault::{RustyVault, logical::Response, storage::Backend};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use tracing::log;
@@ -58,7 +58,7 @@ impl VaultCore {
 
     pub async fn config(ctx: Storage, key_path: PathBuf) -> Self {
         let backend: Arc<dyn Backend> = Arc::new(JupiterBackend::new(ctx.clone()));
-        let seal_config = libvault_core::core::SealConfig {
+        let seal_config = libvault::core::SealConfig {
             secret_shares: 10,
             secret_threshold: 5,
         };

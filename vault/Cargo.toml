@@ -23,7 +23,7 @@ bs58 = { workspace = true }
 secp256k1 = { workspace = true, features = ["serde", "rand", "hashes"] }
 tokio = { workspace = true, features = ["full"] }
 smallvec = { workspace = true }
-libvault-core = { workspace = true }
+libvault = { workspace = true }
 
 
 [dev-dependencies]

@@ -77,7 +77,7 @@ impl VaultCore {
         .expect("Failed to generate root cert");
     }
 
-    /// - `data`: see [RoleEntry](libvault_core::modules::pki::path_roles)
+    /// - `data`: see [RoleEntry](libvault::modules::pki::path_roles)
     ///  - This function configures a role for issuing certificates.
     ///  - The `ROLE` constant is used as the role name.
     ///
@@ -111,7 +111,7 @@ impl VaultCore {
     }
 
     /// issue certificate
-    /// - `data`: see [issue_path](libvault_core::modules::pki::path_issue)
+    /// - `data`: see [issue_path](libvault::modules::pki::path_issue)
     /// - return: `(cert_pem, private_key)`
     pub async fn issue_cert(&self, data: Value) -> (String, String) {
         // let dns_sans = ["test.com", "a.test.com", "b.test.com"];
@@ -182,7 +182,7 @@ mod tests_raw {
 
     use common::errors::MegaError;
     use jupiter::tests::test_storage;
-    use libvault_core::logical::Response;
+    use libvault::logical::Response;
     use openssl::{asn1::Asn1Time, ec::EcKey, nid::Nid, pkey::PKey, rsa::Rsa, x509::X509};
     use serde_json::{Map, Value, json};
 
