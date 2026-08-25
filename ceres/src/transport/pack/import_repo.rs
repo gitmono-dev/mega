@@ -27,7 +27,7 @@ use io_orbit::object_storage::MultiObjectByteStream;
 use jupiter::{
     redis::lock::RedLock,
     service::git_service::GitService,
-    storage::{Storage, git_db_storage::GitDbStorage},
+    storage::{Storage, base_storage::StorageConnector, git_db_storage::GitDbStorage},
     utils::converter::FromGitModel,
 };
 use tokio::sync::mpsc::{self, Sender};
@@ -363,10 +363,25 @@ impl RepoHandler for ImportRepo {
                     .await
                     .map_err(|e| GitError::CustomError(e.to_string()))?;
             }
-            CommandType::Delete => storage
-                .remove_ref(self.repo.repo_id, &refs.ref_name)
-                .await
-                .map_err(|e| GitError::CustomError(e.to_string()))?,
+            CommandType::Delete => {
+                // The advertised old id is the client's lease; a stale request
+                // must not remove a tag that moved after ref discovery.
+                if !storage
+                    .remove_ref_if_unchanged(
+                        self.repo.repo_id,
+                        &refs.ref_name,
+                        &refs.old_id,
+                        storage.get_connection(),
+                    )
+                    .await
+                    .map_err(|e| GitError::CustomError(e.to_string()))?
+                {
+                    return Err(GitError::CustomError(format!(
+                        "tag {} moved since advertisement (expected {})",
+                        refs.ref_name, refs.old_id
+                    )));
+                }
+            }
             CommandType::Update => {
                 storage
                     .update_ref(self.repo.repo_id, &refs.ref_name, &refs.new_id)

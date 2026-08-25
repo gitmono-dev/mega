@@ -109,9 +109,17 @@ pub async fn dispatch_import_receive_pack_finalized(
                         .await?;
                 }
                 CommandType::Delete => {
-                    git_db
-                        .remove_ref_in_txn(repo_id, &cmd.ref_name, &txn)
-                        .await?;
+                    // Same lease rule as deletion-only pushes: never remove a
+                    // ref that moved after ref discovery.
+                    if !git_db
+                        .remove_ref_if_unchanged(repo_id, &cmd.ref_name, &cmd.old_id, &txn)
+                        .await?
+                    {
+                        return Err(MegaError::Other(format!(
+                            "ref {} moved since advertisement (expected {})",
+                            cmd.ref_name, cmd.old_id
+                        )));
+                    }
                 }
                 CommandType::Update => {
                     git_db
@@ -218,23 +226,17 @@ async fn apply_branch_deletions(
     let txn = storage.begin_db_transaction().await?;
     let git_db = storage.git_db_storage();
     for &cmd in deletions {
-        // Compare-and-delete within the transaction: the advertised old id is
-        // the client's lease on the ref. Another push may have advanced the
-        // branch after ref discovery, and deleting by name alone would remove
-        // that newer tip.
-        let current = git_db
-            .get_ref_by_name_in_txn(repo_id, &cmd.ref_name, &txn)
+        // The advertised old id is the client's lease on the ref; a
+        // conditional delete keeps the check atomic against concurrent pushes.
+        if !git_db
+            .remove_ref_if_unchanged(repo_id, &cmd.ref_name, &cmd.old_id, &txn)
             .await?
-            .ok_or_else(|| MegaError::Other(format!("ref {} not found", cmd.ref_name)))?;
-        if current.ref_git_id != cmd.old_id {
+        {
             return Err(MegaError::Other(format!(
-                "ref {} moved since advertisement (expected {}, found {})",
-                cmd.ref_name, cmd.old_id, current.ref_git_id
+                "ref {} moved since advertisement (expected {})",
+                cmd.ref_name, cmd.old_id
             )));
         }
-        git_db
-            .remove_ref_in_txn(repo_id, &cmd.ref_name, &txn)
-            .await?;
     }
     txn.commit().await.map_err(MegaError::Db)
 }
