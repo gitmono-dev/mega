@@ -273,18 +273,26 @@ def _stage_counts() -> tuple[int, int, int, int]:
         )
 
 def _heartbeat_thread(stop_evt: threading.Event) -> None:
-    # Periodically emit a compact summary of what the script is doing.
-    # This is meant to answer "where is it stuck?" at a glance.
-    while not stop_evt.wait(max(0.5, float(STATUS_HEARTBEAT_INTERVAL_S))):
+    # Periodically refresh the sticky progress footer (always at bottom of stderr).
+    # Also paints once immediately so the footer exists before the first interval elapses.
+    while True:
         lines = _format_status_block()
-        if STATUS_STICKY:
-            with _print_lock:
+        with _print_lock:
+            if STATUS_STICKY:
                 _render_status_block_locked(lines)
-        else:
-            info(" | ".join(lines))
+            else:
+                print("\n".join(lines), file=sys.stderr, flush=True)
+        if stop_evt.wait(max(0.5, float(STATUS_HEARTBEAT_INTERVAL_S))):
+            break
+    if STATUS_STICKY:
+        with _print_lock:
+            _clear_status_block_locked()
+            # Final snapshot as normal lines so the last state remains in scrollback.
+            print("\n".join(_format_status_block()), file=sys.stderr, flush=True)
 
 def _log(level: str, msg: str) -> None:
     # Standardized, low-noise logging. Use --verbose for command outputs.
+    # Always write to stderr so sticky status (also on stderr) and logs share one stream.
     if level == "INFO":
         c = BLUE
     elif level == "WARN":
@@ -294,15 +302,14 @@ def _log(level: str, msg: str) -> None:
     else:
         c = ""
     prefix = f"[{level}]"
+    line = f"{c}{prefix}{RESET} {msg}" if c else f"{prefix} {msg}"
     with _print_lock:
         if STATUS_STICKY:
             _clear_status_block_locked()
-        if c:
-            print(f"{c}{prefix}{RESET} {msg}")
-        else:
-            print(f"{prefix} {msg}")
-        if STATUS_STICKY and _status_block_last_lines:
-            _render_status_block_locked(_status_block_last_lines)
+        print(line, file=sys.stderr, flush=True)
+        if STATUS_STICKY:
+            # Re-paint with fresh progress so OK/INFO lines don't leave a stale block.
+            _render_status_block_locked(_format_status_block())
 
 def info(msg: str) -> None:
     _log("INFO", msg)
@@ -791,7 +798,6 @@ def process_crate_version(
         _record_push_fail()
         return False
 
-    ok(f"{_fmt_repo(crate_name, version)} pushed")
     _record_push_ok()
     # On success, remove local repo directory to save disk space.
     try:
@@ -1105,6 +1111,9 @@ def scan_and_process_crates(
             nonlocal succeeded, failed, skipped
             status, c_name, v = fut.result()
             _progress_note_result(status)
+            # Print after progress counters update so sticky footer shows the new totals.
+            if status == "ok":
+                ok(f"{_fmt_repo(c_name, v)} pushed")
             with lock:
                 if status == "ok":
                     succeeded += 1

@@ -218,7 +218,7 @@ def main(argv: list[str] | None = None) -> int:
         "--jobs",
         str(args.jobs),
         "--keep-crate-cache",
-        "--no-status-sticky",
+        "--status-sticky",
     ]
     cmd.extend(extra)
 
@@ -242,7 +242,7 @@ def main(argv: list[str] | None = None) -> int:
         "--jobs",
         str(args.jobs),
         "--keep-crate-cache",
-        "--no-status-sticky",
+        "--status-sticky",
         *extra,
     ]
     print("Running:", " ".join(printable))
