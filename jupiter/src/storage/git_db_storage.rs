@@ -535,9 +535,22 @@ impl GitDbStorage {
             .map(|m| (m, num_items))?)
     }
 
-    /// Find single tag by repo id and tag name
-    pub async fn get_tag_by_repo_and_name(
+    /// Find a stored annotated tag object by its object id.
+    pub async fn get_tag_by_hash(
         &self,
+        repo_id: i64,
+        tag_id: &str,
+    ) -> Result<Option<git_tag::Model>, MegaError> {
+        let result = git_tag::Entity::find()
+            .filter(git_tag::Column::RepoId.eq(repo_id))
+            .filter(git_tag::Column::TagId.eq(tag_id.to_string()))
+            .one(self.get_connection())
+            .await?;
+        Ok(result)
+    }
+
+    /// Find single tag by repo id and tag name
+    pub async fn get_tag_by_repo_and_name(        &self,
         repo_id: i64,
         name: &str,
     ) -> Result<Option<git_tag::Model>, MegaError> {

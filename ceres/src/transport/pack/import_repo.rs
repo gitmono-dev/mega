@@ -401,6 +401,15 @@ impl RepoHandler for ImportRepo {
             .is_some()
     }
 
+    async fn check_tag_exist(&self, hash: &str) -> bool {
+        self.storage
+            .git_db_storage()
+            .get_tag_by_hash(self.repo.repo_id, hash)
+            .await
+            .unwrap()
+            .is_some()
+    }
+
     async fn check_default_branch(&self) -> bool {
         let storage = self.storage.git_db_storage();
         storage
