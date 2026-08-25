@@ -28,9 +28,25 @@ pub async fn dispatch_import_receive_pack_finalized(
     unpack_redlock: Arc<RedLock>,
     extra_timings: Arc<Mutex<Vec<(String, u128)>>>,
 ) -> Result<(), MegaError> {
-    let commit_id = match commands.iter().find(|c| c.ref_type == RefTypeEnum::Branch) {
+    // The attach commit is sourced from the pushed branch tip; deletions carry
+    // the zero id and resolve no commit. A push whose branch commands are all
+    // deletions has no content to attach (the repo is necessarily attached
+    // already, or its refs would not exist), so just apply the deletions.
+    let branch_cmds: Vec<&RefCommand> = commands
+        .iter()
+        .filter(|c| c.ref_type == RefTypeEnum::Branch)
+        .collect();
+    let attach_source = branch_cmds
+        .iter()
+        .find(|c| c.command_type != CommandType::Delete);
+    let commit_id = match attach_source {
         Some(cmd) => cmd.new_id.clone(),
-        None => return Ok(()),
+        None => {
+            if branch_cmds.is_empty() {
+                return Ok(());
+            }
+            return apply_branch_deletions(&storage, repo_id, &branch_cmds).await;
+        }
     };
 
     let mono_storage = storage.mono_storage();
@@ -191,4 +207,21 @@ pub async fn dispatch_import_receive_pack_finalized(
     Err(MegaError::Other(
         "attach_to_monorepo_parent: exceeded retry limit for concurrent root updates".into(),
     ))
+}
+
+/// Applies deletion-only branch commands. The monorepo root ref is untouched,
+/// so the root update lock and attach-retry loop are not needed.
+async fn apply_branch_deletions(
+    storage: &Storage,
+    repo_id: i64,
+    deletions: &[&RefCommand],
+) -> Result<(), MegaError> {
+    let txn = storage.begin_db_transaction().await?;
+    let git_db = storage.git_db_storage();
+    for cmd in deletions {
+        git_db
+            .remove_ref_in_txn(repo_id, &cmd.ref_name, &txn)
+            .await?;
+    }
+    txn.commit().await.map_err(MegaError::Db)
 }
