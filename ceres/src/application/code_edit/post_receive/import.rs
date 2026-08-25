@@ -32,9 +32,11 @@ pub async fn dispatch_import_receive_pack_finalized(
     // the zero id and resolve no commit. A push whose branch commands are all
     // deletions has no content to attach (the repo is necessarily attached
     // already, or its refs would not exist), so just apply the deletions.
+    // Commands already rejected by the protocol layer keep their ng status and
+    // are excluded here; their report lines were already emitted upstream.
     let branch_cmds: Vec<&RefCommand> = commands
         .iter()
-        .filter(|c| c.ref_type == RefTypeEnum::Branch)
+        .filter(|c| c.ref_type == RefTypeEnum::Branch && c.status == "ok")
         .collect();
     let attach_source = branch_cmds
         .iter()
@@ -99,10 +101,7 @@ pub async fn dispatch_import_receive_pack_finalized(
 
         let txn = storage.begin_db_transaction().await?;
         let git_db = storage.git_db_storage();
-        for cmd in &commands {
-            if cmd.ref_type != RefTypeEnum::Branch {
-                continue;
-            }
+        for &cmd in &branch_cmds {
             match cmd.command_type {
                 CommandType::Create => {
                     git_db

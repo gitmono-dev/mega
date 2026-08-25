@@ -252,6 +252,21 @@ impl SmartSession {
                 }
             }
         }
+        // A pack-less push carries no objects, so any surviving non-deletion
+        // command must target an object the server already stores; real git
+        // clients never send otherwise ("everything up-to-date" sends no
+        // request at all). Fail such commands here rather than letting
+        // finalization trip over the missing object later.
+        if pack_stream.is_none() {
+            for command in commands.iter_mut() {
+                if command.command_type != CommandType::Delete && command.status == "ok" {
+                    let exists = repo_handler.check_commit_exist(&command.new_id).await;
+                    if !exists {
+                        command.failed(format!("target object {} not found", command.new_id));
+                    }
+                }
+            }
+        }
         // 1. unpack progress. Pack-less pushes (e.g. ref deletions) carry no packfile
         //    after the command flush, so unpack is skipped entirely.
         let t_unpack = Instant::now();
