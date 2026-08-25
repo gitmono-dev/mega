@@ -441,6 +441,13 @@ impl RepoHandler for MonoRepo {
             .is_some()
     }
 
+    // Tag pushes are rejected up front on the monorepo path, so this is only
+    // reachable for non-tag targets in practice; commits are the realistic
+    // reference target.
+    async fn check_object_exist(&self, hash: &str) -> bool {
+        self.check_commit_exist(hash).await
+    }
+
     async fn check_default_branch(&self) -> bool {
         true
     }

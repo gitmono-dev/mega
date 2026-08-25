@@ -234,12 +234,10 @@ pub trait RepoHandler: Send + Sync + 'static {
 
     async fn check_commit_exist(&self, hash: &str) -> bool;
 
-    /// Whether the repository stores an annotated tag object with this id.
-    /// Defaults to false so repo types that do not track tag objects reject
-    /// unverifiable tag targets instead of accepting them blind.
-    async fn check_tag_exist(&self, _hash: &str) -> bool {
-        false
-    }
+    /// Whether the repository stores any object with this id (tag, commit,
+    /// tree, or blob) that a pushed lightweight or annotated tag could
+    /// reference.
+    async fn check_object_exist(&self, hash: &str) -> bool;
 
     async fn check_default_branch(&self) -> bool;
 

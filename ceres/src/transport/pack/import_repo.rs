@@ -401,13 +401,32 @@ impl RepoHandler for ImportRepo {
             .is_some()
     }
 
-    async fn check_tag_exist(&self, hash: &str) -> bool {
-        self.storage
-            .git_db_storage()
+    /// A pushed tag may reference an annotated tag object, commit, tree, or
+    /// blob; accept it only if that object is stored.
+    async fn check_object_exist(&self, hash: &str) -> bool {
+        let git_db = self.storage.git_db_storage();
+        if git_db
             .get_tag_by_hash(self.repo.repo_id, hash)
             .await
             .unwrap()
             .is_some()
+            || self.check_commit_exist(hash).await
+        {
+            return true;
+        }
+        if git_db
+            .get_tree_by_hash(self.repo.repo_id, hash)
+            .await
+            .unwrap()
+            .is_some()
+        {
+            return true;
+        }
+        !git_db
+            .get_blobs_by_hashes(self.repo.repo_id, vec![hash.to_string()])
+            .await
+            .unwrap()
+            .is_empty()
     }
 
     async fn check_default_branch(&self) -> bool {

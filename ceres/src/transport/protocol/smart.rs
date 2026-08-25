@@ -245,7 +245,6 @@ impl SmartSession {
         // front instead of failing later with opaque errors or silently
         // writing unrelated refs. Import repos handle their own deletions.
         if is_monorepo {
-            let mut surviving_branch_update = false;
             for command in commands.iter_mut() {
                 if command.command_type == CommandType::Delete {
                     command.failed(format!(
@@ -258,11 +257,37 @@ impl SmartSession {
                          manage tags through the tag API"
                             .to_string(),
                     );
-                } else if command.status == "ok" {
-                    // Each push materializes a single CL from one branch tip;
-                    // multiple updates would overwrite each other's CL ref
-                    // while all reporting success. (Packed pushes hit the same
-                    // restriction in check_entry.)
+                }
+            }
+        }
+        // A pack-less push carries no objects, so every surviving non-deletion
+        // command must target an object the server already stores; real git
+        // clients never send otherwise ("everything up-to-date" sends no
+        // request at all). Tags may reference any stored object type; branches
+        // must point at a commit. Fail unverifiable commands here rather than
+        // persisting dangling refs or tripping finalization later.
+        if pack_stream.is_none() {
+            for command in commands.iter_mut() {
+                if command.status != "ok" || command.command_type == CommandType::Delete {
+                    continue;
+                }
+                let exists = match command.ref_type {
+                    RefTypeEnum::Branch => repo_handler.check_commit_exist(&command.new_id).await,
+                    _ => repo_handler.check_object_exist(&command.new_id).await,
+                };
+                if !exists {
+                    command.failed(format!("target object {} not found", command.new_id));
+                }
+            }
+        }
+        // Each monorepo push materializes a single CL from one branch tip;
+        // multiple updates would overwrite each other's CL ref while all
+        // reporting success. Count only commands that survived validation.
+        // (Packed pushes hit the same restriction in check_entry.)
+        if is_monorepo {
+            let mut surviving_branch_update = false;
+            for command in commands.iter_mut() {
+                if command.ref_type == RefTypeEnum::Branch && command.status == "ok" {
                     if surviving_branch_update {
                         command.failed(
                             "monorepo pushes support at most one branch update".to_string(),
@@ -270,26 +295,6 @@ impl SmartSession {
                     } else {
                         surviving_branch_update = true;
                     }
-                }
-            }
-        }
-        // A pack-less push carries no objects, so every surviving non-deletion
-        // command must target an object the server already stores; real git
-        // clients never send otherwise ("everything up-to-date" sends no
-        // request at all). Branches resolve against commits, annotated tags
-        // against stored tag objects. Fail unverifiable commands here rather
-        // than persisting dangling refs or tripping finalization later.
-        if pack_stream.is_none() {
-            for command in commands.iter_mut() {
-                if command.status != "ok" || command.command_type == CommandType::Delete {
-                    continue;
-                }
-                let exists = match command.ref_type {
-                    RefTypeEnum::Tag => repo_handler.check_tag_exist(&command.new_id).await,
-                    _ => repo_handler.check_commit_exist(&command.new_id).await,
-                };
-                if !exists {
-                    command.failed(format!("target object {} not found", command.new_id));
                 }
             }
         }
