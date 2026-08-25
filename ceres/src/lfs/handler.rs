@@ -45,6 +45,12 @@ pub async fn lfs_retrieve_lock(
             lock_list.next_cursor = next;
             Ok(lock_list)
         }
+        // Client-input errors (e.g. a malformed `limit`) must reach the router
+        // unmasked so `map_lfs_error` can classify them as 400; only genuine
+        // lookup failures are hidden behind the generic message.
+        Err(GitLFSError::GeneralError(msg)) if msg.starts_with("Invalid") => {
+            Err(GitLFSError::GeneralError(msg))
+        }
         Err(_) => Err(GitLFSError::GeneralError(
             "Lookup operation failed!".to_string(),
         )),
@@ -678,8 +684,17 @@ mod tests {
 
     #[test]
     fn non_numeric_and_negative_limits_are_rejected() {
-        assert!(apply_lock_limit(vec![lock("1")], "abc").is_err());
-        assert!(apply_lock_limit(vec![lock("1")], "-1").is_err());
+        // The router classifies by message content ("Invalid..." -> 400), so the
+        // rejection must carry that prefix to survive the lookup-error masking
+        // in `lfs_retrieve_lock`.
+        for limit in ["abc", "-1"] {
+            match apply_lock_limit(vec![lock("1")], limit) {
+                Err(GitLFSError::GeneralError(msg)) => {
+                    assert!(msg.starts_with("Invalid"), "unexpected message: {msg}");
+                }
+                other => panic!("expected GeneralError, got {other:?}"),
+            }
+        }
     }
 
     #[test]
