@@ -238,10 +238,12 @@ impl SmartSession {
             .repo_handler_with_commands(state, commands.clone())
             .await?;
         let is_monorepo = repo_handler.is_monorepo();
-        // A deletion's new id is the zero id and monorepo state only advances
-        // through CL merges, so there is no commit to materialize a ref update
-        // from. Reject such commands up front (import repos do support
-        // deletion) instead of failing later with opaque zero-id lookup errors.
+        // Monorepo state advances only through CL merges: a deletion's new id
+        // is the zero id and resolves no commit to materialize a ref update
+        // from, and tag refs are managed through the tag API rather than
+        // receive-pack (pushed tags were never persisted here). Reject both up
+        // front instead of failing later with opaque errors or silently
+        // writing unrelated refs. Import repos handle their own deletions.
         if is_monorepo {
             for command in commands.iter_mut() {
                 if command.command_type == CommandType::Delete {
@@ -249,17 +251,27 @@ impl SmartSession {
                         "deleting {} is not supported on monorepo",
                         command.ref_name
                     ));
+                } else if command.ref_type == RefTypeEnum::Tag {
+                    command.failed(
+                        "tag pushes are not supported on monorepo; \
+                         manage tags through the tag API"
+                            .to_string(),
+                    );
                 }
             }
         }
-        // A pack-less push carries no objects, so any surviving non-deletion
-        // command must target an object the server already stores; real git
-        // clients never send otherwise ("everything up-to-date" sends no
-        // request at all). Fail such commands here rather than letting
-        // finalization trip over the missing object later.
+        // A pack-less push carries no objects, so any surviving branch command
+        // must target a commit the server already stores; real git clients
+        // never send otherwise ("everything up-to-date" sends no request at
+        // all). Fail such commands here rather than letting finalization trip
+        // over the missing object later. Tags are exempt: their new id may be
+        // an annotated tag object, which the commit table does not track.
         if pack_stream.is_none() {
             for command in commands.iter_mut() {
-                if command.command_type != CommandType::Delete && command.status == "ok" {
+                if command.status == "ok"
+                    && command.ref_type == RefTypeEnum::Branch
+                    && command.command_type != CommandType::Delete
+                {
                     let exists = repo_handler.check_commit_exist(&command.new_id).await;
                     if !exists {
                         command.failed(format!("target object {} not found", command.new_id));

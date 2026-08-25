@@ -168,6 +168,20 @@ impl GitDbStorage {
         Ok(())
     }
 
+    pub async fn get_ref_by_name_in_txn(
+        &self,
+        repo_id: i64,
+        ref_name: &str,
+        txn: &DatabaseTransaction,
+    ) -> Result<Option<import_refs::Model>, MegaError> {
+        let result = import_refs::Entity::find()
+            .filter(import_refs::Column::RepoId.eq(repo_id))
+            .filter(import_refs::Column::RefName.eq(ref_name))
+            .one(txn)
+            .await?;
+        Ok(result)
+    }
+
     pub async fn update_ref_in_txn(
         &self,
         repo_id: i64,
