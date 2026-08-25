@@ -1,5 +1,7 @@
 # Crates.io crates import (third-party/rust/crates)
 
+> **中文上手（架构 / 本地脚本 / Terraform Job 调试）：** [上手指南.md](./上手指南.md)
+
 ## Overview
 
 This script imports crates from `crates.io` into Mega as **path-based git repositories** under:

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import queue
 import random
 import shutil
 import subprocess
@@ -13,7 +14,7 @@ import tarfile
 import time
 import urllib.request
 from collections import defaultdict
-from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, as_completed, wait
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 import threading
@@ -64,6 +65,8 @@ _progress_skip = 0
 _progress_fail = 0
 _progress_scan_complete = False
 _progress_total: int | None = None  # known after scan finishes (or non-streaming start)
+_progress_jobs = 1
+_work_queue: queue.Queue | None = None
 
 def _record_push_ok() -> None:
     now = time.monotonic()
@@ -173,6 +176,18 @@ def _format_eta(done: int, total: int | None) -> str:
         return f"eta={remain / 60:.1f}m"
     return f"eta={remain / 3600:.1f}h"
 
+def _format_progress_bar(done: int, total: int | None, width: int = 30) -> str:
+    """ASCII progress bar, e.g. [############--------------]  40.0%"""
+    if not total or total <= 0:
+        return f"[{'-' * width}]   ?.??%"
+    frac = min(1.0, max(0.0, done / total))
+    filled = int(round(width * frac))
+    if done > 0 and filled == 0:
+        filled = 1
+    filled = min(width, filled)
+    bar = "#" * filled + "-" * (width - filled)
+    return f"[{bar}] {frac * 100.0:5.1f}%"
+
 def _format_progress_line() -> str:
     with _progress_lock:
         crates = _progress_index_crates
@@ -183,20 +198,24 @@ def _format_progress_line() -> str:
         fail_n = _progress_fail
         scan_done = _progress_scan_complete
         total = _progress_total
+        jobs = _progress_jobs
+    # Denominator = final total after scan, else versions discovered so far (grows toward ~2M).
+    denom = total if (total and total > 0) else (queued if queued > 0 else None)
     pending = max(0, queued - done)
-    if total and total > 0:
-        pct = (done / total) * 100.0
-        return (
-            f"progress: {done}/{total} ({pct:.1f}%) "
-            f"ok={ok_n} skip={skip_n} fail={fail_n} pending={pending} "
-            f"index_crates={crates} scan={'done' if scan_done else 'running'} "
-            f"{_format_eta(done, total)}"
-        )
+    qdepth = 0
+    if _work_queue is not None:
+        try:
+            qdepth = _work_queue.qsize()
+        except NotImplementedError:
+            qdepth = pending
+    bar = _format_progress_bar(done, denom)
+    scan_tag = "scan=done" if scan_done else "scan=running"
+    count_s = f"{done}/{denom}" if denom else f"done={done}"
     return (
-        f"progress: done={done} queued={queued} pending={pending} "
-        f"ok={ok_n} skip={skip_n} fail={fail_n} "
-        f"index_crates={crates} scan={'done' if scan_done else 'running'} "
-        f"{_format_eta(done, None)}"
+        f"progress: {bar}  {count_s}  "
+        f"jobs={jobs} ok={ok_n} skip={skip_n} fail={fail_n} "
+        f"queue={qdepth} crates={crates} {scan_tag}  "
+        f"{_format_eta(done, denom)}"
     )
 
 def _clear_status_block_locked() -> None:
@@ -241,8 +260,37 @@ def _format_status_block() -> list[str]:
     fail60 = _push_fail_last_60s()
     ok_total, fail_total = _push_totals()
     ppm = _pushes_per_min_since_start()
+    with _progress_lock:
+        done = _progress_versions_done
+        queued = _progress_versions_queued
+        total = _progress_total
+        ok_n = _progress_ok
+        skip_n = _progress_skip
+        fail_n = _progress_fail
+        crates = _progress_index_crates
+        scan_done = _progress_scan_complete
+        jobs = _progress_jobs
+    # Growing denominator while index scan runs; locks to final total when scan completes.
+    denom = total if (total and total > 0) else (queued if queued > 0 else None)
+    qdepth = 0
+    if _work_queue is not None:
+        try:
+            qdepth = _work_queue.qsize()
+        except NotImplementedError:
+            qdepth = max(0, queued - done)
+    if denom:
+        head = f"progress: {_format_progress_bar(done, denom)}  {done}/{denom}  {_format_eta(done, denom)}"
+    else:
+        head = f"progress: {_format_progress_bar(0, None)}  scanning index..."
+    scan_line = (
+        f"scan: crates={crates} versions_found={queued} "
+        f"status={'done' if scan_done else 'running (denom grows until full index walk)'}"
+    )
     return [
-        _format_progress_line(),
+        head,
+        scan_line,
+        f"config: jobs={jobs} queue_depth={qdepth}",
+        f"counts: ok={ok_n} skip={skip_n} fail={fail_n} done={done}",
         f"status: downloading={d} extracting={x} waiting_push={w} pushing={p}",
         (
             f"push: ok_60s={ok60} fail_60s={fail60} "
@@ -998,6 +1046,7 @@ def scan_and_process_crates(
     reimport_ok: bool,
     keep_crate_cache: bool = False,
 ) -> tuple[int, int, int]:
+    global _progress_jobs, _work_queue
     info("Scanning crates.io index...")
     _progress_reset()
 
@@ -1024,7 +1073,10 @@ def scan_and_process_crates(
         use_streaming_full_index = not only_crates and not (limit_crates and limit_crates > 0)
 
         if use_streaming_full_index:
-            info("Streaming index: will download/commit/push while walking crate files.")
+            info(
+                "Streaming index in parallel: producer walks full crates.io-index "
+                "while workers import/push (denominator grows with scan ~2M versions)."
+            )
         elif only_crates:
             crates = scan_selected_crates_index(index_path, only_crates)
             info(f"Found {len(crates)} crates.")
@@ -1049,6 +1101,13 @@ def scan_and_process_crates(
         failed = 0
         skipped = 0
         lock = threading.Lock()
+        _progress_jobs = max(1, int(jobs))
+        info(
+            f"Config: jobs={_progress_jobs} "
+            f"max_versions_per_crate={max_versions_per_crate} "
+            f"keep_crate_cache={keep_crate_cache} "
+            f"reimport_ok={reimport_ok} dry_run={dry_run}"
+        )
 
         def process_one(crate_name: str, v: str) -> tuple[str, str, str]:
             key = (crate_name, v)
@@ -1107,9 +1166,8 @@ def scan_and_process_crates(
                 warn(f"{_fmt_repo(crate_name, v)} failed: {e}")
                 return ("fail", crate_name, v)
 
-        def record_result(fut) -> None:
+        def record_result_status(status: str, c_name: str, v: str) -> None:
             nonlocal succeeded, failed, skipped
-            status, c_name, v = fut.result()
             _progress_note_result(status)
             # Print after progress counters update so sticky footer shows the new totals.
             if status == "ok":
@@ -1133,38 +1191,87 @@ def scan_and_process_crates(
                 manifest[key] = rec
                 append_manifest_record(manifest_path, rec)
 
-        # Concurrency: bounded pending futures in streaming mode to avoid RAM spikes.
-        with ThreadPoolExecutor(max_workers=max(1, int(jobs))) as ex:
-            if use_streaming_full_index:
-                max_pending = max(32, int(jobs) * 8)
-                pending: set = set()
-                for crate_name, versions in stream_index_crate_versions(
-                    index_path, max_versions_per_crate
-                ):
-                    for v in versions:
-                        pending.add(ex.submit(process_one, crate_name, v))
-                        while len(pending) >= max_pending:
-                            done, _ = wait(pending, return_when=FIRST_COMPLETED)
-                            for df in done:
-                                pending.discard(df)
-                                record_result(df)
-                _progress_mark_scan_complete()
-                info(
-                    f"Index scan complete: {_progress_index_crates} crates, "
-                    f"{_progress_versions_queued} versions queued; draining workers..."
+        def record_result(fut) -> None:
+            status, c_name, v = fut.result()
+            record_result_status(status, c_name, v)
+
+        n_jobs = max(1, int(jobs))
+        if use_streaming_full_index:
+            # Producer (index scan) runs at full speed into a large work queue while
+            # workers download/push in parallel. Denominator (versions_found) grows
+            # with the scan toward the full crates.io size (~2M versions), not with
+            # the tiny in-flight window that previously stalled the walk.
+            #
+            # Queue holds (name, version) only — ~2M entries is acceptable within Job memory.
+            work_q: queue.Queue = queue.Queue(maxsize=0)
+            _work_queue = work_q
+            scan_error: list[BaseException] = []
+
+            def index_producer() -> None:
+                try:
+                    for crate_name, versions in stream_index_crate_versions(
+                        index_path, max_versions_per_crate
+                    ):
+                        for v in versions:
+                            work_q.put((crate_name, v))
+                    _progress_mark_scan_complete()
+                    info(
+                        f"Index scan complete: {_progress_index_crates} crates, "
+                        f"{_progress_versions_queued} versions found; workers draining queue..."
+                    )
+                except BaseException as e:
+                    scan_error.append(e)
+                    warn(f"Index scan failed: {e}")
+                finally:
+                    for _ in range(n_jobs):
+                        work_q.put(None)
+
+            def worker_loop() -> None:
+                while True:
+                    item = work_q.get()
+                    try:
+                        if item is None:
+                            return
+                        crate_name, v = item
+                        status, c_name, ver = process_one(crate_name, v)
+                        record_result_status(status, c_name, ver)
+                    finally:
+                        work_q.task_done()
+
+            info(
+                "Parallel mode: index scan producer + "
+                f"{n_jobs} import workers (queue unbounded for version descriptors)."
+            )
+            producer = threading.Thread(
+                target=index_producer, name="crates-index-scan", daemon=True
+            )
+            workers = [
+                threading.Thread(
+                    target=worker_loop, name=f"crates-worker-{i}", daemon=True
                 )
-                for df in as_completed(pending):
-                    record_result(df)
-            else:
-                tasks: list[tuple[str, str]] = []
-                for crate_name, versions in crates_items:
-                    vs = sorted(versions)
-                    if max_versions_per_crate > 0:
-                        vs = vs[-max_versions_per_crate:]
-                    for v in vs:
-                        tasks.append((crate_name, v))
-                _progress_set_total(len(tasks))
-                info(f"Starting to process {len(tasks)} crate versions...")
+                for i in range(n_jobs)
+            ]
+            producer.start()
+            for t in workers:
+                t.start()
+            producer.join()
+            for t in workers:
+                t.join()
+            _work_queue = None
+            if scan_error:
+                raise scan_error[0]
+        else:
+            _work_queue = None
+            tasks: list[tuple[str, str]] = []
+            for crate_name, versions in crates_items:
+                vs = sorted(versions)
+                if max_versions_per_crate > 0:
+                    vs = vs[-max_versions_per_crate:]
+                for v in vs:
+                    tasks.append((crate_name, v))
+            _progress_set_total(len(tasks))
+            info(f"Starting to process {len(tasks)} crate versions...")
+            with ThreadPoolExecutor(max_workers=n_jobs) as ex:
                 futures = [ex.submit(process_one, c, v) for c, v in tasks]
                 for f in as_completed(futures):
                     record_result(f)
@@ -1175,6 +1282,7 @@ def scan_and_process_crates(
         write_manifest(manifest_path, manifest)
         return succeeded, skipped, failed
     finally:
+        _work_queue = None
         stop_evt.set()
         if hb_thread is not None:
             hb_thread.join(timeout=max(1.0, float(STATUS_HEARTBEAT_INTERVAL_S) + 1.0))
