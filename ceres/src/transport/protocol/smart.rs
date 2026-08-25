@@ -238,16 +238,13 @@ impl SmartSession {
             .repo_handler_with_commands(state, commands.clone())
             .await?;
         let is_monorepo = repo_handler.is_monorepo();
-        // A deletion's new id is the zero id and monorepo branch state only
-        // advances through CL merges, so there is no commit to materialize a
-        // ref update from. Reject such commands up front (import repos do
-        // support deletion) instead of failing later inside finalize with an
-        // opaque zero-id lookup error.
+        // A deletion's new id is the zero id and monorepo state only advances
+        // through CL merges, so there is no commit to materialize a ref update
+        // from. Reject such commands up front (import repos do support
+        // deletion) instead of failing later with opaque zero-id lookup errors.
         if is_monorepo {
             for command in commands.iter_mut() {
-                if command.ref_type == RefTypeEnum::Branch
-                    && command.command_type == CommandType::Delete
-                {
+                if command.command_type == CommandType::Delete {
                     command.failed(format!(
                         "deleting {} is not supported on monorepo",
                         command.ref_name
@@ -296,7 +293,11 @@ impl SmartSession {
         //    mono and import both persist branch refs inside `finalize_receive_pack`.
         for command in commands.iter_mut() {
             if command.ref_type == RefTypeEnum::Tag {
-                // just update if refs type is tag
+                // Already-rejected commands (e.g. monorepo deletions) keep
+                // their up-front failure reason instead of being re-processed.
+                if command.status != "ok" {
+                    continue;
+                }
                 if let Err(e) = repo_handler.update_refs(command).await {
                     command.failed(e.to_string());
                 }

@@ -28,6 +28,28 @@ pub async fn dispatch_import_receive_pack_finalized(
     unpack_redlock: Arc<RedLock>,
     extra_timings: Arc<Mutex<Vec<(String, u128)>>>,
 ) -> Result<(), MegaError> {
+    // Deleting the current default branch would leave the repository with a
+    // dangling HEAD: ref discovery advertises a zero id and import APIs unwrap
+    // the now-missing default ref. Reject it for every path (deletion-only and
+    // mixed pushes alike) before any ref row is removed.
+    if let Some(default_ref) = storage
+        .git_db_storage()
+        .get_ref(repo_id)
+        .await?
+        .into_iter()
+        .find(|r| r.default_branch)
+        && commands.iter().any(|c| {
+            c.ref_type == RefTypeEnum::Branch
+                && c.command_type == CommandType::Delete
+                && c.ref_name == default_ref.ref_name
+        })
+    {
+        return Err(MegaError::Other(format!(
+            "cannot delete the current default branch {}",
+            default_ref.ref_name
+        )));
+    }
+
     // The attach commit is sourced from the pushed branch tip; deletions carry
     // the zero id and resolve no commit. A push whose branch commands are all
     // deletions has no content to attach (the repo is necessarily attached
