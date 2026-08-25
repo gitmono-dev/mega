@@ -404,7 +404,11 @@ impl RepoHandler for ImportRepo {
                 .lock()
                 .expect("command_list lock poisoned");
             cmds.iter()
-                .find(|c| c.ref_type == RefTypeEnum::Branch && c.new_id != ZERO_ID)
+                .find(|c| {
+                    c.ref_type == RefTypeEnum::Branch
+                        && c.status == "ok"
+                        && c.new_id != ZERO_ID
+                })
                 .map(|c| c.new_id.clone())
         };
         let current_head = match from_commands {

@@ -342,15 +342,13 @@ impl SmartSession {
 
         let mut finalize_ms: Option<u128> = None;
         let mut bind_ms: Option<u128> = None;
-        // Skip finalize when nothing survives to finalize: every command
-        // rejected up front (e.g. delete-only monorepo pushes), or a monorepo
-        // push carrying only tag mutations — monorepo finalize events describe
-        // a branch tip and fail against an empty one. Import finalization is
-        // safe without branches (its dispatch returns early) and keeps running.
+        // Skip finalize when no branch command survived validation: rejected
+        // deletions, missing-target updates, or tag-only pushes have no branch
+        // work to finalize, and finalize consumers assume a usable branch tip.
         let has_branch_work = commands
             .iter()
             .any(|c| c.ref_type == RefTypeEnum::Branch && c.status == "ok");
-        if !unpack_failed && (!is_monorepo || has_branch_work) {
+        if !unpack_failed && has_branch_work {
             let t_finalize = Instant::now();
             if let Err(e) = repo_handler.finalize_receive_pack().await {
                 let msg = e.to_string();

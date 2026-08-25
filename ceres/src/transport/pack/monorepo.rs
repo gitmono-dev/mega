@@ -43,13 +43,20 @@ use crate::{
     },
 };
 
+/// Branch-tip metadata describing the surviving work of this push. Behind a
+/// mutex because the protocol layer refines it after up-front rejections
+/// (deletions, missing targets) via [`RepoHandler::sync_commands_after_unpack`].
+pub struct BranchTip {
+    pub base_branch: String,
+    pub from_hash: String,
+    pub to_hash: String,
+}
+
 pub struct MonoRepo {
     pub storage: Storage,
     pub git_object_cache: Arc<GitObjectCache>,
     pub path: PathBuf,
-    pub base_branch: String,
-    pub from_hash: String,
-    pub to_hash: String,
+    pub tip: Mutex<BranchTip>,
     // current_commit only exists when an unpack operation occurs.
     // When only a branch is updated and the pack file is empty, this value will be None.
     pub current_commit: Arc<RwLock<Option<Commit>>>,
@@ -75,6 +82,26 @@ impl RepoHandler for MonoRepo {
             .command_list
             .lock()
             .expect("command_list lock poisoned") = commands.to_vec();
+        // Tip metadata was captured at handler construction, before the
+        // protocol layer rejected commands (deletions, missing targets); keep
+        // it pointing at surviving work so finalize events stay valid.
+        if let Some(command) = commands
+            .iter()
+            .find(|x| {
+                x.ref_type == RefTypeEnum::Branch
+                    && x.command_type != CommandType::Delete
+                    && x.status == "ok"
+            })
+        {
+            let mut tip = self.tip.lock().expect("branch tip lock poisoned");
+            tip.from_hash = command.old_id.clone();
+            tip.to_hash = command.new_id.clone();
+            tip.base_branch = command
+                .ref_name
+                .strip_prefix("refs/heads/")
+                .unwrap_or(command.ref_name.as_str())
+                .to_string();
+        }
     }
 
     async fn refs_with_head_hash(&self) -> (String, Vec<Refs>) {
@@ -162,15 +189,23 @@ impl RepoHandler for MonoRepo {
     }
 
     async fn finalize_receive_pack(&self) -> Result<(), MegaError> {
+        let (base_branch, from_hash, to_hash) = {
+            let tip = self.tip.lock().expect("branch tip lock poisoned");
+            (
+                tip.base_branch.clone(),
+                tip.from_hash.clone(),
+                tip.to_hash.clone(),
+            )
+        };
         self.persist_mono_branch_cl_mega_refs_transaction().await?;
         self.traverses_tree_and_update_filepath().await?;
         let cl_link = self.cl_link.read().await.clone();
         self.application
             .handle(TransportEvent::MonoReceivePackFinalized {
                 repo_path: self.path.clone(),
-                base_branch: self.base_branch.clone(),
-                from_hash: self.from_hash.clone(),
-                to_hash: self.to_hash.clone(),
+                base_branch,
+                from_hash,
+                to_hash,
                 username: self.username.clone(),
                 cl_link,
             })
@@ -479,7 +514,10 @@ impl MonoRepo {
             .clone();
         let txn = self.storage.begin_db_transaction().await?;
         for cmd in &cmds {
-            if cmd.ref_type == RefTypeEnum::Branch && cmd.command_type != CommandType::Delete {
+            if cmd.ref_type == RefTypeEnum::Branch
+                && cmd.status == "ok"
+                && cmd.command_type != CommandType::Delete
+            {
                 self.apply_cl_mega_ref_for_push_command(cmd, Some(&txn))
                     .await?;
             }
