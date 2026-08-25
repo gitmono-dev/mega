@@ -130,9 +130,96 @@ pub fn get_current_bin_name() -> String {
         .to_owned()
 }
 
+/// True when `parent` is a strict path-segment prefix of `child`.
+///
+/// Equal paths return false. `/third-party/rust` is not a prefix of
+/// `/third-party/rust_v1`.
+pub fn is_strict_path_prefix(parent: &str, child: &str) -> bool {
+    let parent = parent.trim_end_matches('/');
+    let child = child.trim_end_matches('/');
+    if parent.is_empty() || child.is_empty() || parent == child {
+        return false;
+    }
+    child.starts_with(parent) && child.as_bytes().get(parent.len()) == Some(&b'/')
+}
+
+/// If `new_path` would nest under or above any path in `existing`, return that
+/// conflicting path. Same-path entries are ignored (update / idempotent create).
+pub fn nested_import_repo_conflict<'a>(
+    new_path: &str,
+    existing: impl IntoIterator<Item = &'a str>,
+) -> Option<&'a str> {
+    let new_path = new_path.trim_end_matches('/');
+    for path in existing {
+        let trimmed = path.trim_end_matches('/');
+        if trimmed.is_empty() || trimmed == new_path {
+            continue;
+        }
+        if is_strict_path_prefix(trimmed, new_path) || is_strict_path_prefix(new_path, trimmed) {
+            return Some(path);
+        }
+    }
+    None
+}
+
+/// Human-readable error when creating an import repo would nest with an existing one.
+pub fn nested_import_repo_conflict_message(new_path: &str, conflicting_path: &str) -> String {
+    format!(
+        "cannot create import repo at '{new_path}': nested with existing import repo at '{conflicting_path}'"
+    )
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn test_is_strict_path_prefix() {
+        assert!(is_strict_path_prefix(
+            "/third-party/rust",
+            "/third-party/rust/crates/sw/ay/swayws/1.3.0"
+        ));
+        assert!(is_strict_path_prefix(
+            "/third-party/rust/",
+            "/third-party/rust/crates"
+        ));
+        assert!(!is_strict_path_prefix("/third-party/rust", "/third-party/rust"));
+        assert!(!is_strict_path_prefix("/third-party/rust", "/third-party/rust_v1"));
+        assert!(!is_strict_path_prefix("/third-party/rust_v1", "/third-party/rust"));
+        assert!(!is_strict_path_prefix("/third-party/foo", "/third-party/bar"));
+    }
+
+    #[test]
+    fn test_nested_import_repo_conflict() {
+        let existing = [
+            "/third-party/rust/crates/sw/ay/swayws/1.3.0",
+            "/third-party/rust_v1",
+        ];
+        assert_eq!(
+            nested_import_repo_conflict("/third-party/rust", existing),
+            Some("/third-party/rust/crates/sw/ay/swayws/1.3.0")
+        );
+        assert_eq!(
+            nested_import_repo_conflict(
+                "/third-party/rust/crates/to/ki/tokio/1.0.0",
+                ["/third-party/rust"]
+            ),
+            Some("/third-party/rust")
+        );
+        assert!(
+            nested_import_repo_conflict("/third-party/foo", existing).is_none()
+        );
+        assert!(
+            nested_import_repo_conflict("/third-party/rust_v1", existing).is_none()
+        );
+        assert!(
+            nested_import_repo_conflict(
+                "/third-party/rust/crates/sw/ay/swayws/1.3.0",
+                existing
+            )
+            .is_none()
+        );
+    }
 
     #[test]
     fn test_is_full_hex_object_id() {

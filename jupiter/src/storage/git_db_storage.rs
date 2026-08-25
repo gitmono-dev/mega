@@ -5,7 +5,12 @@ use callisto::{
     git_blob, git_commit, git_repo, git_tag, git_tree, import_refs,
     sea_orm_active_enums::RefTypeEnum,
 };
-use common::{errors::MegaError, utils::generate_id};
+use common::{
+    errors::MegaError,
+    utils::{
+        generate_id, nested_import_repo_conflict_message,
+    },
+};
 use futures::Stream;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseTransaction, DbBackend, DbErr, EntityTrait,
@@ -41,6 +46,12 @@ impl GitDbStorage {
         let repo_id = if let Some(existing) = self.find_git_repo_exact_match(repo_path).await? {
             existing.id
         } else {
+            if let Some(conflict) = self.find_nested_import_repo_conflict(repo_path).await? {
+                return Err(MegaError::Conflict(nested_import_repo_conflict_message(
+                    repo_path,
+                    &conflict.repo_path,
+                )));
+            }
             let repo_id = generate_id();
             let repo = git_repo::Model {
                 id: repo_id,
@@ -291,6 +302,48 @@ impl GitDbStorage {
             .one(self.get_connection())
             .await?;
         Ok(result)
+    }
+
+    /// Returns an existing import repo that would nest with `repo_path` if a new
+    /// import repo were created there (ancestor or descendant by path segment).
+    ///
+    /// Same-path repos are not conflicts (caller should use exact match first).
+    pub async fn find_nested_import_repo_conflict(
+        &self,
+        repo_path: &str,
+    ) -> Result<Option<git_repo::Model>, MegaError> {
+        let path = repo_path.trim_end_matches('/');
+        if path.is_empty() || path == "/" {
+            return Ok(None);
+        }
+
+        // Descendant of the new path (new path would become a parent import repo).
+        if let Some(descendant) = git_repo::Entity::find()
+            .filter(git_repo::Column::RepoPath.like(format!("{path}/%")))
+            .one(self.get_connection())
+            .await?
+        {
+            return Ok(Some(descendant));
+        }
+
+        // Ancestor of the new path (new path would nest under an existing import repo).
+        let mut current = std::path::PathBuf::from(path);
+        while current.pop() {
+            let parent = current.to_string_lossy();
+            let parent = if parent.is_empty() {
+                "/".to_string()
+            } else {
+                parent.to_string()
+            };
+            if parent == "/" {
+                break;
+            }
+            if let Some(ancestor) = self.find_git_repo_exact_match(&parent).await? {
+                return Ok(Some(ancestor));
+            }
+        }
+
+        Ok(None)
     }
 
     /// Finds a Git repository with a path that matches the beginning of the provided repository path using a LIKE query.

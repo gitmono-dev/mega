@@ -7,7 +7,10 @@ use std::{
 };
 
 use callisto::sea_orm_active_enums::RefTypeEnum;
-use common::errors::{MegaError, ProtocolError};
+use common::{
+    errors::{MegaError, ProtocolError},
+    utils::nested_import_repo_conflict_message,
+};
 use import_refs::RefCommand;
 use jupiter::redis::lock::RedLock;
 use repo::Repo;
@@ -176,8 +179,23 @@ impl SmartSession {
                         return Err(ProtocolError::NotFound("Repository not found.".to_owned()));
                     }
                     ServiceType::ReceivePack => {
+                        if let Some(conflict) = storage
+                            .find_nested_import_repo_conflict(path_str)
+                            .await
+                            .map_err(|e| {
+                                ProtocolError::InvalidInput(format!(
+                                    "failed to check nested import repo conflict: {e}"
+                                ))
+                            })?
+                        {
+                            return Err(ProtocolError::InvalidInput(
+                                nested_import_repo_conflict_message(path_str, &conflict.repo_path),
+                            ));
+                        }
                         let repo = Repo::new(self.repo_path.clone(), false);
-                        storage.save_git_repo(repo.clone().into()).await.unwrap();
+                        storage.save_git_repo(repo.clone().into()).await.map_err(|e| {
+                            ProtocolError::InvalidInput(format!("failed to create import repo: {e}"))
+                        })?;
                         repo
                     }
                 }
