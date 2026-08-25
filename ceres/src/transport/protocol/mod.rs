@@ -11,7 +11,7 @@ use common::{
     errors::{MegaError, ProtocolError},
     utils::nested_import_repo_conflict_message,
 };
-use import_refs::RefCommand;
+use import_refs::{CommandType, RefCommand};
 use jupiter::redis::lock::RedLock;
 use repo::Repo;
 use tokio::sync::RwLock;
@@ -201,6 +201,28 @@ impl SmartSession {
                 }
             };
 
+            // Deleting the current default branch would leave the repository
+            // with a dangling HEAD: ref discovery advertises a zero id and
+            // import APIs unwrap the now-missing default ref. Reject before
+            // any persistence (tags included) happens.
+            if let Some(default_ref) = storage
+                .get_ref(repo.repo_id)
+                .await
+                .map_err(|e| ProtocolError::InvalidInput(format!("failed to load refs: {e}")))?
+                .into_iter()
+                .find(|r| r.default_branch)
+                && commands.iter().any(|c| {
+                    c.ref_type == RefTypeEnum::Branch
+                        && c.command_type == CommandType::Delete
+                        && c.ref_name == default_ref.ref_name
+                })
+            {
+                return Err(ProtocolError::InvalidInput(format!(
+                    "cannot delete the current default branch {}",
+                    default_ref.ref_name
+                )));
+            }
+
             let unpack_redlock = Arc::new(RedLock::new(
                 state.git_object_cache.connection.clone(),
                 // Serialize monorepo root mega_refs update across concurrent import attaches.
@@ -231,7 +253,13 @@ impl SmartSession {
                 username: self.auth.username.clone(),
                 command_list: Mutex::new(commands.clone()),
             };
-            if let Some(command) = commands.iter().find(|x| x.ref_type == RefTypeEnum::Branch) {
+            // Metadata must describe a surviving change: a deletion's zero
+            // new_id would otherwise flow into finalize events even when the
+            // deletion itself is rejected and other updates land.
+            if let Some(command) = commands
+                .iter()
+                .find(|x| x.ref_type == RefTypeEnum::Branch && x.command_type != CommandType::Delete)
+            {
                 res.from_hash = command.old_id.clone();
                 res.to_hash = command.new_id.clone();
                 res.base_branch = command
