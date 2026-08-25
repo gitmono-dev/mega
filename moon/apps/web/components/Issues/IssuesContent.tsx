@@ -36,6 +36,7 @@ import { useGetLabelList } from '@/hooks/useGetLabelList'
 import { useSyncedMembers } from '@/hooks/useSyncedMembers'
 import { apiErrorToast } from '@/utils/apiErrorToast'
 import { atomWithWebStorage } from '@/utils/atomWithWebStorage'
+import { megaUserHandle } from '@/utils/megaUser'
 
 import { Pagination } from './Pagenation'
 
@@ -62,6 +63,17 @@ export function IssuesContent({ setFilterQuery, shouldClearFilters, setShouldCle
 
   const { mutate: issueLists } = useGetIssueLists()
   const { members } = useSyncedMembers()
+
+  const authorHandle = useCallback(
+    (author: string) => {
+      const member = members.find(
+        (m) => m.user.id === author || m.user.username === author || m.user.github_login === author
+      )
+
+      return megaUserHandle(member?.user, author)
+    },
+    [members]
+  )
 
   const filterState = useFilterState({ scope: scope as string, type: 'issue' })
 
@@ -245,10 +257,15 @@ export function IssuesContent({ setFilterQuery, shouldClearFilters, setShouldCle
 
   const getIssueDescription = (item: ItemsType[number]) => {
     const normalizedStatus = item.status.toLowerCase()
+    const displayAuthor = authorHandle(item.author)
+    const hoverUsername =
+      members.find(
+        (m) => m.user.id === item.author || m.user.username === item.author || m.user.github_login === item.author
+      )?.user.username || item.author
     const authorNode = (
       <>
-        <MemberHovercard username={item.author}>
-          <span className='cursor-pointer hover:text-blue-600 hover:underline'>{item.author}</span>
+        <MemberHovercard username={hoverUsername}>
+          <span className='cursor-pointer hover:text-blue-600 hover:underline'>{displayAuthor}</span>
         </MemberHovercard>
         {item.author_is_bot ? (
           <>

@@ -1,83 +1,37 @@
 import React from 'react'
 import { Avatar, AvatarStack } from '@primer/react'
-import { useQueries } from '@tanstack/react-query'
 
-import { OrganizationMember } from '@gitmono/types/generated'
+import { SyncOrganizationMember } from '@gitmono/types/generated'
 
-import { useScope } from '@/contexts/scope'
-import { apiClient } from '@/utils/queryClient'
-
-import { MemberHovercard } from './MemberHoverCardNE'
+import { MemberHovercard } from '@/components/InlinePost/MemberHovercard'
+import { useMemberMap } from '@/components/Issues/utils/sideEffect'
 
 interface MemberHoverAvatarListProps {
   isLeft?: boolean
+  /** Actor keys: campsite_user_id, username, or github_login */
   authors: string[]
 }
+
 export const MemberHoverAvatarList = ({ authors, isLeft }: MemberHoverAvatarListProps) => {
-  const shouldFetch = authors.length > 0
-  const query = apiClient.organizations.getMembersByUsername()
+  const memberMap = useMemberMap()
 
-  const { scope } = useScope()
-
-  const queries = useQueries({
-    queries: authors.map((u) => ({
-      queryKey: query.requestKey(`${scope}`, `${u}`),
-      queryFn: () => query.request(`${scope}`, `${u}`),
-      enabled: shouldFetch
-    })),
-    combine: (res) => {
-      return {
-        data: res.map((r) => r.data),
-        pending: res.some((r) => r.isPending)
-      }
-    }
-  })
+  const members = authors
+    .map((actor) => memberMap.get(actor) as SyncOrganizationMember | undefined)
+    .filter((m): m is SyncOrganizationMember => !!m)
 
   return (
-    <>
-      <AvatarStack alignRight={!isLeft}>
-        {queries.pending
-          ? Array.from({ length: authors.length }).map((_, i) => (
-              // eslint-disable-next-line react/no-array-index-key
-              <div className='h-[48px] w-[48px] rounded-full bg-[#f3f4f5]' key={i} />
-            ))
-          : queries.data.map(
-              (q) =>
-                q && (
-                  <AvatarwithHover
-                    key={q.id}
-                    src={q?.user.avatar_url}
-                    hoverProps={{ username: q.user.username, userData: q }}
-                  />
-                )
-            )}
-      </AvatarStack>
-    </>
-  )
-}
+    <AvatarStack alignRight={!isLeft}>
+      {members.map((member) => {
+        const src = member.user.avatar_urls?.sm || member.user.avatar_urls?.base || ''
 
-interface HoverProps {
-  username: string
-  userData: OrganizationMember
-}
-const AvatarwithHover = ({
-  src,
-  hoverProps,
-  className,
-  style
-}: {
-  src: string
-  hoverProps: HoverProps
-  className?: string
-  style?: React.CSSProperties
-}) => {
-  return (
-    <>
-      <MemberHovercard username={hoverProps.username} side='top' align='end' member={hoverProps.userData}>
-        <div className={className} style={style}>
-          <Avatar src={src} />
-        </div>
-      </MemberHovercard>
-    </>
+        return (
+          <MemberHovercard key={member.user.id} username={member.user.username} side='top' align='end'>
+            <div>
+              <Avatar src={src} />
+            </div>
+          </MemberHovercard>
+        )
+      })}
+    </AvatarStack>
   )
 }

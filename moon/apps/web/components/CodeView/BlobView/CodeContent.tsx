@@ -12,7 +12,8 @@ import { UsersIcon } from '@gitmono/ui'
 
 import ThemedMarkdown from '@/components/Theme/ThemedMarkdown/index'
 import { useGetBlame } from '@/hooks/useGetBlame'
-import { useGetOrganizationMember } from '@/hooks/useGetOrganizationMember'
+import { useMemberByActor } from '@/hooks/useMemberByActor'
+import { megaUserHandle } from '@/utils/megaUser'
 import { getLanguageForFile } from '@/utils/shikiLanguageFallback'
 
 import BlobEditor from './BlobEditor'
@@ -21,13 +22,15 @@ import styles from './CodeContent.module.css'
 type ViewMode = 'code' | 'blame' | 'preview'
 
 const UserAvatar = React.memo(({ username, zIndex }: { username?: string; zIndex?: number }) => {
-  const { data: memberData } = useGetOrganizationMember({ username })
+  const { data: member } = useMemberByActor(username)
+  const displayName = megaUserHandle(member?.user, username || '')
+  const avatarUrl = member?.user?.avatar_urls?.sm || member?.user?.avatar_urls?.base || ''
 
   return (
     <motion.div>
       <Avatar
-        alt={username}
-        src={memberData?.user?.avatar_url || ''}
+        alt={displayName || username}
+        src={avatarUrl}
         sx={{ width: 20, height: 20, border: '2px solid var(--bg-primary)' }}
         style={{ zIndex }}
       />

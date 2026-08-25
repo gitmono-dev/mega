@@ -183,10 +183,22 @@ mod test {
             "/third-party/rust/",
             "/third-party/rust/crates"
         ));
-        assert!(!is_strict_path_prefix("/third-party/rust", "/third-party/rust"));
-        assert!(!is_strict_path_prefix("/third-party/rust", "/third-party/rust_v1"));
-        assert!(!is_strict_path_prefix("/third-party/rust_v1", "/third-party/rust"));
-        assert!(!is_strict_path_prefix("/third-party/foo", "/third-party/bar"));
+        assert!(!is_strict_path_prefix(
+            "/third-party/rust",
+            "/third-party/rust"
+        ));
+        assert!(!is_strict_path_prefix(
+            "/third-party/rust",
+            "/third-party/rust_v1"
+        ));
+        assert!(!is_strict_path_prefix(
+            "/third-party/rust_v1",
+            "/third-party/rust"
+        ));
+        assert!(!is_strict_path_prefix(
+            "/third-party/foo",
+            "/third-party/bar"
+        ));
     }
 
     #[test]
@@ -206,18 +218,11 @@ mod test {
             ),
             Some("/third-party/rust")
         );
+        assert!(nested_import_repo_conflict("/third-party/foo", existing).is_none());
+        assert!(nested_import_repo_conflict("/third-party/rust_v1", existing).is_none());
         assert!(
-            nested_import_repo_conflict("/third-party/foo", existing).is_none()
-        );
-        assert!(
-            nested_import_repo_conflict("/third-party/rust_v1", existing).is_none()
-        );
-        assert!(
-            nested_import_repo_conflict(
-                "/third-party/rust/crates/sw/ay/swayws/1.3.0",
-                existing
-            )
-            .is_none()
+            nested_import_repo_conflict("/third-party/rust/crates/sw/ay/swayws/1.3.0", existing)
+                .is_none()
         );
     }
 

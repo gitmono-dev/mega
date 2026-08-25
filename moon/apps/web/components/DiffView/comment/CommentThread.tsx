@@ -5,7 +5,8 @@ import type { CommentReviewResponse, ThreadReviewResponse } from '@gitmono/types
 import { Avatar, Button } from '@gitmono/ui'
 
 import { useGetCurrentUser } from '@/hooks/useGetCurrentUser'
-import { useGetOrganizationMember } from '@/hooks/useGetOrganizationMember'
+import { useMemberByActor } from '@/hooks/useMemberByActor'
+import { megaUserHandle } from '@/utils/megaUser'
 
 import { useDeleteComment } from '../hooks/useDeleteComment'
 import { useDeleteThread } from '../hooks/useDeleteThread'
@@ -15,10 +16,11 @@ import { useResolveThread } from '../hooks/useResolveThread'
 import { useUpdateComment } from '../hooks/useUpdateComment'
 
 function UserAvatar({ username, size = 'sm' }: { username: string; size?: 'xs' | 'sm' }) {
-  const { data: member } = useGetOrganizationMember({ username })
-  const avatarUrl = member?.user?.avatar_url
+  const { data: member } = useMemberByActor(username)
+  const displayName = megaUserHandle(member?.user, username)
+  const avatarUrl = member?.user?.avatar_urls?.sm || member?.user?.avatar_urls?.base
 
-  return <Avatar src={avatarUrl} alt={username} name={username} size={size} />
+  return <Avatar src={avatarUrl} alt={displayName} name={displayName} size={size} />
 }
 
 interface CommentItemProps {
@@ -304,6 +306,8 @@ function CommentItem({
   isUpdating
 }: CommentItemProps) {
   const [showMenu, setShowMenu] = useState(false)
+  const { data: member } = useMemberByActor(comment.user_name)
+  const displayName = megaUserHandle(member?.user, comment.user_name)
 
   return (
     <div className='flex gap-3'>
@@ -311,7 +315,7 @@ function CommentItem({
       <div className='min-w-0 flex-1'>
         <div className='mb-1 flex items-center justify-between'>
           <div className='flex items-center gap-2'>
-            <span className='text-sm font-semibold text-gray-900 dark:text-gray-100'>{comment.user_name}</span>
+            <span className='text-sm font-semibold text-gray-900 dark:text-gray-100'>{displayName}</span>
             <span className='text-xs text-gray-500 dark:text-gray-400'>{comment.created_at}</span>
           </div>
           {(onEdit || onDelete) && (

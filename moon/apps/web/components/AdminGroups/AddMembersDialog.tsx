@@ -5,6 +5,7 @@ import { Button, LoadingSpinner } from '@gitmono/ui'
 import { useAddAdminGroupMembers } from '@/hooks/admin/useAddAdminGroupMembers'
 import { useAdminGroupMembersList } from '@/hooks/admin/useAdminGroupMembersList'
 import { useGetSyncMembers } from '@/hooks/useGetSyncMembers'
+import { megaUserHandle } from '@/utils/megaUser'
 
 interface AddMembersDialogProps {
   groupId: number | null
@@ -35,8 +36,8 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
 
   const addMembersMutation = useAddAdminGroupMembers()
 
-  // Get list of existing member usernames in current group
-  const existingMemberUsernames = new Set(groupMembersData?.data?.items?.map((member) => member.username) || [])
+  // Group API stores campsite public ids in the `username` field.
+  const existingMemberIds = new Set(groupMembersData?.data?.items?.map((member) => member.username) || [])
 
   // Fetch members when dialog opens
   useEffect(() => {
@@ -47,8 +48,10 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
     }
   }, [groupId, refetchMembers])
 
-  const handleMemberToggle = (username: string) => {
-    setSelectedMembers((prev) => (prev.includes(username) ? prev.filter((u) => u !== username) : [...prev, username]))
+  const handleMemberToggle = (campsiteUserId: string) => {
+    setSelectedMembers((prev) =>
+      prev.includes(campsiteUserId) ? prev.filter((u) => u !== campsiteUserId) : [...prev, campsiteUserId]
+    )
   }
 
   const handleAddMembersSubmit = async () => {
@@ -145,9 +148,7 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
               <div className='space-y-4'>
                 {/* Available members to add */}
                 {(() => {
-                  const availableMembers = members.filter(
-                    (member) => !existingMemberUsernames.has(member.user.username)
-                  )
+                  const availableMembers = members.filter((member) => !existingMemberIds.has(member.user.id))
 
                   return availableMembers.length > 0 ? (
                     <div>
@@ -157,7 +158,8 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
                       <div className='max-h-60 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50'>
                         <div className='divide-y divide-gray-200 dark:divide-gray-700'>
                           {availableMembers.map((member) => {
-                            const isSelected = selectedMembers.includes(member.user.username)
+                            const isSelected = selectedMembers.includes(member.user.id)
+                            const handle = megaUserHandle(member.user)
 
                             return (
                               <div
@@ -165,14 +167,14 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
                                 className={`flex cursor-pointer items-center px-4 py-3 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 ${
                                   isSelected ? 'border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
                                 }`}
-                                onClick={() => handleMemberToggle(member.user.username)}
+                                onClick={() => handleMemberToggle(member.user.id)}
                               >
                                 <input
                                   type='checkbox'
                                   checked={isSelected}
                                   onChange={(e) => {
                                     e.stopPropagation()
-                                    handleMemberToggle(member.user.username)
+                                    handleMemberToggle(member.user.id)
                                   }}
                                   onClick={(e) => e.stopPropagation()}
                                   className='mr-3 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
@@ -186,7 +188,7 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
                                   <p className='text-primary truncate text-sm font-medium'>
                                     {member.user.display_name}
                                   </p>
-                                  <p className='text-tertiary truncate text-xs'>@{member.user.username}</p>
+                                  <p className='text-tertiary truncate text-xs'>@{handle}</p>
                                 </div>
                                 <div className='ml-3 flex shrink-0 items-center gap-2'>
                                   <span
@@ -214,7 +216,7 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
 
                 {/* Already in group members */}
                 {(() => {
-                  const existingMembers = members.filter((member) => existingMemberUsernames.has(member.user.username))
+                  const existingMembers = members.filter((member) => existingMemberIds.has(member.user.id))
 
                   return existingMembers.length > 0 ? (
                     <div>
@@ -223,36 +225,42 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
                       </h3>
                       <div className='max-h-40 overflow-y-auto rounded-md border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800/50'>
                         <div className='divide-y divide-gray-200 dark:divide-gray-700'>
-                          {existingMembers.map((member) => (
-                            <div key={member.user.id} className='flex items-center px-4 py-3 opacity-60'>
-                              <div className='mr-3 flex h-4 w-4 items-center justify-center'>
-                                <div className='h-2 w-2 rounded-full bg-green-500'></div>
+                          {existingMembers.map((member) => {
+                            const handle = megaUserHandle(member.user)
+
+                            return (
+                              <div key={member.user.id} className='flex items-center px-4 py-3 opacity-60'>
+                                <div className='mr-3 flex h-4 w-4 items-center justify-center'>
+                                  <div className='h-2 w-2 rounded-full bg-green-500'></div>
+                                </div>
+                                <img
+                                  src={member.user.avatar_urls?.sm || ''}
+                                  alt={member.user.display_name}
+                                  className='mr-3 h-8 w-8 shrink-0 rounded-full border border-gray-200 dark:border-gray-600'
+                                />
+                                <div className='min-w-0 flex-1'>
+                                  <p className='truncate text-sm font-medium text-gray-500'>
+                                    {member.user.display_name}
+                                  </p>
+                                  <p className='truncate text-xs text-gray-400'>@{handle}</p>
+                                </div>
+                                <div className='ml-3 flex shrink-0 items-center gap-2'>
+                                  <span
+                                    className={`rounded-full px-2 py-1 text-xs font-medium ${
+                                      member.role === 'admin'
+                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                        : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                    }`}
+                                  >
+                                    {member.role}
+                                  </span>
+                                  <span className='rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300'>
+                                    In Group
+                                  </span>
+                                </div>
                               </div>
-                              <img
-                                src={member.user.avatar_urls?.sm || ''}
-                                alt={member.user.display_name}
-                                className='mr-3 h-8 w-8 shrink-0 rounded-full border border-gray-200 dark:border-gray-600'
-                              />
-                              <div className='min-w-0 flex-1'>
-                                <p className='truncate text-sm font-medium text-gray-500'>{member.user.display_name}</p>
-                                <p className='truncate text-xs text-gray-400'>@{member.user.username}</p>
-                              </div>
-                              <div className='ml-3 flex shrink-0 items-center gap-2'>
-                                <span
-                                  className={`rounded-full px-2 py-1 text-xs font-medium ${
-                                    member.role === 'admin'
-                                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                                      : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                                  }`}
-                                >
-                                  {member.role}
-                                </span>
-                                <span className='rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300'>
-                                  In Group
-                                </span>
-                              </div>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       </div>
                     </div>

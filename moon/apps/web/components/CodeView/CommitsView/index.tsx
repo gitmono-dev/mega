@@ -14,8 +14,10 @@ import { ListBanner } from '@/components/ClView/ClList'
 import { MemberHovercard } from '@/components/InlinePost/MemberHovercard'
 import { MemberHoverAvatarList } from '@/components/Issues/MemberHoverAvatarList'
 import { Pagination } from '@/components/Issues/Pagenation'
+import { useMemberMap } from '@/components/Issues/utils/sideEffect'
 import { useScope } from '@/contexts/scope'
 import { useGetCommitsHistory } from '@/hooks/commits/useGetCommitsHistory'
+import { megaUserHandle } from '@/utils/megaUser'
 
 import { AuthorDropdown, BranchDropdown, DateRangeValue, TimeDropdown } from './dropdown'
 import { commitPath, CommitsItem, CommitsList } from './items'
@@ -27,29 +29,50 @@ const formatCommitDate = (timestamp: number): string => {
   return format(dateObject, 'MMM d, yyyy')
 }
 
-export const formatAssignees = (assignees: string[]): React.ReactNode => {
+/** Resolve campsite_user_id / username / github_login to a display label. */
+export function FormatAssignees({ assignees }: { assignees: string[] }) {
+  const memberMap = useMemberMap()
+  const resolve = (actor: string) => {
+    const member = memberMap.get(actor)
+
+    return {
+      display: megaUserHandle(member?.user, actor),
+      hoverUsername: member?.user.username || actor
+    }
+  }
+
   if (assignees.length === 1) {
+    const a = resolve(assignees[0])
+
     return (
-      <MemberHovercard username={assignees[0]}>
-        <span className='text-accent cursor-pointer transition-colors hover:underline'>{assignees[0]}</span>
+      <MemberHovercard username={a.hoverUsername}>
+        <span className='text-accent cursor-pointer transition-colors hover:underline'>{a.display}</span>
       </MemberHovercard>
     )
-  } else if (assignees.length === 2) {
+  }
+
+  if (assignees.length === 2) {
+    const a = resolve(assignees[0])
+    const b = resolve(assignees[1])
+
     return (
       <>
-        <MemberHovercard username={assignees[0]}>
-          <span className='text-accent cursor-pointer transition-colors hover:underline'>{assignees[0]}</span>
+        <MemberHovercard username={a.hoverUsername}>
+          <span className='text-accent cursor-pointer transition-colors hover:underline'>{a.display}</span>
         </MemberHovercard>
         {' and '}
-        <MemberHovercard username={assignees[1]}>
-          <span className='text-accent cursor-pointer transition-colors hover:underline'>{assignees[1]}</span>
+        <MemberHovercard username={b.hoverUsername}>
+          <span className='text-accent cursor-pointer transition-colors hover:underline'>{b.display}</span>
         </MemberHovercard>
       </>
     )
-  } else if (assignees.length >= 3) {
-    return `${assignees.length} people`
   }
-  return ''
+
+  if (assignees.length >= 3) {
+    return <>{`${assignees.length} people`}</>
+  }
+
+  return null
 }
 
 type Commits = {
@@ -218,7 +241,7 @@ export const CommitsView: React.FC = () => {
                                 <MemberHoverAvatarList authors={[item.committer]} isLeft={true} />
                               </div>
                               <div className='flex items-center gap-1 whitespace-nowrap'>
-                                <span>{formatAssignees([item.committer])}</span>
+                                <FormatAssignees assignees={[item.committer]} />
                                 <span className='text-quaternary text-[11px]'>
                                   authored{' '}
                                   {formatDistance(fromUnixTime(parseInt(item.date, 10)), new Date(), {

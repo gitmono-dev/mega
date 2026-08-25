@@ -193,9 +193,14 @@ impl SmartSession {
                             ));
                         }
                         let repo = Repo::new(self.repo_path.clone(), false);
-                        storage.save_git_repo(repo.clone().into()).await.map_err(|e| {
-                            ProtocolError::InvalidInput(format!("failed to create import repo: {e}"))
-                        })?;
+                        storage
+                            .save_git_repo(repo.clone().into())
+                            .await
+                            .map_err(|e| {
+                                ProtocolError::InvalidInput(format!(
+                                    "failed to create import repo: {e}"
+                                ))
+                            })?;
                         repo
                     }
                 }

@@ -2,8 +2,10 @@ import React, { useState } from 'react'
 
 import { Button, LoadingSpinner, PlusIcon, TrashIcon } from '@gitmono/ui'
 
+import { useMemberMap } from '@/components/Issues/utils/sideEffect'
 import { useAdminGroupMembersList } from '@/hooks/admin/useAdminGroupMembersList'
 import { useDeleteAdminGroupMember } from '@/hooks/admin/useDeleteAdminGroupMember'
+import { megaUserHandle } from '@/utils/megaUser'
 
 import { AddMembersDialog } from './AddMembersDialog'
 
@@ -16,6 +18,7 @@ interface GroupMembersDialogProps {
 export const GroupMembersDialog = ({ groupId, groupName, onClose }: GroupMembersDialogProps) => {
   const [deletingUsername, setDeletingUsername] = useState<string | null>(null)
   const [showAddMembersDialog, setShowAddMembersDialog] = useState(false)
+  const memberMap = useMemberMap()
 
   // Get current group's member list
   const { data: groupMembersData, isLoading } = useAdminGroupMembersList(groupId || 0, {
@@ -82,35 +85,51 @@ export const GroupMembersDialog = ({ groupId, groupName, onClose }: GroupMembers
             </div>
           ) : (
             <div className='space-y-2'>
-              {members.map((member) => (
-                <div
-                  key={member.id}
-                  className='flex items-center rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900/50 dark:hover:bg-gray-800'
-                >
-                  <div className='mr-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-gray-300 dark:border-gray-600 dark:bg-gray-600'>
-                    <span className='text-sm font-medium text-gray-600 dark:text-gray-300'>
-                      {member.username.charAt(0).toUpperCase()}
-                    </span>
+              {members.map((member) => {
+                const synced = memberMap.get(member.username)
+                const displayName = megaUserHandle(synced?.user, member.username)
+                const handle = synced?.user.username || member.username
+                const avatarUrl = synced?.user.avatar_urls?.sm || synced?.user.avatar_urls?.base
+                const initial = (displayName || handle).charAt(0).toUpperCase()
+
+                return (
+                  <div
+                    key={member.id}
+                    className='flex items-center rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900/50 dark:hover:bg-gray-800'
+                  >
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={displayName}
+                        className='mr-4 h-10 w-10 shrink-0 rounded-full border border-gray-200 dark:border-gray-600'
+                      />
+                    ) : (
+                      <div className='mr-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-gray-300 dark:border-gray-600 dark:bg-gray-600'>
+                        <span className='text-sm font-medium text-gray-600 dark:text-gray-300'>{initial}</span>
+                      </div>
+                    )}
+                    <div className='min-w-0 flex-1'>
+                      <p className='text-primary truncate text-sm font-medium'>{displayName}</p>
+                      <p className='text-tertiary truncate text-xs'>
+                        @{handle}
+                        {' · '}
+                        Joined: {new Date(member.joined_at * 1000).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className='flex shrink-0 items-center gap-3'>
+                      <Button
+                        variant='plain'
+                        size='sm'
+                        onClick={() => handleDeleteMember(member.username)}
+                        disabled={deletingUsername === member.username || deleteMemberMutation.isPending}
+                        className='text-red-600 hover:bg-red-50 hover:text-red-800 dark:hover:bg-red-900/20'
+                      >
+                        {deletingUsername === member.username ? <LoadingSpinner /> : <TrashIcon className='h-4 w-4' />}
+                      </Button>
+                    </div>
                   </div>
-                  <div className='min-w-0 flex-1'>
-                    <p className='text-primary truncate text-sm font-medium'>@{member.username}</p>
-                    <p className='text-tertiary truncate text-xs'>
-                      Joined: {new Date(member.joined_at * 1000).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className='flex shrink-0 items-center gap-3'>
-                    <Button
-                      variant='plain'
-                      size='sm'
-                      onClick={() => handleDeleteMember(member.username)}
-                      disabled={deletingUsername === member.username || deleteMemberMutation.isPending}
-                      className='text-red-600 hover:bg-red-50 hover:text-red-800 dark:hover:bg-red-900/20'
-                    >
-                      {deletingUsername === member.username ? <LoadingSpinner /> : <TrashIcon className='h-4 w-4' />}
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

@@ -7,7 +7,8 @@ import { Avatar, Button, ClockIcon, EyeIcon } from '@gitmono/ui'
 
 import { MemberHovercard } from '@/components/InlinePost/MemberHovercard'
 import { useGetLatestCommit } from '@/hooks/useGetLatestCommit'
-import { useGetOrganizationMember } from '@/hooks/useGetOrganizationMember'
+import { useMemberByActor } from '@/hooks/useMemberByActor'
+import { megaUserHandle } from '@/utils/megaUser'
 
 const CommitHyStyle = {
   width: '100%',
@@ -23,7 +24,9 @@ interface CommitHistoryProps {
 export default function CommitHistory({ flag, path, refs }: CommitHistoryProps) {
   const [Expand, setExpand] = useState(false)
   const { data: commitData } = useGetLatestCommit(path, refs)
-  const { data: memberData } = useGetOrganizationMember({ username: commitData?.author, enabled: !!commitData?.author })
+  const { data: member } = useMemberByActor(commitData?.author)
+  const displayName = megaUserHandle(member?.user, commitData?.author || '')
+  const hoverUsername = member?.user.username || commitData?.author || ''
 
   const ExpandDetails = () => {
     setExpand(!Expand)
@@ -43,10 +46,10 @@ export default function CommitHistory({ flag, path, refs }: CommitHistoryProps) 
     <>
       <div style={CommitHyStyle} className='border-primary bg-primary border'>
         <Flex align='center' className='min-h-[50px] p-1'>
-          <MemberHovercard username={commit.author} role='member'>
+          <MemberHovercard username={hoverUsername} role='member'>
             <Flex align='center'>
-              <Avatar src={memberData?.user?.avatar_url || ''} />
-              <span className='text-primary mx-3 font-bold'>{commit.author}</span>
+              <Avatar src={member?.user?.avatar_urls?.sm || member?.user?.avatar_urls?.base || ''} />
+              <span className='text-primary mx-3 font-bold'>{displayName || commit.author}</span>
             </Flex>
           </MemberHovercard>
           <span className='text-tertiary min-w-0 flex-1 truncate text-sm'>{commit.short_message}</span>
@@ -90,8 +93,8 @@ export default function CommitHistory({ flag, path, refs }: CommitHistoryProps) 
 
       {Expand && commitData && (
         <p className='text-tertiary ml-4'>
-          Signed-off-by: {commitData.author} {'<'}
-          {memberData?.user?.email}
+          Signed-off-by: {displayName || commitData.author} {'<'}
+          {member?.user?.email}
           {'>'}
         </p>
       )}

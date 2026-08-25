@@ -230,7 +230,14 @@ export default function CLView() {
               </span>
             </Tooltip>{' '}
             by{' '}
-            <MemberHovercard username={item.author}>
+            <MemberHovercard
+              username={
+                members.find(
+                  (m) =>
+                    m.user.id === item.author || m.user.username === item.author || m.user.github_login === item.author
+                )?.user.username || item.author
+              }
+            >
               <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
             </MemberHovercard>
             {item.author_is_bot ? (
@@ -251,7 +258,14 @@ export default function CLView() {
               </span>
             </Tooltip>{' '}
             by{' '}
-            <MemberHovercard username={item.author}>
+            <MemberHovercard
+              username={
+                members.find(
+                  (m) =>
+                    m.user.id === item.author || m.user.username === item.author || m.user.github_login === item.author
+                )?.user.username || item.author
+              }
+            >
               <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
             </MemberHovercard>
             {item.author_is_bot ? (
@@ -267,7 +281,16 @@ export default function CLView() {
           return (
             <>
               by{' '}
-              <MemberHovercard username={item.author}>
+              <MemberHovercard
+                username={
+                  members.find(
+                    (m) =>
+                      m.user.id === item.author ||
+                      m.user.username === item.author ||
+                      m.user.github_login === item.author
+                  )?.user.username || item.author
+                }
+              >
                 <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
               </MemberHovercard>
               {item.author_is_bot ? (
@@ -291,7 +314,14 @@ export default function CLView() {
         return (
           <>
             by{' '}
-            <MemberHovercard username={item.author}>
+            <MemberHovercard
+              username={
+                members.find(
+                  (m) =>
+                    m.user.id === item.author || m.user.username === item.author || m.user.github_login === item.author
+                )?.user.username || item.author
+              }
+            >
               <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
             </MemberHovercard>
             {item.author_is_bot ? (

@@ -9,7 +9,7 @@ import toast from 'react-hot-toast'
 import { CommitSummary, CommonPageDiffItemSchema, CommonResultVecMuiTreeNode, DiffItemSchema } from '@gitmono/types'
 import { LoadingSpinner } from '@gitmono/ui'
 
-import { formatAssignees } from '@/components/CodeView/CommitsView'
+import { FormatAssignees } from '@/components/CodeView/CommitsView'
 import { commitPath } from '@/components/CodeView/CommitsView/items'
 import FileDiff from '@/components/DiffView/FileDiff'
 import { MemberHoverAvatarList } from '@/components/Issues/MemberHoverAvatarList'
@@ -134,7 +134,7 @@ export const CommitsDetailView: React.FC = () => {
         <div className='text-secondary flex flex-wrap items-center gap-2 text-sm'>
           <div className='flex items-center gap-2'>
             <MemberHoverAvatarList authors={[commitsDetail.commit.author]} isLeft={true} />
-            {formatAssignees([commitsDetail.commit.author])}
+            <FormatAssignees assignees={[commitsDetail.commit.author]} />
             <span>authored</span>
             {commitDate && (
               <time dateTime={commitDate.toISOString()} title={format(commitDate, 'PPpp')}>
