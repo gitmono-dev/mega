@@ -2,15 +2,17 @@ use std::convert::Infallible;
 
 use anyhow::Result;
 use axum::{
-    body::Body,
+    body::{Body, BodyDataStream},
     http::{HeaderValue, Request, Response},
 };
 use base64::Engine;
-use bytes::{Bytes, BytesMut};
+use bytes::{Buf, Bytes, BytesMut};
 use ceres::{
     TransportRuntime,
     infra::pack_stream::into_pack_byte_stream,
-    transport::protocol::{PushUserInfo, ServiceType, SmartSession, TransportProtocol, smart},
+    transport::protocol::{
+        PushUserInfo, ServiceType, SmartSession, TransportProtocol, import_refs::RefCommand, smart,
+    },
 };
 use common::errors::{ProtocolError, mega_to_protocol_error};
 use futures::{TryStreamExt, stream};
@@ -256,30 +258,9 @@ pub async fn git_receive_pack(
     if !git_receive_pack_auth(state, &mut pack_protocol, req.headers()).await? {
         return auth_failed();
     }
-    // Convert the request body into a data stream.
-    let mut data_stream = req.into_body().into_data_stream();
-    let mut report_status = Bytes::new();
+    let data_stream = req.into_body().into_data_stream();
+    let report_status = process_receive_pack_body(state, &mut pack_protocol, data_stream).await?;
 
-    let mut chunk_buffer = BytesMut::new(); // Used to cache the data of chunks before the PACK subsequence is found.
-    // Process the data stream to handle the Git receive-pack protocol.
-    while let Some(chunk) = data_stream.next().await {
-        let chunk = chunk.unwrap();
-        // Process the data up to the "PACK" subsequence.
-        if let Some(pos) = search_subsequence(&chunk, b"PACK") {
-            chunk_buffer.extend_from_slice(&chunk[0..pos]);
-            let commands =
-                pack_protocol.parse_receive_pack_commands(Bytes::copy_from_slice(&chunk_buffer));
-            // Create a new stream from the remaining bytes and the rest of the data stream.
-            let left_chunk_bytes = Bytes::copy_from_slice(&chunk[pos..]);
-            let pack_stream = stream::once(async { Ok(left_chunk_bytes) }).chain(data_stream);
-            report_status = pack_protocol
-                .git_receive_pack_stream(state, commands, into_pack_byte_stream(pack_stream))
-                .await?;
-            break;
-        } else {
-            chunk_buffer.extend_from_slice(&chunk);
-        }
-    }
     tracing::info!("report status:{:?}", report_status);
     let response = Response::builder().body(Body::from(report_status)).unwrap();
     let response = add_default_header(
@@ -289,9 +270,88 @@ pub async fn git_receive_pack(
     Ok(response)
 }
 
-// Function to find the subsequence in a slice
-pub fn search_subsequence(chunk: &[u8], search: &[u8]) -> Option<usize> {
-    chunk.windows(search.len()).position(|s| s == search)
+/// Consumes the receive-pack request body and processes the push it carries.
+///
+/// The body is framed by pkt-line structure instead of searching for the `PACK`
+/// magic: the command section ends at a flush packet (`0000`) and the packfile,
+/// when present, starts right after it. Scanning raw bytes for `PACK` breaks when
+/// the signature straddles a transport chunk boundary or when a push carries no
+/// packfile at all (e.g. ref deletions).
+async fn process_receive_pack_body(
+    state: &TransportRuntime,
+    pack_protocol: &mut SmartSession,
+    mut data_stream: BodyDataStream,
+) -> Result<Bytes, ProtocolError> {
+    let mut chunk_buffer = BytesMut::new();
+    // `Some` once the flush-terminated command section has been parsed; the buffered
+    // bytes that follow are packfile data.
+    let mut commands: Option<Vec<RefCommand>> = None;
+    while let Some(chunk) = data_stream.next().await {
+        chunk_buffer.extend_from_slice(&chunk.unwrap());
+        if commands.is_none()
+            && let Some((commands_bytes, pack_head)) = split_commands_and_pack(&mut chunk_buffer)?
+        {
+            commands = Some(pack_protocol.parse_receive_pack_commands(commands_bytes));
+            chunk_buffer = pack_head.into();
+        }
+        if commands.is_some() && !chunk_buffer.is_empty() {
+            let commands = commands.take().unwrap_or_default();
+            let pack_head = std::mem::take(&mut chunk_buffer).freeze();
+            let pack_stream = stream::once(async move { Ok(pack_head) }).chain(data_stream);
+            return pack_protocol
+                .git_receive_pack_stream(state, commands, Some(into_pack_byte_stream(pack_stream)))
+                .await;
+        }
+    }
+
+    if let Some(commands) = commands {
+        // The stream ended right after the flush: a pack-less push.
+        return pack_protocol
+            .git_receive_pack_stream(state, commands, None)
+            .await;
+    }
+    Err(ProtocolError::InvalidInput(
+        "receive-pack body ended before the pkt-line flush".to_string(),
+    ))
+}
+
+/// Splits a buffered receive-pack body into its command section and the start of the
+/// packfile by walking pkt-line framing.
+///
+/// Returns `Ok(None)` while more bytes are needed to reach the terminating flush
+/// packet, and an error on malformed length headers.
+pub(crate) fn split_commands_and_pack(
+    buffer: &mut BytesMut,
+) -> Result<Option<(Bytes, Bytes)>, ProtocolError> {
+    let mut consumed = 0;
+    loop {
+        if buffer.len() < consumed + 4 {
+            return Ok(None);
+        }
+        let len = std::str::from_utf8(&buffer[consumed..consumed + 4])
+            .map_err(|_| {
+                ProtocolError::InvalidInput("pkt-line length header is not UTF-8".to_string())
+            })
+            .and_then(|header| {
+                usize::from_str_radix(header, 16).map_err(|_| {
+                    ProtocolError::InvalidInput(format!("invalid pkt-line length: {header}"))
+                })
+            })?;
+        if len == 0 {
+            let commands = buffer.split_to(consumed).freeze();
+            buffer.advance(4);
+            return Ok(Some((commands, buffer.split().freeze())));
+        }
+        if len < 4 {
+            return Err(ProtocolError::InvalidInput(format!(
+                "invalid pkt-line length: {len}"
+            )));
+        }
+        if buffer.len() < consumed + len {
+            return Ok(None);
+        }
+        consumed += len;
+    }
 }
 
 /// # Build Response headers for Smart Server.
@@ -310,4 +370,82 @@ fn add_default_header<T>(content_type: String, mut response: Response<T>) -> Res
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::*;
+
+    fn pkt_line(payload: &[u8]) -> Vec<u8> {
+        let mut line = format!("{:04x}", payload.len() + 4).into_bytes();
+        line.extend_from_slice(payload);
+        line
+    }
+
+    fn command_section() -> Vec<u8> {
+        let mut body = pkt_line(
+            b"0000000000000000000000000000000000000000 27dd8d4cf39f3868c6eee38b601bc9e9939304f5 refs/heads/main\0report-status\n",
+        );
+        body.extend_from_slice(&pkt_line(
+            b"27dd8d4cf39f3868c6eee38b601bc9e9939304f5 0000000000000000000000000000000000000000 refs/heads/PACK\0\n",
+        ));
+        body.extend_from_slice(b"0000");
+        body
+    }
+
+    #[test]
+    fn split_keeps_commands_before_flush_and_pack_after() {
+        let mut buffer = BytesMut::from_iter(command_section());
+        buffer.extend_from_slice(b"PACK....");
+
+        let (commands, pack_head) = split_commands_and_pack(&mut buffer)
+            .unwrap()
+            .expect("flush packet present");
+        let expected_commands = &command_section()[..command_section().len() - 4];
+        assert_eq!(&commands[..], expected_commands);
+        assert_eq!(&pack_head[..], b"PACK....");
+        assert!(buffer.is_empty());
+    }
+
+    #[test]
+    fn split_handles_flush_marker_straddling_chunks() {
+        let section = command_section();
+        let (first, second) = section.split_at(section.len() - 2);
+
+        let mut buffer = BytesMut::from_iter(first);
+        assert!(split_commands_and_pack(&mut buffer).unwrap().is_none());
+
+        // The flush marker itself straddles the two chunks.
+        buffer.extend_from_slice(second);
+        let (commands, pack_head) = split_commands_and_pack(&mut buffer)
+            .unwrap()
+            .expect("flush completes across chunks");
+        assert_eq!(commands.len(), command_section().len() - 4);
+        assert!(pack_head.is_empty());
+    }
+
+    #[test]
+    fn split_treats_pack_in_ref_name_as_command_data() {
+        let mut buffer = BytesMut::new();
+        buffer.extend_from_slice(&pkt_line(
+            b"0000000000000000000000000000000000000000 27dd8d4cf39f3868c6eee38b601bc9e9939304f5 refs/heads/JDK-PACK\0\n",
+        ));
+        buffer.extend_from_slice(b"0000PACK...");
+
+        let (commands, pack_head) = split_commands_and_pack(&mut buffer)
+            .unwrap()
+            .expect("flush packet present");
+        assert!(
+            std::str::from_utf8(&commands)
+                .unwrap()
+                .contains("refs/heads/JDK-PACK")
+        );
+        assert_eq!(&pack_head[..7], b"PACK...");
+    }
+
+    #[test]
+    fn split_rejects_invalid_length_header() {
+        let mut buffer = BytesMut::from(&b"zzzz"[..]);
+        assert!(split_commands_and_pack(&mut buffer).is_err());
+
+        let mut buffer = BytesMut::from(&b"0002"[..]);
+        assert!(split_commands_and_pack(&mut buffer).is_err());
+    }
+}

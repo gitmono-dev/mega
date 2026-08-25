@@ -207,9 +207,12 @@ impl MonoApiService {
             .git_receive_pack_stream(
                 &state,
                 commands,
-                into_pack_byte_stream(tokio_stream::once(Ok::<Bytes, std::convert::Infallible>(
+                Some(into_pack_byte_stream(tokio_stream::once(Ok::<
+                    Bytes,
+                    std::convert::Infallible,
+                >(
                     Bytes::from(pack_data),
-                ))),
+                )))),
             )
             .await
             .map_err(|e| MegaError::Other(format!("{e}")))?;

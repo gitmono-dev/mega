@@ -21,7 +21,7 @@ use russh::{
 use tokio::{io::AsyncReadExt, sync::Mutex};
 
 use crate::git_protocol::{
-    http::search_subsequence,
+    http::split_commands_and_pack,
     protocol_error::{ssh_error_message, ssh_exit_status},
 };
 
@@ -264,27 +264,23 @@ impl SshServer {
         session: &mut Session,
     ) -> Result<(), anyhow::Error> {
         let smart_protocol = self.smart_protocol.as_mut().unwrap();
-        let data = self.data_combined.split().freeze();
-        let mut data_stream = Box::pin(stream::once(async move {
-            Ok::<Bytes, std::convert::Infallible>(data)
-        }));
-        let mut report_status = Bytes::new();
+        let mut buffer = std::mem::take(&mut self.data_combined);
 
-        while let Some(chunk) = data_stream.next().await {
-            let chunk = chunk.unwrap();
-
-            if let Some(pos) = search_subsequence(&chunk, b"PACK") {
-                let commands = smart_protocol
-                    .parse_receive_pack_commands(Bytes::copy_from_slice(&chunk[..pos]));
-                let remaining_bytes = Bytes::copy_from_slice(&chunk[pos..]);
-                let remaining_stream =
-                    stream::once(async { Ok(remaining_bytes) }).chain(data_stream);
-                report_status = match smart_protocol
-                    .git_receive_pack_stream(
-                        &self.state,
-                        commands,
-                        into_pack_byte_stream(remaining_stream),
-                    )
+        // Frame by pkt-line structure: commands end at the flush packet and the
+        // packfile (when present) starts right after it. A push without a packfile
+        // (e.g. ref deletion) must still run the receive-pack status report.
+        let report_status = match split_commands_and_pack(&mut buffer)? {
+            Some((commands_bytes, pack_head)) => {
+                let commands = smart_protocol.parse_receive_pack_commands(commands_bytes);
+                let pack_stream = if pack_head.is_empty() {
+                    None
+                } else {
+                    Some(into_pack_byte_stream(stream::once(async move {
+                        Ok::<Bytes, std::io::Error>(pack_head)
+                    })))
+                };
+                match smart_protocol
+                    .git_receive_pack_stream(&self.state, commands, pack_stream)
                     .await
                 {
                     Ok(status) => status,
@@ -292,10 +288,19 @@ impl SshServer {
                         Self::send_protocol_error(session, channel, err)?;
                         return Ok(());
                     }
-                };
-                break;
+                }
             }
-        }
+            None => {
+                Self::send_protocol_error(
+                    session,
+                    channel,
+                    ProtocolError::InvalidInput(
+                        "receive-pack body ended before the pkt-line flush".to_string(),
+                    ),
+                )?;
+                return Ok(());
+            }
+        };
 
         tracing::info!("report status: {:?}", report_status);
         session.data(channel, report_status.to_vec())?;

@@ -226,7 +226,7 @@ impl SmartSession {
         &mut self,
         state: &TransportRuntime,
         commands: Vec<RefCommand>,
-        data_stream: PackByteStream,
+        pack_stream: Option<PackByteStream>,
     ) -> Result<Bytes, ProtocolError> {
         let t0 = Instant::now();
         let mut timings_ms: BTreeMap<String, u128> = BTreeMap::new();
@@ -238,21 +238,31 @@ impl SmartSession {
             .repo_handler_with_commands(state, commands.clone())
             .await?;
         let is_monorepo = repo_handler.is_monorepo();
-        //1. unpack progress
+        // 1. unpack progress. Pack-less pushes (e.g. ref deletions) carry no packfile
+        //    after the command flush, so unpack is skipped entirely.
         let t_unpack = Instant::now();
-        let receiver = repo_handler
-            .unpack_stream(&state.storage.config().pack, data_stream)
-            .await?;
+        let receiver = match pack_stream {
+            Some(stream) => Some(
+                repo_handler
+                    .unpack_stream(&state.storage.config().pack, stream)
+                    .await?,
+            ),
+            None => None,
+        };
         timings_ms.insert(
             "unpack_stream_ms".to_string(),
             t_unpack.elapsed().as_millis(),
         );
 
         let t_receiver = Instant::now();
-        let unpack_result = repo_handler
-            .clone()
-            .receiver_handler(receiver.0, receiver.1)
-            .await;
+        let unpack_result = if let Some((receiver, rx_pack_id)) = receiver {
+            repo_handler
+                .clone()
+                .receiver_handler(receiver, rx_pack_id)
+                .await
+        } else {
+            Ok(())
+        };
         timings_ms.insert(
             "receiver_handler_ms".to_string(),
             t_receiver.elapsed().as_millis(),
