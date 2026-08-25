@@ -45,7 +45,7 @@ _active_pushes: set[str] = set()
 _waiting_push: set[str] = set()
 
 STATUS_HEARTBEAT = False
-STATUS_HEARTBEAT_INTERVAL_S = 15.0
+STATUS_HEARTBEAT_INTERVAL_S = 2.0
 STATUS_STICKY = False
 
 _push_ok_lock = threading.Lock()
@@ -115,6 +115,10 @@ def _pushes_per_min_since_start() -> float:
     mins = elapsed_s / 60.0
     ok_total, fail_total = _push_totals()
     return (ok_total + fail_total) / max(1e-6, mins)
+
+def _pushes_per_sec_last_60s() -> float:
+    """Successful push rate over the trailing 60s window (ok_60s / 60)."""
+    return _push_ok_last_60s() / 60.0
 
 def _progress_reset() -> None:
     global _progress_index_crates, _progress_versions_queued, _progress_versions_done
@@ -211,11 +215,12 @@ def _format_progress_line() -> str:
     bar = _format_progress_bar(done, denom)
     scan_tag = "scan=done" if scan_done else "scan=running"
     count_s = f"{done}/{denom}" if denom else f"done={done}"
+    pps = _pushes_per_sec_last_60s()
     return (
         f"progress: {bar}  {count_s}  "
         f"jobs={jobs} ok={ok_n} skip={skip_n} fail={fail_n} "
         f"queue={qdepth} crates={crates} {scan_tag}  "
-        f"{_format_eta(done, denom)}"
+        f"push/s={pps:.2f}  {_format_eta(done, denom)}"
     )
 
 def _clear_status_block_locked() -> None:
@@ -260,6 +265,7 @@ def _format_status_block() -> list[str]:
     fail60 = _push_fail_last_60s()
     ok_total, fail_total = _push_totals()
     ppm = _pushes_per_min_since_start()
+    pps = _pushes_per_sec_last_60s()
     with _progress_lock:
         done = _progress_versions_done
         queued = _progress_versions_queued
@@ -279,9 +285,15 @@ def _format_status_block() -> list[str]:
         except NotImplementedError:
             qdepth = max(0, queued - done)
     if denom:
-        head = f"progress: {_format_progress_bar(done, denom)}  {done}/{denom}  {_format_eta(done, denom)}"
+        head = (
+            f"progress: {_format_progress_bar(done, denom)}  {done}/{denom}  "
+            f"push/s={pps:.2f}  {_format_eta(done, denom)}"
+        )
     else:
-        head = f"progress: {_format_progress_bar(0, None)}  scanning index..."
+        head = (
+            f"progress: {_format_progress_bar(0, None)}  scanning index...  "
+            f"push/s={pps:.2f}"
+        )
     scan_line = (
         f"scan: crates={crates} versions_found={queued} "
         f"status={'done' if scan_done else 'running (denom grows until full index walk)'}"
@@ -295,7 +307,7 @@ def _format_status_block() -> list[str]:
         (
             f"push: ok_60s={ok60} fail_60s={fail60} "
             f"ok_total={ok_total} fail_total={fail_total} "
-            f"per_min={ppm:.2f}"
+            f"per_s={pps:.2f} per_min={ppm:.2f}"
         ),
     ]
 
@@ -341,6 +353,8 @@ def _heartbeat_thread(stop_evt: threading.Event) -> None:
 def _log(level: str, msg: str) -> None:
     # Standardized, low-noise logging. Use --verbose for command outputs.
     # Always write to stderr so sticky status (also on stderr) and logs share one stream.
+    # Progress counters refresh on the heartbeat (~2s). Per-crate OK lines are verbose-only,
+    # so sticky re-paint here is only for occasional INFO/WARN (and verbose OK).
     if level == "INFO":
         c = BLUE
     elif level == "WARN":
@@ -356,7 +370,6 @@ def _log(level: str, msg: str) -> None:
             _clear_status_block_locked()
         print(line, file=sys.stderr, flush=True)
         if STATUS_STICKY:
-            # Re-paint with fresh progress so OK/INFO lines don't leave a stale block.
             _render_status_block_locked(_format_status_block())
 
 def info(msg: str) -> None:
@@ -521,14 +534,33 @@ def _download_with_progress(url: str, dest_path: str, *, label: str) -> bool:
         with _download_state_lock:
             _active_downloads.discard(label)
 
-def check_and_download_crate(crates_dir, crate_name, crate_version, dl_base_url) -> str | None:
+def check_and_download_crate(
+    crates_dir,
+    crate_name,
+    crate_version,
+    dl_base_url,
+    *,
+    readonly_cache: bool = False,
+) -> str | None:
     # Construct the filename and path for the crate
     crate_filename = f"{crate_name}-{crate_version}.crate"
     crate_path = os.path.join(crates_dir, crate_name, crate_filename)
+    label = _fmt_repo(crate_name, crate_version)
+
+    # Freighter / shared cache: never create dirs, never download, never delete.
+    # Missing or invalid crates are freighter's job to refresh.
+    if readonly_cache:
+        if not os.path.exists(crate_path):
+            warn(f"{label} .crate not in readonly cache: {crate_path}")
+            return None
+        if not _crate_file_seems_valid(crate_path):
+            warn(f"{label} cached .crate appears invalid (readonly; not deleting): {crate_path}")
+            return None
+        return crate_path
+
     ensure_directory(os.path.dirname(crate_path))  # Ensure the directory exists
 
     download_url = f"{dl_base_url}/{crate_name}/{crate_filename}"
-    label = _fmt_repo(crate_name, crate_version)
 
     def download_once() -> bool:
         if VERBOSE:
@@ -606,6 +638,98 @@ def _git_has_any_commit(repo_path: str) -> bool:
     )
     return res.returncode == 0
 
+def _sha_is_zero(sha: str) -> bool:
+    return bool(sha) and set(sha.lower()) <= {"0"}
+
+def remote_repo_has_commits(
+    git_base_url: str,
+    rel: str,
+    auth_token: str | None,
+    *,
+    timeout_s: float = 60.0,
+) -> bool:
+    """True if Mega already has at least one non-zero ref on this path."""
+    remote_url = f"{git_base_url.rstrip('/')}/{rel}"
+    cmd = maybe_wrap_git_with_bearer(["git", "ls-remote", remote_url], auth_token)
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_s)
+    except subprocess.TimeoutExpired:
+        warn(f"ls-remote timed out for {rel}")
+        return False
+    if res.returncode != 0:
+        return False
+    for line in (res.stdout or "").splitlines():
+        parts = line.split()
+        if not parts:
+            continue
+        sha = parts[0]
+        if len(sha) >= 40 and not _sha_is_zero(sha):
+            return True
+    return False
+
+def _is_non_fast_forward_rejection(stdout: str, stderr: str) -> bool:
+    text = f"{stdout or ''}\n{stderr or ''}".lower()
+    if "non-fast-forward" in text:
+        return True
+    if "fetch first" in text:
+        return True
+    if "updates were rejected" in text:
+        return True
+    return False
+
+def git_push_main(
+    repo_path: str,
+    *,
+    auth_token: str | None,
+    force: bool,
+    force_with_lease: bool,
+) -> str:
+    """Push main to remote 'mega'. Returns 'ok' | 'exists' | 'fail'.
+
+    'exists' means the remote rejected a non-fast-forward update — typically
+    because a prior Job already imported this path. Callers should treat that
+    as success and record manifest status=ok (unless --force / --force-with-lease).
+    """
+    push_args = ["git", "push", "-u", "mega", "main"]
+    if force_with_lease:
+        push_args.insert(2, "--force-with-lease")
+    elif force:
+        push_args.insert(2, "--force")
+    push_cmd = maybe_wrap_git_with_bearer(push_args, auth_token)
+    try:
+        result = subprocess.run(
+            push_cmd,
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except Exception as e:
+        warn(f"Git push failed: {e}")
+        return "fail"
+    if result.returncode == 0:
+        return "ok"
+    out = result.stdout or ""
+    err = result.stderr or ""
+    if not force and not force_with_lease and _is_non_fast_forward_rejection(out, err):
+        return "exists"
+    warn("Git command failed: push rejected")
+    if VERBOSE:
+        if out.strip():
+            warn(f"stdout: {out.strip()}")
+        if err.strip():
+            warn(f"stderr: {err.strip()}")
+    return "fail"
+
+def _cleanup_local_repo(repo_path: str, *, note: str) -> None:
+    try:
+        if os.path.exists(repo_path):
+            shutil.rmtree(repo_path)
+            if VERBOSE:
+                info(f"Removed local repo ({note}): {repo_path}")
+    except Exception as e:
+        warn(f"Failed to remove local repo {repo_path}: {e}")
+
 def ensure_remote_and_push_existing(
     repo_path: str,
     rel: str,
@@ -651,31 +775,25 @@ def ensure_remote_and_push_existing(
     try:
         with _with_stage(_active_pushes, label):
             t_push0 = time.monotonic()
-            push_args = ['git', 'push', '-u', 'mega', 'main']
-            if force_with_lease:
-                push_args.insert(2, '--force-with-lease')
-            elif force:
-                push_args.insert(2, '--force')
-            push_cmd = maybe_wrap_git_with_bearer(push_args, auth_token)
-            res = run_git_command(repo_path, push_cmd, log_on_error=True)
+            outcome = git_push_main(
+                repo_path,
+                auth_token=auth_token,
+                force=force,
+                force_with_lease=force_with_lease,
+            )
             dt_push = time.monotonic() - t_push0
         if dt_push >= 5.0:
             info(f"{label} push finished in {dt_push:.1f}s")
     finally:
         push_sema.release()
-    if res is None:
+    if outcome == "fail":
         # Keep repo on disk for troubleshooting
         _record_push_fail()
         return False
+    if outcome == "exists":
+        info(f"{label} already on mega (non-fast-forward); treating as ok")
     _record_push_ok()
-
-    # On success, remove local repo directory to save disk space.
-    try:
-        shutil.rmtree(repo_path)
-        if VERBOSE:
-            info(f"Removed local repo (existing): {repo_path}")
-    except Exception as e:
-        warn(f"Failed to remove local repo {repo_path}: {e}")
+    _cleanup_local_repo(repo_path, note="existing")
     return True
 
 def init_git_repo(repo_path):
@@ -829,31 +947,26 @@ def process_crate_version(
     try:
         with _with_stage(_active_pushes, label):
             t_push0 = time.monotonic()
-            push_args = ['git', 'push', '-u', 'mega', 'main']
-            if force_with_lease:
-                push_args.insert(2, '--force-with-lease')
-            elif force:
-                push_args.insert(2, '--force')
-            push_cmd = maybe_wrap_git_with_bearer(push_args, auth_token)
-            push_result = run_git_command(repo_path, push_cmd)
+            outcome = git_push_main(
+                repo_path,
+                auth_token=auth_token,
+                force=force,
+                force_with_lease=force_with_lease,
+            )
             dt_push = time.monotonic() - t_push0
         if dt_push >= 5.0:
             info(f"{label} push finished in {dt_push:.1f}s")
     finally:
         push_sema.release()
-    if push_result is None:
+    if outcome == "fail":
         warn(f"{_fmt_repo(crate_name, version)} push failed")
         _record_push_fail()
         return False
+    if outcome == "exists":
+        info(f"{label} already on mega (non-fast-forward); treating as ok")
 
     _record_push_ok()
-    # On success, remove local repo directory to save disk space.
-    try:
-        shutil.rmtree(repo_path)
-        if VERBOSE:
-            info(f"Removed local repo: {repo_path}")
-    except Exception as e:
-        warn(f"Failed to remove local repo {repo_path}: {e}")
+    _cleanup_local_repo(repo_path, note="import")
     # Optionally drop cached .crate (keep when sharing a host freighter cache).
     if not keep_crate_cache:
         try:
@@ -1045,10 +1158,16 @@ def scan_and_process_crates(
     manifest_path: str,
     reimport_ok: bool,
     keep_crate_cache: bool = False,
+    readonly_crate_cache: bool = False,
 ) -> tuple[int, int, int]:
     global _progress_jobs, _work_queue
     info("Scanning crates.io index...")
     _progress_reset()
+
+    if readonly_crate_cache:
+        # Readonly freighter cache implies never deleting .crate after push.
+        keep_crate_cache = True
+        info("Crate cache is readonly: no download/delete under --crates-dir (freighter owns updates).")
 
     stop_evt = threading.Event()
     hb_thread = None
@@ -1106,6 +1225,7 @@ def scan_and_process_crates(
             f"Config: jobs={_progress_jobs} "
             f"max_versions_per_crate={max_versions_per_crate} "
             f"keep_crate_cache={keep_crate_cache} "
+            f"readonly_crate_cache={readonly_crate_cache} "
             f"reimport_ok={reimport_ok} dry_run={dry_run}"
         )
 
@@ -1120,29 +1240,48 @@ def scan_and_process_crates(
 
             rel = mega_third_party_crates_rel_path(crate_name, v)
             repo_path = os.path.join(git_repos_dir, rel)
+            label = _fmt_repo(crate_name, v)
 
-            # Existing repo path
+            # Already on Mega (prior Job / NFF leftovers): skip download+push.
+            # Return "present" → counted as skip, persisted as ok for next runs.
+            if not dry_run and not reimport_ok and remote_repo_has_commits(
+                git_base_url, rel, auth_token
+            ):
+                if VERBOSE:
+                    info(f"{label} already on mega; skipping")
+                _cleanup_local_repo(repo_path, note="reconcile")
+                return ("present", crate_name, v)
+
+            # Existing local workdir: resume push (non-ff → present/ok).
             if os.path.exists(repo_path) and os.path.exists(os.path.join(repo_path, ".git")):
-                if repush_existing and not dry_run:
-                    ok_push = ensure_remote_and_push_existing(
-                        repo_path,
-                        rel,
-                        git_base_url,
-                        crate_name=crate_name,
-                        version=v,
-                        commit_signoff=commit_signoff,
-                        auth_token=auth_token,
-                        force=force,
-                        force_with_lease=force_with_lease,
-                        push_sema=push_sema,
-                    )
-                    return ("ok" if ok_push else "fail", crate_name, v)
-                else:
+                if dry_run:
                     if VERBOSE:
-                        info(f"{_fmt_repo(crate_name, v)} exists; skipping")
+                        info(f"{label} exists; skipping")
                     return ("skip", crate_name, v)
+                ok_push = ensure_remote_and_push_existing(
+                    repo_path,
+                    rel,
+                    git_base_url,
+                    crate_name=crate_name,
+                    version=v,
+                    commit_signoff=commit_signoff,
+                    auth_token=auth_token,
+                    force=force,
+                    force_with_lease=force_with_lease,
+                    push_sema=push_sema,
+                )
+                # ensure_remote_and_push_existing treats NFF as success; map to present
+                # when we only confirmed remote history (no new objects). Keep "ok" for
+                # real pushes — both persist as ok via record_result_status.
+                return ("ok" if ok_push else "fail", crate_name, v)
 
-            crate_path = check_and_download_crate(crates_dir, crate_name, v, dl_base_url)
+            crate_path = check_and_download_crate(
+                crates_dir,
+                crate_name,
+                v,
+                dl_base_url,
+                readonly_cache=readonly_crate_cache,
+            )
             if crate_path is None:
                 return ("fail", crate_name, v)
             try:
@@ -1168,14 +1307,18 @@ def scan_and_process_crates(
 
         def record_result_status(status: str, c_name: str, v: str) -> None:
             nonlocal succeeded, failed, skipped
-            _progress_note_result(status)
-            # Print after progress counters update so sticky footer shows the new totals.
-            if status == "ok":
+            # "present" = remote already had the crate; skip work, persist as ok.
+            persist_status = "ok" if status in ("ok", "present") else status
+            progress_status = "skip" if status == "present" else status
+            _progress_note_result(progress_status)
+            # Counters feed the sticky progress footer (heartbeat ~2s). Per-crate OK
+            # lines are verbose-only so a full import does not scroll millions of times.
+            if status == "ok" and VERBOSE:
                 ok(f"{_fmt_repo(c_name, v)} pushed")
             with lock:
                 if status == "ok":
                     succeeded += 1
-                elif status == "skip":
+                elif status in ("skip", "present"):
                     skipped += 1
                 else:
                     failed += 1
@@ -1184,7 +1327,7 @@ def scan_and_process_crates(
                 rec = {
                     "crate": c_name,
                     "version": v,
-                    "status": status,
+                    "status": persist_status,
                     "remote": f"{git_base_url.rstrip('/')}/{rel}",
                     "last_import_time": datetime.now(timezone.utc).isoformat(),
                 }
@@ -1344,8 +1487,8 @@ def main():
     p.add_argument(
         "--status-interval",
         type=float,
-        default=10.0,
-        help="Seconds between status heartbeat prints (default: 10).",
+        default=2.0,
+        help="Seconds between status heartbeat / progress refreshes (default: 2).",
     )
     p.add_argument(
         "--status-sticky",
@@ -1397,6 +1540,15 @@ def main():
         action="store_true",
         help="Do not delete downloaded .crate files after a successful push (for shared host caches).",
     )
+    p.add_argument(
+        "--readonly-crate-cache",
+        action="store_true",
+        help=(
+            "Treat --crates-dir as read-only: never download, create dirs, or delete .crate files. "
+            "Missing/invalid crates fail; freighter (or another process) must refresh the cache. "
+            "Implies --keep-crate-cache."
+        ),
+    )
     args = p.parse_args()
 
     global VERBOSE
@@ -1406,7 +1558,7 @@ def main():
     DOWNLOAD_PROGRESS_INTERVAL_S = float(args.download_progress_interval or 1.0)
     global STATUS_HEARTBEAT, STATUS_HEARTBEAT_INTERVAL_S
     STATUS_HEARTBEAT = bool(args.status_heartbeat)
-    STATUS_HEARTBEAT_INTERVAL_S = float(args.status_interval or 15.0)
+    STATUS_HEARTBEAT_INTERVAL_S = float(args.status_interval or 2.0)
     global STATUS_STICKY
     STATUS_STICKY = bool(args.status_sticky)
 
@@ -1418,7 +1570,13 @@ def main():
     crates_dir = str(Path(args.crates_dir).resolve())
     git_repos_dir = str(Path(args.workdir).resolve())
 
-    ensure_directory(crates_dir)
+    readonly_crate_cache = bool(args.readonly_crate_cache)
+    if readonly_crate_cache:
+        if not os.path.isdir(crates_dir):
+            warn(f"Error: --readonly-crate-cache requires existing crates dir: {crates_dir}")
+            sys.exit(1)
+    else:
+        ensure_directory(crates_dir)
     ensure_directory(git_repos_dir)
 
     auth_token = args.token.strip() or None
@@ -1450,7 +1608,8 @@ def main():
         manifest=manifest,
         manifest_path=manifest_path,
         reimport_ok=args.reimport_ok,
-        keep_crate_cache=bool(args.keep_crate_cache),
+        keep_crate_cache=bool(args.keep_crate_cache) or readonly_crate_cache,
+        readonly_crate_cache=readonly_crate_cache,
     )
 
     # Record end time and calculate duration for the entire process

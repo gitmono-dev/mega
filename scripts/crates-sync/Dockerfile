@@ -18,7 +18,10 @@ RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.l
 
 WORKDIR /app
 
+# So kubectl logs shows print() immediately (stdout is a pipe, not a TTY).
+ENV PYTHONUNBUFFERED=1
+
 # Build context must be the scripts/crates-sync directory (this folder).
 COPY . scripts/crates-sync/
 
-ENTRYPOINT ["python3", "scripts/crates-sync/run_job.py"]
+ENTRYPOINT ["python3", "-u", "scripts/crates-sync/run_job.py"]

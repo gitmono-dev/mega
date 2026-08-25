@@ -107,6 +107,8 @@ For each `crate@version`, the manifest tracks:
 On startup:
 
 - If a crate version already has `status=ok` in the manifest, it is **skipped by default**.
+- If Mega already has history on that path (prior Job), the importer **skips** download/push (`ls-remote`), counts it as skip, and writes `status=ok` so the next run is a cheap manifest skip — unless you pass `--force` / `--force-with-lease` with `--reimport-ok` to overwrite.
+- A non-fast-forward push is also treated as already-present (ok), not fail.
 - `--force` / `--force-with-lease` only affect `git push`; they **do not** disable manifest skipping (so you can use them for non-fast-forward mirrors without re-importing every crate).
 - To intentionally re-import versions that are already `ok`, use `--reimport-ok`.
 
@@ -208,7 +210,11 @@ Notes:
 
 CI builds `mega/crates-sync` from `scripts/crates-sync/Dockerfile` (workflow: `.github/workflows/crates-sync-deploy.yml`).
 
-The Job entrypoint is `run_job.py`: wait for mono → `bootstrap-init` bot token → optional `git pull` on index → `crates-sync.py` with `--keep-crate-cache` and `--max-versions-per-crate 0` (all versions).
+The Job entrypoint is `run_job.py`: wait for mono → `bootstrap-init` bot token →
+`crates-sync.py` with `--keep-crate-cache`, `--readonly-crate-cache`, and
+`--max-versions-per-crate 0` (all versions). Index `git pull` is **off by default**
+(`--pull-index` to opt in). Freighter owns refreshing `crates.io-index` and `.crate` files;
+the Job only reads them and writes under `mega-crates-work/`.
 
 On **mega-rust**, data is expected on the node hostPath:
 

@@ -2,13 +2,17 @@
 """K8s Job entrypoint for crates-sync.
 
 Waits for mono-engine, bootstraps a bot push token via MEGA_INIT_BOOTSTRAP_SECRET,
-optionally refreshes a local crates.io-index checkout, then runs crates-sync.py.
+then runs crates-sync.py against a freighter hostPath.
+
+Freighter owns updates to crates.io-index and the .crate cache. This entrypoint
+treats those trees as read-only (no git pull; no download/delete under crates/).
+Optional --pull-index is opt-in only.
 
 Typical freighter hostPath layout (mounted at --freighter-root):
 
-  <root>/crates.io-index   -> --index
-  <root>/crates            -> --crates-dir
-  <root>/mega-crates-work  -> --workdir (+ manifest)
+  <root>/crates.io-index   -> --index   (read-only)
+  <root>/crates            -> --crates-dir (read-only cache)
+  <root>/mega-crates-work  -> --workdir (+ manifest; writable)
 """
 
 from __future__ import annotations
@@ -158,9 +162,14 @@ def main(argv: list[str] | None = None) -> int:
         help="0 = all versions per crate (default for Job).",
     )
     p.add_argument(
+        "--pull-index",
+        action="store_true",
+        help="git pull the crates.io-index checkout before sync (writes to index; off by default).",
+    )
+    p.add_argument(
         "--no-pull-index",
         action="store_true",
-        help="Do not attempt git pull on the index checkout.",
+        help="Deprecated no-op: index pull is already off by default (freighter owns index updates).",
     )
     p.add_argument(
         "--wait-timeout",
@@ -184,7 +193,10 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"Index directory not found: {index_path}")
     if not (index_path / "config.json").is_file():
         raise SystemExit(f"Index config.json not found under {index_path}")
-    crates_dir.mkdir(parents=True, exist_ok=True)
+    if not crates_dir.is_dir():
+        raise SystemExit(
+            f"Crates cache directory not found (readonly freighter layout): {crates_dir}"
+        )
     workdir.mkdir(parents=True, exist_ok=True)
 
     base_url = args.base_url.rstrip("/")
@@ -192,14 +204,21 @@ def main(argv: list[str] | None = None) -> int:
     init_secret = resolve_init_bootstrap_secret(args.init_secret)
     token = bootstrap_init_bot_token(base_url, init_secret)
 
-    if not args.no_pull_index:
-        maybe_pull_index(index_path)
+    # Freighter owns index/crates updates. Only pull when explicitly requested.
+    if args.pull_index:
+        if args.no_pull_index:
+            print("Warning: --pull-index ignored because --no-pull-index was also set.")
+        else:
+            maybe_pull_index(index_path)
+    elif args.no_pull_index:
+        print("Index pull skipped (default; --no-pull-index is redundant).")
 
     if not CRATES_SYNC_PY.is_file():
         raise SystemExit(f"crates-sync.py not found next to run_job.py: {CRATES_SYNC_PY}")
 
     cmd = [
         sys.executable,
+        "-u",
         str(CRATES_SYNC_PY),
         "--index",
         str(index_path),
@@ -218,12 +237,14 @@ def main(argv: list[str] | None = None) -> int:
         "--jobs",
         str(args.jobs),
         "--keep-crate-cache",
+        "--readonly-crate-cache",
         "--status-sticky",
     ]
     cmd.extend(extra)
 
     printable = [
         sys.executable,
+        "-u",
         str(CRATES_SYNC_PY),
         "--index",
         str(index_path),
@@ -242,6 +263,7 @@ def main(argv: list[str] | None = None) -> int:
         "--jobs",
         str(args.jobs),
         "--keep-crate-cache",
+        "--readonly-crate-cache",
         "--status-sticky",
         *extra,
     ]
