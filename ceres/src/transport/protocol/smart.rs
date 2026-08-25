@@ -15,7 +15,7 @@ use crate::{
         pack::PackByteStream,
         protocol::{
             Capability, ServiceType, SideBind, SmartSession, TransportProtocol, ZERO_ID,
-            import_refs::RefCommand,
+            import_refs::{CommandType, RefCommand},
         },
     },
 };
@@ -238,6 +238,23 @@ impl SmartSession {
             .repo_handler_with_commands(state, commands.clone())
             .await?;
         let is_monorepo = repo_handler.is_monorepo();
+        // A deletion's new id is the zero id and monorepo branch state only
+        // advances through CL merges, so there is no commit to materialize a
+        // ref update from. Reject such commands up front (import repos do
+        // support deletion) instead of failing later inside finalize with an
+        // opaque zero-id lookup error.
+        if is_monorepo {
+            for command in commands.iter_mut() {
+                if command.ref_type == RefTypeEnum::Branch
+                    && command.command_type == CommandType::Delete
+                {
+                    command.failed(format!(
+                        "deleting {} is not supported on monorepo",
+                        command.ref_name
+                    ));
+                }
+            }
+        }
         // 1. unpack progress. Pack-less pushes (e.g. ref deletions) carry no packfile
         //    after the command flush, so unpack is skipped entirely.
         let t_unpack = Instant::now();
@@ -309,7 +326,9 @@ impl SmartSession {
 
         let mut finalize_ms: Option<u128> = None;
         let mut bind_ms: Option<u128> = None;
-        if !unpack_failed {
+        // Nothing left to persist when every command was rejected up front
+        // (e.g. a delete-only monorepo push); skip finalize and just report.
+        if !unpack_failed && commands.iter().any(|c| c.status == "ok") {
             let t_finalize = Instant::now();
             if let Err(e) = repo_handler.finalize_receive_pack().await {
                 let msg = e.to_string();

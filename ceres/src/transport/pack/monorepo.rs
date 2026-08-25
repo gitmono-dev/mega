@@ -39,7 +39,7 @@ use crate::{
     infra::cache::GitObjectCache,
     transport::{
         pack::RepoHandler,
-        protocol::import_refs::{RefCommand, Refs},
+        protocol::import_refs::{CommandType, RefCommand, Refs},
     },
 };
 
@@ -479,7 +479,7 @@ impl MonoRepo {
             .clone();
         let txn = self.storage.begin_db_transaction().await?;
         for cmd in &cmds {
-            if cmd.ref_type == RefTypeEnum::Branch {
+            if cmd.ref_type == RefTypeEnum::Branch && cmd.command_type != CommandType::Delete {
                 self.apply_cl_mega_ref_for_push_command(cmd, Some(&txn))
                     .await?;
             }
