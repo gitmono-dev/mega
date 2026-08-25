@@ -24,7 +24,7 @@ It reads a local `crates.io-index` checkout, downloads `.crate` tarballs, extrac
 - Python 3
 - Git (installed and accessible from command line)
 
-## Installation
+##  Installation
 
 1. Clone this repository or download the script.
 2. Ensure `git` is available on your PATH.
@@ -200,3 +200,46 @@ Notes:
 
 - The manifest ensures already-imported `crate@version` entries are skipped on subsequent runs.
 - Adjust `--jobs` based on your CPU/IO and Mega server capacity.
+- Use `--keep-crate-cache` when `--crates-dir` is a shared host cache (e.g. freighter) so successful pushes do not delete `.crate` files.
+
+## Kubernetes Job (onprem)
+
+CI builds `mega/crates-sync` from `scripts/crates-sync/Dockerfile` (workflow: `.github/workflows/crates-sync-deploy.yml`).
+
+The Job entrypoint is `run_job.py`: wait for mono → `bootstrap-init` bot token → optional `git pull` on index → `crates-sync.py` with `--keep-crate-cache` and `--max-versions-per-crate 0` (all versions).
+
+On **mega-rust**, data is expected on the node hostPath:
+
+| Host path | Container mount |
+|-----------|-----------------|
+| `/opt/data/freighter` | `/freighter` |
+| `.../crates.io-index` | `--index` |
+| `.../crates` | `--crates-dir` |
+| `.../mega-crates-work` | `--workdir` + manifest |
+
+Terraform (`gitmono_stack`):
+
+```hcl
+enable_crates_sync              = true
+crates_sync_freighter_host_path = "/opt/data/freighter"
+crates_sync_node_hostname       = "storage-server-01"  # must match kubectl get nodes
+# crates_sync_image = "registry.xuanwu.openatom.cn/mega/crates-sync:<sha>"
+```
+
+The Job is scheduled onto that node (`nodeAffinity`), mounts the freighter hostPath, and runs asynchronously (`wait_for_completion = false`). Re-run by bumping `crates_sync_image` (or delete the Job and re-apply).
+
+Manual run on the freighter host (no Job):
+
+```bash
+export MEGA_TOKEN="..."
+python3 scripts/crates-sync/crates-sync.py \
+  --index /opt/data/freighter/crates.io-index \
+  --crates-dir /opt/data/freighter/crates \
+  --workdir /opt/data/freighter/mega-crates-work \
+  --manifest /opt/data/freighter/mega-crates-work/crates-import-manifest.jsonl \
+  --git-base-url https://git.rust.xuanwu.openatom.cn \
+  --token "$MEGA_TOKEN" \
+  --max-versions-per-crate 0 \
+  --jobs 2 \
+  --keep-crate-cache
+```

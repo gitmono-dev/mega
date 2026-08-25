@@ -121,6 +121,7 @@ set TARGET_PLATFORMS=linux/amd64
 | `mega/orion-server` | `orion-server/Dockerfile` | `.` (repo root) | `latest` |
 | `mega/mega-ui` | `moon/apps/web/Dockerfile` | `moon` | `latest` |
 | `mega/mega-init` | `scripts/init_mega/Dockerfile` | `.` (repo root) | `latest` |
+| `mega/crates-sync` | `scripts/crates-sync/Dockerfile` | `scripts/crates-sync` | `latest` |
 
 ## Image Tags
 

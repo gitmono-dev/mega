@@ -54,6 +54,17 @@ _push_ok_total = 0
 _push_fail_total = 0
 _run_start_mono: float | None = None
 
+# Overall import progress (shared with heartbeat).
+_progress_lock = threading.Lock()
+_progress_index_crates = 0
+_progress_versions_queued = 0
+_progress_versions_done = 0
+_progress_ok = 0
+_progress_skip = 0
+_progress_fail = 0
+_progress_scan_complete = False
+_progress_total: int | None = None  # known after scan finishes (or non-streaming start)
+
 def _record_push_ok() -> None:
     now = time.monotonic()
     with _push_ok_lock:
@@ -102,6 +113,92 @@ def _pushes_per_min_since_start() -> float:
     ok_total, fail_total = _push_totals()
     return (ok_total + fail_total) / max(1e-6, mins)
 
+def _progress_reset() -> None:
+    global _progress_index_crates, _progress_versions_queued, _progress_versions_done
+    global _progress_ok, _progress_skip, _progress_fail
+    global _progress_scan_complete, _progress_total
+    with _progress_lock:
+        _progress_index_crates = 0
+        _progress_versions_queued = 0
+        _progress_versions_done = 0
+        _progress_ok = 0
+        _progress_skip = 0
+        _progress_fail = 0
+        _progress_scan_complete = False
+        _progress_total = None
+
+def _progress_note_index_crate() -> None:
+    global _progress_index_crates
+    with _progress_lock:
+        _progress_index_crates += 1
+
+def _progress_note_queued(n: int = 1) -> None:
+    global _progress_versions_queued
+    with _progress_lock:
+        _progress_versions_queued += n
+
+def _progress_note_result(status: str) -> None:
+    global _progress_versions_done, _progress_ok, _progress_skip, _progress_fail
+    with _progress_lock:
+        _progress_versions_done += 1
+        if status == "ok":
+            _progress_ok += 1
+        elif status == "skip":
+            _progress_skip += 1
+        else:
+            _progress_fail += 1
+
+def _progress_mark_scan_complete() -> None:
+    global _progress_scan_complete, _progress_total
+    with _progress_lock:
+        _progress_scan_complete = True
+        _progress_total = _progress_versions_queued
+
+def _progress_set_total(total: int) -> None:
+    global _progress_scan_complete, _progress_total, _progress_versions_queued
+    with _progress_lock:
+        _progress_scan_complete = True
+        _progress_total = total
+        _progress_versions_queued = total
+
+def _format_eta(done: int, total: int | None) -> str:
+    if _run_start_mono is None or done <= 0 or not total or total <= done:
+        return "eta=?"
+    elapsed = max(1e-6, time.monotonic() - _run_start_mono)
+    rate = done / elapsed
+    remain = (total - done) / max(1e-9, rate)
+    if remain < 60:
+        return f"eta={remain:.0f}s"
+    if remain < 3600:
+        return f"eta={remain / 60:.1f}m"
+    return f"eta={remain / 3600:.1f}h"
+
+def _format_progress_line() -> str:
+    with _progress_lock:
+        crates = _progress_index_crates
+        queued = _progress_versions_queued
+        done = _progress_versions_done
+        ok_n = _progress_ok
+        skip_n = _progress_skip
+        fail_n = _progress_fail
+        scan_done = _progress_scan_complete
+        total = _progress_total
+    pending = max(0, queued - done)
+    if total and total > 0:
+        pct = (done / total) * 100.0
+        return (
+            f"progress: {done}/{total} ({pct:.1f}%) "
+            f"ok={ok_n} skip={skip_n} fail={fail_n} pending={pending} "
+            f"index_crates={crates} scan={'done' if scan_done else 'running'} "
+            f"{_format_eta(done, total)}"
+        )
+    return (
+        f"progress: done={done} queued={queued} pending={pending} "
+        f"ok={ok_n} skip={skip_n} fail={fail_n} "
+        f"index_crates={crates} scan={'done' if scan_done else 'running'} "
+        f"{_format_eta(done, None)}"
+    )
+
 def _clear_status_block_locked() -> None:
     global _status_block_active, _status_block_last_lens
     if not _status_block_active:
@@ -145,6 +242,7 @@ def _format_status_block() -> list[str]:
     ok_total, fail_total = _push_totals()
     ppm = _pushes_per_min_since_start()
     return [
+        _format_progress_line(),
         f"status: downloading={d} extracting={x} waiting_push={w} pushing={p}",
         (
             f"push: ok_60s={ok60} fail_60s={fail60} "
@@ -612,11 +710,10 @@ def process_crate_version(
     force: bool,
     force_with_lease: bool,
     push_sema: threading.Semaphore,
+    keep_crate_cache: bool = False,
 ) -> bool:
-    # Record start time for the entire crate
-    crate_start_time = datetime.now()
     if VERBOSE:
-        info(f"Started {crate_name} at {crate_start_time}")
+        info(f"Started {crate_name} at {datetime.now()}")
 
     # Process a specific version of a crate
     rel = mega_third_party_crates_rel_path(crate_name, version)
@@ -693,16 +790,18 @@ def process_crate_version(
         warn(f"{_fmt_repo(crate_name, version)} push failed")
         _record_push_fail()
         return False
-    else:
-        ok(f"{_fmt_repo(crate_name, version)} pushed")
-        _record_push_ok()
-        # On success, remove local repo directory and cached crate to save disk space.
-        try:
-            shutil.rmtree(repo_path)
-            if VERBOSE:
-                info(f"Removed local repo: {repo_path}")
-        except Exception as e:
-            warn(f"Failed to remove local repo {repo_path}: {e}")
+
+    ok(f"{_fmt_repo(crate_name, version)} pushed")
+    _record_push_ok()
+    # On success, remove local repo directory to save disk space.
+    try:
+        shutil.rmtree(repo_path)
+        if VERBOSE:
+            info(f"Removed local repo: {repo_path}")
+    except Exception as e:
+        warn(f"Failed to remove local repo {repo_path}: {e}")
+    # Optionally drop cached .crate (keep when sharing a host freighter cache).
+    if not keep_crate_cache:
         try:
             if os.path.exists(crate_path):
                 os.remove(crate_path)
@@ -710,17 +809,7 @@ def process_crate_version(
                     info(f"Removed cached crate file: {crate_path}")
         except Exception as e:
             warn(f"Failed to remove cached crate file {crate_path}: {e}")
-        return True
-
-    # Record end time and calculate duration for the entire crate
-    crate_end_time = datetime.now()
-    crate_duration = crate_end_time - crate_start_time
-    if VERBOSE:
-        info(f"Finished {crate_name} at {crate_end_time} (duration {crate_duration})")
-
-    # Keep output minimal by default
-    if VERBOSE:
-        print("------------------")
+    return True
 
 def stream_index_crate_versions(index_path: str, max_versions_per_crate: int):
     """
@@ -769,6 +858,8 @@ def stream_index_crate_versions(index_path: str, max_versions_per_crate: int):
             if max_versions_per_crate > 0:
                 vs = vs[-max_versions_per_crate:]
 
+            _progress_note_index_crate()
+            _progress_note_queued(len(vs))
             yield crate_name, vs
             files_seen += 1
             if files_seen % 1000 == 0:
@@ -899,8 +990,10 @@ def scan_and_process_crates(
     manifest: Dict[Tuple[str, str], dict],
     manifest_path: str,
     reimport_ok: bool,
-):
+    keep_crate_cache: bool = False,
+) -> tuple[int, int, int]:
     info("Scanning crates.io index...")
+    _progress_reset()
 
     stop_evt = threading.Event()
     hb_thread = None
@@ -908,158 +1001,174 @@ def scan_and_process_crates(
         hb_thread = threading.Thread(target=_heartbeat_thread, args=(stop_evt,), daemon=True)
         hb_thread.start()
 
-    # Read the config.json to get the dl base URL (needed before any processing)
-    config_path = os.path.join(index_path, "config.json")
     try:
-        with open(config_path, "r") as config_file:
-            config = json.load(config_file)
-            dl_base_url = config.get("dl")
-            if not dl_base_url:
-                warn("Error: 'dl' key not found in config.json")
-                sys.exit(1)
-    except Exception as e:
-        warn(f"Error reading config.json: {e}")
-        sys.exit(1)
+        # Read the config.json to get the dl base URL (needed before any processing)
+        config_path = os.path.join(index_path, "config.json")
+        try:
+            with open(config_path, "r") as config_file:
+                config = json.load(config_file)
+                dl_base_url = config.get("dl")
+                if not dl_base_url:
+                    warn("Error: 'dl' key not found in config.json")
+                    sys.exit(1)
+        except Exception as e:
+            warn(f"Error reading config.json: {e}")
+            sys.exit(1)
 
-    use_streaming_full_index = not only_crates and not (limit_crates and limit_crates > 0)
+        use_streaming_full_index = not only_crates and not (limit_crates and limit_crates > 0)
 
-    if use_streaming_full_index:
-        info("Streaming index: will download/commit/push while walking crate files.")
-    elif only_crates:
-        crates = scan_selected_crates_index(index_path, only_crates)
-        info(f"Found {len(crates)} crates.")
-        crates_items = list(crates.items())
-        allow = {c.strip() for c in only_crates if c.strip()}
-        crates_items = [(n, v) for (n, v) in crates_items if n in allow]
-        info(f"Filtered to {len(crates_items)} crates via --crate.")
-    else:
-        names = load_or_build_crate_name_cache(index_path, crate_name_cache)
-        random.shuffle(names)
-        picked = names[:limit_crates]
-        info(f"Sampling {len(picked)} crates via --limit-crates (no full content scan).")
-        crates = scan_selected_crates_index(index_path, picked)
-        info(f"Loaded {len(crates)} crates' versions.")
-        crates_items = list(crates.items())
-        if VERBOSE:
-            info("Shuffling crates list...")
-        random.shuffle(crates_items)
+        if use_streaming_full_index:
+            info("Streaming index: will download/commit/push while walking crate files.")
+        elif only_crates:
+            crates = scan_selected_crates_index(index_path, only_crates)
+            info(f"Found {len(crates)} crates.")
+            crates_items = list(crates.items())
+            allow = {c.strip() for c in only_crates if c.strip()}
+            crates_items = [(n, v) for (n, v) in crates_items if n in allow]
+            info(f"Filtered to {len(crates_items)} crates via --crate.")
+        else:
+            names = load_or_build_crate_name_cache(index_path, crate_name_cache)
+            random.shuffle(names)
+            picked = names[:limit_crates]
+            info(f"Sampling {len(picked)} crates via --limit-crates (no full content scan).")
+            crates = scan_selected_crates_index(index_path, picked)
+            info(f"Loaded {len(crates)} crates' versions.")
+            crates_items = list(crates.items())
+            if VERBOSE:
+                info("Shuffling crates list...")
+            random.shuffle(crates_items)
 
-    push_sema = threading.BoundedSemaphore(max(1, int(jobs)))
-    succeeded = 0
-    failed = 0
-    skipped = 0
-    lock = threading.Lock()
+        push_sema = threading.BoundedSemaphore(max(1, int(jobs)))
+        succeeded = 0
+        failed = 0
+        skipped = 0
+        lock = threading.Lock()
 
-    def process_one(crate_name: str, v: str) -> tuple[str, str, str]:
-        key = (crate_name, v)
-        rec = manifest.get(key)
-        # If already successfully imported, skip unless --reimport-ok (git --force does not disable this).
-        if rec and rec.get("status") == "ok" and not reimport_ok:
-            info(f"{_fmt_repo(crate_name, v)} already imported; skipping (manifest)")
-            return ("skip", crate_name, v)
+        def process_one(crate_name: str, v: str) -> tuple[str, str, str]:
+            key = (crate_name, v)
+            rec = manifest.get(key)
+            # If already successfully imported, skip unless --reimport-ok (git --force does not disable this).
+            if rec and rec.get("status") == "ok" and not reimport_ok:
+                if VERBOSE:
+                    info(f"{_fmt_repo(crate_name, v)} already imported; skipping (manifest)")
+                return ("skip", crate_name, v)
 
-        rel = mega_third_party_crates_rel_path(crate_name, v)
-        repo_path = os.path.join(git_repos_dir, rel)
+            rel = mega_third_party_crates_rel_path(crate_name, v)
+            repo_path = os.path.join(git_repos_dir, rel)
 
-        # Existing repo path
-        if os.path.exists(repo_path) and os.path.exists(os.path.join(repo_path, ".git")):
-            if repush_existing and not dry_run:
-                ok_push = ensure_remote_and_push_existing(
-                    repo_path,
-                    rel,
+            # Existing repo path
+            if os.path.exists(repo_path) and os.path.exists(os.path.join(repo_path, ".git")):
+                if repush_existing and not dry_run:
+                    ok_push = ensure_remote_and_push_existing(
+                        repo_path,
+                        rel,
+                        git_base_url,
+                        crate_name=crate_name,
+                        version=v,
+                        commit_signoff=commit_signoff,
+                        auth_token=auth_token,
+                        force=force,
+                        force_with_lease=force_with_lease,
+                        push_sema=push_sema,
+                    )
+                    return ("ok" if ok_push else "fail", crate_name, v)
+                else:
+                    if VERBOSE:
+                        info(f"{_fmt_repo(crate_name, v)} exists; skipping")
+                    return ("skip", crate_name, v)
+
+            crate_path = check_and_download_crate(crates_dir, crate_name, v, dl_base_url)
+            if crate_path is None:
+                return ("fail", crate_name, v)
+            try:
+                ok_done = process_crate_version(
+                    0,
+                    crate_name,
+                    v,
+                    crate_path,
+                    git_repos_dir,
                     git_base_url,
-                    crate_name=crate_name,
-                    version=v,
                     commit_signoff=commit_signoff,
+                    dry_run=dry_run,
                     auth_token=auth_token,
                     force=force,
                     force_with_lease=force_with_lease,
                     push_sema=push_sema,
+                    keep_crate_cache=keep_crate_cache,
                 )
-                return ("ok" if ok_push else "fail", crate_name, v)
+                return ("ok" if ok_done else "fail", crate_name, v)
+            except Exception as e:
+                warn(f"{_fmt_repo(crate_name, v)} failed: {e}")
+                return ("fail", crate_name, v)
+
+        def record_result(fut) -> None:
+            nonlocal succeeded, failed, skipped
+            status, c_name, v = fut.result()
+            _progress_note_result(status)
+            with lock:
+                if status == "ok":
+                    succeeded += 1
+                elif status == "skip":
+                    skipped += 1
+                else:
+                    failed += 1
+                key = (c_name, v)
+                rel = mega_third_party_crates_rel_path(c_name, v)
+                rec = {
+                    "crate": c_name,
+                    "version": v,
+                    "status": status,
+                    "remote": f"{git_base_url.rstrip('/')}/{rel}",
+                    "last_import_time": datetime.now(timezone.utc).isoformat(),
+                }
+                manifest[key] = rec
+                append_manifest_record(manifest_path, rec)
+
+        # Concurrency: bounded pending futures in streaming mode to avoid RAM spikes.
+        with ThreadPoolExecutor(max_workers=max(1, int(jobs))) as ex:
+            if use_streaming_full_index:
+                max_pending = max(32, int(jobs) * 8)
+                pending: set = set()
+                for crate_name, versions in stream_index_crate_versions(
+                    index_path, max_versions_per_crate
+                ):
+                    for v in versions:
+                        pending.add(ex.submit(process_one, crate_name, v))
+                        while len(pending) >= max_pending:
+                            done, _ = wait(pending, return_when=FIRST_COMPLETED)
+                            for df in done:
+                                pending.discard(df)
+                                record_result(df)
+                _progress_mark_scan_complete()
+                info(
+                    f"Index scan complete: {_progress_index_crates} crates, "
+                    f"{_progress_versions_queued} versions queued; draining workers..."
+                )
+                for df in as_completed(pending):
+                    record_result(df)
             else:
-                info(f"{_fmt_repo(crate_name, v)} exists; skipping")
-                return ("skip", crate_name, v)
+                tasks: list[tuple[str, str]] = []
+                for crate_name, versions in crates_items:
+                    vs = sorted(versions)
+                    if max_versions_per_crate > 0:
+                        vs = vs[-max_versions_per_crate:]
+                    for v in vs:
+                        tasks.append((crate_name, v))
+                _progress_set_total(len(tasks))
+                info(f"Starting to process {len(tasks)} crate versions...")
+                futures = [ex.submit(process_one, c, v) for c, v in tasks]
+                for f in as_completed(futures):
+                    record_result(f)
 
-        crate_path = check_and_download_crate(crates_dir, crate_name, v, dl_base_url)
-        if crate_path is None:
-            return ("fail", crate_name, v)
-        try:
-            ok_done = process_crate_version(
-                0,
-                crate_name,
-                v,
-                crate_path,
-                git_repos_dir,
-                git_base_url,
-                commit_signoff=commit_signoff,
-                dry_run=dry_run,
-                auth_token=auth_token,
-                force=force,
-                force_with_lease=force_with_lease,
-                push_sema=push_sema,
-            )
-            return ("ok" if ok_done else "fail", crate_name, v)
-        except Exception as e:
-            warn(f"{_fmt_repo(crate_name, v)} failed: {e}")
-            return ("fail", crate_name, v)
-
-    def record_result(fut) -> None:
-        nonlocal succeeded, failed, skipped
-        status, c_name, v = fut.result()
-        with lock:
-            if status == "ok":
-                succeeded += 1
-            elif status == "skip":
-                skipped += 1
-            else:
-                failed += 1
-            key = (c_name, v)
-            rel = mega_third_party_crates_rel_path(c_name, v)
-            rec = {
-                "crate": c_name,
-                "version": v,
-                "status": status,
-                "remote": f"{git_base_url.rstrip('/')}/{rel}",
-                "last_import_time": datetime.now(timezone.utc).isoformat(),
-            }
-            manifest[key] = rec
-            append_manifest_record(manifest_path, rec)
-
-    # Concurrency: bounded pending futures in streaming mode to avoid RAM spikes.
-    with ThreadPoolExecutor(max_workers=max(1, int(jobs))) as ex:
-        if use_streaming_full_index:
-            max_pending = max(32, int(jobs) * 8)
-            pending: set = set()
-            for crate_name, versions in stream_index_crate_versions(
-                index_path, max_versions_per_crate
-            ):
-                for v in versions:
-                    pending.add(ex.submit(process_one, crate_name, v))
-                    while len(pending) >= max_pending:
-                        done, _ = wait(pending, return_when=FIRST_COMPLETED)
-                        for df in done:
-                            pending.discard(df)
-                            record_result(df)
-            for df in as_completed(pending):
-                record_result(df)
-        else:
-            tasks: list[tuple[str, str]] = []
-            for crate_name, versions in crates_items:
-                vs = sorted(versions)
-                if max_versions_per_crate > 0:
-                    vs = vs[-max_versions_per_crate:]
-                for v in vs:
-                    tasks.append((crate_name, v))
-            info(f"Starting to process {len(tasks)} crate versions...")
-            futures = [ex.submit(process_one, c, v) for c, v in tasks]
-            for f in as_completed(futures):
-                record_result(f)
-
-    info(f"Summary: ok={succeeded}, skipped={skipped}, failed={failed}")
-    # Compact manifest (dedupe append-only history to one line per crate@version).
-    write_manifest(manifest_path, manifest)
-    return succeeded + skipped + failed
+        info(f"Summary: ok={succeeded}, skipped={skipped}, failed={failed}")
+        info(_format_progress_line())
+        # Compact manifest (dedupe append-only history to one line per crate@version).
+        write_manifest(manifest_path, manifest)
+        return succeeded, skipped, failed
+    finally:
+        stop_evt.set()
+        if hb_thread is not None:
+            hb_thread.join(timeout=max(1.0, float(STATUS_HEARTBEAT_INTERVAL_S) + 1.0))
 
 
 def main():
@@ -1166,6 +1275,11 @@ def main():
         action="store_true",
         help="Re-process crate versions even if manifest status is ok (default: skip ok).",
     )
+    p.add_argument(
+        "--keep-crate-cache",
+        action="store_true",
+        help="Do not delete downloaded .crate files after a successful push (for shared host caches).",
+    )
     args = p.parse_args()
 
     global VERBOSE
@@ -1200,7 +1314,7 @@ def main():
         manifest_path = str(Path(git_repos_dir) / "crates-import-manifest.jsonl")
     manifest = load_manifest(manifest_path)
 
-    total_crates = scan_and_process_crates(
+    succeeded, skipped, failed = scan_and_process_crates(
         index_path,
         crates_dir,
         git_repos_dir,
@@ -1219,13 +1333,17 @@ def main():
         manifest=manifest,
         manifest_path=manifest_path,
         reimport_ok=args.reimport_ok,
+        keep_crate_cache=bool(args.keep_crate_cache),
     )
 
     # Record end time and calculate duration for the entire process
     total_end_time = datetime.now()
     total_duration = total_end_time - total_start_time
-    info(f"Total processed: {total_crates}")
+    total_crates = succeeded + skipped + failed
+    info(f"Total processed: {total_crates} (ok={succeeded}, skipped={skipped}, failed={failed})")
     info(f"Finished at {total_end_time} (duration {total_duration})")
+    if failed > 0:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()  # Run the main function if this script is executed directly

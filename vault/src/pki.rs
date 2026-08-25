@@ -48,7 +48,7 @@ impl VaultCore {
             .expect("Failed to mount pki backend");
     }
 
-    /// generate root cert, so that you can read from `pki/ca/pem`
+    /// generate root cert, so that you can read from `pki/ca/tls/pem`
     /// - if `exported` is true, then the response will contain `private key`
     async fn generate_root(&self, exported: bool) {
         let key_type = "rsa";
