@@ -14,10 +14,12 @@ tools/**
 docs
 
 # Exclude scripts by default (large / unused in most images), but keep the
-# paths required by scripts/init_mega/Dockerfile (mega-init image).
+# paths required by scripts/init_mega and scripts/mono-reset Dockerfiles.
 scripts/*
 !scripts/init_mega/
 !scripts/init_mega/**
+!scripts/mono-reset/
+!scripts/mono-reset/**
 !scripts/import-buck2-deps/
 !scripts/import-buck2-deps/**
 

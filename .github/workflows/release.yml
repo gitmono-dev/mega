@@ -35,6 +35,10 @@ jobs:
             context: scripts/crates-sync
             dockerfile: scripts/crates-sync/Dockerfile
 
+          - name: mono-reset
+            context: .
+            dockerfile: scripts/mono-reset/Dockerfile
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
