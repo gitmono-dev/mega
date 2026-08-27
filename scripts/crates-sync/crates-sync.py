@@ -68,6 +68,15 @@ _progress_total: int | None = None  # known after scan finishes (or non-streamin
 _progress_jobs = 1
 _work_queue: queue.Queue | None = None
 
+# Fail-fast breaker: N consecutive failed items with no ok/skip in between
+# means a systemic problem (e.g. fork exhaustion, server unreachable), not
+# bad crates — abort the run instead of burning the whole queue into the
+# manifest as false "fail" records.
+FAIL_FAST_THRESHOLD = 500
+_fail_lock = threading.Lock()
+_consecutive_fails = 0
+_abort_event = threading.Event()
+
 def _record_push_ok() -> None:
     now = time.monotonic()
     with _push_ok_lock:
@@ -588,10 +597,26 @@ def check_and_download_crate(
 
     return crate_path
 
+def _run_cmd(cmd: list[str], *, retries: int = 4, base_delay_s: float = 0.5, **kwargs) -> subprocess.CompletedProcess:
+    """subprocess.run with retry on transient spawn failures.
+
+    Under PID pressure (pids cgroup limit) fork fails with EAGAIN
+    (BlockingIOError) or ENOMEM; a single failure must not kill a worker
+    thread, so retry briefly before giving up.
+    """
+    for attempt in range(retries + 1):
+        try:
+            return subprocess.run(cmd, **kwargs)
+        except OSError:
+            if attempt >= retries:
+                raise
+            time.sleep(base_delay_s * (2 ** attempt))
+
+
 def run_git_command(repo_path, command, *, check: bool = True, log_on_error: bool = True):
     # Run a git command in the specified repository
     try:
-        result = subprocess.run(command, cwd=repo_path, check=check, capture_output=True, text=True)
+        result = _run_cmd(command, cwd=repo_path, check=check, capture_output=True, text=True)
         return result.stdout.strip()
     except subprocess.CalledProcessError as e:
         if log_on_error:
@@ -606,7 +631,7 @@ def run_git_command(repo_path, command, *, check: bool = True, log_on_error: boo
         return None
 
 def ensure_git_remote(repo_path: str, remote_name: str, remote_url: str) -> None:
-    existing = subprocess.run(
+    existing = _run_cmd(
         ["git", "remote", "get-url", remote_name],
         cwd=repo_path,
         capture_output=True,
@@ -630,7 +655,7 @@ def maybe_wrap_git_with_bearer(cmd: list[str], token: str | None) -> list[str]:
     return ["git", "-c", f"http.extraHeader={header}", *cmd[1:]]
 
 def _git_has_any_commit(repo_path: str) -> bool:
-    res = subprocess.run(
+    res = _run_cmd(
         ["git", "rev-parse", "--verify", "HEAD"],
         cwd=repo_path,
         capture_output=True,
@@ -652,7 +677,7 @@ def remote_repo_has_commits(
     remote_url = f"{git_base_url.rstrip('/')}/{rel}"
     cmd = maybe_wrap_git_with_bearer(["git", "ls-remote", remote_url], auth_token)
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_s)
+        res = _run_cmd(cmd, capture_output=True, text=True, timeout=timeout_s)
     except subprocess.TimeoutExpired:
         warn(f"ls-remote timed out for {rel}")
         return False
@@ -697,7 +722,7 @@ def git_push_main(
         push_args.insert(2, "--force")
     push_cmd = maybe_wrap_git_with_bearer(push_args, auth_token)
     try:
-        result = subprocess.run(
+        result = _run_cmd(
             push_cmd,
             cwd=repo_path,
             capture_output=True,
@@ -714,11 +739,11 @@ def git_push_main(
     if not force and not force_with_lease and _is_non_fast_forward_rejection(out, err):
         return "exists"
     warn("Git command failed: push rejected")
-    if VERBOSE:
-        if out.strip():
-            warn(f"stdout: {out.strip()}")
-        if err.strip():
-            warn(f"stderr: {err.strip()}")
+    # Always surface the reason (bounded): client-side failures (e.g. fork
+    # exhaustion) never reach the server, so logs are the only evidence.
+    detail = (err or "").strip() or (out or "").strip()
+    if detail:
+        warn(f"push error detail: {detail[-400:]}")
     return "fail"
 
 def _cleanup_local_repo(repo_path: str, *, note: str) -> None:
@@ -1307,10 +1332,23 @@ def scan_and_process_crates(
 
         def record_result_status(status: str, c_name: str, v: str) -> None:
             nonlocal succeeded, failed, skipped
+            global _consecutive_fails
             # "present" = remote already had the crate; skip work, persist as ok.
             persist_status = "ok" if status in ("ok", "present") else status
             progress_status = "skip" if status == "present" else status
             _progress_note_result(progress_status)
+            with _fail_lock:
+                if persist_status == "fail":
+                    _consecutive_fails += 1
+                    if _consecutive_fails == FAIL_FAST_THRESHOLD:
+                        warn(
+                            f"Fail-fast: {FAIL_FAST_THRESHOLD} consecutive failures without any "
+                            "success; aborting run (systemic failure suspected, e.g. fork "
+                            "exhaustion or mono-engine unreachable)."
+                        )
+                        _abort_event.set()
+                else:
+                    _consecutive_fails = 0
             # Counters feed the sticky progress footer (heartbeat ~2s). Per-crate OK
             # lines are verbose-only so a full import does not scroll millions of times.
             if status == "ok" and VERBOSE:
@@ -1355,6 +1393,9 @@ def scan_and_process_crates(
                     for crate_name, versions in stream_index_crate_versions(
                         index_path, max_versions_per_crate
                     ):
+                        if _abort_event.is_set():
+                            warn("Index scan stopped early: fail-fast breaker tripped.")
+                            break
                         for v in versions:
                             work_q.put((crate_name, v))
                     _progress_mark_scan_complete()
@@ -1371,12 +1412,21 @@ def scan_and_process_crates(
 
             def worker_loop() -> None:
                 while True:
+                    if _abort_event.is_set():
+                        return
                     item = work_q.get()
                     try:
                         if item is None:
                             return
                         crate_name, v = item
-                        status, c_name, ver = process_one(crate_name, v)
+                        try:
+                            status, c_name, ver = process_one(crate_name, v)
+                        except Exception as e:
+                            # Never let one item kill the worker: a dead worker
+                            # strands the queue and the run "finishes" at a few
+                            # percent done.
+                            warn(f"{_fmt_repo(crate_name, v)} worker error: {e}")
+                            status, c_name, ver = "fail", crate_name, v
                         record_result_status(status, c_name, ver)
                     finally:
                         work_q.task_done()
@@ -1618,6 +1668,11 @@ def main():
     total_crates = succeeded + skipped + failed
     info(f"Total processed: {total_crates} (ok={succeeded}, skipped={skipped}, failed={failed})")
     info(f"Finished at {total_end_time} (duration {total_duration})")
+    if _abort_event.is_set():
+        # Distinct exit code so operators can tell "aborted early on systemic
+        # failure" from a normal completed-with-failures run.
+        warn(f"Aborted early by fail-fast breaker ({FAIL_FAST_THRESHOLD} consecutive failures).")
+        sys.exit(3)
     if failed > 0:
         sys.exit(1)
 

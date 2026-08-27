@@ -448,9 +448,7 @@ impl RepoHandler for ImportRepo {
                 .expect("command_list lock poisoned");
             cmds.iter()
                 .find(|c| {
-                    c.ref_type == RefTypeEnum::Branch
-                        && c.status == "ok"
-                        && c.new_id != ZERO_ID
+                    c.ref_type == RefTypeEnum::Branch && c.status == "ok" && c.new_id != ZERO_ID
                 })
                 .map(|c| c.new_id.clone())
         };

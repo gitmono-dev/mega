@@ -30,26 +30,23 @@ docker build -f scripts/mono-reset/Dockerfile -t mega/mono-reset:local .
 
 ## Terraform (onprem)
 
-In `envs/onprem/k3s-rust` (or sibling env). **Two values required** — `enable_mono_reset`
-alone is not enough; plan fails unless confirm matches the namespace:
+In `envs/onprem/k3s-rust` (or sibling env). Put **only** `enable_mono_reset = true`
+in tfvars; type the confirm string at apply time (plan fails if wrong/missing):
 
 ```hcl
-enable_mono_reset  = true
-mono_reset_confirm = "WIPE_GIT_DATA:mega-rust"  # WIPE_GIT_DATA:<namespace>
-mono_reset_image   = "registry.xuanwu.openatom.cn/mega/mono-reset:<sha>"
-# mono_reset_args = ["--skip-buckal"]  # optional
+enable_mono_reset = true
+mono_reset_image  = "registry.xuanwu.openatom.cn/mega/mono-reset:<sha>"  # optional
 ```
 
-Then:
-
 ```bash
-terraform apply
+printf 'Confirm wipe (WIPE_GIT_DATA:mega-rust): '
+read -r c
+terraform apply -var="mono_reset_confirm=$c"
 kubectl -n mega-rust logs -f job/mono-reset
 ```
 
-After success, set `enable_mono_reset = false` and clear `mono_reset_confirm` (and
-apply) so a later unrelated apply does not recreate the Job. Changing
-`mono_reset_image` replaces/re-runs the Job only while both switches stay set.
+After success, set `enable_mono_reset = false` and apply without the confirm
+`-var` so a later unrelated apply does not recreate the Job.
 
 While the Job scales `mono-engine` (and `orion-server`) to 0, git API is down; **mega-ui** and **campsite-api** stay up so login UI remains reachable.
 

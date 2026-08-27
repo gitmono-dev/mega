@@ -548,7 +548,8 @@ impl GitDbStorage {
     }
 
     /// Find single tag by repo id and tag name
-    pub async fn get_tag_by_repo_and_name(        &self,
+    pub async fn get_tag_by_repo_and_name(
+        &self,
         repo_id: i64,
         name: &str,
     ) -> Result<Option<git_tag::Model>, MegaError> {

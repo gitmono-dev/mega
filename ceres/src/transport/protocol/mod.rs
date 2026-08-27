@@ -19,7 +19,9 @@ use tokio::sync::RwLock;
 use crate::{
     bus::TransportRuntime,
     transport::pack::{
-        RepoHandler, import_repo::ImportRepo, monorepo::{BranchTip, MonoRepo},
+        RepoHandler,
+        import_repo::ImportRepo,
+        monorepo::{BranchTip, MonoRepo},
     },
 };
 
@@ -252,7 +254,9 @@ impl SmartSession {
             // deletion itself is rejected and other updates land.
             let tip = commands
                 .iter()
-                .find(|x| x.ref_type == RefTypeEnum::Branch && x.command_type != CommandType::Delete)
+                .find(|x| {
+                    x.ref_type == RefTypeEnum::Branch && x.command_type != CommandType::Delete
+                })
                 .map(|command| BranchTip {
                     base_branch: command
                         .ref_name

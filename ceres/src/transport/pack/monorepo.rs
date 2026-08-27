@@ -85,14 +85,11 @@ impl RepoHandler for MonoRepo {
         // Tip metadata was captured at handler construction, before the
         // protocol layer rejected commands (deletions, missing targets); keep
         // it pointing at surviving work so finalize events stay valid.
-        if let Some(command) = commands
-            .iter()
-            .find(|x| {
-                x.ref_type == RefTypeEnum::Branch
-                    && x.command_type != CommandType::Delete
-                    && x.status == "ok"
-            })
-        {
+        if let Some(command) = commands.iter().find(|x| {
+            x.ref_type == RefTypeEnum::Branch
+                && x.command_type != CommandType::Delete
+                && x.status == "ok"
+        }) {
             let mut tip = self.tip.lock().expect("branch tip lock poisoned");
             tip.from_hash = command.old_id.clone();
             tip.to_hash = command.new_id.clone();
