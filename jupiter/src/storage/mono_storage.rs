@@ -16,7 +16,7 @@ use sea_orm::{
     ActiveValue::Set,
     ColumnTrait, Condition, ConnectionTrait, DatabaseTransaction, DbErr, EntityTrait,
     IntoActiveModel, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect, TransactionTrait,
-    sea_query::{Expr, OnConflict},
+    sea_query::{CaseStatement, Expr, ExprTrait, OnConflict},
 };
 
 use crate::{
@@ -455,18 +455,38 @@ impl MonoStorage {
         blob_id: &str,
         file_path: &str,
     ) -> Result<(), MegaError> {
-        if let Some(model) = mega_blob::Entity::find()
-            .filter(mega_blob::Column::BlobId.eq(blob_id))
-            .one(self.get_connection())
-            .await?
-        {
-            let mut active: mega_blob::ActiveModel = model.into();
+        self.update_blob_filepaths(vec![(blob_id.to_string(), file_path.to_string())])
+            .await
+    }
 
-            active.file_path = Set(file_path.to_string());
-
-            active.update(self.get_connection()).await?;
+    /// Batch-assign `file_path` on `mega_blob`. Duplicate `blob_id`s keep the last path.
+    /// Missing ids are skipped. Empty input is a no-op.
+    pub async fn update_blob_filepaths(
+        &self,
+        pairs: Vec<(String, String)>,
+    ) -> Result<(), MegaError> {
+        if pairs.is_empty() {
+            return Ok(());
         }
 
+        let collapsed = last_wins_mega_filepaths(pairs);
+        for chunk in collapsed.chunks(<BaseStorage as StorageConnector>::BATCH_CHUNK_SIZE) {
+            let blob_ids: Vec<String> = chunk.iter().map(|(id, _)| id.clone()).collect();
+            let mut case = CaseStatement::new();
+            for (blob_id, file_path) in chunk {
+                case = case.case(
+                    Expr::col(mega_blob::Column::BlobId).eq(blob_id.clone()),
+                    file_path.clone(),
+                );
+            }
+            case = case.finally(Expr::col(mega_blob::Column::FilePath));
+
+            mega_blob::Entity::update_many()
+                .col_expr(mega_blob::Column::FilePath, case.into())
+                .filter(mega_blob::Column::BlobId.is_in(blob_ids))
+                .exec(self.get_connection())
+                .await?;
+        }
         Ok(())
     }
 
@@ -888,10 +908,13 @@ impl MonoStorage {
 
 #[cfg(test)]
 mod tests {
+    use callisto::mega_blob;
     use common::utils;
+    use sea_orm::{ColumnTrait, EntityTrait, IntoActiveModel, QueryFilter};
     use tempfile::TempDir;
 
-    use crate::tests::test_storage;
+    use super::*;
+    use crate::{storage::base_storage::StorageConnector, tests::test_storage};
 
     #[tokio::test]
     async fn ensure_cl_ref_creates_missing_canonical_ref() {
@@ -1027,4 +1050,78 @@ mod tests {
         assert_eq!(updated.ref_tree_hash, "4".repeat(40));
         assert!(updated.is_cl);
     }
+
+    fn mega_blob_row(id: i64, blob_id: &str, file_path: &str) -> mega_blob::Model {
+        mega_blob::Model {
+            id,
+            blob_id: blob_id.to_string(),
+            name: String::new(),
+            size: 0,
+            created_at: chrono::Utc::now().naive_utc(),
+            pack_id: String::new(),
+            file_path: file_path.to_string(),
+            pack_offset: 0,
+            is_delta_in_pack: false,
+            commit_id: String::new(),
+        }
+    }
+
+    async fn insert_mega_blob(stg: &MonoStorage, model: mega_blob::Model) {
+        mega_blob::Entity::insert(model.into_active_model())
+            .exec(stg.get_connection())
+            .await
+            .expect("insert mega_blob");
+    }
+
+    async fn mega_filepath(stg: &MonoStorage, blob_id: &str) -> Option<String> {
+        mega_blob::Entity::find()
+            .filter(mega_blob::Column::BlobId.eq(blob_id))
+            .one(stg.get_connection())
+            .await
+            .unwrap()
+            .map(|m| m.file_path)
+    }
+
+    #[tokio::test]
+    async fn update_blob_filepaths_sets_multiple_paths() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.mono_storage();
+        insert_mega_blob(&stg, mega_blob_row(1, "blob-a", "")).await;
+        insert_mega_blob(&stg, mega_blob_row(2, "blob-b", "")).await;
+
+        stg.update_blob_filepaths(vec![
+            ("blob-a".into(), "src/lib.rs".into()),
+            ("blob-b".into(), "Cargo.toml".into()),
+        ])
+        .await
+        .unwrap();
+
+        assert_eq!(
+            mega_filepath(&stg, "blob-a").await.as_deref(),
+            Some("src/lib.rs")
+        );
+        assert_eq!(
+            mega_filepath(&stg, "blob-b").await.as_deref(),
+            Some("Cargo.toml")
+        );
+    }
+
+    #[tokio::test]
+    async fn update_blob_filepaths_ignores_missing_id() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.mono_storage();
+        stg.update_blob_filepaths(vec![("missing".into(), "nope.rs".into())])
+            .await
+            .expect("missing blob is not an error");
+    }
+}
+
+fn last_wins_mega_filepaths(pairs: Vec<(String, String)>) -> Vec<(String, String)> {
+    let mut map = HashMap::with_capacity(pairs.len());
+    for (blob_id, file_path) in pairs {
+        map.insert(blob_id, file_path);
+    }
+    map.into_iter().collect()
 }

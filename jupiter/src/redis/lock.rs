@@ -50,11 +50,15 @@ impl RedLock {
         Ok(result.is_some())
     }
 
+    /// Retry interval while waiting for SET NX. A 200ms sleep turned a ~25ms
+    /// hold into 200/400/600ms waits for anyone who missed the unlock.
+    const LOCK_RETRY_SLEEP: Duration = Duration::from_millis(10);
+
     /// Lock with retry
     pub async fn lock(self: Arc<Self>) -> Result<RedLockGuard, MegaError> {
         let t0 = Instant::now();
         while !self.try_lock().await? {
-            sleep(Duration::from_millis(200)).await;
+            sleep(Self::LOCK_RETRY_SLEEP).await;
         }
 
         self.spawn_auto_renew();

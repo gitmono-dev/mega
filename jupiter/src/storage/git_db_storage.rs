@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{collections::HashMap, ops::Deref};
 
 use api_model::common::Pagination;
 use callisto::{
@@ -11,9 +11,9 @@ use common::{
 };
 use futures::Stream;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseTransaction, DbBackend, DbErr,
-    EntityTrait, IntoActiveModel, PaginatorTrait, QueryFilter, QueryOrder, QueryTrait, Set,
-    TransactionTrait, sea_query::Expr,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseTransaction, DbErr, EntityTrait,
+    IntoActiveModel, PaginatorTrait, QueryFilter, QueryOrder, Set, TransactionTrait,
+    sea_query::{CaseStatement, Expr, ExprTrait},
 };
 
 use crate::storage::base_storage::{BaseStorage, StorageConnector};
@@ -282,21 +282,46 @@ impl GitDbStorage {
 
     pub async fn update_git_blob_filepath(
         &self,
-        blob_id: &String,
+        repo_id: i64,
+        blob_id: &str,
         file_path: &str,
     ) -> Result<(), MegaError> {
-        if let Some(model) = git_blob::Entity::find()
-            .filter(git_blob::Column::BlobId.eq(blob_id))
-            .one(self.get_connection())
-            .await?
-        {
-            let mut active: git_blob::ActiveModel = model.into();
+        self.update_git_blob_filepaths(repo_id, vec![(blob_id.to_string(), file_path.to_string())])
+            .await
+    }
 
-            active.file_path = Set(file_path.to_string());
-
-            active.update(self.get_connection()).await?;
+    /// Batch-assign `file_path` for blobs in one repo.
+    ///
+    /// Duplicate `blob_id`s keep the last path (same as sequential UPDATE). Missing ids are
+    /// skipped. Empty input is a no-op.
+    pub async fn update_git_blob_filepaths(
+        &self,
+        repo_id: i64,
+        pairs: Vec<(String, String)>,
+    ) -> Result<(), MegaError> {
+        if pairs.is_empty() {
+            return Ok(());
         }
 
+        let collapsed = last_wins_filepaths(pairs);
+        for chunk in collapsed.chunks(<BaseStorage as StorageConnector>::BATCH_CHUNK_SIZE) {
+            let blob_ids: Vec<String> = chunk.iter().map(|(id, _)| id.clone()).collect();
+            let mut case = CaseStatement::new();
+            for (blob_id, file_path) in chunk {
+                case = case.case(
+                    Expr::col(git_blob::Column::BlobId).eq(blob_id.clone()),
+                    file_path.clone(),
+                );
+            }
+            case = case.finally(Expr::col(git_blob::Column::FilePath));
+
+            git_blob::Entity::update_many()
+                .col_expr(git_blob::Column::FilePath, case.into())
+                .filter(git_blob::Column::RepoId.eq(repo_id))
+                .filter(git_blob::Column::BlobId.is_in(blob_ids))
+                .exec(self.get_connection())
+                .await?;
+        }
         Ok(())
     }
 
@@ -335,8 +360,12 @@ impl GitDbStorage {
         }
 
         // Descendant of the new path (new path would become a parent import repo).
+        // Btree range `[path/, path0)` uses idx_ir_repo_path; `LIKE 'path/%'` does not
+        // (needs varchar_pattern_ops / C collation) and seq-scans ~1M rows.
+        let (lo, hi) = git_repo_descendant_bounds(path);
         if let Some(descendant) = git_repo::Entity::find()
-            .filter(git_repo::Column::RepoPath.like(format!("{path}/%")))
+            .filter(git_repo::Column::RepoPath.gte(lo))
+            .filter(git_repo::Column::RepoPath.lt(hi))
             .one(self.get_connection())
             .await?
         {
@@ -363,26 +392,36 @@ impl GitDbStorage {
         Ok(None)
     }
 
-    /// Finds a Git repository with a path that matches the beginning of the provided repository path using a LIKE query.
+    /// Longest import repo whose path is a segment-prefix of `repo_path`.
     ///
-    /// # Arguments
-    ///
-    /// * `repo_path` - A string slice that holds the beginning of the path of the repository to search for.
-    ///
-    /// # Returns
-    ///
-    /// A `Result` containing an `Option` with the Git repository model if found, or `None` if not found.
-    /// Returns a `MegaError` if an error occurs during the search.
+    /// Walks parents with the unique `repo_path` index instead of
+    /// `'{path}' LIKE repo_path || '%'` (seq scan, and a false match on
+    /// `/third-party/rust` vs `/third-party/rust_v1`).
     pub async fn find_git_repo_like_path(
         &self,
         repo_path: &str,
     ) -> Result<Option<git_repo::Model>, MegaError> {
-        let query = git_repo::Entity::find()
-            .filter(Expr::cust(format!("'{repo_path}' LIKE repo_path || '%'")))
-            .order_by_desc(Expr::cust("LENGTH(repo_path)"));
-        tracing::debug!("{}", query.build(DbBackend::Postgres).to_string());
-        let result = query.one(self.get_connection()).await?;
-        Ok(result)
+        let path = repo_path.trim_end_matches('/');
+        if path.is_empty() {
+            return Ok(None);
+        }
+
+        let mut current = std::path::PathBuf::from(path);
+        loop {
+            let candidate = current.to_string_lossy();
+            let candidate = if candidate.is_empty() {
+                "/".to_string()
+            } else {
+                candidate.to_string()
+            };
+            if let Some(repo) = self.find_git_repo_exact_match(&candidate).await? {
+                return Ok(Some(repo));
+            }
+            if candidate == "/" || !current.pop() {
+                break;
+            }
+        }
+        Ok(None)
     }
 
     pub async fn save_git_repo(&self, repo: git_repo::Model) -> Result<(), MegaError> {
@@ -616,5 +655,325 @@ impl GitDbStorage {
         (c_count + t_count + b_count + tag_count)
             .try_into()
             .unwrap()
+    }
+}
+
+fn last_wins_filepaths(pairs: Vec<(String, String)>) -> Vec<(String, String)> {
+    let mut map = HashMap::with_capacity(pairs.len());
+    for (blob_id, file_path) in pairs {
+        map.insert(blob_id, file_path);
+    }
+    map.into_iter().collect()
+}
+
+/// Inclusive lower / exclusive upper bound for `repo_path` values that are
+/// strict descendants of `path` (`path/…`).
+///
+/// `'/'` is ASCII 47 and `'0'` is 48, so `[path/, path0)` is the btree range
+/// of keys that start with `path/`.
+fn git_repo_descendant_bounds(path: &str) -> (String, String) {
+    (format!("{path}/"), format!("{path}0"))
+}
+
+#[cfg(test)]
+mod tests {
+    use callisto::{git_blob, git_repo};
+    use sea_orm::{ColumnTrait, EntityTrait, IntoActiveModel, QueryFilter};
+    use tempfile::TempDir;
+
+    use super::*;
+    use crate::tests::test_storage;
+
+    fn blob_row(id: i64, repo_id: i64, blob_id: &str, file_path: &str) -> git_blob::Model {
+        git_blob::Model {
+            id,
+            repo_id,
+            blob_id: blob_id.to_string(),
+            name: None,
+            size: 0,
+            created_at: chrono::Utc::now().naive_utc(),
+            pack_id: String::new(),
+            file_path: file_path.to_string(),
+            pack_offset: 0,
+            is_delta_in_pack: false,
+        }
+    }
+
+    async fn insert_blob(stg: &GitDbStorage, model: git_blob::Model) {
+        git_blob::Entity::insert(model.into_active_model())
+            .exec(stg.get_connection())
+            .await
+            .expect("insert git_blob");
+    }
+
+    async fn filepath_of(stg: &GitDbStorage, repo_id: i64, blob_id: &str) -> Option<String> {
+        git_blob::Entity::find()
+            .filter(git_blob::Column::RepoId.eq(repo_id))
+            .filter(git_blob::Column::BlobId.eq(blob_id))
+            .one(stg.get_connection())
+            .await
+            .unwrap()
+            .map(|m| m.file_path)
+    }
+
+    #[tokio::test]
+    async fn update_git_blob_filepaths_empty_is_noop() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        stg.update_git_blob_filepaths(1, vec![])
+            .await
+            .expect("empty batch");
+    }
+
+    #[tokio::test]
+    async fn update_git_blob_filepaths_sets_paths_in_one_repo() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        let repo_id = 7;
+        insert_blob(&stg, blob_row(1, repo_id, "blob-a", "")).await;
+        insert_blob(&stg, blob_row(2, repo_id, "blob-b", "")).await;
+
+        stg.update_git_blob_filepaths(
+            repo_id,
+            vec![
+                ("blob-a".into(), "src/lib.rs".into()),
+                ("blob-b".into(), "Cargo.toml".into()),
+            ],
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(
+            filepath_of(&stg, repo_id, "blob-a").await.as_deref(),
+            Some("src/lib.rs")
+        );
+        assert_eq!(
+            filepath_of(&stg, repo_id, "blob-b").await.as_deref(),
+            Some("Cargo.toml")
+        );
+    }
+
+    #[tokio::test]
+    async fn update_git_blob_filepaths_is_scoped_to_repo() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        insert_blob(&stg, blob_row(1, 1, "shared-blob", "old-a")).await;
+        insert_blob(&stg, blob_row(2, 2, "shared-blob", "old-b")).await;
+
+        stg.update_git_blob_filepaths(1, vec![("shared-blob".into(), "src/lib.rs".into())])
+            .await
+            .unwrap();
+
+        assert_eq!(
+            filepath_of(&stg, 1, "shared-blob").await.as_deref(),
+            Some("src/lib.rs")
+        );
+        assert_eq!(
+            filepath_of(&stg, 2, "shared-blob").await.as_deref(),
+            Some("old-b")
+        );
+    }
+
+    #[tokio::test]
+    async fn update_git_blob_filepaths_duplicate_blob_keeps_last_path() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        insert_blob(&stg, blob_row(1, 1, "dup", "")).await;
+
+        stg.update_git_blob_filepaths(
+            1,
+            vec![
+                ("dup".into(), "first.rs".into()),
+                ("dup".into(), "last.rs".into()),
+            ],
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(
+            filepath_of(&stg, 1, "dup").await.as_deref(),
+            Some("last.rs")
+        );
+    }
+
+    #[tokio::test]
+    async fn update_git_blob_filepaths_ignores_missing_blob_id() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        stg.update_git_blob_filepaths(1, vec![("missing".into(), "nope.rs".into())])
+            .await
+            .expect("missing blob is not an error");
+    }
+
+    #[tokio::test]
+    async fn update_git_blob_filepaths_chunks_above_batch_size() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        let repo_id = 3;
+        let n = <BaseStorage as StorageConnector>::BATCH_CHUNK_SIZE + 1;
+        let mut pairs = Vec::with_capacity(n);
+        for i in 0..n {
+            let blob_id = format!("b{i:04}");
+            insert_blob(&stg, blob_row(i as i64 + 1, repo_id, &blob_id, "")).await;
+            pairs.push((blob_id, format!("f{i}.rs")));
+        }
+
+        stg.update_git_blob_filepaths(repo_id, pairs.clone())
+            .await
+            .unwrap();
+
+        let last_id = format!("b{:04}", n - 1);
+        assert_eq!(
+            filepath_of(&stg, repo_id, &last_id).await.as_deref(),
+            Some(format!("f{}.rs", n - 1).as_str())
+        );
+        assert_eq!(
+            filepath_of(&stg, repo_id, "b0000").await.as_deref(),
+            Some("f0.rs")
+        );
+    }
+
+    #[tokio::test]
+    async fn update_git_blob_filepaths_binds_quotes_in_path() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        insert_blob(&stg, blob_row(1, 1, "q", "")).await;
+        stg.update_git_blob_filepaths(1, vec![("q".into(), "foo's/bar.rs".into())])
+            .await
+            .unwrap();
+        assert_eq!(
+            filepath_of(&stg, 1, "q").await.as_deref(),
+            Some("foo's/bar.rs")
+        );
+    }
+
+    async fn insert_repo(stg: &GitDbStorage, id: i64, path: &str) {
+        stg.save_git_repo(git_repo::Model {
+            id,
+            repo_path: path.to_string(),
+            repo_name: path.rsplit('/').next().unwrap_or(path).to_string(),
+            created_at: chrono::Utc::now().naive_utc(),
+            updated_at: chrono::Utc::now().naive_utc(),
+        })
+        .await
+        .expect("insert git_repo");
+    }
+
+    #[test]
+    fn git_repo_descendant_bounds_are_prefix_range() {
+        assert_eq!(
+            git_repo_descendant_bounds("/third-party/rust"),
+            (
+                "/third-party/rust/".to_string(),
+                "/third-party/rust0".to_string()
+            )
+        );
+        let (lo, hi) = git_repo_descendant_bounds("/third-party/rust");
+        let crate_path = "/third-party/rust/crates/sw/ay/swayws/1.3.0";
+        assert!(crate_path >= lo.as_str() && crate_path < hi.as_str());
+        assert!(!("/third-party/rust_v1" >= lo.as_str() && "/third-party/rust_v1" < hi.as_str()));
+        assert!(!("/third-party/rust" >= lo.as_str() && "/third-party/rust" < hi.as_str()));
+    }
+
+    #[tokio::test]
+    async fn nested_conflict_finds_descendant_not_sibling_prefix() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        insert_repo(&stg, 1, "/third-party/rust/crates/sw/ay/swayws/1.3.0").await;
+        insert_repo(&stg, 2, "/third-party/rust_v1").await;
+
+        let hit = stg
+            .find_nested_import_repo_conflict("/third-party/rust")
+            .await
+            .unwrap()
+            .expect("descendant is a conflict");
+        assert_eq!(hit.repo_path, "/third-party/rust/crates/sw/ay/swayws/1.3.0");
+
+        assert!(
+            stg.find_nested_import_repo_conflict("/third-party/rust_v1")
+                .await
+                .unwrap()
+                .is_none()
+        );
+        assert!(
+            stg.find_nested_import_repo_conflict("/third-party/foo")
+                .await
+                .unwrap()
+                .is_none()
+        );
+        assert!(
+            stg.find_nested_import_repo_conflict("/third-party/rust/crates/sw/ay/swayws/1.3.0")
+                .await
+                .unwrap()
+                .is_none()
+        );
+    }
+
+    #[tokio::test]
+    async fn nested_conflict_finds_ancestor() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        insert_repo(&stg, 1, "/third-party/rust").await;
+
+        let hit = stg
+            .find_nested_import_repo_conflict("/third-party/rust/crates/to/ki/tokio/1.0.0")
+            .await
+            .unwrap()
+            .expect("ancestor is a conflict");
+        assert_eq!(hit.repo_path, "/third-party/rust");
+    }
+
+    #[tokio::test]
+    async fn like_path_walks_to_longest_segment_prefix() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        insert_repo(&stg, 1, "/third-party/rust").await;
+        insert_repo(&stg, 2, "/third-party/rust/crates/foo/1.0.0").await;
+
+        let exact = stg
+            .find_git_repo_like_path("/third-party/rust/crates/foo/1.0.0")
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(exact.repo_path, "/third-party/rust/crates/foo/1.0.0");
+
+        let under = stg
+            .find_git_repo_like_path("/third-party/rust/crates/foo/1.0.0/src/lib.rs")
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(under.repo_path, "/third-party/rust/crates/foo/1.0.0");
+
+        let parent = stg
+            .find_git_repo_like_path("/third-party/rust/crates/bar/2.0.0")
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(parent.repo_path, "/third-party/rust");
+    }
+
+    #[tokio::test]
+    async fn like_path_does_not_match_string_prefix_sibling() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        insert_repo(&stg, 1, "/third-party/rust").await;
+
+        assert!(
+            stg.find_git_repo_like_path("/third-party/rust_v1")
+                .await
+                .unwrap()
+                .is_none()
+        );
     }
 }

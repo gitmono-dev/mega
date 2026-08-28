@@ -67,12 +67,9 @@ pub async fn dispatch_import_receive_pack_finalized(
     let mut root_lock_wait_sum_ms: u128 = 0;
 
     for attempt in 0..MAX_ATTACH_ATTEMPTS {
-        let t_lock = Instant::now();
-        let guard = unpack_redlock.clone().lock().await?;
-        let lock_wait_ms = t_lock.elapsed().as_millis();
-        root_lock_wait_max_ms = root_lock_wait_max_ms.max(lock_wait_ms);
-        root_lock_wait_sum_ms += lock_wait_ms;
-
+        // Tree walk + .gitkeep upload are the expensive part of attach (~20ms of
+        // the former 25ms hold). Do them without the global root lock; the CAS
+        // on mega_refs still rejects a stale snapshot.
         let root_ref = mono_storage
             .get_main_ref("/")
             .await?
@@ -98,6 +95,29 @@ pub async fn dispatch_import_receive_pack_finalized(
             .mono_service
             .save_blobs(&new_commit.id.to_string(), vec![gitkeep_blob])
             .await?;
+
+        let t_lock = Instant::now();
+        let guard = unpack_redlock.clone().lock().await?;
+        let lock_wait_ms = t_lock.elapsed().as_millis();
+        root_lock_wait_max_ms = root_lock_wait_max_ms.max(lock_wait_ms);
+        root_lock_wait_sum_ms += lock_wait_ms;
+
+        let current_root = mono_storage
+            .get_main_ref("/")
+            .await?
+            .ok_or_else(|| MegaError::Other("root ref not found".to_string()))?;
+        if current_root.ref_commit_hash != expected_commit
+            || current_root.ref_tree_hash != expected_tree
+            || current_root.id != root_ref_id
+        {
+            let _ = guard.unlock().await;
+            tracing::warn!(
+                attempt = attempt,
+                repo_path = %repo_path.display(),
+                "attach_to_monorepo_parent: root ref moved before txn, retrying"
+            );
+            continue;
+        }
 
         let txn = storage.begin_db_transaction().await?;
         let git_db = storage.git_db_storage();

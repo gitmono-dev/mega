@@ -472,44 +472,50 @@ impl RepoHandler for ImportRepo {
                 .unwrap()
                 .clone(),
         );
-        self.traverses_and_update_filepath(root_tree, PathBuf::new())
+        let pairs = collect_git_blob_filepaths(
+            self.storage.git_db_storage(),
+            self.repo.repo_id,
+            root_tree,
+            PathBuf::new(),
+        )
+        .await?;
+        self.storage
+            .git_db_storage()
+            .update_git_blob_filepaths(self.repo.repo_id, pairs)
             .await?;
         Ok(())
     }
 }
 
-impl ImportRepo {
-    #[async_recursion]
-    async fn traverses_and_update_filepath(
-        &self,
-        tree: Tree,
-        path: PathBuf,
-    ) -> Result<(), MegaError> {
-        for item in tree.tree_items {
-            if item.is_tree() {
-                let tree = Tree::from_git_model(
-                    self.storage
-                        .git_db_storage()
-                        .get_tree_by_hash(self.repo.repo_id, &item.id.to_string())
-                        .await?
-                        .unwrap()
-                        .clone(),
-                );
-
-                // 递归调用
-                self.traverses_and_update_filepath(tree, path.join(item.name))
-                    .await?;
-            } else {
-                let id = item.id.to_string();
-                self.storage
-                    .git_db_storage()
-                    .update_git_blob_filepath(&id, path.join(item.name).to_str().unwrap())
-                    .await?;
-            }
+#[async_recursion]
+pub(crate) async fn collect_git_blob_filepaths(
+    storage: GitDbStorage,
+    repo_id: i64,
+    tree: Tree,
+    path: PathBuf,
+) -> Result<Vec<(String, String)>, MegaError> {
+    let mut pairs = Vec::new();
+    for item in tree.tree_items {
+        if item.is_tree() {
+            let child = Tree::from_git_model(
+                storage
+                    .get_tree_by_hash(repo_id, &item.id.to_string())
+                    .await?
+                    .unwrap()
+                    .clone(),
+            );
+            pairs.extend(
+                collect_git_blob_filepaths(storage.clone(), repo_id, child, path.join(item.name))
+                    .await?,
+            );
+        } else {
+            pairs.push((
+                item.id.to_string(),
+                path.join(item.name).to_str().unwrap().to_string(),
+            ));
         }
-
-        Ok(())
     }
+    Ok(pairs)
 }
 
 async fn process_objects(
@@ -604,6 +610,23 @@ async fn process_objects(
 #[cfg(test)]
 mod test {
     use std::path::PathBuf;
+
+    use callisto::{git_blob, git_tree};
+    use git_internal::internal::object::{
+        ObjectTrait,
+        blob::Blob,
+        tree::{Tree, TreeItem, TreeItemMode},
+    };
+    use jupiter::{
+        sea_orm::{ColumnTrait, EntityTrait, IntoActiveModel, QueryFilter},
+        storage::base_storage::StorageConnector,
+        tests::test_storage,
+        utils::converter::FromGitModel,
+    };
+    use tempfile::TempDir;
+
+    use super::collect_git_blob_filepaths;
+
     #[test]
     pub fn test_recurse_tree() {
         let path = PathBuf::from("/third-party/crates/tokio/tokio-console");
@@ -611,5 +634,134 @@ mod test {
         for path in ancestors.into_iter() {
             println!("{path:?}");
         }
+    }
+
+    #[tokio::test]
+    async fn collect_and_batch_update_nested_crate_tree() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        let repo_id = 11i64;
+
+        let cargo = Blob::from_content("[package]\nname = \"demo\"\n");
+        let lib = Blob::from_content("pub fn f() {}\n");
+        let src_tree = Tree::from_tree_items(vec![TreeItem {
+            mode: TreeItemMode::Blob,
+            id: lib.id,
+            name: "lib.rs".into(),
+        }])
+        .unwrap();
+        let root_tree = Tree::from_tree_items(vec![
+            TreeItem {
+                mode: TreeItemMode::Blob,
+                id: cargo.id,
+                name: "Cargo.toml".into(),
+            },
+            TreeItem {
+                mode: TreeItemMode::Tree,
+                id: src_tree.id,
+                name: "src".into(),
+            },
+        ])
+        .unwrap();
+
+        let now = chrono::Utc::now().naive_utc();
+        git_blob::Entity::insert_many([
+            git_blob::Model {
+                id: 1,
+                repo_id,
+                blob_id: cargo.id.to_string(),
+                name: None,
+                size: 0,
+                created_at: now,
+                pack_id: String::new(),
+                file_path: String::new(),
+                pack_offset: 0,
+                is_delta_in_pack: false,
+            }
+            .into_active_model(),
+            git_blob::Model {
+                id: 2,
+                repo_id,
+                blob_id: lib.id.to_string(),
+                name: None,
+                size: 0,
+                created_at: now,
+                pack_id: String::new(),
+                file_path: String::new(),
+                pack_offset: 0,
+                is_delta_in_pack: false,
+            }
+            .into_active_model(),
+        ])
+        .exec(stg.get_connection())
+        .await
+        .unwrap();
+
+        git_tree::Entity::insert_many([
+            git_tree::Model {
+                id: 3,
+                repo_id,
+                tree_id: src_tree.id.to_string(),
+                sub_trees: src_tree.to_data().unwrap(),
+                size: 0,
+                created_at: now,
+                pack_id: String::new(),
+                pack_offset: 0,
+            }
+            .into_active_model(),
+            git_tree::Model {
+                id: 4,
+                repo_id,
+                tree_id: root_tree.id.to_string(),
+                sub_trees: root_tree.to_data().unwrap(),
+                size: 0,
+                created_at: now,
+                pack_id: String::new(),
+                pack_offset: 0,
+            }
+            .into_active_model(),
+        ])
+        .exec(stg.get_connection())
+        .await
+        .unwrap();
+
+        let loaded_root = Tree::from_git_model(
+            stg.get_tree_by_hash(repo_id, &root_tree.id.to_string())
+                .await
+                .unwrap()
+                .unwrap(),
+        );
+        let mut pairs =
+            collect_git_blob_filepaths(stg.clone(), repo_id, loaded_root, PathBuf::new())
+                .await
+                .unwrap();
+        pairs.sort_by(|a, b| a.1.cmp(&b.1));
+        assert_eq!(
+            pairs,
+            vec![
+                (cargo.id.to_string(), "Cargo.toml".into()),
+                (lib.id.to_string(), "src/lib.rs".into()),
+            ]
+        );
+
+        stg.update_git_blob_filepaths(repo_id, pairs).await.unwrap();
+
+        let cargo_row = git_blob::Entity::find()
+            .filter(git_blob::Column::RepoId.eq(repo_id))
+            .filter(git_blob::Column::BlobId.eq(cargo.id.to_string()))
+            .one(stg.get_connection())
+            .await
+            .unwrap()
+            .unwrap();
+        let lib_row = git_blob::Entity::find()
+            .filter(git_blob::Column::RepoId.eq(repo_id))
+            .filter(git_blob::Column::BlobId.eq(lib.id.to_string()))
+            .one(stg.get_connection())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(cargo_row.file_path, "Cargo.toml");
+        assert_eq!(lib_row.file_path, "src/lib.rs");
     }
 }

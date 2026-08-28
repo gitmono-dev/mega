@@ -177,17 +177,39 @@ def _progress_set_total(total: int) -> None:
         _progress_total = total
         _progress_versions_queued = total
 
-def _format_eta(done: int, total: int | None) -> str:
-    if _run_start_mono is None or done <= 0 or not total or total <= done:
-        return "eta=?"
+def _eta_push_rate_per_s() -> float:
+    """Successful pushes/s. Never use skip rate — remaining work is extract+push."""
+    window = _pushes_per_sec_last_60s()
+    if _push_ok_last_60s() >= 5 and window > 0:
+        return window
+    if _run_start_mono is None:
+        return 0.0
+    ok_total, _ = _push_totals()
+    if ok_total < 5:
+        return 0.0
     elapsed = max(1e-6, time.monotonic() - _run_start_mono)
-    rate = done / elapsed
-    remain = (total - done) / max(1e-9, rate)
+    return ok_total / elapsed
+
+
+def _format_eta(done: int, total: int | None) -> str:
+    """ETA = remaining queue / successful push rate.
+
+    Skip (ls-remote) is orders of magnitude faster than push. Counting skip
+    toward the rate makes a multi-day import look like ~1–2h.
+    """
+    if not total or total <= done:
+        return "eta=?"
+    rate = _eta_push_rate_per_s()
+    if rate <= 0:
+        return "eta=?"
+    remain = (total - done) / rate
     if remain < 60:
         return f"eta={remain:.0f}s"
     if remain < 3600:
         return f"eta={remain / 60:.1f}m"
-    return f"eta={remain / 3600:.1f}h"
+    if remain < 86400:
+        return f"eta={remain / 3600:.1f}h"
+    return f"eta={remain / 86400:.1f}d"
 
 def _format_progress_bar(done: int, total: int | None, width: int = 30) -> str:
     """ASCII progress bar, e.g. [############--------------]  40.0%"""

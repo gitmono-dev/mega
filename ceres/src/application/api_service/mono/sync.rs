@@ -37,7 +37,8 @@ impl MonoApiService {
         ));
 
         for attempt in 0..MAX_ATTACH_ATTEMPTS {
-            let guard = redlock.clone().lock().await?;
+            // Same split as import receive-pack attach: walk/upload off the
+            // global root lock; CAS on mega_refs still serializes the root update.
             let root_ref = storage
                 .get_main_ref("/")
                 .await?
@@ -67,6 +68,24 @@ impl MonoApiService {
                 .mono_service
                 .save_blobs(&new_commit.id.to_string(), vec![gitkeep_blob])
                 .await?;
+
+            let guard = redlock.clone().lock().await?;
+            let current_root = storage
+                .get_main_ref("/")
+                .await?
+                .ok_or_else(|| MegaError::Other("root ref not found".to_string()))?;
+            if current_root.ref_commit_hash != expected_commit
+                || current_root.ref_tree_hash != expected_tree
+                || current_root.id != root_ref_id
+            {
+                let _ = guard.unlock().await;
+                tracing::warn!(
+                    attempt,
+                    repo_path = %path,
+                    "attach_project_path_to_monorepo_root: root ref moved before txn, retrying"
+                );
+                continue;
+            }
 
             let txn = self.storage().begin_db_transaction().await?;
             match storage

@@ -30,7 +30,11 @@ use git_internal::{
     },
 };
 use io_orbit::object_storage::MultiObjectByteStream;
-use jupiter::{sea_orm::DatabaseTransaction, storage::Storage, utils::converter::FromMegaModel};
+use jupiter::{
+    sea_orm::DatabaseTransaction,
+    storage::{Storage, mono_storage::MonoStorage},
+    utils::converter::FromMegaModel,
+};
 use tokio::sync::{RwLock, mpsc};
 use tokio_stream::wrappers::ReceiverStream;
 
@@ -490,7 +494,18 @@ impl RepoHandler for MonoRepo {
             commit_opt.tree_id
         );
 
-        self.traverses_and_update_filepath(root_tree, PathBuf::new())
+        let pairs =
+            collect_mega_blob_filepaths(self.storage.mono_storage(), root_tree, PathBuf::new())
+                .await
+                .map_err(|e| {
+                    MegaError::Other(format!(
+                        "Failed to update file paths for commit {}: {}",
+                        commit_opt.id, e
+                    ))
+                })?;
+        self.storage
+            .mono_storage()
+            .update_blob_filepaths(pairs)
             .await
             .map_err(|e| {
                 MegaError::Other(format!(
@@ -571,43 +586,41 @@ impl MonoRepo {
     }
 }
 
-impl MonoRepo {
-    #[async_recursion]
-    async fn traverses_and_update_filepath(
-        &self,
-        tree: Tree,
-        path: PathBuf,
-    ) -> Result<(), MegaError> {
-        for item in tree.tree_items {
-            let item_path = path.join(&item.name);
+#[async_recursion]
+async fn collect_mega_blob_filepaths(
+    storage: MonoStorage,
+    tree: Tree,
+    path: PathBuf,
+) -> Result<Vec<(String, String)>, MegaError> {
+    let mut pairs = Vec::new();
+    for item in tree.tree_items {
+        let item_path = path.join(&item.name);
 
-            if item.is_tree() {
-                let tree_hash = item.id.to_string();
-                let trees = self
-                    .storage
-                    .mono_storage()
-                    .get_trees_by_hashes(vec![tree_hash.clone()])
-                    .await
-                    .map_err(|e| {
-                        MegaError::Other(format!(
-                            "Failed to retrieve tree {} at path '{}': {}",
-                            tree_hash,
-                            item_path.display(),
-                            e
-                        ))
-                    })?;
-
-                if trees.is_empty() {
-                    return Err(MegaError::Other(format!(
-                        "Tree {} not found at path '{}'",
+        if item.is_tree() {
+            let tree_hash = item.id.to_string();
+            let trees = storage
+                .get_trees_by_hashes(vec![tree_hash.clone()])
+                .await
+                .map_err(|e| {
+                    MegaError::Other(format!(
+                        "Failed to retrieve tree {} at path '{}': {}",
                         tree_hash,
-                        item_path.display()
-                    )));
-                }
+                        item_path.display(),
+                        e
+                    ))
+                })?;
 
-                let child_tree = Tree::from_mega_model(trees[0].clone());
+            if trees.is_empty() {
+                return Err(MegaError::Other(format!(
+                    "Tree {} not found at path '{}'",
+                    tree_hash,
+                    item_path.display()
+                )));
+            }
 
-                self.traverses_and_update_filepath(child_tree, item_path.clone())
+            let child_tree = Tree::from_mega_model(trees[0].clone());
+            pairs.extend(
+                collect_mega_blob_filepaths(storage.clone(), child_tree, item_path.clone())
                     .await
                     .map_err(|e| {
                         MegaError::Other(format!(
@@ -616,38 +629,29 @@ impl MonoRepo {
                             item_path.display(),
                             e
                         ))
-                    })?;
-            } else {
-                let blob_id = item.id.to_string();
-                let file_path_str = item_path.to_str().ok_or_else(|| {
-                    MegaError::Other(format!(
-                        "Invalid UTF-8 path for blob {}: '{}'",
-                        blob_id,
-                        item_path.display()
-                    ))
-                })?;
-
-                self.storage
-                    .mono_storage()
-                    .update_blob_filepath(&blob_id, file_path_str)
-                    .await
-                    .map_err(|e| {
-                        MegaError::Other(format!(
-                            "Failed to update file path for blob {} at '{}': {}",
-                            blob_id, file_path_str, e
-                        ))
-                    })?;
-
-                tracing::debug!(
-                    "Updated file path for blob {} to '{}'",
+                    })?,
+            );
+        } else {
+            let blob_id = item.id.to_string();
+            let file_path_str = item_path.to_str().ok_or_else(|| {
+                MegaError::Other(format!(
+                    "Invalid UTF-8 path for blob {}: '{}'",
                     blob_id,
-                    file_path_str
-                );
-            }
+                    item_path.display()
+                ))
+            })?;
+            tracing::debug!(
+                "Queued file path for blob {} to '{}'",
+                blob_id,
+                file_path_str
+            );
+            pairs.push((blob_id, file_path_str.to_string()));
         }
-
-        Ok(())
     }
+    Ok(pairs)
+}
+
+impl MonoRepo {
     async fn fetch_or_new_cl_link(&self) -> Result<String, MegaError> {
         let storage = self.storage.cl_storage();
         let path_str = self.path.to_str().unwrap();
