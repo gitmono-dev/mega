@@ -130,6 +130,29 @@ impl MegaError {
         }
         Self::Other(msg)
     }
+
+    /// True for Postgres deadlock (`40P01`) or serialization failure (`40001`).
+    pub fn is_retryable_db_serialization(&self) -> bool {
+        match self {
+            MegaError::Db(err) => db_err_is_retryable_serialization(err),
+            _ => is_retryable_pg_conflict(&self.to_string()),
+        }
+    }
+}
+
+/// True when a SeaORM error is a Postgres deadlock (`40P01`) or
+/// serialization failure (`40001`) that is safe to retry.
+pub fn db_err_is_retryable_serialization(err: &sea_orm::DbErr) -> bool {
+    is_retryable_pg_conflict(&err.to_string()) || is_retryable_pg_conflict(&format!("{err:?}"))
+}
+
+fn is_retryable_pg_conflict(text: &str) -> bool {
+    let lower = text.to_ascii_lowercase();
+    lower.contains("deadlock detected")
+        || lower.contains("40p01")
+        || lower.contains("40001")
+        || lower.contains("serialization failure")
+        || lower.contains("could not serialize access")
 }
 
 impl From<Infallible> for MegaError {
@@ -449,5 +472,37 @@ mod tests {
         ));
         assert!(matches!(err, ProtocolError::NotFound(_)));
         assert_eq!(protocol_error_http_status(&err), 404);
+    }
+
+    #[test]
+    fn db_err_detects_deadlock_message() {
+        let err = sea_orm::DbErr::Custom(
+            "deadlock detected\nCONTEXT: while inserting index tuple in relation \"git_blob\""
+                .into(),
+        );
+        assert!(db_err_is_retryable_serialization(&err));
+        assert!(MegaError::Db(err).is_retryable_db_serialization());
+    }
+
+    #[test]
+    fn db_err_detects_sqlstate_40p01() {
+        let err = sea_orm::DbErr::Custom("ERROR: 40P01 deadlock detected".into());
+        assert!(db_err_is_retryable_serialization(&err));
+    }
+
+    #[test]
+    fn db_err_detects_sqlstate_40001() {
+        let err = sea_orm::DbErr::Custom("ERROR: 40001 could not serialize access".into());
+        assert!(db_err_is_retryable_serialization(&err));
+        assert!(MegaError::Db(err).is_retryable_db_serialization());
+    }
+
+    #[test]
+    fn db_err_ignores_unrelated_unique_violations() {
+        let err = sea_orm::DbErr::Custom(
+            "duplicate key value violates unique constraint \"git_repo_pkey\"".into(),
+        );
+        assert!(!db_err_is_retryable_serialization(&err));
+        assert!(!MegaError::Db(err).is_retryable_db_serialization());
     }
 }

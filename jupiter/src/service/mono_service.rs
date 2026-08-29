@@ -17,7 +17,9 @@ use crate::{
         base_storage::{BaseStorage, StorageConnector},
         mono_storage::MonoStorage,
     },
-    utils::converter::{IntoMegaModel, MegaModelConverter, MegaObjectModel, process_entry},
+    utils::converter::{
+        IntoMegaModel, MegaModelConverter, MegaObjectModel, active_hash, process_entry,
+    },
 };
 
 #[derive(Clone)]
@@ -134,9 +136,15 @@ impl MonoService {
             return Err(err);
         }
 
-        let git_objects = Arc::try_unwrap(git_objects)
+        let mut git_objects = Arc::try_unwrap(git_objects)
             .expect("Failed to unwrap Arc")
             .into_inner();
+
+        git_objects.blobs.sort_by_key(|a| active_hash(&a.blob_id));
+        git_objects.trees.sort_by_key(|a| active_hash(&a.tree_id));
+        git_objects
+            .commits
+            .sort_by_key(|a| active_hash(&a.commit_id));
 
         self.mono_storage
             .batch_save_model(git_objects.commits.clone())

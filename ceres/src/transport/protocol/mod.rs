@@ -196,16 +196,14 @@ impl SmartSession {
                                 nested_import_repo_conflict_message(path_str, &conflict.repo_path),
                             ));
                         }
-                        let repo = Repo::new(self.repo_path.clone(), false);
-                        storage
-                            .save_git_repo(repo.clone().into())
-                            .await
-                            .map_err(|e| {
+                        let created = Repo::new(self.repo_path.clone(), false);
+                        let persisted =
+                            storage.save_git_repo(created.into()).await.map_err(|e| {
                                 ProtocolError::InvalidInput(format!(
                                     "failed to create import repo: {e}"
                                 ))
                             })?;
-                        repo
+                        Repo::from(persisted)
                     }
                 }
             };

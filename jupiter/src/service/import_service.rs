@@ -16,7 +16,7 @@ use crate::{
         base_storage::{BaseStorage, StorageConnector},
         git_db_storage::GitDbStorage,
     },
-    utils::converter::{GitObjectModel, process_entry},
+    utils::converter::{GitObjectModel, active_hash, process_entry},
 };
 
 #[derive(Clone)]
@@ -103,9 +103,15 @@ impl ImportService {
             return Err(err);
         }
 
-        let git_objects = Arc::try_unwrap(git_objects)
+        let mut git_objects = Arc::try_unwrap(git_objects)
             .expect("Failed to unwrap Arc")
             .into_inner();
+
+        git_objects.blobs.sort_by_key(|a| active_hash(&a.blob_id));
+        git_objects.trees.sort_by_key(|a| active_hash(&a.tree_id));
+        git_objects
+            .commits
+            .sort_by_key(|a| active_hash(&a.commit_id));
 
         self.git_db_storage
             .batch_save_model(git_objects.commits)

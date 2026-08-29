@@ -13,7 +13,7 @@ use futures::Stream;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseTransaction, DbErr, EntityTrait,
     IntoActiveModel, PaginatorTrait, QueryFilter, QueryOrder, Set, TransactionTrait,
-    sea_query::{CaseStatement, Expr, ExprTrait},
+    sea_query::{CaseStatement, Expr, ExprTrait, OnConflict},
 };
 
 use crate::storage::base_storage::{BaseStorage, StorageConnector};
@@ -50,16 +50,14 @@ impl GitDbStorage {
                     &conflict.repo_path,
                 )));
             }
-            let repo_id = generate_id();
             let repo = git_repo::Model {
-                id: repo_id,
+                id: generate_id(),
                 repo_path: repo_path.to_string(),
                 repo_name: repo_name.to_string(),
                 created_at: chrono::Utc::now().naive_utc(),
                 updated_at: chrono::Utc::now().naive_utc(),
             };
-            self.save_git_repo(repo).await?;
-            repo_id
+            self.save_git_repo(repo).await?.id
         };
 
         let refs = import_refs::Model {
@@ -424,13 +422,22 @@ impl GitDbStorage {
         Ok(None)
     }
 
-    pub async fn save_git_repo(&self, repo: git_repo::Model) -> Result<(), MegaError> {
-        let a_model = repo.into_active_model();
-        git_repo::Entity::insert(a_model)
-            .exec(self.get_connection())
-            .await
-            .map_err(|e| MegaError::Other(format!("Failed to insert git_repo: {e}")))?;
-        Ok(())
+    pub async fn save_git_repo(&self, repo: git_repo::Model) -> Result<git_repo::Model, MegaError> {
+        let repo_path = repo.repo_path.clone();
+        let insert = git_repo::Entity::insert(repo.into_active_model()).on_conflict(
+            OnConflict::column(git_repo::Column::RepoPath)
+                .do_nothing()
+                .to_owned(),
+        );
+        match insert.exec(self.get_connection()).await {
+            Ok(_) | Err(DbErr::RecordNotInserted) => {}
+            Err(e) => {
+                return Err(MegaError::Other(format!("Failed to insert git_repo: {e}")));
+            }
+        }
+        self.find_git_repo_exact_match(&repo_path)
+            .await?
+            .ok_or_else(|| MegaError::Other(format!("git_repo missing after save: {repo_path}")))
     }
 
     pub async fn get_commit_by_hash(
@@ -864,6 +871,60 @@ mod tests {
         })
         .await
         .expect("insert git_repo");
+    }
+
+    fn git_repo_row(id: i64, path: &str, name: &str) -> git_repo::Model {
+        git_repo::Model {
+            id,
+            repo_path: path.to_string(),
+            repo_name: name.to_string(),
+            created_at: chrono::Utc::now().naive_utc(),
+            updated_at: chrono::Utc::now().naive_utc(),
+        }
+    }
+
+    #[tokio::test]
+    async fn save_git_repo_same_path_returns_existing_id() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        let path = "/third-party/rust/crates/foo/1.0.0";
+        let first = stg
+            .save_git_repo(git_repo_row(11, path, "1.0.0"))
+            .await
+            .unwrap();
+        let second = stg
+            .save_git_repo(git_repo_row(22, path, "other"))
+            .await
+            .unwrap();
+        assert_eq!(first.id, 11);
+        assert_eq!(second.id, first.id);
+        assert_eq!(second.repo_name, first.repo_name);
+    }
+
+    #[tokio::test]
+    async fn create_repo_and_save_ref_reuses_repo_id() {
+        let dir = TempDir::new().unwrap();
+        let storage = test_storage(dir.path()).await;
+        let stg = storage.git_db_storage();
+        let path = "/third-party/foo";
+        stg.create_repo_and_save_ref(path, "foo", "refs/heads/master", "aaa")
+            .await
+            .unwrap();
+        let first = stg
+            .find_git_repo_exact_match(path)
+            .await
+            .unwrap()
+            .expect("repo after first create");
+        stg.create_repo_and_save_ref(path, "foo", "refs/heads/master", "bbb")
+            .await
+            .unwrap();
+        let second = stg
+            .find_git_repo_exact_match(path)
+            .await
+            .unwrap()
+            .expect("repo after second create");
+        assert_eq!(first.id, second.id);
     }
 
     #[test]

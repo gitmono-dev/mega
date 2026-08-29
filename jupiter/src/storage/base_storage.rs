@@ -1,11 +1,50 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use async_trait::async_trait;
-use common::errors::MegaError;
+use common::errors::{MegaError, db_err_is_retryable_serialization};
 use sea_orm::{
     ActiveModelTrait, DatabaseConnection, DatabaseTransaction, DbErr, EntityTrait,
     sea_query::OnConflict,
 };
+
+const INSERT_RETRY_ATTEMPTS: u32 = 5;
+const INSERT_RETRY_BASE_MS: u64 = 10;
+
+async fn insert_many_with_deadlock_retry<E, A>(
+    conn: &DatabaseConnection,
+    txn: Option<&DatabaseTransaction>,
+    models: Vec<A>,
+    onconflict: &OnConflict,
+) -> Result<(), MegaError>
+where
+    E: EntityTrait,
+    A: ActiveModelTrait<Entity = E> + From<<E as EntityTrait>::Model> + Send + Clone,
+{
+    let mut attempt = 0u32;
+    loop {
+        attempt += 1;
+        let insert = E::insert_many(models.clone()).on_conflict(onconflict.clone());
+        let result = if let Some(txn) = txn {
+            insert.exec(txn).await
+        } else {
+            insert.exec(conn).await
+        };
+        match result {
+            Ok(_) | Err(DbErr::RecordNotInserted) => return Ok(()),
+            Err(e) if db_err_is_retryable_serialization(&e) && attempt < INSERT_RETRY_ATTEMPTS => {
+                let backoff_ms = INSERT_RETRY_BASE_MS << (attempt - 1);
+                tracing::warn!(
+                    attempt,
+                    backoff_ms,
+                    error = %e,
+                    "retrying batch insert after deadlock or serialization failure"
+                );
+                tokio::time::sleep(Duration::from_millis(backoff_ms)).await;
+            }
+            Err(e) => return Err(e.into()),
+        }
+    }
+}
 
 #[async_trait]
 pub trait StorageConnector {
@@ -21,7 +60,7 @@ pub trait StorageConnector {
     async fn batch_save_model<E, A>(&self, save_models: Vec<A>) -> Result<(), MegaError>
     where
         E: EntityTrait,
-        A: ActiveModelTrait<Entity = E> + From<<E as EntityTrait>::Model> + Send,
+        A: ActiveModelTrait<Entity = E> + From<<E as EntityTrait>::Model> + Send + Clone,
     {
         let onconflict = OnConflict::new().do_nothing().to_owned();
         Self::batch_save_model_with_conflict(self, save_models, onconflict).await
@@ -34,7 +73,7 @@ pub trait StorageConnector {
     ) -> Result<(), MegaError>
     where
         E: EntityTrait,
-        A: ActiveModelTrait<Entity = E> + From<<E as EntityTrait>::Model> + Send,
+        A: ActiveModelTrait<Entity = E> + From<<E as EntityTrait>::Model> + Send + Clone,
     {
         let onconflict = OnConflict::new().do_nothing().to_owned();
         Self::batch_save_model_with_conflict_and_txn(self, save_models, onconflict, txn).await
@@ -48,24 +87,20 @@ pub trait StorageConnector {
     ) -> Result<(), MegaError>
     where
         E: EntityTrait,
-        A: ActiveModelTrait<Entity = E> + From<<E as EntityTrait>::Model> + Send,
+        A: ActiveModelTrait<Entity = E> + From<<E as EntityTrait>::Model> + Send + Clone,
     {
         let mut i = 0;
         let len = save_models.len();
 
         while i < len {
             let end = (i + Self::BATCH_CHUNK_SIZE).min(len);
-            let models = save_models[i..end].to_vec();
-            let insert = E::insert_many(models).on_conflict(onconflict.clone());
-            let _ = match if let Some(txn) = txn {
-                insert.exec(txn).await
-            } else {
-                insert.exec(self.get_connection()).await
-            } {
-                Ok(_) => Ok(()),
-                Err(DbErr::RecordNotInserted) => Ok(()),
-                Err(e) => Err(e),
-            };
+            insert_many_with_deadlock_retry::<E, A>(
+                self.get_connection(),
+                txn,
+                save_models[i..end].to_vec(),
+                &onconflict,
+            )
+            .await?;
             i = end;
         }
         Ok(())
@@ -98,23 +133,22 @@ pub trait StorageConnector {
     ) -> Result<(), MegaError>
     where
         E: EntityTrait,
-        A: ActiveModelTrait<Entity = E> + From<<E as EntityTrait>::Model> + Send,
+        A: ActiveModelTrait<Entity = E> + From<<E as EntityTrait>::Model> + Send + Clone,
     {
-        let futures = save_models.chunks(Self::BATCH_CHUNK_SIZE).map(|chunk| {
-            let insert = E::insert_many(chunk.iter().cloned()).on_conflict(onconflict.clone());
+        let mut i = 0;
+        let len = save_models.len();
 
-            async move {
-                match insert.exec(self.get_connection()).await {
-                    Ok(_) => Ok(()),
-                    Err(DbErr::RecordNotInserted) => {
-                        // ignore not inserted err
-                        Ok(())
-                    }
-                    Err(e) => Err(e),
-                }
-            }
-        });
-        futures::future::try_join_all(futures).await?;
+        while i < len {
+            let end = (i + Self::BATCH_CHUNK_SIZE).min(len);
+            insert_many_with_deadlock_retry::<E, A>(
+                self.get_connection(),
+                None,
+                save_models[i..end].to_vec(),
+                &onconflict,
+            )
+            .await?;
+            i = end;
+        }
         Ok(())
     }
 }
