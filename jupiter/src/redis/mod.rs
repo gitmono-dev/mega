@@ -1,7 +1,9 @@
 pub mod lock;
+pub mod snowflake_worker;
 
 pub use ::redis::{AsyncCommands, aio::ConnectionManager};
 use common::config::RedisConfig;
+pub use snowflake_worker::claim_snowflake_worker;
 
 /// Initializes a Redis multiplexed asynchronous connection from the given configuration.
 ///
