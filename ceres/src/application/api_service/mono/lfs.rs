@@ -14,6 +14,11 @@ use crate::lfs::{
 };
 
 impl LfsApplicationService {
+    #[cfg(feature = "fastcdc")]
+    pub fn media_service(&self) -> &jupiter::service::lfs_service::LfsService {
+        &self.ctx.storage().lfs_service
+    }
+
     pub async fn lfs_retrieve_lock(&self, query: LockListQuery) -> Result<LockList, GitLFSError> {
         handler::lfs_retrieve_lock(self.ctx.storage().lfs_db_storage(), query).await
     }

@@ -43,6 +43,8 @@ impl ObjectKey {
 pub enum ObjectNamespace {
     Git,
     Lfs,
+    /// Private media manifests and chunks, separate from public complete LFS objects.
+    Media,
     Log,
     /// Artifact protocol objects (`docs/artifacts-protocol.md`), keyed by UUID string.
     Artifact,
@@ -53,6 +55,7 @@ impl ObjectNamespace {
         match self {
             ObjectNamespace::Git => "git",
             ObjectNamespace::Lfs => "lfs",
+            ObjectNamespace::Media => "media",
             ObjectNamespace::Log => "log",
             ObjectNamespace::Artifact => "artifact",
         }
@@ -134,6 +137,27 @@ pub trait MegaObjectStorage: Send + Sync {
         data: ObjectByteStream,
         meta: ObjectMeta,
     ) -> Result<(), MegaError>;
+
+    /// Atomically replace an object without buffering its entire contents.
+    ///
+    /// Implementations must bound upload buffering independently of object size,
+    /// apply backpressure to the input, and publish only after the stream succeeds.
+    /// A caller should also bound each input item, since the implementation must
+    /// retain that item while consuming it. Unlike `put_stream`, this operation
+    /// does not inherit create-only or single-PUT upload policies.
+    ///
+    /// Unsupported backends must fail explicitly, never fall back to buffering
+    /// the full object. The default rejects the operation without consuming data.
+    async fn put_stream_bounded(
+        &self,
+        _key: &ObjectKey,
+        _data: ObjectByteStream,
+        _meta: ObjectMeta,
+    ) -> Result<(), MegaError> {
+        Err(MegaError::ObjStorage(
+            "storage backend does not support bounded streaming writes".to_owned(),
+        ))
+    }
 
     /// Retrieve a single object from the storage backend.
     ///
@@ -307,6 +331,15 @@ mod tests {
 
         // Unified 3-level sharding for LFS objects.
         assert_eq!(key.default_sharding(), "lfs/ab/cd/ef/1234567890");
+    }
+
+    #[test]
+    fn test_media_namespace_is_separate_from_lfs() {
+        let key = ObjectKey {
+            namespace: ObjectNamespace::Media,
+            key: "abcdef1234567890".to_owned(),
+        };
+        assert_eq!(key.default_sharding(), "media/ab/cd/ef/1234567890");
     }
 
     #[test]

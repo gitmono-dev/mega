@@ -45,6 +45,9 @@ pub struct ObjectStoreAdapter {
     pub upload_strategy: UploadStrategy,
 }
 
+// S3/GCS require non-final parts >= 5 MiB; R2 also requires equal part sizes.
+const MULTIPART_PART_SIZE: usize = 8 * 1024 * 1024;
+
 /// Supported backend implementations for object storage.
 ///
 /// Each variant wraps a specific `object_store` backend in an [`Arc`] so that
@@ -86,6 +89,17 @@ impl MegaObjectStorage for ObjectStoreAdapter {
                 UploadStrategy::SinglePut => self.put_single(&path, data).await,
             },
         }
+    }
+
+    async fn put_stream_bounded(
+        &self,
+        key: &ObjectKey,
+        data: ObjectByteStream,
+        _meta: ObjectMeta,
+    ) -> Result<(), MegaError> {
+        // Local, GCS and S3 implement atomic multipart publication. Do not use
+        // the configured SinglePut policy, which buffers the entire object.
+        self.put_multipart(&key.to_object_store_path(), data).await
     }
 
     async fn get_stream(
@@ -635,18 +649,64 @@ impl ObjectStoreAdapter {
     async fn put_multipart(
         &self,
         path: &object_store::path::Path,
+        data: ObjectByteStream,
+    ) -> Result<(), MegaError> {
+        Self::put_multipart_to(self.to_store(), path, data).await
+    }
+
+    /// Use one fixed-size upload buffer and await each part before reading more.
+    /// The backend publishes the object atomically on `complete`; a backend that
+    /// rejects multipart is an error, not a request to buffer the whole object.
+    async fn put_multipart_to(
+        store: &dyn ObjectStore,
+        path: &object_store::path::Path,
         mut data: ObjectByteStream,
     ) -> Result<(), MegaError> {
-        let mut upload = self
-            .to_store()
+        // An empty stream must use an empty PUT: S3 cannot complete a multipart
+        // upload with no parts. Ignore zero-length input items for this decision.
+        let first = loop {
+            match data.try_next().await? {
+                Some(chunk) if chunk.is_empty() => continue,
+                Some(chunk) => break chunk,
+                None => {
+                    store
+                        .put(path, PutPayload::new())
+                        .await
+                        .map_err(IoOrbitError::from)?;
+                    return Ok(());
+                }
+            }
+        };
+        let mut upload = store
             .put_multipart(path)
             .await
             .map_err(IoOrbitError::from)?;
 
         let res = async {
-            while let Some(chunk) = data.try_next().await? {
+            let mut buffer = BytesMut::with_capacity(MULTIPART_PART_SIZE);
+            let mut chunk = first;
+            loop {
+                let mut remaining = chunk.as_ref();
+                while !remaining.is_empty() {
+                    let take = remaining.len().min(MULTIPART_PART_SIZE - buffer.len());
+                    buffer.extend_from_slice(&remaining[..take]);
+                    remaining = &remaining[take..];
+                    if buffer.len() == MULTIPART_PART_SIZE {
+                        upload
+                            .put_part(std::mem::take(&mut buffer).freeze().into())
+                            .await
+                            .map_err(IoOrbitError::from)?;
+                        buffer.reserve(MULTIPART_PART_SIZE);
+                    }
+                }
+                match data.try_next().await? {
+                    Some(next) => chunk = next,
+                    None => break,
+                }
+            }
+            if !buffer.is_empty() {
                 upload
-                    .put_part(chunk.into())
+                    .put_part(buffer.freeze().into())
                     .await
                     .map_err(IoOrbitError::from)?;
             }
@@ -657,11 +717,16 @@ impl ObjectStoreAdapter {
         }
         .await;
 
-        if res.is_err() {
-            upload.abort().await.map_err(IoOrbitError::from)?;
+        if let Err(error) = res {
+            if let Err(abort_error) = upload.abort().await {
+                return Err(MegaError::ObjStorage(format!(
+                    "{error}; failed to abort multipart upload: {abort_error}"
+                )));
+            }
+            return Err(error);
         }
 
-        res
+        Ok(())
     }
 
     /// Upload an object using a *single PUT* request.
@@ -686,7 +751,7 @@ impl ObjectStoreAdapter {
     ///   - backends without stable multipart support
     ///
     /// For large objects (Git packfiles, LFS blobs, etc.),
-    /// `put_stream` + `put_multipart` MUST be used instead.
+    /// `put_stream_bounded` MUST be used instead when bounded memory is required.
     async fn put_single(
         &self,
         path: &object_store::path::Path,
@@ -744,5 +809,396 @@ impl ObjectStoreAdapter {
             Err(object_store::Error::AlreadyExists { .. }) => Ok(()),
             Err(e) => Err(IoOrbitError::from(e).into()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{fmt, io, sync::Mutex};
+
+    use futures::stream::BoxStream;
+    use object_store::{
+        CopyOptions, GetOptions, GetResult, ListResult, MultipartUpload, PutMultipartOptions,
+        PutResult, UploadPart, memory::InMemory, path::Path,
+    };
+
+    use super::*;
+
+    #[derive(Debug, Default)]
+    struct UploadStats {
+        started: usize,
+        part_lengths: Vec<usize>,
+        finished_parts: usize,
+        single_lengths: Vec<usize>,
+        complete_calls: usize,
+        abort_calls: usize,
+    }
+
+    #[derive(Clone, Copy, Debug, Default)]
+    struct Failures {
+        part: bool,
+        complete: bool,
+        abort: bool,
+        unsupported: bool,
+    }
+
+    #[derive(Debug, Default)]
+    struct StrictStore {
+        inner: InMemory,
+        stats: Arc<Mutex<UploadStats>>,
+        failures: Failures,
+    }
+
+    impl fmt::Display for StrictStore {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.write_str("StrictStore")
+        }
+    }
+
+    fn injected_error(message: &'static str) -> object_store::Error {
+        object_store::Error::Generic {
+            store: "StrictStore",
+            source: Box::new(io::Error::other(message)),
+        }
+    }
+
+    #[derive(Debug)]
+    struct StrictUpload {
+        inner: Box<dyn MultipartUpload>,
+        stats: Arc<Mutex<UploadStats>>,
+        failures: Failures,
+    }
+
+    #[async_trait::async_trait]
+    impl MultipartUpload for StrictUpload {
+        fn put_part(&mut self, payload: PutPayload) -> UploadPart {
+            let length = payload.content_length();
+            {
+                let mut stats = self.stats.lock().unwrap();
+                if let Some(previous) = stats.part_lengths.last() {
+                    assert_eq!(*previous, MULTIPART_PART_SIZE, "short non-final part");
+                }
+                assert!(length > 0 && length <= MULTIPART_PART_SIZE);
+                stats.part_lengths.push(length);
+            }
+            if self.failures.part {
+                return Box::pin(async { Err(injected_error("injected part failure")) });
+            }
+            let part = self.inner.put_part(payload);
+            let stats = Arc::clone(&self.stats);
+            Box::pin(async move {
+                part.await?;
+                stats.lock().unwrap().finished_parts += 1;
+                Ok(())
+            })
+        }
+
+        async fn complete(&mut self) -> object_store::Result<PutResult> {
+            self.stats.lock().unwrap().complete_calls += 1;
+            if self.failures.complete {
+                return Err(injected_error("injected complete failure"));
+            }
+            self.inner.complete().await
+        }
+
+        async fn abort(&mut self) -> object_store::Result<()> {
+            self.stats.lock().unwrap().abort_calls += 1;
+            if self.failures.abort {
+                return Err(injected_error("injected abort failure"));
+            }
+            self.inner.abort().await
+        }
+    }
+
+    #[async_trait::async_trait]
+    impl ObjectStore for StrictStore {
+        async fn put_opts(
+            &self,
+            location: &Path,
+            payload: PutPayload,
+            opts: PutOptions,
+        ) -> object_store::Result<PutResult> {
+            // Bounded writes may use a single PUT only for an empty object.
+            assert_eq!(payload.content_length(), 0);
+            self.stats.lock().unwrap().single_lengths.push(0);
+            self.inner.put_opts(location, payload, opts).await
+        }
+
+        async fn put_multipart_opts(
+            &self,
+            location: &Path,
+            opts: PutMultipartOptions,
+        ) -> object_store::Result<Box<dyn MultipartUpload>> {
+            self.stats.lock().unwrap().started += 1;
+            if self.failures.unsupported {
+                return Err(object_store::Error::NotSupported {
+                    source: Box::new(io::Error::other("multipart disabled")),
+                });
+            }
+            Ok(Box::new(StrictUpload {
+                inner: self.inner.put_multipart_opts(location, opts).await?,
+                stats: Arc::clone(&self.stats),
+                failures: self.failures,
+            }))
+        }
+
+        async fn get_opts(
+            &self,
+            location: &Path,
+            options: GetOptions,
+        ) -> object_store::Result<GetResult> {
+            self.inner.get_opts(location, options).await
+        }
+
+        fn delete_stream(
+            &self,
+            locations: BoxStream<'static, object_store::Result<Path>>,
+        ) -> BoxStream<'static, object_store::Result<Path>> {
+            self.inner.delete_stream(locations)
+        }
+
+        fn list(
+            &self,
+            prefix: Option<&Path>,
+        ) -> BoxStream<'static, object_store::Result<object_store::ObjectMeta>> {
+            self.inner.list(prefix)
+        }
+
+        async fn list_with_delimiter(
+            &self,
+            prefix: Option<&Path>,
+        ) -> object_store::Result<ListResult> {
+            self.inner.list_with_delimiter(prefix).await
+        }
+
+        async fn copy_opts(
+            &self,
+            from: &Path,
+            to: &Path,
+            options: CopyOptions,
+        ) -> object_store::Result<()> {
+            self.inner.copy_opts(from, to, options).await
+        }
+    }
+
+    #[tokio::test]
+    async fn multipart_aggregates_fixed_parts_with_backpressure() {
+        let bytes = Bytes::from(
+            (0..2 * MULTIPART_PART_SIZE + 17)
+                .map(|index| (index as u8).wrapping_mul(31))
+                .collect::<Vec<_>>(),
+        );
+        for length in [2 * MULTIPART_PART_SIZE, bytes.len()] {
+            for input_size in [4096, bytes.len()] {
+                let store = StrictStore::default();
+                let path = Path::from("object");
+                let expected = bytes.slice(..length);
+                let input = expected.clone();
+                let stats = Arc::clone(&store.stats);
+                let source = stream::unfold(0, move |offset| {
+                    let input = input.clone();
+                    let stats = Arc::clone(&stats);
+                    async move {
+                        // The adapter must finish full parts before polling for
+                        // more bytes, even when inputs are tiny ReaderStream items.
+                        assert_eq!(
+                            stats.lock().unwrap().finished_parts,
+                            offset / MULTIPART_PART_SIZE
+                        );
+                        if offset == input.len() {
+                            None
+                        } else {
+                            let end = (offset + input_size).min(input.len());
+                            Some((Ok(input.slice(offset..end)), end))
+                        }
+                    }
+                });
+                ObjectStoreAdapter::put_multipart_to(&store, &path, Box::pin(source))
+                    .await
+                    .unwrap();
+                assert_eq!(
+                    store.get(&path).await.unwrap().bytes().await.unwrap(),
+                    expected
+                );
+                let stats = store.stats.lock().unwrap();
+                let mut lengths = vec![MULTIPART_PART_SIZE; 2];
+                if length % MULTIPART_PART_SIZE != 0 {
+                    lengths.push(length % MULTIPART_PART_SIZE);
+                }
+                assert_eq!(stats.part_lengths, lengths);
+                assert_eq!(stats.complete_calls, 1);
+                assert_eq!(stats.abort_calls, 0);
+                assert!(stats.single_lengths.is_empty());
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn multipart_empty_object_uses_single_put() {
+        for empty_items in [0, 3] {
+            let store = StrictStore::default();
+            let path = Path::from("empty");
+            let source = stream::iter((0..empty_items).map(|_| Ok(Bytes::new())));
+            ObjectStoreAdapter::put_multipart_to(&store, &path, Box::pin(source))
+                .await
+                .unwrap();
+            assert_eq!(store.head(&path).await.unwrap().size, 0);
+            let stats = store.stats.lock().unwrap();
+            assert_eq!(stats.started, 0);
+            assert_eq!(stats.single_lengths, [0]);
+        }
+    }
+
+    #[tokio::test]
+    async fn multipart_failures_abort_and_preserve_existing_object() {
+        for failures in [
+            Failures::default(),
+            Failures {
+                part: true,
+                ..Default::default()
+            },
+            Failures {
+                complete: true,
+                ..Default::default()
+            },
+            Failures {
+                abort: true,
+                ..Default::default()
+            },
+        ] {
+            let store = StrictStore {
+                failures,
+                ..Default::default()
+            };
+            let path = Path::from("existing");
+            store.inner.put(&path, "keep me".into()).await.unwrap();
+            let mut items = vec![Ok(Bytes::from(vec![1; MULTIPART_PART_SIZE]))];
+            if !failures.part && !failures.complete {
+                items.push(Err(io::Error::other("injected stream failure")));
+            }
+            let error =
+                ObjectStoreAdapter::put_multipart_to(&store, &path, Box::pin(stream::iter(items)))
+                    .await
+                    .unwrap_err()
+                    .to_string();
+            let phase = if failures.part {
+                "part"
+            } else if failures.complete {
+                "complete"
+            } else {
+                "stream"
+            };
+            assert!(
+                error.contains(&format!("injected {phase} failure")),
+                "{error}"
+            );
+            if failures.abort {
+                assert!(error.contains("injected abort failure"), "{error}");
+            }
+            assert_eq!(
+                store.get(&path).await.unwrap().bytes().await.unwrap(),
+                "keep me"
+            );
+            let stats = store.stats.lock().unwrap();
+            assert_eq!(stats.abort_calls, 1);
+            assert_eq!(stats.complete_calls, usize::from(failures.complete));
+            assert!(stats.single_lengths.is_empty());
+        }
+    }
+
+    #[tokio::test]
+    async fn multipart_unsupported_does_not_fall_back_to_buffering() {
+        let store = StrictStore {
+            failures: Failures {
+                unsupported: true,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let path = Path::from("unsupported");
+        let source = stream::once(async { Ok(Bytes::from_static(b"data")) });
+        assert!(
+            ObjectStoreAdapter::put_multipart_to(&store, &path, Box::pin(source))
+                .await
+                .is_err()
+        );
+        let stats = store.stats.lock().unwrap();
+        assert_eq!(stats.started, 1);
+        assert!(stats.single_lengths.is_empty());
+    }
+
+    #[tokio::test]
+    async fn bounded_local_upload_streams_then_atomically_replaces() {
+        let dir = tempfile::tempdir().unwrap();
+        let local = Arc::new(LocalFileSystem::new_with_prefix(dir.path()).unwrap());
+        let adapter = ObjectStoreAdapter {
+            store: BackendStore::Local(Arc::clone(&local)),
+            upload_strategy: UploadStrategy::SinglePut,
+        };
+        let key = ObjectKey {
+            namespace: ObjectNamespace::Lfs,
+            key: "a".repeat(64),
+        };
+        let path = key.to_object_store_path();
+        local.put(&path, "old object".into()).await.unwrap();
+        let target = local.path_to_filesystem(&path).unwrap();
+        let observed_path = path.clone();
+        let observed_local = Arc::clone(&local);
+        let observed_parent = target.parent().unwrap().to_path_buf();
+        let first = stream::once(async { Ok(Bytes::from(vec![7; MULTIPART_PART_SIZE])) });
+        let last = stream::once(async move {
+            assert_eq!(
+                observed_local
+                    .get(&observed_path)
+                    .await
+                    .unwrap()
+                    .bytes()
+                    .await
+                    .unwrap(),
+                "old object"
+            );
+            // A full part has already reached the staging file before EOF;
+            // SinglePut buffering would leave only the original small file.
+            assert!(std::fs::read_dir(observed_parent).unwrap().any(|entry| {
+                // Inspect an open handle, not a potentially stale directory
+                // entry's cached length while the file is still open.
+                std::fs::File::open(entry.unwrap().path())
+                    .unwrap()
+                    .metadata()
+                    .unwrap()
+                    .len()
+                    == MULTIPART_PART_SIZE as u64
+            }));
+            Ok(Bytes::from_static(b"tail"))
+        });
+        adapter
+            .put_stream_bounded(&key, Box::pin(first.chain(last)), ObjectMeta::default())
+            .await
+            .unwrap();
+        let expected = local.get(&path).await.unwrap().bytes().await.unwrap();
+        assert_eq!(
+            &expected[..MULTIPART_PART_SIZE],
+            vec![7; MULTIPART_PART_SIZE]
+        );
+        assert_eq!(&expected[MULTIPART_PART_SIZE..], b"tail");
+
+        let failed = stream::iter(vec![
+            Ok(Bytes::from(vec![3; MULTIPART_PART_SIZE])),
+            Err(io::Error::other("injected stream failure")),
+        ]);
+        assert!(
+            adapter
+                .put_stream_bounded(&key, Box::pin(failed), ObjectMeta::default())
+                .await
+                .is_err()
+        );
+        assert_eq!(
+            local.get(&path).await.unwrap().bytes().await.unwrap(),
+            expected
+        );
+        assert_eq!(
+            std::fs::read_dir(target.parent().unwrap()).unwrap().count(),
+            1
+        );
     }
 }

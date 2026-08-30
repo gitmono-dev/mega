@@ -29,6 +29,9 @@ rand = { workspace = true, features = ["thread_rng"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 sha1 = { workspace = true }
+sha2 = { workspace = true, optional = true }
+tempfile = { workspace = true, optional = true }
+thiserror = { workspace = true, optional = true }
 tracing = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
 reqwest = { workspace = true, features = ["json", "stream"] }
@@ -43,9 +46,11 @@ tokio-util = { workspace = true }
 rkyv = { workspace = true }
 
 [features]
+fastcdc = ["dep:sha2", "dep:tempfile", "dep:thiserror"]
 migrate = ["jupiter/migrate"]
 
 [dev-dependencies]
+sea-orm = { workspace = true }
 axum = { workspace = true }
 jupiter-migrate = { workspace = true }
 orion-client = { workspace = true }

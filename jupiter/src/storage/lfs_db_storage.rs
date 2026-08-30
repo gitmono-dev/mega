@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use callisto::{lfs_locks, lfs_objects};
 use common::errors::MegaError;
-use sea_orm::{EntityTrait, InsertResult, IntoActiveModel, Set};
+use sea_orm::{EntityTrait, InsertResult, IntoActiveModel, Set, TryInsertResult};
 
 use crate::storage::base_storage::{BaseStorage, StorageConnector};
 
@@ -21,24 +21,23 @@ impl Deref for LfsDbStorage {
 impl LfsDbStorage {
     pub async fn new_lfs_object(&self, object: lfs_objects::Model) -> Result<bool, MegaError> {
         let res = lfs_objects::Entity::insert(object.into_active_model())
+            .on_conflict_do_nothing()
             .exec(self.get_connection())
-            .await;
-        Ok(res.is_ok())
+            .await?;
+        Ok(matches!(res, TryInsertResult::Inserted(_)))
     }
 
     pub async fn get_lfs_object(&self, oid: &str) -> Result<Option<lfs_objects::Model>, MegaError> {
         let result = lfs_objects::Entity::find_by_id(oid)
             .one(self.get_connection())
-            .await
-            .unwrap();
+            .await?;
         Ok(result)
     }
 
     pub async fn delete_lfs_object(&self, oid: String) -> Result<(), MegaError> {
         lfs_objects::Entity::delete_by_id(oid)
             .exec(self.get_connection())
-            .await
-            .unwrap();
+            .await?;
         Ok(())
     }
 

@@ -497,10 +497,11 @@ pub async fn app(ctx: AppContext, host: String, port: u16) -> Router {
         .merge(SwaggerUi::new("/swagger-ui").url("/api/openapi.json", api))
 }
 
-fn rewrite_lfs_request_uri<B>(mut req: Request<B>) -> Request<B> {
+pub(crate) fn rewrite_lfs_request_uri<B>(mut req: Request<B>) -> Request<B> {
     let full_path = req.uri().path();
 
     if let Some(pos) = full_path.rfind("/info/lfs/") {
+        let repository = full_path[..pos].to_owned();
         let lfs_subpath = &full_path[pos..];
 
         let new_path_and_query = if let Some(query) = req.uri().query() {
@@ -509,6 +510,10 @@ fn rewrite_lfs_request_uri<B>(mut req: Request<B>) -> Request<B> {
             lfs_subpath.to_owned()
         };
 
+        if !repository.is_empty() {
+            req.extensions_mut()
+                .insert(lfs_router::LfsRepository(repository));
+        }
         let new_uri = match Uri::builder().path_and_query(&new_path_and_query).build() {
             Ok(uri) => uri,
             Err(e) => {

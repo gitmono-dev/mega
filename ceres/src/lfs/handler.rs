@@ -180,8 +180,41 @@ pub async fn lfs_delete_lock(
     }
 }
 
-///
-///
+/// The basic protocol accepts only SHA-256 object IDs, never storage paths.
+/// Keep this check independent of optional transports so private storage keys
+/// cannot be addressed through the standard LFS endpoints.
+pub fn validate_object_oid(oid: &str) -> Result<(), GitLFSError> {
+    if oid.len() != 64
+        || !oid
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+    {
+        return Err(GitLFSError::GeneralError(
+            "Invalid LFS object ID: expected 64 lowercase hexadecimal characters".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_object_size(size: i64) -> Result<(), GitLFSError> {
+    if size < 0 {
+        return Err(GitLFSError::GeneralError(
+            "Invalid LFS object size: expected a non-negative size".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_request_object(object: &RequestObject) -> Result<(), GitLFSError> {
+    validate_object_oid(&object.oid)?;
+    validate_object_size(object.size)
+}
+
+fn lfs_database_error(error: MegaError) -> GitLFSError {
+    tracing::error!("LFS metadata storage operation failed: {error}");
+    GitLFSError::GeneralError("LFS metadata storage operation failed".into())
+}
+
 /// Reference:
 ///     1. [Git LFS Batch API](https://github.com/git-lfs/git-lfs/blob/main/docs/api/batch.md)
 pub async fn lfs_process_batch(
@@ -195,6 +228,16 @@ pub async fn lfs_process_batch(
     let file_storage = service.obj_storage.clone();
     let db_storage = service.lfs_storage.clone();
     for object in objects {
+        if let Err(error) = validate_request_object(&object) {
+            response_objects.push(ResponseObject::failed_with_err(
+                &object,
+                ObjectError {
+                    code: 400,
+                    message: error.to_string(),
+                },
+            ));
+            continue;
+        }
         let meta_res = lfs_get_meta(&db_storage, &object.oid).await?;
         let meta = match meta_res {
             Some(meta) => meta,
@@ -205,7 +248,7 @@ pub async fn lfs_process_batch(
                     db_storage
                         .new_lfs_object(meta.clone().into())
                         .await
-                        .unwrap();
+                        .map_err(lfs_database_error)?;
                     meta
                 } else {
                     response_objects.push(ResponseObject::failed_with_err(
@@ -275,6 +318,7 @@ pub async fn lfs_upload_object(
     req_obj: &RequestObject,
     body_bytes: Vec<u8>,
 ) -> Result<(), GitLFSError> {
+    validate_request_object(req_obj)?;
     let db_storage: LfsDbStorage = service.lfs_storage.clone();
 
     let meta = if let Some(meta) = lfs_get_meta(&db_storage, &req_obj.oid).await? {
@@ -498,7 +542,16 @@ async fn lfs_get_meta(
     storage: &LfsDbStorage,
     oid: &str,
 ) -> Result<Option<MetaObject>, GitLFSError> {
-    Ok(storage.get_lfs_object(oid).await.unwrap().map(|m| m.into()))
+    validate_object_oid(oid)?;
+    let meta: Option<MetaObject> = storage
+        .get_lfs_object(oid)
+        .await
+        .map_err(lfs_database_error)?
+        .map(Into::into);
+    if let Some(meta) = &meta {
+        validate_object_size(meta.size)?;
+    }
+    Ok(meta)
 }
 
 async fn lfs_delete_meta(
@@ -640,8 +693,298 @@ async fn delete_lock(
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
+    use common::config::{LocalConfig, ObjectStorageBackend, ObjectStorageConfig};
+    use io_orbit::factory::ObjectStorageFactory;
+    use jupiter::storage::base_storage::{BaseStorage, StorageConnector};
+    use sea_orm::{ConnectionTrait, Database};
+
     use super::*;
     use crate::lfs::lfs_structs::{Action, Ref, ResCondition, ResponseObject};
+
+    async fn lfs_fixture() -> (tempfile::TempDir, LfsService) {
+        let dir = tempfile::tempdir().unwrap();
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        db.execute_unprepared(
+            "CREATE TABLE lfs_objects (oid TEXT PRIMARY KEY, size BIGINT NOT NULL, exist BOOLEAN NOT NULL)",
+        )
+        .await
+        .unwrap();
+        let config = ObjectStorageConfig {
+            storage_type: ObjectStorageBackend::Local,
+            local: LocalConfig {
+                root_dir: dir.path().to_string_lossy().into_owned(),
+            },
+            ..Default::default()
+        };
+        let service = LfsService {
+            lfs_storage: LfsDbStorage {
+                base: BaseStorage::new(Arc::new(db)),
+            },
+            obj_storage: ObjectStorageFactory::build(&config).await.unwrap(),
+        };
+        (dir, service)
+    }
+
+    fn batch_request(operation: Operation, objects: Vec<RequestObject>) -> BatchRequest {
+        BatchRequest {
+            operation,
+            transfers: vec!["basic".into()],
+            objects,
+            hash_algo: "sha256".into(),
+        }
+    }
+
+    #[tokio::test]
+    async fn basic_rejects_invalid_identifiers_and_sizes_before_database_access() {
+        let (_dir, service) = lfs_fixture().await;
+        let legacy_oid = "b".repeat(64);
+        service
+            .lfs_storage
+            .new_lfs_object(callisto::lfs_objects::Model {
+                oid: legacy_oid.clone(),
+                size: -1,
+                exist: true,
+            })
+            .await
+            .unwrap();
+        assert!(matches!(
+            lfs_download_object(service.clone(), legacy_oid.clone()).await,
+            Err(GitLFSError::GeneralError(message)) if message.starts_with("Invalid")
+        ));
+        assert!(matches!(
+            lfs_upload_object(
+                &service,
+                &RequestObject { oid: legacy_oid, ..Default::default() },
+                vec![],
+            ).await,
+            Err(GitLFSError::GeneralError(message)) if message.starts_with("Invalid")
+        ));
+        // Validating these requests must not depend on a working metadata DB.
+        service
+            .lfs_storage
+            .get_connection()
+            .execute_unprepared("DROP TABLE lfs_objects")
+            .await
+            .unwrap();
+        let mut requests: Vec<RequestObject> = [
+            String::new(),
+            "../secret".into(),
+            "media-v1/known-scope/chunks/known-hash".into(),
+            "media-v1%2Fknown-scope%2Fpending%2Fmanifest".into(),
+            "a".repeat(63),
+            "a".repeat(65),
+            "A".repeat(64),
+            "g".repeat(64),
+        ]
+        .into_iter()
+        .map(|oid| RequestObject {
+            oid,
+            size: 1,
+            ..Default::default()
+        })
+        .collect();
+        requests.push(RequestObject {
+            oid: "a".repeat(64),
+            size: -1,
+            ..Default::default()
+        });
+
+        for operation in [Operation::Upload, Operation::Download] {
+            let objects = requests
+                .iter()
+                .map(|request| RequestObject {
+                    oid: request.oid.clone(),
+                    size: request.size,
+                    ..Default::default()
+                })
+                .collect();
+            let response = lfs_process_batch(
+                &service,
+                batch_request(operation, objects),
+                "http://localhost",
+            )
+            .await
+            .unwrap();
+            for object in response.objects {
+                assert_eq!(object.error.unwrap().code, 400);
+                assert!(object.actions.is_none());
+            }
+        }
+        for request in requests {
+            assert!(matches!(
+                lfs_upload_object(&service, &request, vec![]).await,
+                Err(GitLFSError::GeneralError(message)) if message.starts_with("Invalid")
+            ));
+            if request.size >= 0 {
+                assert!(matches!(
+                    lfs_download_object(service.clone(), request.oid).await,
+                    Err(GitLFSError::GeneralError(message)) if message.starts_with("Invalid")
+                ));
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn basic_cannot_read_or_overwrite_a_private_key_registered_in_legacy_metadata() {
+        let (_dir, service) = lfs_fixture().await;
+        let private_key = "media-v1/known-scope/chunks/known-hash";
+        let key = lfs_object_key(private_key);
+        let original = b"private chunk".to_vec();
+        service
+            .obj_storage
+            .inner
+            .put_stream(&key, original.clone().into_stream(), ObjectMeta::default())
+            .await
+            .unwrap();
+        service
+            .lfs_storage
+            .new_lfs_object(callisto::lfs_objects::Model {
+                oid: private_key.into(),
+                size: original.len() as i64,
+                exist: true,
+            })
+            .await
+            .unwrap();
+
+        let request = RequestObject {
+            oid: private_key.into(),
+            size: original.len() as i64,
+            ..Default::default()
+        };
+        assert!(
+            lfs_upload_object(&service, &request, b"replacement".to_vec())
+                .await
+                .is_err()
+        );
+        assert!(
+            lfs_download_object(service.clone(), private_key.into())
+                .await
+                .is_err()
+        );
+        let batch = lfs_process_batch(
+            &service,
+            batch_request(Operation::Download, vec![request]),
+            "http://localhost",
+        )
+        .await
+        .unwrap();
+        assert_eq!(batch.objects[0].error.as_ref().unwrap().code, 400);
+        assert!(batch.objects[0].actions.is_none());
+
+        let (mut stream, _) = service.obj_storage.inner.get_stream(&key).await.unwrap();
+        let mut actual = Vec::new();
+        while let Some(bytes) = stream.next().await {
+            actual.extend_from_slice(&bytes.unwrap());
+        }
+        assert_eq!(actual, original);
+    }
+
+    #[tokio::test]
+    async fn basic_metadata_failures_are_errors_instead_of_panics() {
+        let (_dir, service) = lfs_fixture().await;
+        service
+            .lfs_storage
+            .get_connection()
+            .execute_unprepared(
+                "CREATE TRIGGER reject_lfs_insert BEFORE INSERT ON lfs_objects BEGIN SELECT RAISE(FAIL, 'test insert failure'); END",
+            )
+            .await
+            .unwrap();
+        let request = || RequestObject {
+            oid: "a".repeat(64),
+            size: 0,
+            ..Default::default()
+        };
+        let result = lfs_process_batch(
+            &service,
+            batch_request(Operation::Upload, vec![request()]),
+            "http://localhost",
+        )
+        .await;
+        assert!(matches!(
+            result,
+            Err(GitLFSError::GeneralError(message)) if message == "LFS metadata storage operation failed"
+        ));
+
+        service
+            .lfs_storage
+            .get_connection()
+            .execute_unprepared("DROP TABLE lfs_objects")
+            .await
+            .unwrap();
+        assert!(matches!(
+            lfs_download_object(service.clone(), request().oid).await,
+            Err(GitLFSError::GeneralError(message)) if message == "LFS metadata storage operation failed"
+        ));
+        assert!(matches!(
+            lfs_upload_object(&service, &request(), vec![]).await,
+            Err(GitLFSError::GeneralError(message)) if message == "LFS metadata storage operation failed"
+        ));
+    }
+
+    #[tokio::test]
+    async fn basic_valid_sha256_objects_keep_upload_and_download_actions() {
+        let (_dir, service) = lfs_fixture().await;
+        for (oid, data) in [
+            (
+                "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+                b"hello".as_slice(),
+            ),
+            (
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                b"".as_slice(),
+            ),
+        ] {
+            let request = || RequestObject {
+                oid: oid.into(),
+                size: data.len() as i64,
+                ..Default::default()
+            };
+            let upload = lfs_process_batch(
+                &service,
+                batch_request(Operation::Upload, vec![request()]),
+                "http://localhost",
+            )
+            .await
+            .unwrap();
+            assert!(
+                upload.objects[0]
+                    .actions
+                    .as_ref()
+                    .unwrap()
+                    .contains_key(&Action::Upload)
+            );
+            lfs_upload_object(&service, &request(), data.to_vec())
+                .await
+                .unwrap();
+            let download = lfs_process_batch(
+                &service,
+                batch_request(Operation::Download, vec![request()]),
+                "http://localhost",
+            )
+            .await
+            .unwrap();
+            assert!(
+                download.objects[0]
+                    .actions
+                    .as_ref()
+                    .unwrap()
+                    .contains_key(&Action::Download)
+            );
+            let mut stream = Box::pin(
+                lfs_download_object(service.clone(), oid.into())
+                    .await
+                    .unwrap(),
+            );
+            let mut actual = Vec::new();
+            while let Some(bytes) = stream.next().await {
+                actual.extend_from_slice(&bytes.unwrap());
+            }
+            assert_eq!(actual, data);
+        }
+    }
 
     fn lock(id: &str) -> Lock {
         Lock {

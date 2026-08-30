@@ -22,3 +22,6 @@ reqwest = { workspace = true }
 tokio = { workspace = true, features = ["time", "macros", "rt"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

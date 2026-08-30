@@ -61,15 +61,25 @@ use crate::api::{MonoApiServiceState, api_doc::LFS_TAG};
 const LFS_CONTENT_TYPE: &str = "application/vnd.git-lfs+json";
 const LFS_STREAM_CONTENT_TYPE: &str = "application/octet-stream";
 
+#[cfg(feature = "fastcdc")]
+mod media;
+
+/// Original repository path, captured before the standard LFS URI rewrite.
+#[derive(Clone, Debug)]
+pub struct LfsRepository(pub String);
+
 pub fn lfs_routes() -> OpenApiRouter<MonoApiServiceState> {
-    OpenApiRouter::new()
+    let router = OpenApiRouter::new()
         .routes(routes!(lfs_upload_object))
         .routes(routes!(lfs_download_object))
         .routes(routes!(list_locks))
         .routes(routes!(create_lock))
         .routes(routes!(list_locks_for_verification))
         .routes(routes!(delete_lock))
-        .routes(routes!(lfs_process_batch))
+        .routes(routes!(lfs_process_batch));
+    #[cfg(feature = "fastcdc")]
+    let router = router.nest("/libra/media/v1", media::router());
+    router
 }
 
 /// The [LFS Server Discovery](https://github.com/git-lfs/git-lfs/blob/main/docs/api/server-discovery.md)
@@ -396,21 +406,14 @@ pub async fn lfs_upload_object(
     Path(oid): Path<String>,
     req: Request<Body>,
 ) -> Result<Response<Body>, (StatusCode, String)> {
+    let body_bytes = match read_lfs_upload_body(&oid, req).await {
+        Ok(bytes) => bytes,
+        Err(response) => return Ok(response),
+    };
     let req_obj = RequestObject {
         oid,
         ..Default::default()
     };
-
-    // Collect bytes asynchronously from the stream into a Vec<u8>
-    let body_bytes: Vec<u8> = req
-        .into_body()
-        .into_data_stream()
-        .try_fold(Vec::new(), |mut acc, chunk| async move {
-            acc.extend_from_slice(&chunk);
-            Ok(acc)
-        })
-        .await
-        .unwrap();
 
     let result = state
         .services()
@@ -429,6 +432,22 @@ pub async fn lfs_upload_object(
     }
 }
 
+async fn read_lfs_upload_body(oid: &str, req: Request<Body>) -> Result<Vec<u8>, Response<Body>> {
+    // Reject invalid paths before polling an untrusted upload body.
+    ceres::lfs::handler::validate_object_oid(oid).map_err(|error| {
+        let (code, message) = map_lfs_error(error);
+        lfs_error_response(code, message)
+    })?;
+    req.into_body()
+        .into_data_stream()
+        .try_fold(Vec::new(), |mut acc, chunk| async move {
+            acc.extend_from_slice(&chunk);
+            Ok(acc)
+        })
+        .await
+        .map_err(|_| lfs_error_response(StatusCode::BAD_REQUEST, "Invalid LFS request body".into()))
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -436,6 +455,33 @@ mod tests {
     use axum::http::StatusCode;
 
     use super::*;
+
+    #[tokio::test]
+    async fn invalid_upload_oid_is_rejected_without_reading_body() {
+        let body = Body::from_stream(futures::stream::poll_fn(
+            |_| -> std::task::Poll<Option<std::io::Result<Vec<u8>>>> {
+                panic!("invalid object IDs must be rejected before polling the body")
+            },
+        ));
+        let response =
+            read_lfs_upload_body("media-v1/known-scope/chunks/known-hash", Request::new(body))
+                .await
+                .unwrap_err();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(response.headers()["Content-Type"], LFS_CONTENT_TYPE);
+    }
+
+    #[tokio::test]
+    async fn unreadable_upload_body_returns_lfs_error() {
+        let body = Body::from_stream(futures::stream::once(async {
+            Err::<Vec<u8>, _>(std::io::Error::other("test body failure"))
+        }));
+        let response = read_lfs_upload_body(&"a".repeat(64), Request::new(body))
+            .await
+            .unwrap_err();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(response.headers()["Content-Type"], LFS_CONTENT_TYPE);
+    }
 
     #[test]
     fn test_map_lfs_error_not_found() {
