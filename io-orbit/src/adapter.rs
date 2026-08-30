@@ -185,7 +185,7 @@ impl MegaObjectStorage for ObjectStoreAdapter {
 
     async fn exists(&self, key: &ObjectKey) -> Result<bool, MegaError> {
         let path = key.to_object_store_path();
-        Ok(self.to_store().head(&path).await.is_ok())
+        Self::exists_in(self.to_store(), &path).await
     }
 
     async fn delete(&self, key: &ObjectKey) -> Result<(), MegaError> {
@@ -540,6 +540,17 @@ impl LogStorage for ObjectStoreAdapter {
 }
 
 impl ObjectStoreAdapter {
+    async fn exists_in(
+        store: &dyn ObjectStore,
+        path: &object_store::path::Path,
+    ) -> Result<bool, MegaError> {
+        match store.head(path).await {
+            Ok(_) => Ok(true),
+            Err(object_store::Error::NotFound { .. }) => Ok(false),
+            Err(error) => Err(IoOrbitError::from(error).into()),
+        }
+    }
+
     fn to_store(&self) -> &dyn ObjectStore {
         let store: &dyn ObjectStore = match &self.store {
             BackendStore::S3(s3) => s3.as_ref(),
@@ -836,6 +847,7 @@ mod tests {
 
     #[derive(Clone, Copy, Debug, Default)]
     struct Failures {
+        head: bool,
         part: bool,
         complete: bool,
         abort: bool,
@@ -947,6 +959,9 @@ mod tests {
             location: &Path,
             options: GetOptions,
         ) -> object_store::Result<GetResult> {
+            if self.failures.head {
+                return Err(injected_error("injected head failure"));
+            }
             self.inner.get_opts(location, options).await
         }
 
@@ -979,6 +994,29 @@ mod tests {
         ) -> object_store::Result<()> {
             self.inner.copy_opts(from, to, options).await
         }
+    }
+
+    #[tokio::test]
+    async fn exists_distinguishes_not_found_from_storage_failures() {
+        let store = InMemory::new();
+        let path = Path::from("object");
+        assert!(!ObjectStoreAdapter::exists_in(&store, &path).await.unwrap());
+
+        store.put(&path, PutPayload::new()).await.unwrap();
+        assert!(ObjectStoreAdapter::exists_in(&store, &path).await.unwrap());
+
+        let failing = StrictStore {
+            failures: Failures {
+                head: true,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let error = ObjectStoreAdapter::exists_in(&failing, &path)
+            .await
+            .unwrap_err();
+        assert!(matches!(error, MegaError::ObjStorage(_)));
+        assert!(error.to_string().contains("injected head failure"));
     }
 
     #[tokio::test]
