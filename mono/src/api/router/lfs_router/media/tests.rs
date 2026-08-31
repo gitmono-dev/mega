@@ -149,6 +149,90 @@ async fn media_router_requires_token_and_preserves_repository_scope() {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
+#[tokio::test]
+async fn media_http_errors_preserve_response_contract() {
+    let too_large = body(Request::new(Body::from("ab")), 1).await.unwrap_err();
+    for (error, status, content_type, message) in [
+        (
+            MediaHttpError::from(MediaError::Invalid("bad manifest".into())),
+            StatusCode::BAD_REQUEST,
+            LFS_CONTENT_TYPE,
+            "Invalid media request: bad manifest",
+        ),
+        (
+            MediaHttpError::from(MediaError::NotFound),
+            StatusCode::NOT_FOUND,
+            LFS_CONTENT_TYPE,
+            "Media object not found",
+        ),
+        (
+            MediaHttpError::from(MediaError::Conflict),
+            StatusCode::CONFLICT,
+            LFS_CONTENT_TYPE,
+            "Media manifest conflicts with the finalized object",
+        ),
+        (
+            MediaHttpError::from(MediaError::Storage("private backend diagnostics".into())),
+            StatusCode::INTERNAL_SERVER_ERROR,
+            LFS_CONTENT_TYPE,
+            "media storage operation failed",
+        ),
+        (
+            too_large,
+            StatusCode::PAYLOAD_TOO_LARGE,
+            "application/json",
+            "media body exceeds limit or cannot be read",
+        ),
+    ] {
+        let response = error.into_response();
+        assert_eq!(response.status(), status);
+        assert_eq!(response.headers()["Content-Type"], content_type);
+        let value: serde_json::Value =
+            serde_json::from_slice(&to_bytes(response.into_body(), 4096).await.unwrap()).unwrap();
+        assert_eq!(value, serde_json::json!({"message": message}));
+    }
+}
+
+#[tokio::test]
+async fn media_router_rejects_invalid_manifest_bodies() {
+    let (_dir, app) = fixture().await;
+    let unreadable = Body::from_stream(futures::stream::once(async {
+        Err::<Vec<u8>, _>(std::io::Error::other("test body failure"))
+    }));
+    for (body, status, content_type, message) in [
+        (
+            Body::from("{"),
+            StatusCode::BAD_REQUEST,
+            LFS_CONTENT_TYPE,
+            "Invalid media request: malformed manifest JSON",
+        ),
+        (
+            unreadable,
+            StatusCode::PAYLOAD_TOO_LARGE,
+            "application/json",
+            "media body exceeds limit or cannot be read",
+        ),
+    ] {
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/project/demo.git/info/lfs/libra/media/v1/manifests")
+                    .header("Authorization", "Bearer test-alice")
+                    .body(body)
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), status);
+        assert_eq!(response.headers()["Content-Type"], content_type);
+        let value: serde_json::Value =
+            serde_json::from_slice(&to_bytes(response.into_body(), 4096).await.unwrap()).unwrap();
+        assert_eq!(value, serde_json::json!({"message": message}));
+    }
+}
+
 /// Serves the actual production media router plus token validation against an
 /// isolated SQLite database for Libra's ignored cross-repository HTTP test.
 #[tokio::test]

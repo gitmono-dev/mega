@@ -408,7 +408,7 @@ pub async fn lfs_upload_object(
 ) -> Result<Response<Body>, (StatusCode, String)> {
     let body_bytes = match read_lfs_upload_body(&oid, req).await {
         Ok(bytes) => bytes,
-        Err(response) => return Ok(response),
+        Err((code, message)) => return Ok(lfs_error_response(code, message)),
     };
     let req_obj = RequestObject {
         oid,
@@ -432,12 +432,12 @@ pub async fn lfs_upload_object(
     }
 }
 
-async fn read_lfs_upload_body(oid: &str, req: Request<Body>) -> Result<Vec<u8>, Response<Body>> {
+async fn read_lfs_upload_body(
+    oid: &str,
+    req: Request<Body>,
+) -> Result<Vec<u8>, (StatusCode, String)> {
     // Reject invalid paths before polling an untrusted upload body.
-    ceres::lfs::handler::validate_object_oid(oid).map_err(|error| {
-        let (code, message) = map_lfs_error(error);
-        lfs_error_response(code, message)
-    })?;
+    ceres::lfs::handler::validate_object_oid(oid).map_err(map_lfs_error)?;
     req.into_body()
         .into_data_stream()
         .try_fold(Vec::new(), |mut acc, chunk| async move {
@@ -445,7 +445,7 @@ async fn read_lfs_upload_body(oid: &str, req: Request<Body>) -> Result<Vec<u8>, 
             Ok(acc)
         })
         .await
-        .map_err(|_| lfs_error_response(StatusCode::BAD_REQUEST, "Invalid LFS request body".into()))
+        .map_err(|_| (StatusCode::BAD_REQUEST, "Invalid LFS request body".into()))
 }
 
 #[cfg(test)]
@@ -463,10 +463,11 @@ mod tests {
                 panic!("invalid object IDs must be rejected before polling the body")
             },
         ));
-        let response =
+        let (code, message) =
             read_lfs_upload_body("media-v1/known-scope/chunks/known-hash", Request::new(body))
                 .await
                 .unwrap_err();
+        let response = lfs_error_response(code, message);
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         assert_eq!(response.headers()["Content-Type"], LFS_CONTENT_TYPE);
     }
@@ -476,9 +477,10 @@ mod tests {
         let body = Body::from_stream(futures::stream::once(async {
             Err::<Vec<u8>, _>(std::io::Error::other("test body failure"))
         }));
-        let response = read_lfs_upload_body(&"a".repeat(64), Request::new(body))
+        let (code, message) = read_lfs_upload_body(&"a".repeat(64), Request::new(body))
             .await
             .unwrap_err();
+        let response = lfs_error_response(code, message);
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         assert_eq!(response.headers()["Content-Type"], LFS_CONTENT_TYPE);
     }
