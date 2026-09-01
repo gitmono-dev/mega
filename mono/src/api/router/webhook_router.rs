@@ -3,7 +3,10 @@ use axum::{
     Json,
     extract::{Path, Query, State},
 };
-use ceres::model::webhook::{CreateWebhookRequest, ListWebhooksQuery, WebhookResponse};
+use ceres::model::{
+    serde_snowflake::SnowflakeId,
+    webhook::{CreateWebhookRequest, ListWebhooksQuery, WebhookResponse},
+};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{MonoApiServiceState, api_doc::WEBHOOK_TAG, error::ApiError};
@@ -61,7 +64,7 @@ async fn list_webhooks(
 /// Delete a webhook
 #[utoipa::path(
     delete,
-    params(("id", description = "Webhook ID")),
+    params(("id" = SnowflakeId, Path, description = "Webhook ID")),
     path = "/webhooks/{id}",
     responses(
         (status = 200, body = CommonResult<String>, content_type = "application/json"),
@@ -71,7 +74,7 @@ async fn list_webhooks(
 )]
 async fn delete_webhook(
     state: State<MonoApiServiceState>,
-    Path(id): Path<i64>,
+    Path(SnowflakeId(id)): Path<SnowflakeId>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
     state.services().webhook().delete_webhook(id).await?;
     Ok(Json(CommonResult::success(None)))

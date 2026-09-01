@@ -10,7 +10,7 @@ import { megaUserHandle } from '@/utils/megaUser'
 import { AddMembersDialog } from './AddMembersDialog'
 
 interface GroupMembersDialogProps {
-  groupId: number | null
+  groupId: string | null
   groupName?: string
   onClose: () => void
 }
@@ -21,7 +21,7 @@ export const GroupMembersDialog = ({ groupId, groupName, onClose }: GroupMembers
   const memberMap = useMemberMap()
 
   // Get current group's member list
-  const { data: groupMembersData, isLoading } = useAdminGroupMembersList(groupId || 0, {
+  const { data: groupMembersData, isLoading } = useAdminGroupMembersList(groupId ?? '', {
     pagination: { page: 1, per_page: 1000 }, // Get all group members
     additional: {}
   })

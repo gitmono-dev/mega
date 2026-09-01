@@ -49,62 +49,59 @@ const CloneTabs = () => {
   ]
 
   return (
-    <>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger>
-          <Button variant='base'>
-            <Flex gap='3'>
-              <DownloadIcon />
-              Code
-            </Flex>
-          </Button>
-        </PopoverTrigger>
-        <PopoverPortal>
-          {open && (
-            <PopoverContent
-              className={cn(
-                'animate-scale-fade shadow-popover dark:border-primary-opaque bg-primary relative flex h-[130px] w-[400px] flex-1 origin-[var(--radix-hover-card-content-transform-origin)] flex-col overflow-hidden rounded-lg border border-transparent dark:shadow-[0px_2px_16px_rgba(0,0,0,1)]'
-              )}
-              sideOffset={4}
-              align='start'
-              onOpenAutoFocus={(e) => e.preventDefault()}
-              asChild
-              addDismissibleLayer
-            >
-              <Tabs.Root defaultValue={active_tab} onValueChange={setActiveTab}>
-                <Tabs.List size='1' className='p-2'>
-                  <Tabs.Trigger value='HTTP'>
-                    <Button variant={active_tab === 'HTTP' ? 'flat' : 'plain'}>HTTP</Button>
-                  </Tabs.Trigger>
-                  <Tabs.Trigger value='SSH' style={{ marginLeft: '10px' }}>
-                    <Button variant={active_tab === 'SSH' ? 'flat' : 'plain'}>SSH</Button>
-                  </Tabs.Trigger>
-                </Tabs.List>
-                <Box pt='3'>
-                  {tabContent?.map((_item) => {
-                    return (
-                      <Tabs.Content value={_item.value} key={_item.value}>
-                        <Flex align='center'>
-                          <input
-                            value={_item.inputValue}
-                            className='bg-quaternary border-primary m-2 w-[350px] border-r border-b p-1'
-                            style={{ borderRadius: '5px' }}
-                          />
-                          <Button onClick={handleCopy} size='sm' variant='text' className='text-secondary'>
-                            {copied ? <CheckIcon /> : <CopyIcon />}
-                          </Button>
-                        </Flex>
-                        <div className='text-tertiary ml-2'>{_item.info}</div>
-                      </Tabs.Content>
-                    )
-                  })}
-                </Box>
-              </Tabs.Root>
-            </PopoverContent>
-          )}
-        </PopoverPortal>
-      </Popover>
-    </>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant='base'>
+          <Flex gap='3'>
+            <DownloadIcon />
+            Code
+          </Flex>
+        </Button>
+      </PopoverTrigger>
+      <PopoverPortal>
+        {open && (
+          <PopoverContent
+            className={cn(
+              'animate-scale-fade shadow-popover dark:border-primary-opaque bg-primary relative flex h-[130px] w-[400px] flex-1 origin-[var(--radix-hover-card-content-transform-origin)] flex-col overflow-hidden rounded-lg border border-transparent dark:shadow-[0px_2px_16px_rgba(0,0,0,1)]'
+            )}
+            sideOffset={4}
+            align='start'
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            asChild
+            addDismissibleLayer
+          >
+            <Tabs.Root defaultValue={active_tab} onValueChange={setActiveTab}>
+              <Tabs.List size='1' className='p-2'>
+                <Tabs.Trigger value='HTTP'>HTTP</Tabs.Trigger>
+                <Tabs.Trigger value='SSH' style={{ marginLeft: '10px' }}>
+                  SSH
+                </Tabs.Trigger>
+              </Tabs.List>
+              <Box pt='3'>
+                {tabContent?.map((_item) => {
+                  return (
+                    <Tabs.Content value={_item.value} key={_item.value}>
+                      <Flex align='center'>
+                        <input
+                          readOnly
+                          value={_item.inputValue}
+                          className='bg-quaternary border-primary m-2 w-[350px] border-r border-b p-1'
+                          style={{ borderRadius: '5px' }}
+                        />
+                        <Button onClick={handleCopy} size='sm' variant='text' className='text-secondary'>
+                          {copied ? <CheckIcon /> : <CopyIcon />}
+                        </Button>
+                      </Flex>
+                      <div className='text-tertiary ml-2'>{_item.info}</div>
+                    </Tabs.Content>
+                  )
+                })}
+              </Box>
+            </Tabs.Root>
+          </PopoverContent>
+        )}
+      </PopoverPortal>
+    </Popover>
   )
 }
 

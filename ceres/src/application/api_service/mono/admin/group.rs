@@ -308,22 +308,25 @@ impl AdminApplicationService {
 
         match resource_type {
             ResourceTypeValue::Note => {
-                let note = self
-                    .ctx
-                    .storage()
-                    .note_storage()
-                    .get_note_by_public_id(normalized_resource_id)
-                    .await?;
-                match note {
-                    Some(note) => Ok(note.public_id),
-                    None => {
-                        tracing::warn!(
-                            resource_id = normalized_resource_id,
-                            "note resource missing in mono notes table; falling back to raw public_id"
-                        );
-                        Ok(normalized_resource_id.to_string())
-                    }
-                }
+                // TODO: mono `notes` is not populated yet (Campsite remains source of truth).
+                // Re-enable lookup once notes are migrated/synced into mono:
+                // let note = self
+                //     .ctx
+                //     .storage()
+                //     .note_storage()
+                //     .get_note_by_public_id(normalized_resource_id)
+                //     .await?;
+                // match note {
+                //     Some(note) => Ok(note.public_id),
+                //     None => {
+                //         tracing::warn!(
+                //             resource_id = normalized_resource_id,
+                //             "note resource missing in mono notes table; falling back to raw public_id"
+                //         );
+                //         Ok(normalized_resource_id.to_string())
+                //     }
+                // }
+                Ok(normalized_resource_id.to_string())
             }
         }
     }

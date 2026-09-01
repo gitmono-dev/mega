@@ -8,8 +8,9 @@ use axum::{
     Json,
     extract::{Path, State},
 };
-use ceres::application::build_trigger::{
-    CreateTriggerRequest, ListTriggersParams, TriggerResponse,
+use ceres::{
+    application::build_trigger::{CreateTriggerRequest, ListTriggersParams, TriggerResponse},
+    model::serde_snowflake::SnowflakeId,
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -103,7 +104,7 @@ async fn list_triggers(
     get,
     path = "/{id}",
     params(
-        ("id" = i64, Path, description = "Trigger ID")
+        ("id" = SnowflakeId, Path, description = "Trigger ID")
     ),
     responses(
         (status = 200, body = CommonResult<TriggerResponse>, content_type = "application/json"),
@@ -115,7 +116,7 @@ async fn list_triggers(
 async fn get_trigger(
     _user: LoginUser,
     state: State<MonoApiServiceState>,
-    Path(id): Path<i64>,
+    Path(SnowflakeId(id)): Path<SnowflakeId>,
 ) -> Result<Json<CommonResult<TriggerResponse>>, ApiError> {
     let service = state.services().build_trigger();
     let response = service.get_trigger(id).await?;
@@ -131,7 +132,7 @@ async fn get_trigger(
     post,
     path = "/{id}/retry",
     params(
-        ("id" = i64, Path, description = "Original trigger ID to retry")
+        ("id" = SnowflakeId, Path, description = "Original trigger ID to retry")
     ),
     responses(
         (status = 200, body = CommonResult<TriggerResponse>, content_type = "application/json"),
@@ -143,7 +144,7 @@ async fn get_trigger(
 async fn retry_trigger(
     user: LoginUser,
     state: State<MonoApiServiceState>,
-    Path(id): Path<i64>,
+    Path(SnowflakeId(id)): Path<SnowflakeId>,
 ) -> Result<Json<CommonResult<TriggerResponse>>, ApiError> {
     let actor = collaboration_actor(&user)?;
     let service = state.services().build_trigger();

@@ -38,7 +38,7 @@ export function useEditorSync({ resourceId, resourceType, initialState }: Props)
   const [syncError, setSyncError] = useState<EditorSyncError | null>(null)
   const [syncState, setSyncState] = useState<EditorSyncState>('connecting')
 
-  const [provider] = useState(() => {
+  const [{ provider, websocketProvider }] = useState(() => {
     let document: Y.Doc | undefined
 
     if (initialState) {
@@ -50,12 +50,15 @@ export function useEditorSync({ resourceId, resourceType, initialState }: Props)
       document = ydoc
     }
 
+    // @hocuspocus/provider@4: when a custom websocketProvider is passed,
+    // HocuspocusProvider.connect()/disconnect() are no-ops. Connect the socket
+    // directly and attach/detach the provider around the connection lifetime.
     const websocketProvider = new HocuspocusProviderWebsocket({
       url: buildSyncUrl(scope, resourceType),
       autoConnect: false
     })
 
-    return new HocuspocusProvider({
+    const provider = new HocuspocusProvider({
       document,
       websocketProvider,
       name: resourceId,
@@ -88,19 +91,24 @@ export function useEditorSync({ resourceId, resourceType, initialState }: Props)
         setSyncState(data.status)
       }
     })
+
+    return { provider, websocketProvider }
   })
 
   useEffect(() => {
+    provider.attach()
+
     if (isLoggedIn) {
-      void provider.connect()
+      void websocketProvider.connect()
     } else {
-      provider.disconnect()
+      websocketProvider.disconnect()
     }
 
     return () => {
-      provider.disconnect()
+      websocketProvider.disconnect()
+      provider.detach()
     }
-  }, [provider, isLoggedIn])
+  }, [provider, websocketProvider, isLoggedIn])
 
   return [provider, syncState, syncError] as const
 }

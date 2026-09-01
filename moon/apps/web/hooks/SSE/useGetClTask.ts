@@ -95,7 +95,7 @@ export function useGetClTask(cl: string, params?: RequestParams) {
           return {
             build_list: buildList,
             changes: (task.changes ?? []) as StatusProjectRelativePath[],
-            cl_id: 0,
+            cl_id: '',
             created_at: task.created_at,
             targets: mappedTargets,
             task_id: task.id,

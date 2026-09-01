@@ -5,7 +5,7 @@ import { LoadingSpinner } from '@gitmono/ui'
 import { AdminGroupItem } from './AdminGroupItem'
 
 interface GroupItem {
-  id: number
+  id: string
   name: string
   description?: string | null
   created_at: number
@@ -17,8 +17,8 @@ interface AdminGroupsListProps {
   total: number
   isLoading: boolean
   isError: boolean
-  onDelete: (id: number) => void
-  onManageMembers: (id: number) => void
+  onDelete: (id: string) => void
+  onManageMembers: (id: string) => void
   onUpdate?: () => void
 }
 

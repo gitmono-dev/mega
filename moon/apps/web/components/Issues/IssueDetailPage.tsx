@@ -245,7 +245,7 @@ export default function IssueDetailPage({ link }: { link: string }) {
         {
           data: {
             assignees: selected,
-            item_id: Number(id),
+            item_id: id,
             link
           }
         },
@@ -274,7 +274,7 @@ export default function IssueDetailPage({ link }: { link: string }) {
       issueLabels(
         {
           data: {
-            item_id: Number(id),
+            item_id: id,
             label_ids: selected,
             link
           }

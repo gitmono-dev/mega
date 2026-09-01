@@ -280,7 +280,7 @@ const TaskItem = memo(function TaskItem({
   onSelectBuild: (buildId: string) => void
   isLast?: boolean
   cl: string
-  clId?: number
+  clId?: string
   changes?: StatusProjectRelativePath[]
   isQueued?: boolean
   isLatestBuild?: boolean
@@ -299,7 +299,7 @@ const TaskItem = memo(function TaskItem({
     retryBuild({
       build_id: build.id,
       cl_link: cl,
-      cl_id: clId ?? 0,
+      cl_id: clId ?? '',
       changes: changes ?? [],
       targets: []
     })

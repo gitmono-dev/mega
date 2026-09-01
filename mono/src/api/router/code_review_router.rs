@@ -3,9 +3,12 @@ use axum::{
     Json,
     extract::{Path, State},
 };
-use ceres::model::code_review::{
-    CodeReviewResponse, CommentReplyRequest, CommentReviewResponse, InitializeCommentRequest,
-    ThreadReviewResponse, ThreadStatusResponse, UpdateCommentRequest,
+use ceres::model::{
+    code_review::{
+        CodeReviewResponse, CommentReplyRequest, CommentReviewResponse, InitializeCommentRequest,
+        ThreadReviewResponse, ThreadStatusResponse, UpdateCommentRequest,
+    },
+    serde_snowflake::SnowflakeId,
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -86,7 +89,7 @@ async fn initialize_code_review_comment(
 #[utoipa::path(
     post,
     params(
-        ("thread_id", description = "Code Review Comment Thread ID"),
+        ("thread_id" = SnowflakeId, Path, description = "Code Review Comment Thread ID"),
     ),
     path = "/{thread_id}/comment/reply",
     responses(
@@ -96,7 +99,7 @@ async fn initialize_code_review_comment(
 )]
 async fn reply_code_review_comment(
     user: LoginUser,
-    Path(thread_id): Path<i64>,
+    Path(SnowflakeId(thread_id)): Path<SnowflakeId>,
     state: State<MonoApiServiceState>,
     Json(payload): Json<CommentReplyRequest>,
 ) -> Result<Json<CommonResult<CommentReviewResponse>>, ApiError> {
@@ -114,7 +117,7 @@ async fn reply_code_review_comment(
 #[utoipa::path(
     post,
     params(
-        ("comment_id", description = "A numeric ID representing a comment"),
+        ("comment_id" = SnowflakeId, Path, description = "A numeric ID representing a comment"),
     ),
     path = "/{comment_id}/update",
     responses(
@@ -124,7 +127,7 @@ async fn reply_code_review_comment(
 )]
 async fn update_code_review_comment(
     user: LoginUser,
-    Path(comment_id): Path<i64>,
+    Path(SnowflakeId(comment_id)): Path<SnowflakeId>,
     state: State<MonoApiServiceState>,
     Json(payload): Json<UpdateCommentRequest>,
 ) -> Result<Json<CommonResult<CommentReviewResponse>>, ApiError> {
@@ -142,7 +145,7 @@ async fn update_code_review_comment(
 #[utoipa::path(
     post,
     params(
-        ("thread_id", description = "A numeric ID representing a code review thread"),
+        ("thread_id" = SnowflakeId, Path, description = "A numeric ID representing a code review thread"),
     ),
     path = "/{thread_id}/resolve",
     responses(
@@ -151,7 +154,7 @@ async fn update_code_review_comment(
     tag = CODE_REVIEW_TAG,
 )]
 async fn resolve_code_review_thread(
-    Path(thread_id): Path<i64>,
+    Path(SnowflakeId(thread_id)): Path<SnowflakeId>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<ThreadStatusResponse>>, ApiError> {
     let thread = state
@@ -167,7 +170,7 @@ async fn resolve_code_review_thread(
 #[utoipa::path(
     post,
     params(
-        ("thread_id", description = "A numeric ID representing a code review thread"),
+        ("thread_id" = SnowflakeId, Path, description = "A numeric ID representing a code review thread"),
     ),
     path = "/{thread_id}/reopen",
     responses(
@@ -176,7 +179,7 @@ async fn resolve_code_review_thread(
     tag = CODE_REVIEW_TAG,
 )]
 async fn reopen_code_review_thread(
-    Path(thread_id): Path<i64>,
+    Path(SnowflakeId(thread_id)): Path<SnowflakeId>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<ThreadStatusResponse>>, ApiError> {
     let thread = state
@@ -192,7 +195,7 @@ async fn reopen_code_review_thread(
 #[utoipa::path(
     delete,
     params(
-        ("thread_id", description = "A numeric ID representing a code review thread"),
+        ("thread_id" = SnowflakeId, Path, description = "A numeric ID representing a code review thread"),
     ),
     path = "/thread/{thread_id}",
     responses(
@@ -201,7 +204,7 @@ async fn reopen_code_review_thread(
     tag = CODE_REVIEW_TAG,
 )]
 async fn delete_code_review_thread(
-    Path(thread_id): Path<i64>,
+    Path(SnowflakeId(thread_id)): Path<SnowflakeId>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
     state
@@ -217,7 +220,7 @@ async fn delete_code_review_thread(
 #[utoipa::path(
     delete,
     params(
-        ("comment_id", description = "A numeric ID representing a code review comment"),
+        ("comment_id" = SnowflakeId, Path, description = "A numeric ID representing a code review comment"),
     ),
     path = "/comment/{comment_id}",
     responses(
@@ -227,7 +230,7 @@ async fn delete_code_review_thread(
 )]
 async fn delete_code_review_comment(
     user: LoginUser,
-    Path(comment_id): Path<i64>,
+    Path(SnowflakeId(comment_id)): Path<SnowflakeId>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
     let actor = collaboration_actor(&user)?;

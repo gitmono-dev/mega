@@ -9,8 +9,8 @@ import { legacyApiClient } from '@/utils/queryClient'
 export function useDeleteAdminGroup() {
   const queryClient = useQueryClient()
 
-  return useMutation<DeleteApiAdminGroupsByGroupIdData, Error, number>({
-    mutationFn: (groupId: number) => legacyApiClient.v1.deleteApiAdminGroupsByGroupId().request(groupId),
+  return useMutation<DeleteApiAdminGroupsByGroupIdData, Error, string>({
+    mutationFn: (groupId: string) => legacyApiClient.v1.deleteApiAdminGroupsByGroupId().request(groupId),
     onSuccess: () => {
       // Refresh user groups list
       queryClient.invalidateQueries({

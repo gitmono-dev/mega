@@ -11,8 +11,8 @@ import { GroupMembersDialog } from './GroupMembersDialog'
 
 export const AdminGroups = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
-  const [manageMembersGroupId, setManageMembersGroupId] = useState<number | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [manageMembersGroupId, setManageMembersGroupId] = useState<string | null>(null)
 
   const { data, isLoading, isError } = useAdminGroupsList({
     pagination: { page: 1, per_page: 20 },
@@ -22,11 +22,11 @@ export const AdminGroups = () => {
   const groups = data?.data?.items || []
   const total = data?.data?.total || 0
 
-  const handleDeleteGroup = (groupId: number) => {
+  const handleDeleteGroup = (groupId: string) => {
     setDeleteConfirmId(groupId)
   }
 
-  const handleManageMembers = (groupId: number) => {
+  const handleManageMembers = (groupId: string) => {
     setManageMembersGroupId(groupId)
   }
 

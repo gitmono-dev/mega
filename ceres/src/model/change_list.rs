@@ -10,12 +10,21 @@ use uuid::Uuid;
 
 use crate::{
     merge_checker::{CheckType, ConditionResult},
-    model::{conversation::ConversationItem, label::LabelItem},
+    model::{
+        conversation::ConversationItem,
+        label::LabelItem,
+        serde_snowflake::{
+            deserialize_i64_from_string_or_number,
+            deserialize_option_vec_i64_from_string_or_number, serialize_i64_as_string,
+        },
+    },
 };
 
 #[derive(Deserialize, ToSchema)]
 pub struct AssigneeUpdatePayload {
     pub assignees: Vec<String>,
+    #[serde(deserialize_with = "deserialize_i64_from_string_or_number")]
+    #[schema(value_type = String)]
     pub item_id: i64,
     pub link: String,
 }
@@ -24,6 +33,11 @@ pub struct AssigneeUpdatePayload {
 pub struct ListPayload {
     pub status: String,
     pub author: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_option_vec_i64_from_string_or_number"
+    )]
+    #[schema(value_type = Option<Vec<String>>)]
     pub labels: Option<Vec<i64>>,
     pub assignees: Option<Vec<String>>,
     pub sort_by: Option<String>,
@@ -45,6 +59,8 @@ impl From<ListPayload> for ListParams {
 
 #[derive(Serialize, ToSchema)]
 pub struct CLDetailRes {
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub id: i64,
     pub link: String,
     pub title: String,
@@ -337,6 +353,11 @@ pub struct ChangeReviewerStatePayload {
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
 pub struct ChangeReviewStatePayload {
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub conversation_id: i64,
     pub resolved: bool,
 }

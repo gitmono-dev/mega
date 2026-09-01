@@ -3,6 +3,8 @@ use jupiter::{sea_orm::ActiveEnum, storage::webhook_storage::WebhookWithEventTyp
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use super::serde_snowflake::serialize_i64_as_string;
+
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateWebhookRequest {
     pub target_url: String,
@@ -15,6 +17,8 @@ pub struct CreateWebhookRequest {
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct WebhookResponse {
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub id: i64,
     pub target_url: String,
     pub event_types: Vec<String>,

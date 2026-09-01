@@ -8,7 +8,7 @@ export function usePostComment() {
   return useMutation<
     PostApiConversationByCommentIdData,
     Error,
-    { commentId: number; data: ContentPayload; params?: RequestParams }
+    { commentId: string; data: ContentPayload; params?: RequestParams }
   >({
     mutationFn: ({ commentId, data, params }) =>
       legacyApiClient.v1.postApiConversationByCommentId().request(commentId, data, params)

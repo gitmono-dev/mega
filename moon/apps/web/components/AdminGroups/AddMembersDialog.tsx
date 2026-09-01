@@ -8,7 +8,7 @@ import { useGetSyncMembers } from '@/hooks/useGetSyncMembers'
 import { megaUserHandle } from '@/utils/megaUser'
 
 interface AddMembersDialogProps {
-  groupId: number | null
+  groupId: string | null
   onClose: () => void
 }
 
@@ -29,7 +29,7 @@ export const AddMembersDialog = ({ groupId, onClose }: AddMembersDialogProps) =>
   })
 
   // Get current group's existing users
-  const { data: groupMembersData, isLoading: isGroupMembersLoading } = useAdminGroupMembersList(groupId || 0, {
+  const { data: groupMembersData, isLoading: isGroupMembersLoading } = useAdminGroupMembersList(groupId ?? '', {
     pagination: { page: 1, per_page: 1000 }, // Get all group members
     additional: {}
   })

@@ -7,7 +7,7 @@ import { apiErrorToast } from '@/utils/apiErrorToast'
 import { legacyApiClient } from '@/utils/queryClient'
 
 interface AddMembersParams {
-  groupId: number
+  groupId: string
   usernames: string[]
 }
 

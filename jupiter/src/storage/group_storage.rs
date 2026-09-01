@@ -5,7 +5,8 @@ use std::{
 
 use api_model::common::Pagination;
 use callisto::{
-    mega_group, mega_group_member, mega_resource_permission, sea_orm_active_enums::ResourceTypeEnum,
+    mega_group, mega_group_member, mega_resource_permission,
+    sea_orm_active_enums::{PermissionEnum, ResourceTypeEnum},
 };
 use common::{errors::MegaError, utils::generate_id};
 use sea_orm::{
@@ -426,7 +427,14 @@ fn normalize_permission_bindings(
 ) -> Vec<ResourcePermissionBinding> {
     let mut by_group = BTreeMap::new();
     for permission in permissions {
-        by_group.insert(permission.group_id, permission.permission.clone());
+        by_group
+            .entry(permission.group_id)
+            .and_modify(|current: &mut PermissionEnum| {
+                if permission_level(&permission.permission) > permission_level(current) {
+                    *current = permission.permission.clone();
+                }
+            })
+            .or_insert_with(|| permission.permission.clone());
     }
 
     by_group
@@ -436,6 +444,14 @@ fn normalize_permission_bindings(
             permission,
         })
         .collect()
+}
+
+fn permission_level(permission: &PermissionEnum) -> u8 {
+    match permission {
+        PermissionEnum::Read => 1,
+        PermissionEnum::Write => 2,
+        PermissionEnum::Admin => 3,
+    }
 }
 
 /// Returns true when the database error indicates a foreign-key violation.

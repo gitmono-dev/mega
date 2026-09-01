@@ -5,7 +5,7 @@ import { Button } from '@gitmono/ui'
 import { useDeleteAdminGroup } from '@/hooks/admin/useDeleteAdminGroup'
 
 interface DeleteGroupDialogProps {
-  groupId: number | null
+  groupId: string | null
   onClose: () => void
 }
 

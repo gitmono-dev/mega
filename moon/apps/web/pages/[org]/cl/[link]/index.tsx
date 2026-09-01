@@ -160,7 +160,7 @@ const CLDetailPage: PageWithLayout<any> = () => {
         {
           data: {
             link: id,
-            item_id: Number(item_id),
+            item_id: item_id,
             assignees: selected
           }
         },
@@ -212,7 +212,7 @@ const CLDetailPage: PageWithLayout<any> = () => {
       clLabels(
         {
           data: {
-            item_id: Number(item_id),
+            item_id: item_id,
             label_ids: selected,
             link: `${tempId}`
           }

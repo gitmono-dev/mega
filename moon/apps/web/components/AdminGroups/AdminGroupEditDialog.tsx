@@ -14,7 +14,7 @@ import { legacyApiClient } from '@/utils/queryClient'
 interface AdminGroupEditDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  groupId: number | null
+  groupId: string | null
   onSuccess?: (updatedData: { name: string; description: string | null }) => void
 }
 
@@ -39,13 +39,20 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
   const handlePermissionToggle = (resourceId: string, type: 'read' | 'write' | 'admin') => {
     setResourcePermissions((prev) => {
       const current = prev[resourceId] || { read: false, write: false, admin: false }
+      let next = { ...current }
+
+      if (type === 'read') {
+        // Clearing read also clears higher levels; enabling read alone is read-only.
+        next = current.read ? { read: false, write: false, admin: false } : { read: true, write: false, admin: false }
+      } else if (type === 'write') {
+        next = current.write ? { read: true, write: false, admin: false } : { read: true, write: true, admin: false }
+      } else {
+        next = current.admin ? { read: true, write: true, admin: false } : { read: true, write: true, admin: true }
+      }
 
       return {
         ...prev,
-        [resourceId]: {
-          ...current,
-          [type]: !current[type]
-        }
+        [resourceId]: next
       }
     })
   }
@@ -94,17 +101,23 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
     setSavingResources((prev) => new Set(prev).add(resourceId))
 
     try {
-      const permissions = []
+      // DB stores one level per (resource, group). Persist the highest selected.
+      let permission: PermissionValue | null = null
 
-      if (perms.read) permissions.push({ group_id: groupId, permission: PermissionValue.Read })
-      if (perms.write) permissions.push({ group_id: groupId, permission: PermissionValue.Write })
-      if (perms.admin) permissions.push({ group_id: groupId, permission: PermissionValue.Admin })
+      if (perms.admin) permission = PermissionValue.Admin
+      else if (perms.write) permission = PermissionValue.Write
+      else if (perms.read) permission = PermissionValue.Read
+
+      if (!permission) {
+        toast.error('Please select at least one permission')
+        return
+      }
 
       await postResourcePermissions.mutateAsync({
         resourceType: 'note',
         resourceId: resourceId,
         data: {
-          permissions
+          permissions: [{ group_id: groupId, permission }]
         }
       })
 
@@ -127,7 +140,7 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
     return perms && (perms.read || perms.write || perms.admin)
   }
 
-  const { data: groupData, isLoading, error } = useGetAdminGroupById(groupId || 0, { enabled: !!groupId && open })
+  const { data: groupData, isLoading, error } = useGetAdminGroupById(groupId ?? '', { enabled: !!groupId && open })
 
   const {
     data: resourcesData,
@@ -172,15 +185,22 @@ export function AdminGroupEditDialog({ open, onOpenChange, groupId, onSuccess }:
             const response = await legacyApiClient.v1.getApiAdminResourcesPermissions().request('note', resource.id)
 
             if (response?.data && Array.isArray(response.data)) {
-              const groupPermissions = response.data.filter((p) => p.group_id === groupId)
+              const groupPermissions = response.data.filter((p) => String(p.group_id) === String(groupId))
 
               if (groupPermissions.length > 0) {
+                // Stored value is a single max level; expand for hierarchical checkboxes.
                 const perms = { read: false, write: false, admin: false }
 
                 groupPermissions.forEach((p) => {
-                  if (p.permission === 'read') perms.read = true
-                  if (p.permission === 'write') perms.write = true
-                  if (p.permission === 'admin') perms.admin = true
+                  if (p.permission === 'read' || p.permission === 'write' || p.permission === 'admin') {
+                    perms.read = true
+                  }
+                  if (p.permission === 'write' || p.permission === 'admin') {
+                    perms.write = true
+                  }
+                  if (p.permission === 'admin') {
+                    perms.admin = true
+                  }
                 })
 
                 newPermissions[resource.id] = perms

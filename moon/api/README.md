@@ -33,6 +33,8 @@ curl -sS http://localhost:8004/api-doc/openapi.json -o api/gen/orion.json
 
 `script/gen-client` refreshes `gitmono.json` from the live mono OpenAPI, runs [`merge-swagger.js`](merge-swagger.js) (merges every `api/gen/*.json` except `merged_swagger.json` / `openapi_schema.json`), then regenerates `packages/types/generated.ts`.
 
+`merge-swagger.js` also rewrites Mega snowflake path params / known id fields from OpenAPI `int64` to `string` so the generated TypeScript client keeps full precision in JavaScript.
+
 ## Related endpoints
 
 | Service      | Swagger UI                         | OpenAPI JSON                                 |

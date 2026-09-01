@@ -9,10 +9,17 @@ use jupiter::model::{
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::model::{conversation::ConversationItem, label::LabelItem};
+use crate::model::{
+    conversation::ConversationItem, label::LabelItem, serde_snowflake::serialize_i64_as_string,
+};
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct ItemRes {
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "crate::model::serde_snowflake::deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub id: i64,
     pub link: String,
     pub title: String,
@@ -98,6 +105,8 @@ pub struct NewIssue {
 
 #[derive(Serialize, ToSchema)]
 pub struct IssueDetailRes {
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub id: i64,
     pub link: String,
     pub title: String,
@@ -138,6 +147,8 @@ impl From<IssueDetails> for IssueDetailRes {
 
 #[derive(Serialize, ToSchema, PartialEq, Eq)]
 pub struct IssueSuggestions {
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub id: i64,
     pub link: String,
     pub title: String,
@@ -194,4 +205,25 @@ impl From<mega_cl::Model> for IssueSuggestions {
 #[derive(Deserialize, ToSchema, IntoParams)]
 pub struct QueryPayload {
     pub query: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::IssueSuggestions;
+
+    #[test]
+    fn issue_suggestions_id_serializes_as_json_string() {
+        let item = IssueSuggestions {
+            id: 13_502_510_928_822_277,
+            link: "abc".into(),
+            title: "t".into(),
+            suggest_type: "issue_open".into(),
+            created_at: chrono::NaiveDateTime::default(),
+        };
+        let value = serde_json::to_value(&item).unwrap();
+        match &value["id"] {
+            serde_json::Value::String(s) => assert_eq!(s, "13502510928822277"),
+            other => panic!("expected JSON string id, got {other:?}"),
+        }
+    }
 }

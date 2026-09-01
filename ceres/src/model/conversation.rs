@@ -4,8 +4,12 @@ use callisto::{mega_conversation, reactions, sea_orm_active_enums::ConvTypeEnum}
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use super::serde_snowflake::serialize_i64_as_string;
+
 #[derive(Serialize, ToSchema)]
 pub struct ConversationItem {
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub id: i64,
     pub username: String,
     /// True when `username` matches a registered bot (or legacy `"system"` actor).

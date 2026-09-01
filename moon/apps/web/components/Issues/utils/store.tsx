@@ -18,10 +18,10 @@ import { atom } from 'jotai'
 //   (a, b) => a.part === b.part
 // )
 
-export const issueIdAtom = atom(0)
-export const clIdAtom = atom(0)
+export const issueIdAtom = atom('')
+export const clIdAtom = atom('')
 
-export const FALSE_EDIT_VAL = -1
-export const editIdAtom = atom(0)
+export const FALSE_EDIT_VAL = ''
+export const editIdAtom = atom('')
 
 export const refreshAtom = atom(0)

@@ -13,7 +13,7 @@ export interface ApiErrorResponse {
 export interface CommonDetailData {
   assignees: string[]
   conversations: ConversationItem[]
-  id: number
+  id: string
   labels: LabelItem[]
   link: string
   open_timestamp: number

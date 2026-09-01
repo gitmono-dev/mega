@@ -30,15 +30,15 @@ function LabelItem({ conv }: LabelItemProps) {
     if (!match || match.length <= 1) return []
     return match[1]
       .split(', ')
-      .map((id) => parseInt(id, 10))
-      .filter((id) => !isNaN(id))
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0)
   }, [conv.comment])
 
   const labelQueries = useQueries({
     queries: idList.map((id) => ({
       queryKey: ['label', id],
       queryFn: () => legacyApiClient.v1.getApiLabelById().request(id),
-      enabled: id > 0
+      enabled: !!id
     }))
   })
 

@@ -93,7 +93,8 @@ function InnerNoteView({ note }: { note: Note }) {
   })
 
   const permission = notesPermissions?.[note.id]
-  const hasWritePermission = permission?.hasWrite ?? note.viewer_can_edit
+  // Authors always keep write; group ACL only gates non-authors.
+  const hasWritePermission = note.viewer_is_author || (permission?.hasWrite ?? note.viewer_can_edit)
 
   // prefetch comments
   useGetNoteComments({ noteId: note.id })

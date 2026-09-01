@@ -206,16 +206,21 @@ export const useLabelsSelector = ({
   labelList
 }: {
   labels: LabelItem[]
-  updateLabelsRequest: (selected_id: number[]) => void
+  updateLabelsRequest: (selected_id: string[]) => void
   labelList: ReturnType<typeof useLabels>
 }) => {
-  const selectRef = useRef<number[]>([])
-  let selects: number[] = labels.map((i) => i.id)
+  const selectRef = useRef<string[]>([])
+  let selects: string[] = labels.map((i) => String(i.id))
   const shouldFetch = useRef(false)
   const [open, setOpen] = useState(false)
 
   const handleLabels = (selected: ItemInput[]) => {
-    selects = [...selected.map((i) => i.id).filter((t): t is number => typeof t === 'number')]
+    selects = [
+      ...selected
+        .map((i) => i.id)
+        .filter((t): t is string | number => t !== undefined && t !== null)
+        .map((t) => String(t))
+    ]
   }
 
   const handleOpenChange = (open: boolean) => {

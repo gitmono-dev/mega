@@ -36,7 +36,7 @@ interface TimelineItemProps {
 }
 
 interface ConvItem {
-  id: number
+  id: string
   badge?: React.ReactNode
   children?: React.ReactNode
   isOver: boolean

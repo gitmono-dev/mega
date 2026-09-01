@@ -45,7 +45,7 @@ export function CommentThread({ thread, clLink }: CommentThreadProps) {
   const [isCollapsed, setIsCollapsed] = useState(thread.status === 'Resolved')
   const [showReplyInput, setShowReplyInput] = useState(false)
   const [replyContent, setReplyContent] = useState('')
-  const [editingCommentId, setEditingCommentId] = useState<number | null>(null)
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
   const { data: currentUser } = useGetCurrentUser()
 
@@ -109,16 +109,16 @@ export function CommentThread({ thread, clLink }: CommentThreadProps) {
     deleteThread({ threadId: thread.thread_id })
   }
 
-  const handleDeleteComment = (commentId: number) => {
+  const handleDeleteComment = (commentId: string) => {
     deleteComment({ commentId })
   }
 
-  const handleStartEdit = (commentId: number, currentContent: string) => {
+  const handleStartEdit = (commentId: string, currentContent: string) => {
     setEditingCommentId(commentId)
     setEditContent(currentContent)
   }
 
-  const handleUpdateComment = (commentId: number) => {
+  const handleUpdateComment = (commentId: string) => {
     if (!editContent.trim()) return
 
     updateComment(

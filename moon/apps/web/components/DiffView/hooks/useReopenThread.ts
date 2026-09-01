@@ -13,7 +13,7 @@ const reopenThreadMutation = legacyApiClient.v1.postApiCodeReviewReopen()
 export function useReopenThread(link: string) {
   const queryClient = useQueryClient()
 
-  return useMutation<PostApiCodeReviewReopenData, Error, { threadId: number; params?: RequestParams }>({
+  return useMutation<PostApiCodeReviewReopenData, Error, { threadId: string; params?: RequestParams }>({
     mutationFn: ({ threadId, params }) => reopenThreadMutation.request(threadId, params),
 
     onSuccess: () => {

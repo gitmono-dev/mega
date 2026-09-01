@@ -16,7 +16,7 @@ export function useUpdateComment(link: string) {
   return useMutation<
     PostApiCodeReviewUpdateData,
     Error,
-    { commentId: number; data: UpdateCommentRequest; params?: RequestParams }
+    { commentId: string; data: UpdateCommentRequest; params?: RequestParams }
   >({
     mutationFn: ({ commentId, data, params }) => updateCommentMutation.request(commentId, data, params),
 

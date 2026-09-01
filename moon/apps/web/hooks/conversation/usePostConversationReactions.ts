@@ -10,7 +10,7 @@ interface Props {
   reaction: StandardReaction | SyncCustomReaction
 }
 
-export function usePostConversationReactions(commentId: number, id: string, type: string) {
+export function usePostConversationReactions(commentId: string, id: string, type: string) {
   const queryClient = useQueryClient()
 
   return useMutation({

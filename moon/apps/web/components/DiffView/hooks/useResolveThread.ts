@@ -13,7 +13,7 @@ const resolveThreadMutation = legacyApiClient.v1.postApiCodeReviewResolve()
 export function useResolveThread(link: string) {
   const queryClient = useQueryClient()
 
-  return useMutation<PostApiCodeReviewResolveData, Error, { threadId: number; params?: RequestParams }>({
+  return useMutation<PostApiCodeReviewResolveData, Error, { threadId: string; params?: RequestParams }>({
     mutationFn: ({ threadId, params }) => resolveThreadMutation.request(threadId, params),
 
     onSuccess: () => {

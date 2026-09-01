@@ -2,6 +2,8 @@ use callisto::{access_token, ssh_keys};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
+use super::serde_snowflake::{deserialize_i64_from_string_or_number, serialize_i64_as_string};
+
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct AddSSHKey {
     pub title: String,
@@ -10,6 +12,11 @@ pub struct AddSSHKey {
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ListSSHKey {
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub id: i64,
     pub title: String,
     pub ssh_key: String,
@@ -31,6 +38,11 @@ impl From<ssh_keys::Model> for ListSSHKey {
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ListToken {
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub id: i64,
     pub token: String,
     pub created_at: i64,

@@ -33,7 +33,7 @@ export interface TargetDTO {
 export interface TaskInfoDTO {
   build_list: BuildDTO[]
   changes: StatusProjectRelativePath[]
-  cl_id: number
+  cl_id: string
   created_at: string
   targets: TargetDTO[]
   task_id: string

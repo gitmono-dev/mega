@@ -3,7 +3,10 @@ use axum::{
     Json,
     extract::{Path, State},
 };
-use ceres::model::conversation::{ContentPayload, ReactionRequest};
+use ceres::model::{
+    conversation::{ContentPayload, ReactionRequest},
+    serde_snowflake::SnowflakeId,
+};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{
@@ -26,7 +29,7 @@ pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
 #[utoipa::path(
     post,
     params(
-        ("comment_id", description = "A numeric ID representing either a comment or a conversation. Specify the type in the request body."),
+        ("comment_id" = SnowflakeId, Path, description = "A numeric ID representing either a comment or a conversation. Specify the type in the request body."),
     ),
     path = "/{comment_id}/reactions",
     request_body = ReactionRequest,
@@ -37,7 +40,7 @@ pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
 )]
 async fn comment_reactions(
     user: LoginUser,
-    Path(comment_id): Path<i64>,
+    Path(SnowflakeId(comment_id)): Path<SnowflakeId>,
     state: State<MonoApiServiceState>,
     Json(payload): Json<ReactionRequest>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
@@ -85,7 +88,7 @@ async fn delete_comment_reaction(
 #[utoipa::path(
     delete,
     params(
-        ("comment_id", description = "A numeric ID representing a comment"),
+        ("comment_id" = SnowflakeId, Path, description = "A numeric ID representing a comment"),
     ),
     path = "/{comment_id}",
     responses(
@@ -94,7 +97,7 @@ async fn delete_comment_reaction(
     tag = CONV_TAG
 )]
 async fn delete_comment(
-    Path(comment_id): Path<i64>,
+    Path(SnowflakeId(comment_id)): Path<SnowflakeId>,
     state: State<MonoApiServiceState>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
     state
@@ -109,7 +112,7 @@ async fn delete_comment(
 #[utoipa::path(
     post,
     params(
-        ("comment_id", description = "A numeric ID representing a comment"),
+        ("comment_id" = SnowflakeId, Path, description = "A numeric ID representing a comment"),
     ),
     path = "/{comment_id}",
     request_body = ContentPayload,
@@ -120,7 +123,7 @@ async fn delete_comment(
 )]
 async fn edit_comment(
     _: LoginUser,
-    Path(comment_id): Path<i64>,
+    Path(SnowflakeId(comment_id)): Path<SnowflakeId>,
     state: State<MonoApiServiceState>,
     Json(payload): Json<ContentPayload>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {

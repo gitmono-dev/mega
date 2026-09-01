@@ -15,11 +15,9 @@ const HandleTime = ({ created_at }: HandleTimeProps) => {
   }
 
   return (
-    <>
-      <Tooltip label={formatTimestamp(created_at)}>
-        <div className='underline'>{time}</div>
-      </Tooltip>
-    </>
+    <Tooltip label={formatTimestamp(created_at)}>
+      <span className='underline'>{time}</span>
+    </Tooltip>
   )
 }
 

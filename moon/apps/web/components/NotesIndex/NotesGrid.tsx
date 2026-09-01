@@ -75,7 +75,7 @@ function NoteGridItem({
   const isAdmin = permission?.isAdmin || false
   const hasRead = permission?.hasRead || false
 
-  const canAccess = isAdmin || hasRead
+  const canAccess = isAdmin || hasRead || !!note.viewer_is_author
   const isDisabled = !canAccess
 
   const gridContent = (

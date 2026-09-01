@@ -5,9 +5,12 @@ use axum::{
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
 };
-use ceres::model::bots::{
-    BootstrapInitBotResponse, BotRes, ChangeInstallationStatus, CreateBotTokenRequest,
-    CreateBotTokenResponse, InstallBotReq, InstallationTargetType, ListBotTokenItem,
+use ceres::model::{
+    bots::{
+        BootstrapInitBotResponse, BotRes, ChangeInstallationStatus, CreateBotTokenRequest,
+        CreateBotTokenResponse, InstallBotReq, InstallationTargetType, ListBotTokenItem,
+    },
+    serde_snowflake::SnowflakeId,
 };
 use chrono::{Duration, Utc};
 use jupiter::sea_orm::prelude::DateTimeWithTimeZone;
@@ -140,7 +143,7 @@ async fn bootstrap_init_bot(
 #[utoipa::path(
     post,
     params(
-        ("id", description = "Bots ID"),
+        ("id" = SnowflakeId, Path, description = "Bots ID"),
     ),
     path = "/{id}/installations",
     responses(
@@ -150,7 +153,7 @@ async fn bootstrap_init_bot(
 )]
 async fn install_bot(
     state: State<MonoApiServiceState>,
-    Path(id): Path<i64>,
+    Path(SnowflakeId(id)): Path<SnowflakeId>,
     Json(json): Json<InstallBotReq>,
 ) -> Result<Json<CommonResult<BotRes>>, ApiError> {
     let bot = state.services().admin().install_bot(id, json).await?;
@@ -162,7 +165,7 @@ async fn install_bot(
 #[utoipa::path(
     get,
     params(
-        ("id", description = "Bots ID"),
+        ("id" = SnowflakeId, Path, description = "Bots ID"),
     ),
     path = "/{id}/installations",
     responses(
@@ -172,7 +175,7 @@ async fn install_bot(
 )]
 async fn list_installed_bot(
     state: State<MonoApiServiceState>,
-    Path(id): Path<i64>,
+    Path(SnowflakeId(id)): Path<SnowflakeId>,
 ) -> Result<Json<CommonResult<Vec<BotRes>>>, ApiError> {
     let models = state.services().admin().list_installed_bots(id).await?;
 
@@ -182,8 +185,8 @@ async fn list_installed_bot(
 #[utoipa::path(
     patch,
     params(
-        ("id", description = "Bot ID"),
-        ("installation_id", description = "Installation ID"),
+        ("id" = SnowflakeId, Path, description = "Bot ID"),
+        ("installation_id" = SnowflakeId, Path, description = "Installation ID"),
     ),
     path = "/{id}/installations/{installation_id}",
     responses(
@@ -193,13 +196,13 @@ async fn list_installed_bot(
 )]
 async fn change_installation_status(
     state: State<MonoApiServiceState>,
-    Path((id, installation_id)): Path<(i64, i64)>,
+    Path((id, installation_id)): Path<(SnowflakeId, SnowflakeId)>,
     Json(json): Json<ChangeInstallationStatus>,
 ) -> Result<Json<CommonResult<BotRes>>, ApiError> {
     let model = state
         .services()
         .admin()
-        .change_bot_installation_status(id, installation_id, json)
+        .change_bot_installation_status(id.into(), installation_id.into(), json)
         .await?;
 
     Ok(Json(CommonResult::success(Some(model))))
@@ -208,8 +211,8 @@ async fn change_installation_status(
 #[utoipa::path(
     delete,
     params(
-        ("id", description = "Bot ID"),
-        ("installation_id", description = "Installation ID"),
+        ("id" = SnowflakeId, Path, description = "Bot ID"),
+        ("installation_id" = SnowflakeId, Path, description = "Installation ID"),
     ),
     path = "/{id}/installations/{installation_id}",
     responses(
@@ -219,13 +222,13 @@ async fn change_installation_status(
 )]
 async fn uninstall_bot(
     state: State<MonoApiServiceState>,
-    Path((id, installation_id)): Path<(i64, i64)>,
+    Path((id, installation_id)): Path<(SnowflakeId, SnowflakeId)>,
     Json(target_type): Json<InstallationTargetType>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
     state
         .services()
         .admin()
-        .uninstall_bot(id, target_type, installation_id)
+        .uninstall_bot(id.into(), target_type, installation_id.into())
         .await?;
 
     Ok(Json(CommonResult::success(Some(
@@ -241,7 +244,7 @@ async fn uninstall_bot(
     path = "/{bot_id}/tokens",
     request_body = CreateBotTokenRequest,
     params(
-        ("bot_id" = i64, Path, description = "Bot ID")
+        ("bot_id" = SnowflakeId, Path, description = "Bot ID")
     ),
     responses(
         (status = 200, body = CommonResult<CreateBotTokenResponse>),
@@ -255,7 +258,7 @@ async fn uninstall_bot(
 async fn create_bot_token(
     user: LoginUser,
     State(state): State<MonoApiServiceState>,
-    Path(bot_id): Path<i64>,
+    Path(SnowflakeId(bot_id)): Path<SnowflakeId>,
     Json(req): Json<CreateBotTokenRequest>,
 ) -> Result<Json<CommonResult<CreateBotTokenResponse>>, ApiError> {
     ensure_admin(&state, &user).await?;
@@ -292,7 +295,7 @@ async fn create_bot_token(
     get,
     path = "/{bot_id}/tokens",
     params(
-        ("bot_id" = i64, Path, description = "Bot ID")
+        ("bot_id" = SnowflakeId, Path, description = "Bot ID")
     ),
     responses(
         (status = 200, body = CommonResult<Vec<ListBotTokenItem>>),
@@ -305,7 +308,7 @@ async fn create_bot_token(
 async fn list_bot_tokens(
     user: LoginUser,
     State(state): State<MonoApiServiceState>,
-    Path(bot_id): Path<i64>,
+    Path(SnowflakeId(bot_id)): Path<SnowflakeId>,
 ) -> Result<Json<CommonResult<Vec<ListBotTokenItem>>>, ApiError> {
     ensure_admin(&state, &user).await?;
     ensure_bot_exists(&state, bot_id).await?;
@@ -322,8 +325,8 @@ async fn list_bot_tokens(
     delete,
     path = "/{bot_id}/tokens/{id}",
     params(
-        ("bot_id" = i64, Path, description = "Bot ID"),
-        ("id" = i64, Path, description = "Token ID")
+        ("bot_id" = SnowflakeId, Path, description = "Bot ID"),
+        ("id" = SnowflakeId, Path, description = "Token ID")
     ),
     responses(
         (status = 200, description = "Token revoked successfully"),
@@ -336,15 +339,15 @@ async fn list_bot_tokens(
 async fn revoke_bot_token(
     user: LoginUser,
     State(state): State<MonoApiServiceState>,
-    Path((bot_id, token_id)): Path<(i64, i64)>,
+    Path((bot_id, token_id)): Path<(SnowflakeId, SnowflakeId)>,
 ) -> Result<Json<CommonResult<()>>, ApiError> {
     ensure_admin(&state, &user).await?;
-    ensure_bot_exists(&state, bot_id).await?;
+    ensure_bot_exists(&state, bot_id.into()).await?;
 
     state
         .services()
         .admin()
-        .revoke_bot_token(bot_id, token_id)
+        .revoke_bot_token(bot_id.into(), token_id.into())
         .await?;
 
     Ok(Json(CommonResult::success(None)))
@@ -357,7 +360,7 @@ async fn revoke_bot_token(
     post,
     path = "/{bot_id}/tokens/revoke_all",
     params(
-        ("bot_id" = i64, Path, description = "Bot ID")
+        ("bot_id" = SnowflakeId, Path, description = "Bot ID")
     ),
     responses(
         (status = 200, description = "All tokens revoked successfully"),
@@ -370,7 +373,7 @@ async fn revoke_bot_token(
 async fn revoke_all_bot_tokens(
     user: LoginUser,
     State(state): State<MonoApiServiceState>,
-    Path(bot_id): Path<i64>,
+    Path(SnowflakeId(bot_id)): Path<SnowflakeId>,
 ) -> Result<Json<CommonResult<()>>, ApiError> {
     ensure_admin(&state, &user).await?;
     ensure_bot_exists(&state, bot_id).await?;

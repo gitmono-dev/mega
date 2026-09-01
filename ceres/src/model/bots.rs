@@ -6,20 +6,52 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use super::serde_snowflake::{deserialize_i64_from_string_or_number, serialize_i64_as_string};
+
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct BotRes {
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub id: i64,
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub bot_id: i64,
     pub target_type: InstallationTargetType,
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub target_id: i64,
     pub status: InstallationBotStatus,
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub installed_by: i64,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct InstallBotReq {
     pub target_type: InstallationTargetType,
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub target_id: i64,
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub installed_by: i64,
 }
 
@@ -120,6 +152,8 @@ pub struct CreateBotTokenRequest {
 /// Note: `token_plain` is only returned once and is never stored in plaintext.
 #[derive(Serialize, ToSchema)]
 pub struct CreateBotTokenResponse {
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub id: i64,
     pub token_name: String,
     pub expires_at: Option<DateTime<Utc>>,
@@ -132,6 +166,8 @@ pub struct CreateBotTokenResponse {
 /// `token` is a `bot_` push token returned once; use as Bearer (or Basic password).
 #[derive(Serialize, ToSchema)]
 pub struct BootstrapInitBotResponse {
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub bot_id: i64,
     pub bot_name: String,
     pub token: String,
@@ -140,6 +176,8 @@ pub struct BootstrapInitBotResponse {
 /// Item in the list bot tokens response.
 #[derive(Serialize, ToSchema)]
 pub struct ListBotTokenItem {
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub id: i64,
     pub token_name: String,
     pub expires_at: Option<DateTime<Utc>>,

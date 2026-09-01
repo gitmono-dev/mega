@@ -9,6 +9,20 @@ pub const SEQ_BIT_LEN: u8 = 8;
 pub const MAX_WORKER_ID: u32 = (1 << WORKER_ID_BIT_LEN) - 1;
 pub const ENV_WORKER_ID: &str = "MEGA_ID_GENERATOR_WORKER_ID";
 
+/// Default `base_time` from the `idgenerator` crate (2020-02-20T00:00:02Z).
+pub const IDGENERATOR_BASE_TIME_MS: u64 = 1_582_136_402_000;
+
+/// JavaScript `Number.MAX_SAFE_INTEGER` (`2^53 - 1`). Post-#2177 8+8 layout
+/// IDs exceed this; HTTP JSON must serialize snowflake ids as strings
+/// (`ceres::model::serde_snowflake`).
+pub const JS_MAX_SAFE_INTEGER: u64 = (1 << 53) - 1;
+
+/// Approximate snowflake magnitude at `delta_ms` after [`IDGENERATOR_BASE_TIME_MS`]
+/// (ignores worker/seq low bits). Pure / deterministic — no `IdInstance`.
+pub fn approx_id_at(delta_ms: u64) -> u64 {
+    delta_ms << (WORKER_ID_BIT_LEN + SEQ_BIT_LEN) as u32
+}
+
 static ID_GENERATOR_INIT: Once = Once::new();
 static CLAIMED_WORKER_ID: OnceLock<u32> = OnceLock::new();
 
@@ -160,6 +174,51 @@ mod tests {
         assert_ne!(
             hash_worker_id("mono-engine-5f6d8d7cc9-45tx8"),
             hash_worker_id("mono-engine-5f6d8d7cc9-rknxw")
+        );
+    }
+
+    #[test]
+    fn timestamp_shift_is_explicit() {
+        assert_eq!(
+            WORKER_ID_BIT_LEN + SEQ_BIT_LEN,
+            16,
+            "timestamp_shift changed; review ceres serde_snowflake + OpenAPI/generated.ts \
+             (JS Number.MAX_SAFE_INTEGER is {JS_MAX_SAFE_INTEGER})"
+        );
+    }
+
+    #[test]
+    fn current_layout_exceeds_js_safe_integer_at_pinned_now() {
+        // 2026-09-01T00:00:00Z relative to idgenerator default base_time.
+        const PINNED_NOW_MS: u64 = 1_788_220_800_000;
+        let delta_ms = PINNED_NOW_MS - IDGENERATOR_BASE_TIME_MS;
+        let approx = approx_id_at(delta_ms);
+        assert!(
+            approx > JS_MAX_SAFE_INTEGER,
+            "expected 8+8 layout to exceed JS MAX_SAFE at pinned now; \
+             approx={approx}, MAX_SAFE={JS_MAX_SAFE_INTEGER}. \
+             If you intentionally shrank the layout, update the JSON string contract."
+        );
+        // Pre-#2177 was effectively shift=14 (worker 6 + default seq 8); same
+        // moment stayed under the JS budget.
+        let legacy_approx = delta_ms << 14;
+        assert!(
+            legacy_approx <= JS_MAX_SAFE_INTEGER,
+            "fixture assumption broken: legacy shift=14 should still fit JS Number"
+        );
+    }
+
+    #[test]
+    fn js_f64_truncates_post_2177_id() {
+        // Real group id that lost a digit in the browser (…277 → …276).
+        let id: i64 = 13_502_510_928_822_277;
+        assert!(
+            id as u64 > JS_MAX_SAFE_INTEGER,
+            "fixture must be above JS MAX_SAFE_INTEGER"
+        );
+        assert_ne!(
+            id, id as f64 as i64,
+            "IEEE f64 (JS Number) must truncate this snowflake; if not, update the fixture"
         );
     }
 }

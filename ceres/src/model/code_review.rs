@@ -8,6 +8,11 @@ use jupiter::model::code_review_dto::{
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use super::serde_snowflake::{
+    deserialize_i64_from_string_or_number, deserialize_option_i64_from_string_or_number,
+    serialize_i64_as_string, serialize_option_i64_as_string,
+};
+
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct InitializeCommentRequest {
     pub file_path: String,
@@ -22,6 +27,11 @@ pub struct InitializeCommentRequest {
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct CommentReplyRequest {
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub parent_comment_id: i64,
     pub content: String,
 }
@@ -66,6 +76,11 @@ pub struct FileReviewResponse {
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct ThreadReviewResponse {
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub thread_id: i64,
     pub status: ThreadStatus,
     pub created_at: String,
@@ -77,6 +92,11 @@ pub struct ThreadReviewResponse {
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct ThreadStatusResponse {
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub thread_id: i64,
     pub link: String,
     pub status: ThreadStatus,
@@ -84,6 +104,11 @@ pub struct ThreadStatusResponse {
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct AnchorResponse {
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub anchor_id: i64,
     pub file_path: String,
     pub diff_side: DiffSide,
@@ -96,7 +121,17 @@ pub struct AnchorResponse {
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct PositionResponse {
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub position_id: i64,
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub anchor_id: i64,
     pub commit_sha: String,
     pub line_number: i32,
@@ -106,9 +141,20 @@ pub struct PositionResponse {
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct CommentReviewResponse {
+    #[serde(
+        serialize_with = "serialize_i64_as_string",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
+    #[schema(value_type = String)]
     pub comment_id: i64,
     pub user_name: String,
     pub content: Option<String>,
+    #[serde(
+        default,
+        serialize_with = "serialize_option_i64_as_string",
+        deserialize_with = "deserialize_option_i64_from_string_or_number"
+    )]
+    #[schema(value_type = Option<String>)]
     pub parent_id: Option<i64>,
     pub created_at: String,
     pub updated_at: String,

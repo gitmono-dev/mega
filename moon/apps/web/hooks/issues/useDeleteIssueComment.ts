@@ -7,7 +7,7 @@ import { legacyApiClient } from '@/utils/queryClient'
 export function useDeleteIssueComment(id: string, params?: RequestParams) {
   const queryClient = useQueryClient()
 
-  return useMutation<DeleteApiConversationByCommentIdData, Error, number>({
+  return useMutation<DeleteApiConversationByCommentIdData, Error, string>({
     mutationKey: legacyApiClient.v1.deleteApiConversationByCommentId().baseKey,
     mutationFn: (convId) => legacyApiClient.v1.deleteApiConversationByCommentId().request(convId, params),
     onSuccess: () => {

@@ -8,6 +8,7 @@ use ceres::model::{
     notification::{
         NotificationEventTypeInfo, UpdateUserNotificationConfig, UserNotificationConfig,
     },
+    serde_snowflake::SnowflakeId,
     user::{
         AddSSHKey, ClaContentRes, ClaSignStatusRes, ListSSHKey, ListToken, UpdateClaContentPayload,
         UserApprovalStatusRes,
@@ -101,7 +102,7 @@ async fn add_key(
 #[utoipa::path(
     delete,
         params(
-        ("key_id", description = "A numeric ID representing a SSH"),
+        ("key_id" = SnowflakeId, Path, description = "A numeric ID representing a SSH"),
     ),
     path = "/ssh/{key_id}",
     responses(
@@ -112,7 +113,7 @@ async fn add_key(
 async fn remove_key(
     user: LoginUser,
     state: State<MonoApiServiceState>,
-    Path(key_id): Path<i64>,
+    Path(SnowflakeId(key_id)): Path<SnowflakeId>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
     let campsite_user_id = collaboration_actor(&user)?.to_string();
     state
@@ -172,7 +173,7 @@ async fn generate_token(
 #[utoipa::path(
     delete,
         params(
-        ("key_id", description = "A numeric ID representing a User Token"),
+        ("key_id" = SnowflakeId, Path, description = "A numeric ID representing a User Token"),
     ),
     path = "/token/{key_id}",
     responses(
@@ -183,7 +184,7 @@ async fn generate_token(
 async fn remove_token(
     user: LoginUser,
     state: State<MonoApiServiceState>,
-    Path(key_id): Path<i64>,
+    Path(SnowflakeId(key_id)): Path<SnowflakeId>,
 ) -> Result<Json<CommonResult<String>>, ApiError> {
     let campsite_user_id = collaboration_actor(&user)?.to_string();
     state

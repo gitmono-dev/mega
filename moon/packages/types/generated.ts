@@ -3255,8 +3255,7 @@ export type AdminListResponse = {
 
 export type AnchorResponse = {
   anchor_commit_sha: string
-  /** @format int64 */
-  anchor_id: number
+  anchor_id: string
   context_after: string
   context_before: string
   diff_side: DiffSide
@@ -3471,8 +3470,7 @@ export type ArtifactSetListItem = {
 
 export type AssigneeUpdatePayload = {
   assignees: string[]
-  /** @format int64 */
-  item_id: number
+  item_id: string
   link: string
 }
 
@@ -3543,22 +3541,17 @@ export type BlameResult = {
  * `token` is a `bot_` push token returned once; use as Bearer (or Basic password).
  */
 export type BootstrapInitBotResponse = {
-  /** @format int64 */
-  bot_id: number
+  bot_id: string
   bot_name: string
   token: string
 }
 
 export type BotRes = {
-  /** @format int64 */
-  bot_id: number
-  /** @format int64 */
-  id: number
-  /** @format int64 */
-  installed_by: number
+  bot_id: string
+  id: string
+  installed_by: string
   status: InstallationBotStatus
-  /** @format int64 */
-  target_id: number
+  target_id: string
   target_type: InstallationTargetType
 }
 
@@ -3576,8 +3569,7 @@ export type CLDetailRes = {
   /** True when `author` matches a registered bot. */
   author_is_bot?: boolean
   conversations: ConversationItem[]
-  /** @format int64 */
-  id: number
+  id: string
   labels: LabelItem[]
   link: string
   /** @format int64 */
@@ -3595,8 +3587,7 @@ export type ChangeInstallationStatus = {
 }
 
 export type ChangeReviewStatePayload = {
-  /** @format int64 */
-  conversation_id: number
+  conversation_id: string
   resolved: boolean
 }
 
@@ -3640,17 +3631,14 @@ export type CodeReviewResponse = {
 
 export type CommentReplyRequest = {
   content: string
-  /** @format int64 */
-  parent_comment_id: number
+  parent_comment_id: string
 }
 
 export type CommentReviewResponse = {
-  /** @format int64 */
-  comment_id: number
+  comment_id: string
   content?: string | null
   created_at: string
-  /** @format int64 */
-  parent_id?: number | null
+  parent_id?: string | null
   updated_at: string
   user_name: string
 }
@@ -3769,8 +3757,7 @@ export type CommonResultBootstrapInitBotResponse = {
    * `token` is a `bot_` push token returned once; use as Bearer (or Basic password).
    */
   data?: {
-    /** @format int64 */
-    bot_id: number
+    bot_id: string
     bot_name: string
     token: string
   }
@@ -3780,15 +3767,11 @@ export type CommonResultBootstrapInitBotResponse = {
 
 export type CommonResultBotRes = {
   data?: {
-    /** @format int64 */
-    bot_id: number
-    /** @format int64 */
-    id: number
-    /** @format int64 */
-    installed_by: number
+    bot_id: string
+    id: string
+    installed_by: string
     status: InstallationBotStatus
-    /** @format int64 */
-    target_id: number
+    target_id: string
     target_type: InstallationTargetType
   }
   err_message: string
@@ -3803,8 +3786,7 @@ export type CommonResultCLDetailRes = {
     /** True when `author` matches a registered bot. */
     author_is_bot?: boolean
     conversations: ConversationItem[]
-    /** @format int64 */
-    id: number
+    id: string
     labels: LabelItem[]
     link: string
     /** @format int64 */
@@ -3849,12 +3831,10 @@ export type CommonResultCodeReviewResponse = {
 
 export type CommonResultCommentReviewResponse = {
   data?: {
-    /** @format int64 */
-    comment_id: number
+    comment_id: string
     content?: string | null
     created_at: string
-    /** @format int64 */
-    parent_id?: number | null
+    parent_id?: string | null
     updated_at: string
     user_name: string
   }
@@ -3917,10 +3897,8 @@ export type CommonResultCommonPageCommitSummary = {
 export type CommonResultCommonPageGroupMemberResponse = {
   data?: {
     items: {
-      /** @format int64 */
-      group_id: number
-      /** @format int64 */
-      id: number
+      group_id: string
+      id: string
       /** @format int64 */
       joined_at: number
       /** Campsite public user id (field name kept for API compat). */
@@ -3942,8 +3920,8 @@ export type CommonResultCommonPageGroupResponse = {
       /** @format int64 */
       created_at: number
       description?: string | null
-      /** @format int64 */
-      id: number
+      /** Snowflake id; JSON string so JS keeps full precision. */
+      id: string
       name: string
       /** @format int64 */
       updated_at: number
@@ -3974,8 +3952,7 @@ export type CommonResultCommonPageItemRes = {
       closed_at?: number | null
       /** @min 0 */
       comment_num: number
-      /** @format int64 */
-      id: number
+      id: string
       labels: LabelItem[]
       link: string
       /** @format int64 */
@@ -4002,8 +3979,7 @@ export type CommonResultCommonPageLabelItem = {
     items: {
       color: string
       description: string
-      /** @format int64 */
-      id: number
+      id: string
       name: string
     }[]
     /**
@@ -4054,8 +4030,7 @@ export type CommonResultCommonPageWebhookResponse = {
       active: boolean
       created_at: string
       event_types: string[]
-      /** @format int64 */
-      id: number
+      id: string
       path_filter?: string | null
       target_url: string
       updated_at: string
@@ -4082,11 +4057,8 @@ export type CommonResultCompleteResponse = {
    *   for the "no-change" completion path.
    */
   data?: {
-    /**
-     * Change List ID
-     * @format int64
-     */
-    cl_id: number
+    /** Change List ID */
+    cl_id: string
     /** CL link (same as session_id) */
     cl_link: string
     /** Created commit hash */
@@ -4117,8 +4089,7 @@ export type CommonResultCreateBotTokenResponse = {
   data?: {
     /** @format date-time */
     expires_at?: string | null
-    /** @format int64 */
-    id: number
+    id: string
     token_name: string
     token_plain: string
   }
@@ -4158,8 +4129,7 @@ export type CommonResultDeleteGroupResponse = {
      * @min 0
      */
     deleted_permissions_count: number
-    /** @format int64 */
-    group_id: number
+    group_id: string
   }
   err_message: string
   req_result: boolean
@@ -4255,8 +4225,8 @@ export type CommonResultGroupResponse = {
     /** @format int64 */
     created_at: number
     description?: string | null
-    /** @format int64 */
-    id: number
+    /** Snowflake id; JSON string so JS keeps full precision. */
+    id: string
     name: string
     /** @format int64 */
     updated_at: number
@@ -4279,8 +4249,7 @@ export type CommonResultIssueDetailRes = {
     author: string
     author_is_bot?: boolean
     conversations: ConversationItem[]
-    /** @format int64 */
-    id: number
+    id: string
     labels: LabelItem[]
     link: string
     /** @format int64 */
@@ -4296,8 +4265,7 @@ export type CommonResultLabelItem = {
   data?: {
     color: string
     description: string
-    /** @format int64 */
-    id: number
+    id: string
     name: string
   }
   err_message: string
@@ -4379,8 +4347,7 @@ export type CommonResultQueueStatusResponse = {
 
 export type CommonResultRemoveMemberResponse = {
   data?: {
-    /** @format int64 */
-    group_id: number
+    group_id: string
     removed: boolean
     username: string
   }
@@ -4539,8 +4506,7 @@ export type CommonResultThreadReviewResponse = {
     created_at: string
     position: PositionResponse
     status: ThreadStatus
-    /** @format int64 */
-    thread_id: number
+    thread_id: string
     updated_at: string
   }
   err_message: string
@@ -4551,8 +4517,7 @@ export type CommonResultThreadStatusResponse = {
   data?: {
     link: string
     status: ThreadStatus
-    /** @format int64 */
-    thread_id: number
+    thread_id: string
   }
   err_message: string
   req_result: boolean
@@ -4693,15 +4658,11 @@ export type CommonResultVec = {
 
 export type CommonResultVecBotRes = {
   data?: {
-    /** @format int64 */
-    bot_id: number
-    /** @format int64 */
-    id: number
-    /** @format int64 */
-    installed_by: number
+    bot_id: string
+    id: string
+    installed_by: string
     status: InstallationBotStatus
-    /** @format int64 */
-    target_id: number
+    target_id: string
     target_type: InstallationTargetType
   }[]
   err_message: string
@@ -4740,10 +4701,8 @@ export type CommonResultVecGpgKey = {
 
 export type CommonResultVecGroupMemberResponse = {
   data?: {
-    /** @format int64 */
-    group_id: number
-    /** @format int64 */
-    id: number
+    group_id: string
+    id: string
     /** @format int64 */
     joined_at: number
     /** Campsite public user id (field name kept for API compat). */
@@ -4755,8 +4714,7 @@ export type CommonResultVecGroupMemberResponse = {
 
 export type CommonResultVecIssueSuggestions = {
   data?: {
-    /** @format int64 */
-    id: number
+    id: string
     link: string
     title: string
     type: string
@@ -4771,8 +4729,7 @@ export type CommonResultVecListBotTokenItem = {
     created_at: string
     /** @format date-time */
     expires_at?: string | null
-    /** @format int64 */
-    id: number
+    id: string
     revoked: boolean
     token_name: string
   }[]
@@ -4785,8 +4742,7 @@ export type CommonResultVecListSSHKey = {
     /** @format int64 */
     created_at: number
     finger: string
-    /** @format int64 */
-    id: number
+    id: string
     ssh_key: string
     title: string
   }[]
@@ -4798,8 +4754,7 @@ export type CommonResultVecListToken = {
   data?: {
     /** @format int64 */
     created_at: number
-    /** @format int64 */
-    id: number
+    id: string
     token: string
   }[]
   err_message: string
@@ -4833,10 +4788,8 @@ export type CommonResultVecResourcePermissionResponse = {
   data?: {
     /** @format int64 */
     created_at: number
-    /** @format int64 */
-    group_id: number
-    /** @format int64 */
-    id: number
+    group_id: string
+    id: string
     permission: PermissionValue
     resource_id: string
     resource_type: ResourceTypeValue
@@ -4889,8 +4842,7 @@ export type CommonResultWebhookResponse = {
     active: boolean
     created_at: string
     event_types: string[]
-    /** @format int64 */
-    id: number
+    id: string
     path_filter?: string | null
     target_url: string
     updated_at: string
@@ -4923,11 +4875,8 @@ export type CompletePayload = object
  *   for the "no-change" completion path.
  */
 export type CompleteResponse = {
-  /**
-   * Change List ID
-   * @format int64
-   */
-  cl_id: number
+  /** Change List ID */
+  cl_id: string
   /** CL link (same as session_id) */
   cl_link: string
   /** Created commit hash */
@@ -4974,8 +4923,7 @@ export type ConversationItem = {
   /** @format int64 */
   created_at: number
   grouped_reactions: ReactionItem[]
-  /** @format int64 */
-  id: number
+  id: string
   /** True when `username` matches a registered bot (or legacy `"system"` actor). */
   is_bot?: boolean
   resolved?: boolean | null
@@ -5003,8 +4951,7 @@ export type CreateBotTokenRequest = {
 export type CreateBotTokenResponse = {
   /** @format date-time */
   expires_at?: string | null
-  /** @format int64 */
-  id: number
+  id: string
   token_name: string
   token_plain: string
 }
@@ -5105,8 +5052,7 @@ export type DeleteGroupResponse = {
    * @min 0
    */
   deleted_permissions_count: number
-  /** @format int64 */
-  group_id: number
+  group_id: string
 }
 
 export type DeletePermissionsResponse = {
@@ -5245,10 +5191,8 @@ export type GpgKey = {
 }
 
 export type GroupMemberResponse = {
-  /** @format int64 */
-  group_id: number
-  /** @format int64 */
-  id: number
+  group_id: string
+  id: string
   /** @format int64 */
   joined_at: number
   /** Campsite public user id (field name kept for API compat). */
@@ -5259,8 +5203,8 @@ export type GroupResponse = {
   /** @format int64 */
   created_at: number
   description?: string | null
-  /** @format int64 */
-  id: number
+  /** Snowflake id; JSON string so JS keeps full precision. */
+  id: string
   name: string
   /** @format int64 */
   updated_at: number
@@ -5279,10 +5223,8 @@ export type InitializeCommentRequest = {
 }
 
 export type InstallBotReq = {
-  /** @format int64 */
-  installed_by: number
-  /** @format int64 */
-  target_id: number
+  installed_by: string
+  target_id: string
   target_type: InstallationTargetType
 }
 
@@ -5295,8 +5237,7 @@ export type IssueDetailRes = {
   author: string
   author_is_bot?: boolean
   conversations: ConversationItem[]
-  /** @format int64 */
-  id: number
+  id: string
   labels: LabelItem[]
   link: string
   /** @format int64 */
@@ -5306,8 +5247,7 @@ export type IssueDetailRes = {
 }
 
 export type IssueSuggestions = {
-  /** @format int64 */
-  id: number
+  id: string
   link: string
   title: string
   type: string
@@ -5327,8 +5267,7 @@ export type ItemRes = {
   closed_at?: number | null
   /** @min 0 */
   comment_num: number
-  /** @format int64 */
-  id: number
+  id: string
   labels: LabelItem[]
   link: string
   /** @format int64 */
@@ -5344,15 +5283,13 @@ export type ItemRes = {
 export type LabelItem = {
   color: string
   description: string
-  /** @format int64 */
-  id: number
+  id: string
   name: string
 }
 
 export type LabelUpdatePayload = {
-  /** @format int64 */
-  item_id: number
-  label_ids: number[]
+  item_id: string
+  label_ids: string[]
   link: string
 }
 
@@ -5378,8 +5315,7 @@ export type ListBotTokenItem = {
   created_at: string
   /** @format date-time */
   expires_at?: string | null
-  /** @format int64 */
-  id: number
+  id: string
   revoked: boolean
   token_name: string
 }
@@ -5388,7 +5324,7 @@ export type ListPayload = {
   asc: boolean
   assignees?: string[] | null
   author?: string | null
-  labels?: number[] | null
+  labels?: string[] | null
   sort_by?: string | null
   status: string
 }
@@ -5397,8 +5333,7 @@ export type ListSSHKey = {
   /** @format int64 */
   created_at: number
   finger: string
-  /** @format int64 */
-  id: number
+  id: string
   ssh_key: string
   title: string
 }
@@ -5406,8 +5341,7 @@ export type ListSSHKey = {
 export type ListToken = {
   /** @format int64 */
   created_at: number
-  /** @format int64 */
-  id: number
+  id: string
   token: string
 }
 
@@ -5604,7 +5538,7 @@ export type PageParamsListPayload = {
     asc: boolean
     assignees?: string[] | null
     author?: string | null
-    labels?: number[] | null
+    labels?: string[] | null
     sort_by?: string | null
     status: string
   }
@@ -5655,21 +5589,18 @@ export type Pagination = {
 }
 
 export type PermissionBindingRequest = {
-  /** @format int64 */
-  group_id: number
+  group_id: string
   permission: PermissionValue
 }
 
 export type PositionResponse = {
-  /** @format int64 */
-  anchor_id: number
+  anchor_id: string
   commit_sha: string
   /** @format int32 */
   confidence: number
   /** @format int32 */
   line_number: number
-  /** @format int64 */
-  position_id: number
+  position_id: string
   position_status: PositionStatus
 }
 
@@ -5756,8 +5687,7 @@ export type RemoveGpgRequest = {
 }
 
 export type RemoveMemberResponse = {
-  /** @format int64 */
-  group_id: number
+  group_id: string
   removed: boolean
   username: string
 }
@@ -5776,10 +5706,8 @@ export type RequestObject = {
 export type ResourcePermissionResponse = {
   /** @format int64 */
   created_at: number
-  /** @format int64 */
-  group_id: number
-  /** @format int64 */
-  id: number
+  group_id: string
+  id: string
   permission: PermissionValue
   resource_id: string
   resource_type: ResourceTypeValue
@@ -5970,16 +5898,14 @@ export type ThreadReviewResponse = {
   created_at: string
   position: PositionResponse
   status: ThreadStatus
-  /** @format int64 */
-  thread_id: number
+  thread_id: string
   updated_at: string
 }
 
 export type ThreadStatusResponse = {
   link: string
   status: ThreadStatus
-  /** @format int64 */
-  thread_id: number
+  thread_id: string
 }
 
 export type TreeBriefItem = {
@@ -6009,8 +5935,7 @@ export type TreeResponse = {
 
 /** Trigger detail response (new RESTful API) */
 export type TriggerResponse = {
-  /** @format int64 */
-  cl_id?: number | null
+  cl_id?: string
   cl_link?: string | null
   commit_hash: string
   /** @format int64 */
@@ -6169,8 +6094,7 @@ export type WebhookResponse = {
   active: boolean
   created_at: string
   event_types: string[]
-  /** @format int64 */
-  id: number
+  id: string
   path_filter?: string | null
   target_url: string
   updated_at: string
@@ -6273,8 +6197,7 @@ export type RetryBuildRequest = {
   build_id: string
   /** The list of changed files in the hybrid path contract used by Orion. */
   changes: StatusProjectRelativePath[]
-  /** @format int64 */
-  cl_id: number
+  cl_id: string
   cl_link: string
   targets?: string[] | null
 }
@@ -6352,8 +6275,7 @@ export type TaskBuildRequest = {
    *   (for example `common/lib.rs`)
    */
   changes: StatusProjectRelativePath[]
-  /** @format int64 */
-  cl_id: number
+  cl_id: string
   /** The change list link (URL) */
   cl_link: string
   /** The Buck2 project path within the monorepo (for example `/jupiter/callisto`). */
@@ -6372,6 +6294,9 @@ export type TaskHistoryQuery = {
   start?: number | null
   task_id: string
 }
+
+/** Snowflake id; JSON string so JS keeps full precision. */
+export type SnowflakeId = string
 
 export type PostActivityViewsParams = {
   orgSlug: string
@@ -8671,61 +8596,43 @@ export type PostApiAdminGroupsData = CommonResultGroupResponse
 export type PostApiAdminGroupsListData = CommonResultCommonPageGroupResponse
 
 export type GetApiAdminGroupsByGroupIdParams = {
-  /**
-   * Group ID
-   * @format int64
-   */
-  groupId: number
+  /** Group ID */
+  groupId: string
 }
 
 export type GetApiAdminGroupsByGroupIdData = CommonResultGroupResponse
 
 export type PutApiAdminGroupsByGroupIdParams = {
-  /**
-   * Group ID
-   * @format int64
-   */
-  groupId: number
+  /** Group ID */
+  groupId: string
 }
 
 export type PutApiAdminGroupsByGroupIdData = CommonResultGroupResponse
 
 export type DeleteApiAdminGroupsByGroupIdParams = {
-  /**
-   * Group ID
-   * @format int64
-   */
-  groupId: number
+  /** Group ID */
+  groupId: string
 }
 
 export type DeleteApiAdminGroupsByGroupIdData = CommonResultDeleteGroupResponse
 
 export type PostApiAdminGroupsMembersParams = {
-  /**
-   * Group ID
-   * @format int64
-   */
-  groupId: number
+  /** Group ID */
+  groupId: string
 }
 
 export type PostApiAdminGroupsMembersData = CommonResultVecGroupMemberResponse
 
 export type PostApiAdminGroupsMembersListParams = {
-  /**
-   * Group ID
-   * @format int64
-   */
-  groupId: number
+  /** Group ID */
+  groupId: string
 }
 
 export type PostApiAdminGroupsMembersListData = CommonResultCommonPageGroupMemberResponse
 
 export type DeleteApiAdminGroupsMembersByUsernameParams = {
-  /**
-   * Group ID
-   * @format int64
-   */
-  groupId: number
+  /** Group ID */
+  groupId: string
   /** Campsite user id of the member */
   username: string
 }
@@ -8842,96 +8749,63 @@ export type GetApiBlobData = CommonResultString
 export type PostApiBotsBootstrapInitData = CommonResultBootstrapInitBotResponse
 
 export type GetApiBotsTokensParams = {
-  /**
-   * Bot ID
-   * @format int64
-   */
-  botId: number
+  /** Bot ID */
+  botId: string
 }
 
 export type GetApiBotsTokensData = CommonResultVecListBotTokenItem
 
 export type PostApiBotsTokensParams = {
-  /**
-   * Bot ID
-   * @format int64
-   */
-  botId: number
+  /** Bot ID */
+  botId: string
 }
 
 export type PostApiBotsTokensData = CommonResultCreateBotTokenResponse
 
 export type PostApiBotsTokensRevokeAllParams = {
-  /**
-   * Bot ID
-   * @format int64
-   */
-  botId: number
+  /** Bot ID */
+  botId: string
 }
 
 export type PostApiBotsTokensRevokeAllData = any
 
 export type DeleteApiBotsTokensByIdParams = {
-  /**
-   * Bot ID
-   * @format int64
-   */
-  botId: number
-  /**
-   * Token ID
-   * @format int64
-   */
-  id: number
+  /** Bot ID */
+  botId: string
+  /** Token ID */
+  id: string
 }
 
 export type DeleteApiBotsTokensByIdData = any
 
 export type GetApiBotsInstallationsParams = {
-  /**
-   * Bots ID
-   * @format int64
-   */
-  id: number
+  /** Bots ID */
+  id: string
 }
 
 export type GetApiBotsInstallationsData = CommonResultVecBotRes
 
 export type PostApiBotsInstallationsParams = {
-  /**
-   * Bots ID
-   * @format int64
-   */
-  id: number
+  /** Bots ID */
+  id: string
 }
 
 export type PostApiBotsInstallationsData = CommonResultBotRes
 
 export type DeleteApiBotsInstallationsByInstallationIdParams = {
-  /**
-   * Bot ID
-   * @format int64
-   */
-  id: number
-  /**
-   * Installation ID
-   * @format int64
-   */
-  installationId: number
+  /** Bot ID */
+  id: string
+  /** Installation ID */
+  installationId: string
 }
 
 export type DeleteApiBotsInstallationsByInstallationIdData = CommonResultString
 
 export type PatchApiBotsInstallationsByInstallationIdParams = {
-  /**
-   * Bot ID
-   * @format int64
-   */
-  id: number
-  /**
-   * Installation ID
-   * @format int64
-   */
-  installationId: number
+  /** Bot ID */
+  id: string
+  /** Installation ID */
+  installationId: string
 }
 
 export type PatchApiBotsInstallationsByInstallationIdData = CommonResultBotRes
@@ -9102,31 +8976,22 @@ export type GetApiClUpdateStatusParams = {
 export type GetApiClUpdateStatusData = CommonResultUpdateBranchStatusRes
 
 export type DeleteApiCodeReviewCommentByCommentIdParams = {
-  /**
-   * A numeric ID representing a code review comment
-   * @format int64
-   */
-  commentId: number
+  /** A numeric ID representing a code review comment */
+  commentId: string
 }
 
 export type DeleteApiCodeReviewCommentByCommentIdData = CommonResultString
 
 export type DeleteApiCodeReviewThreadByThreadIdParams = {
-  /**
-   * A numeric ID representing a code review thread
-   * @format int64
-   */
-  threadId: number
+  /** A numeric ID representing a code review thread */
+  threadId: string
 }
 
 export type DeleteApiCodeReviewThreadByThreadIdData = CommonResultString
 
 export type PostApiCodeReviewUpdateParams = {
-  /**
-   * A numeric ID representing a comment
-   * @format int64
-   */
-  commentId: number
+  /** A numeric ID representing a comment */
+  commentId: string
 }
 
 export type PostApiCodeReviewUpdateData = CommonResultCommentReviewResponse
@@ -9146,31 +9011,22 @@ export type GetApiCodeReviewCommentsParams = {
 export type GetApiCodeReviewCommentsData = CommonResultCodeReviewResponse
 
 export type PostApiCodeReviewCommentReplyParams = {
-  /**
-   * Code Review Comment Thread ID
-   * @format int64
-   */
-  threadId: number
+  /** Code Review Comment Thread ID */
+  threadId: string
 }
 
 export type PostApiCodeReviewCommentReplyData = CommonResultCommentReviewResponse
 
 export type PostApiCodeReviewReopenParams = {
-  /**
-   * A numeric ID representing a code review thread
-   * @format int64
-   */
-  threadId: number
+  /** A numeric ID representing a code review thread */
+  threadId: string
 }
 
 export type PostApiCodeReviewReopenData = CommonResultThreadStatusResponse
 
 export type PostApiCodeReviewResolveParams = {
-  /**
-   * A numeric ID representing a code review thread
-   * @format int64
-   */
-  threadId: number
+  /** A numeric ID representing a code review thread */
+  threadId: string
 }
 
 export type PostApiCodeReviewResolveData = CommonResultThreadStatusResponse
@@ -9210,31 +9066,22 @@ export type DeleteApiConversationReactionsByIdParams = {
 export type DeleteApiConversationReactionsByIdData = CommonResultString
 
 export type PostApiConversationByCommentIdParams = {
-  /**
-   * A numeric ID representing a comment
-   * @format int64
-   */
-  commentId: number
+  /** A numeric ID representing a comment */
+  commentId: string
 }
 
 export type PostApiConversationByCommentIdData = CommonResultString
 
 export type DeleteApiConversationByCommentIdParams = {
-  /**
-   * A numeric ID representing a comment
-   * @format int64
-   */
-  commentId: number
+  /** A numeric ID representing a comment */
+  commentId: string
 }
 
 export type DeleteApiConversationByCommentIdData = CommonResultString
 
 export type PostApiConversationReactionsParams = {
-  /**
-   * A numeric ID representing either a comment or a conversation. Specify the type in the request body.
-   * @format int64
-   */
-  commentId: number
+  /** A numeric ID representing either a comment or a conversation. Specify the type in the request body. */
+  commentId: string
 }
 
 export type PostApiConversationReactionsData = CommonResultString
@@ -9305,11 +9152,8 @@ export type PostApiLabelListData = CommonResultCommonPageLabelItem
 export type PostApiLabelNewData = CommonResultString
 
 export type GetApiLabelByIdParams = {
-  /**
-   * Label's id
-   * @format int64
-   */
-  id: number
+  /** Label's id */
+  id: string
 }
 
 export type GetApiLabelByIdData = CommonResultLabelItem
@@ -9636,21 +9480,15 @@ export type PostApiTriggersData = CommonResultTriggerResponse
 export type PostApiTriggersListData = CommonResultCommonPageTriggerResponse
 
 export type GetApiTriggersByIdParams = {
-  /**
-   * Trigger ID
-   * @format int64
-   */
-  id: number
+  /** Trigger ID */
+  id: string
 }
 
 export type GetApiTriggersByIdData = CommonResultTriggerResponse
 
 export type PostApiTriggersRetryParams = {
-  /**
-   * Original trigger ID to retry
-   * @format int64
-   */
-  id: number
+  /** Original trigger ID to retry */
+  id: string
 }
 
 export type PostApiTriggersRetryData = CommonResultTriggerResponse
@@ -9676,11 +9514,8 @@ export type PostApiUserSshData = CommonResultString
 export type GetApiUserSshListData = CommonResultVecListSSHKey
 
 export type DeleteApiUserSshByKeyIdParams = {
-  /**
-   * A numeric ID representing a SSH
-   * @format int64
-   */
-  keyId: number
+  /** A numeric ID representing a SSH */
+  keyId: string
 }
 
 export type DeleteApiUserSshByKeyIdData = CommonResultString
@@ -9690,11 +9525,8 @@ export type PostApiUserTokenGenerateData = CommonResultString
 export type GetApiUserTokenListData = CommonResultVecListToken
 
 export type DeleteApiUserTokenByKeyIdParams = {
-  /**
-   * A numeric ID representing a User Token
-   * @format int64
-   */
-  keyId: number
+  /** A numeric ID representing a User Token */
+  keyId: string
 }
 
 export type DeleteApiUserTokenByKeyIdData = CommonResultString
@@ -9719,11 +9551,8 @@ export type GetApiWebhooksData = CommonResultCommonPageWebhookResponse
 export type PostApiWebhooksData = CommonResultWebhookResponse
 
 export type DeleteApiWebhooksByIdParams = {
-  /**
-   * Webhook ID
-   * @format int64
-   */
-  id: number
+  /** Webhook ID */
+  id: string
 }
 
 export type DeleteApiWebhooksByIdData = CommonResultString
@@ -18621,8 +18450,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetApiAdminGroupsByGroupIdData>([base]),
-        requestKey: (groupId: number) => dataTaggedQueryKey<GetApiAdminGroupsByGroupIdData>([base, groupId]),
-        request: (groupId: number, params: RequestParams = {}) =>
+        requestKey: (groupId: string) => dataTaggedQueryKey<GetApiAdminGroupsByGroupIdData>([base, groupId]),
+        request: (groupId: string, params: RequestParams = {}) =>
           this.request<GetApiAdminGroupsByGroupIdData>({
             path: `/api/v1/admin/groups/${groupId}`,
             method: 'GET',
@@ -18644,8 +18473,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PutApiAdminGroupsByGroupIdData>([base]),
-        requestKey: (groupId: number) => dataTaggedQueryKey<PutApiAdminGroupsByGroupIdData>([base, groupId]),
-        request: (groupId: number, data: UpdateGroupRequest, params: RequestParams = {}) =>
+        requestKey: (groupId: string) => dataTaggedQueryKey<PutApiAdminGroupsByGroupIdData>([base, groupId]),
+        request: (groupId: string, data: UpdateGroupRequest, params: RequestParams = {}) =>
           this.request<PutApiAdminGroupsByGroupIdData>({
             path: `/api/v1/admin/groups/${groupId}`,
             method: 'PUT',
@@ -18669,8 +18498,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiAdminGroupsByGroupIdData>([base]),
-        requestKey: (groupId: number) => dataTaggedQueryKey<DeleteApiAdminGroupsByGroupIdData>([base, groupId]),
-        request: (groupId: number, params: RequestParams = {}) =>
+        requestKey: (groupId: string) => dataTaggedQueryKey<DeleteApiAdminGroupsByGroupIdData>([base, groupId]),
+        request: (groupId: string, params: RequestParams = {}) =>
           this.request<DeleteApiAdminGroupsByGroupIdData>({
             path: `/api/v1/admin/groups/${groupId}`,
             method: 'DELETE',
@@ -18692,8 +18521,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiAdminGroupsMembersData>([base]),
-        requestKey: (groupId: number) => dataTaggedQueryKey<PostApiAdminGroupsMembersData>([base, groupId]),
-        request: (groupId: number, data: AddMembersRequest, params: RequestParams = {}) =>
+        requestKey: (groupId: string) => dataTaggedQueryKey<PostApiAdminGroupsMembersData>([base, groupId]),
+        request: (groupId: string, data: AddMembersRequest, params: RequestParams = {}) =>
           this.request<PostApiAdminGroupsMembersData>({
             path: `/api/v1/admin/groups/${groupId}/members`,
             method: 'POST',
@@ -18717,8 +18546,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiAdminGroupsMembersListData>([base]),
-        requestKey: (groupId: number) => dataTaggedQueryKey<PostApiAdminGroupsMembersListData>([base, groupId]),
-        request: (groupId: number, data: PageParamsEmptyListAdditional, params: RequestParams = {}) =>
+        requestKey: (groupId: string) => dataTaggedQueryKey<PostApiAdminGroupsMembersListData>([base, groupId]),
+        request: (groupId: string, data: PageParamsEmptyListAdditional, params: RequestParams = {}) =>
           this.request<PostApiAdminGroupsMembersListData>({
             path: `/api/v1/admin/groups/${groupId}/members/list`,
             method: 'POST',
@@ -18742,9 +18571,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiAdminGroupsMembersByUsernameData>([base]),
-        requestKey: (groupId: number, username: string) =>
+        requestKey: (groupId: string, username: string) =>
           dataTaggedQueryKey<DeleteApiAdminGroupsMembersByUsernameData>([base, groupId, username]),
-        request: (groupId: number, username: string, params: RequestParams = {}) =>
+        request: (groupId: string, username: string, params: RequestParams = {}) =>
           this.request<DeleteApiAdminGroupsMembersByUsernameData>({
             path: `/api/v1/admin/groups/${groupId}/members/${username}`,
             method: 'DELETE',
@@ -19110,8 +18939,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetApiBotsTokensData>([base]),
-        requestKey: (botId: number) => dataTaggedQueryKey<GetApiBotsTokensData>([base, botId]),
-        request: (botId: number, params: RequestParams = {}) =>
+        requestKey: (botId: string) => dataTaggedQueryKey<GetApiBotsTokensData>([base, botId]),
+        request: (botId: string, params: RequestParams = {}) =>
           this.request<GetApiBotsTokensData>({
             path: `/api/v1/bots/${botId}/tokens`,
             method: 'GET',
@@ -19134,8 +18963,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiBotsTokensData>([base]),
-        requestKey: (botId: number) => dataTaggedQueryKey<PostApiBotsTokensData>([base, botId]),
-        request: (botId: number, data: CreateBotTokenRequest, params: RequestParams = {}) =>
+        requestKey: (botId: string) => dataTaggedQueryKey<PostApiBotsTokensData>([base, botId]),
+        request: (botId: string, data: CreateBotTokenRequest, params: RequestParams = {}) =>
           this.request<PostApiBotsTokensData>({
             path: `/api/v1/bots/${botId}/tokens`,
             method: 'POST',
@@ -19160,8 +18989,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiBotsTokensRevokeAllData>([base]),
-        requestKey: (botId: number) => dataTaggedQueryKey<PostApiBotsTokensRevokeAllData>([base, botId]),
-        request: (botId: number, params: RequestParams = {}) =>
+        requestKey: (botId: string) => dataTaggedQueryKey<PostApiBotsTokensRevokeAllData>([base, botId]),
+        request: (botId: string, params: RequestParams = {}) =>
           this.request<PostApiBotsTokensRevokeAllData>({
             path: `/api/v1/bots/${botId}/tokens/revoke_all`,
             method: 'POST',
@@ -19183,8 +19012,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiBotsTokensByIdData>([base]),
-        requestKey: (botId: number, id: number) => dataTaggedQueryKey<DeleteApiBotsTokensByIdData>([base, botId, id]),
-        request: (botId: number, id: number, params: RequestParams = {}) =>
+        requestKey: (botId: string, id: string) => dataTaggedQueryKey<DeleteApiBotsTokensByIdData>([base, botId, id]),
+        request: (botId: string, id: string, params: RequestParams = {}) =>
           this.request<DeleteApiBotsTokensByIdData>({
             path: `/api/v1/bots/${botId}/tokens/${id}`,
             method: 'DELETE',
@@ -19206,8 +19035,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetApiBotsInstallationsData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<GetApiBotsInstallationsData>([base, id]),
-        request: (id: number, params: RequestParams = {}) =>
+        requestKey: (id: string) => dataTaggedQueryKey<GetApiBotsInstallationsData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
           this.request<GetApiBotsInstallationsData>({
             path: `/api/v1/bots/${id}/installations`,
             method: 'GET',
@@ -19230,8 +19059,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiBotsInstallationsData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<PostApiBotsInstallationsData>([base, id]),
-        request: (id: number, data: InstallBotReq, params: RequestParams = {}) =>
+        requestKey: (id: string) => dataTaggedQueryKey<PostApiBotsInstallationsData>([base, id]),
+        request: (id: string, data: InstallBotReq, params: RequestParams = {}) =>
           this.request<PostApiBotsInstallationsData>({
             path: `/api/v1/bots/${id}/installations`,
             method: 'POST',
@@ -19255,9 +19084,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiBotsInstallationsByInstallationIdData>([base]),
-        requestKey: (id: number, installationId: number) =>
+        requestKey: (id: string, installationId: string) =>
           dataTaggedQueryKey<DeleteApiBotsInstallationsByInstallationIdData>([base, id, installationId]),
-        request: (id: number, installationId: number, data: InstallationTargetType, params: RequestParams = {}) =>
+        request: (id: string, installationId: string, data: InstallationTargetType, params: RequestParams = {}) =>
           this.request<DeleteApiBotsInstallationsByInstallationIdData>({
             path: `/api/v1/bots/${id}/installations/${installationId}`,
             method: 'DELETE',
@@ -19281,9 +19110,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PatchApiBotsInstallationsByInstallationIdData>([base]),
-        requestKey: (id: number, installationId: number) =>
+        requestKey: (id: string, installationId: string) =>
           dataTaggedQueryKey<PatchApiBotsInstallationsByInstallationIdData>([base, id, installationId]),
-        request: (id: number, installationId: number, data: ChangeInstallationStatus, params: RequestParams = {}) =>
+        request: (id: string, installationId: string, data: ChangeInstallationStatus, params: RequestParams = {}) =>
           this.request<PatchApiBotsInstallationsByInstallationIdData>({
             path: `/api/v1/bots/${id}/installations/${installationId}`,
             method: 'PATCH',
@@ -19955,9 +19784,9 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiCodeReviewCommentByCommentIdData>([base]),
-        requestKey: (commentId: number) =>
+        requestKey: (commentId: string) =>
           dataTaggedQueryKey<DeleteApiCodeReviewCommentByCommentIdData>([base, commentId]),
-        request: (commentId: number, params: RequestParams = {}) =>
+        request: (commentId: string, params: RequestParams = {}) =>
           this.request<DeleteApiCodeReviewCommentByCommentIdData>({
             path: `/api/v1/code_review/comment/${commentId}`,
             method: 'DELETE',
@@ -19980,8 +19809,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiCodeReviewThreadByThreadIdData>([base]),
-        requestKey: (threadId: number) => dataTaggedQueryKey<DeleteApiCodeReviewThreadByThreadIdData>([base, threadId]),
-        request: (threadId: number, params: RequestParams = {}) =>
+        requestKey: (threadId: string) => dataTaggedQueryKey<DeleteApiCodeReviewThreadByThreadIdData>([base, threadId]),
+        request: (threadId: string, params: RequestParams = {}) =>
           this.request<DeleteApiCodeReviewThreadByThreadIdData>({
             path: `/api/v1/code_review/thread/${threadId}`,
             method: 'DELETE',
@@ -20004,8 +19833,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiCodeReviewUpdateData>([base]),
-        requestKey: (commentId: number) => dataTaggedQueryKey<PostApiCodeReviewUpdateData>([base, commentId]),
-        request: (commentId: number, data: UpdateCommentRequest, params: RequestParams = {}) =>
+        requestKey: (commentId: string) => dataTaggedQueryKey<PostApiCodeReviewUpdateData>([base, commentId]),
+        request: (commentId: string, data: UpdateCommentRequest, params: RequestParams = {}) =>
           this.request<PostApiCodeReviewUpdateData>({
             path: `/api/v1/code_review/${commentId}/update`,
             method: 'POST',
@@ -20080,8 +19909,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiCodeReviewCommentReplyData>([base]),
-        requestKey: (threadId: number) => dataTaggedQueryKey<PostApiCodeReviewCommentReplyData>([base, threadId]),
-        request: (threadId: number, data: CommentReplyRequest, params: RequestParams = {}) =>
+        requestKey: (threadId: string) => dataTaggedQueryKey<PostApiCodeReviewCommentReplyData>([base, threadId]),
+        request: (threadId: string, data: CommentReplyRequest, params: RequestParams = {}) =>
           this.request<PostApiCodeReviewCommentReplyData>({
             path: `/api/v1/code_review/${threadId}/comment/reply`,
             method: 'POST',
@@ -20106,8 +19935,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiCodeReviewReopenData>([base]),
-        requestKey: (threadId: number) => dataTaggedQueryKey<PostApiCodeReviewReopenData>([base, threadId]),
-        request: (threadId: number, params: RequestParams = {}) =>
+        requestKey: (threadId: string) => dataTaggedQueryKey<PostApiCodeReviewReopenData>([base, threadId]),
+        request: (threadId: string, params: RequestParams = {}) =>
           this.request<PostApiCodeReviewReopenData>({
             path: `/api/v1/code_review/${threadId}/reopen`,
             method: 'POST',
@@ -20130,8 +19959,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiCodeReviewResolveData>([base]),
-        requestKey: (threadId: number) => dataTaggedQueryKey<PostApiCodeReviewResolveData>([base, threadId]),
-        request: (threadId: number, params: RequestParams = {}) =>
+        requestKey: (threadId: string) => dataTaggedQueryKey<PostApiCodeReviewResolveData>([base, threadId]),
+        request: (threadId: string, params: RequestParams = {}) =>
           this.request<PostApiCodeReviewResolveData>({
             path: `/api/v1/code_review/${threadId}/resolve`,
             method: 'POST',
@@ -20284,8 +20113,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiConversationByCommentIdData>([base]),
-        requestKey: (commentId: number) => dataTaggedQueryKey<PostApiConversationByCommentIdData>([base, commentId]),
-        request: (commentId: number, data: ContentPayload, params: RequestParams = {}) =>
+        requestKey: (commentId: string) => dataTaggedQueryKey<PostApiConversationByCommentIdData>([base, commentId]),
+        request: (commentId: string, data: ContentPayload, params: RequestParams = {}) =>
           this.request<PostApiConversationByCommentIdData>({
             path: `/api/v1/conversation/${commentId}`,
             method: 'POST',
@@ -20310,8 +20139,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiConversationByCommentIdData>([base]),
-        requestKey: (commentId: number) => dataTaggedQueryKey<DeleteApiConversationByCommentIdData>([base, commentId]),
-        request: (commentId: number, params: RequestParams = {}) =>
+        requestKey: (commentId: string) => dataTaggedQueryKey<DeleteApiConversationByCommentIdData>([base, commentId]),
+        request: (commentId: string, params: RequestParams = {}) =>
           this.request<DeleteApiConversationByCommentIdData>({
             path: `/api/v1/conversation/${commentId}`,
             method: 'DELETE',
@@ -20334,8 +20163,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiConversationReactionsData>([base]),
-        requestKey: (commentId: number) => dataTaggedQueryKey<PostApiConversationReactionsData>([base, commentId]),
-        request: (commentId: number, data: ReactionRequest, params: RequestParams = {}) =>
+        requestKey: (commentId: string) => dataTaggedQueryKey<PostApiConversationReactionsData>([base, commentId]),
+        request: (commentId: string, data: ReactionRequest, params: RequestParams = {}) =>
           this.request<PostApiConversationReactionsData>({
             path: `/api/v1/conversation/${commentId}/reactions`,
             method: 'POST',
@@ -20817,8 +20646,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetApiLabelByIdData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<GetApiLabelByIdData>([base, id]),
-        request: (id: number, params: RequestParams = {}) =>
+        requestKey: (id: string) => dataTaggedQueryKey<GetApiLabelByIdData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
           this.request<GetApiLabelByIdData>({
             path: `/api/v1/label/${id}`,
             method: 'GET',
@@ -22067,8 +21896,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<GetApiTriggersByIdData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<GetApiTriggersByIdData>([base, id]),
-        request: (id: number, params: RequestParams = {}) =>
+        requestKey: (id: string) => dataTaggedQueryKey<GetApiTriggersByIdData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
           this.request<GetApiTriggersByIdData>({
             path: `/api/v1/triggers/${id}`,
             method: 'GET',
@@ -22091,8 +21920,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<PostApiTriggersRetryData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<PostApiTriggersRetryData>([base, id]),
-        request: (id: number, params: RequestParams = {}) =>
+        requestKey: (id: string) => dataTaggedQueryKey<PostApiTriggersRetryData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
           this.request<PostApiTriggersRetryData>({
             path: `/api/v1/triggers/${id}/retry`,
             method: 'POST',
@@ -22361,8 +22190,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiUserSshByKeyIdData>([base]),
-        requestKey: (keyId: number) => dataTaggedQueryKey<DeleteApiUserSshByKeyIdData>([base, keyId]),
-        request: (keyId: number, params: RequestParams = {}) =>
+        requestKey: (keyId: string) => dataTaggedQueryKey<DeleteApiUserSshByKeyIdData>([base, keyId]),
+        request: (keyId: string, params: RequestParams = {}) =>
           this.request<DeleteApiUserSshByKeyIdData>({
             path: `/api/v1/user/ssh/${keyId}`,
             method: 'DELETE',
@@ -22433,8 +22262,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiUserTokenByKeyIdData>([base]),
-        requestKey: (keyId: number) => dataTaggedQueryKey<DeleteApiUserTokenByKeyIdData>([base, keyId]),
-        request: (keyId: number, params: RequestParams = {}) =>
+        requestKey: (keyId: string) => dataTaggedQueryKey<DeleteApiUserTokenByKeyIdData>([base, keyId]),
+        request: (keyId: string, params: RequestParams = {}) =>
           this.request<DeleteApiUserTokenByKeyIdData>({
             path: `/api/v1/user/token/${keyId}`,
             method: 'DELETE',
@@ -22508,8 +22337,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
 
       return {
         baseKey: dataTaggedQueryKey<DeleteApiWebhooksByIdData>([base]),
-        requestKey: (id: number) => dataTaggedQueryKey<DeleteApiWebhooksByIdData>([base, id]),
-        request: (id: number, params: RequestParams = {}) =>
+        requestKey: (id: string) => dataTaggedQueryKey<DeleteApiWebhooksByIdData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
           this.request<DeleteApiWebhooksByIdData>({
             path: `/api/v1/webhooks/${id}`,
             method: 'DELETE',

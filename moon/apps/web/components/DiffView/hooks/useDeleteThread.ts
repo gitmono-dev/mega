@@ -13,7 +13,7 @@ const deleteThreadMutation = legacyApiClient.v1.deleteApiCodeReviewThreadByThrea
 export function useDeleteThread(link: string) {
   const queryClient = useQueryClient()
 
-  return useMutation<DeleteApiCodeReviewThreadByThreadIdData, Error, { threadId: number; params?: RequestParams }>({
+  return useMutation<DeleteApiCodeReviewThreadByThreadIdData, Error, { threadId: string; params?: RequestParams }>({
     mutationFn: ({ threadId, params }) => deleteThreadMutation.request(threadId, params),
 
     onSuccess: () => {

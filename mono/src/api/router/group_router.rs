@@ -4,11 +4,14 @@ use axum::{
     Json,
     extract::{Path, State},
 };
-use ceres::model::group::{
-    AddMembersRequest, CreateGroupRequest, DeleteGroupResponse, DeletePermissionsResponse,
-    EmptyListAdditional, GroupMemberResponse, GroupResponse, RemoveMemberResponse,
-    ResourcePermissionResponse, SetPermissionsRequest, UpdateGroupRequest,
-    UserEffectivePermissionResponse, UserGroupsResponse,
+use ceres::model::{
+    group::{
+        AddMembersRequest, CreateGroupRequest, DeleteGroupResponse, DeletePermissionsResponse,
+        EmptyListAdditional, GroupMemberResponse, GroupResponse, RemoveMemberResponse,
+        ResourcePermissionResponse, SetPermissionsRequest, UpdateGroupRequest,
+        UserEffectivePermissionResponse, UserGroupsResponse,
+    },
+    serde_snowflake::SnowflakeId,
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -104,7 +107,7 @@ async fn list_groups(
     get,
     path = "/groups/{group_id}",
     params(
-        ("group_id" = i64, Path, description = "Group ID")
+        ("group_id" = SnowflakeId, Path, description = "Group ID")
     ),
     responses(
         (status = 200, body = CommonResult<GroupResponse>),
@@ -117,7 +120,7 @@ async fn list_groups(
 async fn get_group(
     user: LoginUser,
     State(state): State<MonoApiServiceState>,
-    Path(group_id): Path<i64>,
+    Path(SnowflakeId(group_id)): Path<SnowflakeId>,
 ) -> Result<Json<CommonResult<GroupResponse>>, ApiError> {
     ensure_admin(&state, &user).await?;
 
@@ -143,7 +146,7 @@ async fn get_group(
     path = "/groups/{group_id}",
     request_body = UpdateGroupRequest,
     params(
-        ("group_id" = i64, Path, description = "Group ID")
+        ("group_id" = SnowflakeId, Path, description = "Group ID")
     ),
     responses(
         (status = 200, body = CommonResult<GroupResponse>),
@@ -158,7 +161,7 @@ async fn get_group(
 async fn update_group(
     user: LoginUser,
     State(state): State<MonoApiServiceState>,
-    Path(group_id): Path<i64>,
+    Path(SnowflakeId(group_id)): Path<SnowflakeId>,
     Json(req): Json<UpdateGroupRequest>,
 ) -> Result<Json<CommonResult<GroupResponse>>, ApiError> {
     ensure_admin(&state, &user).await?;
@@ -182,7 +185,7 @@ async fn update_group(
     delete,
     path = "/groups/{group_id}",
     params(
-        ("group_id" = i64, Path, description = "Group ID")
+        ("group_id" = SnowflakeId, Path, description = "Group ID")
     ),
     responses(
         (status = 200, body = CommonResult<DeleteGroupResponse>),
@@ -195,7 +198,7 @@ async fn update_group(
 async fn delete_group(
     user: LoginUser,
     State(state): State<MonoApiServiceState>,
-    Path(group_id): Path<i64>,
+    Path(SnowflakeId(group_id)): Path<SnowflakeId>,
 ) -> Result<Json<CommonResult<DeleteGroupResponse>>, ApiError> {
     ensure_admin(&state, &user).await?;
 
@@ -214,7 +217,7 @@ async fn delete_group(
     path = "/groups/{group_id}/members",
     request_body = AddMembersRequest,
     params(
-        ("group_id" = i64, Path, description = "Group ID")
+        ("group_id" = SnowflakeId, Path, description = "Group ID")
     ),
     responses(
         (status = 200, body = CommonResult<Vec<GroupMemberResponse>>),
@@ -228,7 +231,7 @@ async fn delete_group(
 async fn add_group_members(
     user: LoginUser,
     State(state): State<MonoApiServiceState>,
-    Path(group_id): Path<i64>,
+    Path(SnowflakeId(group_id)): Path<SnowflakeId>,
     Json(req): Json<AddMembersRequest>,
 ) -> Result<Json<CommonResult<Vec<GroupMemberResponse>>>, ApiError> {
     ensure_admin(&state, &user).await?;
@@ -247,7 +250,7 @@ async fn add_group_members(
     delete,
     path = "/groups/{group_id}/members/{username}",
     params(
-        ("group_id" = i64, Path, description = "Group ID"),
+        ("group_id" = SnowflakeId, Path, description = "Group ID"),
         ("username" = String, Path, description = "Campsite user id of the member")
     ),
     responses(
@@ -261,18 +264,18 @@ async fn add_group_members(
 async fn remove_group_member(
     user: LoginUser,
     State(state): State<MonoApiServiceState>,
-    Path((group_id, username)): Path<(i64, String)>,
+    Path((group_id, username)): Path<(SnowflakeId, String)>,
 ) -> Result<Json<CommonResult<RemoveMemberResponse>>, ApiError> {
     ensure_admin(&state, &user).await?;
     // Path `username` is campsite_user_id.
     let removed = state
         .services()
         .admin()
-        .remove_group_member(group_id, &username)
+        .remove_group_member(group_id.into(), &username)
         .await?;
 
     Ok(Json(CommonResult::success(Some(RemoveMemberResponse {
-        group_id,
+        group_id: group_id.into(),
         username,
         removed,
     }))))
@@ -283,7 +286,7 @@ async fn remove_group_member(
     path = "/groups/{group_id}/members/list",
     request_body = PageParams<EmptyListAdditional>,
     params(
-        ("group_id" = i64, Path, description = "Group ID")
+        ("group_id" = SnowflakeId, Path, description = "Group ID")
     ),
     responses(
         (status = 200, body = CommonResult<CommonPage<GroupMemberResponse>>),
@@ -297,7 +300,7 @@ async fn remove_group_member(
 async fn list_group_members(
     user: LoginUser,
     State(state): State<MonoApiServiceState>,
-    Path(group_id): Path<i64>,
+    Path(SnowflakeId(group_id)): Path<SnowflakeId>,
     Json(json): Json<PageParams<EmptyListAdditional>>,
 ) -> Result<Json<CommonResult<CommonPage<GroupMemberResponse>>>, ApiError> {
     ensure_admin(&state, &user).await?;

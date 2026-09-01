@@ -4,7 +4,7 @@ import type { PageParamsEmptyListAdditional, PostApiAdminGroupsMembersListData, 
 
 import { legacyApiClient } from '@/utils/queryClient'
 
-export function useAdminGroupMembersList(groupId: number, data: PageParamsEmptyListAdditional, params?: RequestParams) {
+export function useAdminGroupMembersList(groupId: string, data: PageParamsEmptyListAdditional, params?: RequestParams) {
   return useQuery<PostApiAdminGroupsMembersListData, Error>({
     queryKey: [...legacyApiClient.v1.postApiAdminGroupsMembersList().requestKey(groupId), data, params],
     queryFn: () => legacyApiClient.v1.postApiAdminGroupsMembersList().request(groupId, data, params),

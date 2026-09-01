@@ -29,7 +29,7 @@ export const NoteRow = memo(({ note, display = 'default', hideProject = false, p
   const hasRead = permission?.hasRead || false
 
   const href = `/${scope}/notes/${note.id}`
-  const canAccess = isAdmin || hasRead
+  const canAccess = isAdmin || hasRead || !!note.viewer_is_author
   const isDisabled = !canAccess
 
   const handleSelectWithPermission = (value: string) => {

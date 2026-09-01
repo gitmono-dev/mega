@@ -118,6 +118,9 @@ const ContentSecurityPolicy = Object.keys(cspResourcesByDirective).reduce((prevP
 /** @type {import('next').NextConfig} */
 const moduleExports = {
   output: 'standalone',
+  // Allow HMR /_next/webpack-hmr when browsing via local hostnames (not localhost).
+  // Without this, Next blocks cross-origin dev websockets from app.gitmono.local.
+  allowedDevOrigins: ['app.gitmono.local', '*.gitmono.local', 'local.gitmega.com', '*.gitmega.nju'],
   experimental: {
     // Keep monorepo package resolution working for local workspace sources.
     externalDir: true

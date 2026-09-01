@@ -17,7 +17,7 @@ export function usePostResourcePermissions() {
   return useMutation<PostApiAdminResourcesPermissionsData, Error, PostResourcePermissionsParams>({
     mutationFn: async ({ resourceType, resourceId, data, params }) => {
       const response = await legacyApiClient.v1
-        .postApiAdminResourcesPermissions()
+        .putApiAdminResourcesPermissions()
         .request(resourceType, resourceId, data, params)
 
       if (response && typeof response === 'object' && 'req_result' in response && !response.req_result) {

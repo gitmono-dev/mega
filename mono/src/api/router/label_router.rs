@@ -3,7 +3,10 @@ use axum::{
     Json,
     extract::{Path, State},
 };
-use ceres::model::label::{LabelItem, NewLabel};
+use ceres::model::{
+    label::{LabelItem, NewLabel},
+    serde_snowflake::SnowflakeId,
+};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::api::{
@@ -72,7 +75,7 @@ async fn new_label(
 #[utoipa::path(
     get,
         params(
-        ("id", description = "Label's id"),
+        ("id" = SnowflakeId, Path, description = "Label's id"),
     ),
     path = "/{id}",
     responses(
@@ -82,7 +85,7 @@ async fn new_label(
 )]
 async fn fetch_label(
     state: State<MonoApiServiceState>,
-    Path(id): Path<i64>,
+    Path(SnowflakeId(id)): Path<SnowflakeId>,
 ) -> Result<Json<CommonResult<LabelItem>>, ApiError> {
     let label = state.services().issue().get_label_by_id(id).await?;
     Ok(Json(CommonResult::success(label)))

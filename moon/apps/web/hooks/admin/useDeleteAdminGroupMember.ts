@@ -7,7 +7,7 @@ import { apiErrorToast } from '@/utils/apiErrorToast'
 import { legacyApiClient } from '@/utils/queryClient'
 
 interface DeleteMemberParams {
-  groupId: number
+  groupId: string
   username: string
 }
 

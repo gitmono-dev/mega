@@ -13,7 +13,7 @@ const deleteCommentMutation = legacyApiClient.v1.deleteApiCodeReviewCommentByCom
 export function useDeleteComment(link: string) {
   const queryClient = useQueryClient()
 
-  return useMutation<DeleteApiCodeReviewCommentByCommentIdData, Error, { commentId: number; params?: RequestParams }>({
+  return useMutation<DeleteApiCodeReviewCommentByCommentIdData, Error, { commentId: string; params?: RequestParams }>({
     mutationFn: ({ commentId, params }) => deleteCommentMutation.request(commentId, params),
 
     onSuccess: () => {

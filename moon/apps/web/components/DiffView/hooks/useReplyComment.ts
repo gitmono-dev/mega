@@ -16,7 +16,7 @@ export function useReplyComment(link: string) {
   return useMutation<
     PostApiCodeReviewCommentReplyData,
     Error,
-    { threadId: number; data: CommentReplyRequest; params?: RequestParams }
+    { threadId: string; data: CommentReplyRequest; params?: RequestParams }
   >({
     mutationFn: ({ threadId, data, params }) => replyCommentMutation.request(threadId, data, params),
 

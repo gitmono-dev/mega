@@ -160,6 +160,8 @@ pub struct CompletePayload {}
 #[derive(Debug, Serialize, ToSchema)]
 pub struct CompleteResponse {
     /// Change List ID
+    #[serde(serialize_with = "crate::model::serde_snowflake::serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub cl_id: i64,
     /// CL link (same as session_id)
     pub cl_link: String,

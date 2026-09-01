@@ -5,6 +5,8 @@ use callisto::{
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use super::serde_snowflake::{deserialize_i64_from_string_or_number, serialize_i64_as_string};
+
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct EmptyListAdditional {}
 
@@ -22,6 +24,9 @@ pub struct UpdateGroupRequest {
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct GroupResponse {
+    /// Snowflake id; JSON string so JS keeps full precision.
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub id: i64,
     pub name: String,
     pub description: Option<String>,
@@ -37,7 +42,11 @@ pub struct AddMembersRequest {
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct GroupMemberResponse {
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub id: i64,
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub group_id: i64,
     /// Campsite public user id (field name kept for API compat).
     pub username: String,
@@ -85,6 +94,8 @@ impl TryFrom<&str> for ResourceTypeValue {
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct PermissionBindingRequest {
+    #[serde(deserialize_with = "deserialize_i64_from_string_or_number")]
+    #[schema(value_type = String)]
     pub group_id: i64,
     pub permission: PermissionValue,
 }
@@ -96,9 +107,13 @@ pub struct SetPermissionsRequest {
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ResourcePermissionResponse {
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub id: i64,
     pub resource_type: ResourceTypeValue,
     pub resource_id: String,
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub group_id: i64,
     pub permission: PermissionValue,
     pub created_at: i64,
@@ -107,6 +122,8 @@ pub struct ResourcePermissionResponse {
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct DeleteGroupResponse {
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub group_id: i64,
     pub deleted_members_count: u64,
     pub deleted_permissions_count: u64,
@@ -115,6 +132,8 @@ pub struct DeleteGroupResponse {
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct RemoveMemberResponse {
+    #[serde(serialize_with = "serialize_i64_as_string")]
+    #[schema(value_type = String)]
     pub group_id: i64,
     pub username: String,
     pub removed: bool,
@@ -222,7 +241,7 @@ impl From<ResourceTypeEnum> for ResourceTypeValue {
 mod tests {
     use callisto::sea_orm_active_enums::PermissionEnum;
 
-    use super::{PermissionValue, ResourceTypeValue};
+    use super::{GroupResponse, PermissionBindingRequest, PermissionValue, ResourceTypeValue};
 
     #[test]
     fn permission_value_satisfies_hierarchy() {
@@ -246,5 +265,33 @@ mod tests {
         let as_enum: PermissionEnum = write.into();
         let back: PermissionValue = as_enum.into();
         assert_eq!(back, write);
+    }
+
+    #[test]
+    fn group_response_id_serializes_as_json_string() {
+        let group = GroupResponse {
+            id: 13_502_510_928_822_277,
+            name: "hhh".into(),
+            description: None,
+            created_at: 0,
+            updated_at: 0,
+        };
+        let value = serde_json::to_value(&group).unwrap();
+        match &value["id"] {
+            serde_json::Value::String(s) => assert_eq!(s, "13502510928822277"),
+            other => panic!("expected JSON string id, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn permission_binding_accepts_string_or_number_group_id() {
+        let from_string: PermissionBindingRequest =
+            serde_json::from_str(r#"{"group_id":"13502510928822277","permission":"read"}"#)
+                .unwrap();
+        assert_eq!(from_string.group_id, 13_502_510_928_822_277);
+
+        let from_number: PermissionBindingRequest =
+            serde_json::from_str(r#"{"group_id":3306264941936901,"permission":"write"}"#).unwrap();
+        assert_eq!(from_number.group_id, 3_306_264_941_936_901);
     }
 }

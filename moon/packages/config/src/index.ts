@@ -12,8 +12,40 @@ export const IS_NGROK = !!process.env.NEXT_PUBLIC_IS_NGROK
 // eslint-disable-next-line turbo/no-undeclared-env-vars
 export const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://app.gitmega.com'
 export const SITE_URL = IS_PRODUCTION ? SITE_URL_PROD : SITE_URL_DEV
+
+// Runtime placeholder used by docker-entrypoint.sh / .env.runtime. Prefer an
+// explicit NEXT_PUBLIC_SYNC_URL (set per env by terraform: sync.<base_domain>).
+// When unset, derive from WEB_URL so rust / rk8s / dev stay aligned with their
+// app host (app.<base> → sync.<base>); local *.local / *.test → localhost:9000.
+const SYNC_URL_PLACEHOLDER = 'wss://rt-sync.placeholder.local'
+const SYNC_URL_LOCAL = 'ws://localhost:9000'
+
+function deriveSyncUrlFromWebUrl(webUrl: string): string | undefined {
+  try {
+    const url = new URL(webUrl)
+
+    if (url.hostname.includes('placeholder')) return undefined
+
+    if (url.hostname === 'localhost' || url.hostname.endsWith('.local') || url.hostname.endsWith('.test')) {
+      return SYNC_URL_LOCAL
+    }
+
+    // Matches mega-terraform gitmono_stack: app_subdomains["mega-ui"]="app",
+    // app_subdomains["mega-web-sync"]="sync" → wss://sync.<base_domain>
+    if (url.hostname.startsWith('app.')) {
+      const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+
+      return `${protocol}//sync.${url.hostname.slice('app.'.length)}`
+    }
+  } catch {
+    // ignore invalid WEB_URL
+  }
+
+  return undefined
+}
+
 // eslint-disable-next-line turbo/no-undeclared-env-vars
-export const SYNC_URL = process.env.NEXT_PUBLIC_SYNC_URL || 'wss://sync.gitmega.com'
+export const SYNC_URL = process.env.NEXT_PUBLIC_SYNC_URL || deriveSyncUrlFromWebUrl(WEB_URL) || SYNC_URL_PLACEHOLDER
 
 export const DESKTOP_APP_PROTOCOL = IS_PRODUCTION ? 'campsite://' : 'campsite-dev://'
 export const LAST_CLIENT_JS_BUILD_ID_LS_KEY = 'latest-js-time'

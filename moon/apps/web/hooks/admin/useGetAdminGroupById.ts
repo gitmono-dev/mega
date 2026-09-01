@@ -8,7 +8,7 @@ interface UseGetAdminGroupByIdOptions extends RequestParams {
   enabled?: boolean
 }
 
-export function useGetAdminGroupById(groupId: number, options?: UseGetAdminGroupByIdOptions) {
+export function useGetAdminGroupById(groupId: string, options?: UseGetAdminGroupByIdOptions) {
   const { enabled = true, ...params } = options || {}
 
   return useQuery<GetApiAdminGroupsByGroupIdData, Error>({

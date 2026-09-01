@@ -10,7 +10,7 @@ export function useUpdateAdminGroup() {
   return useMutation<
     PutApiAdminGroupsByGroupIdData,
     Error,
-    { groupId: number; data: UpdateGroupRequest; params?: RequestParams }
+    { groupId: string; data: UpdateGroupRequest; params?: RequestParams }
   >({
     mutationFn: async ({ groupId, data, params }) => {
       const response = await legacyApiClient.v1.putApiAdminGroupsByGroupId().request(groupId, data, params)

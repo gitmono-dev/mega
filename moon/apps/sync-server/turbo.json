@@ -4,10 +4,10 @@
   "tasks": {
     "dev": {
       "dependsOn": ["^build", "build"],
-      "passThroughEnv": ["PORT"]
+      "passThroughEnv": ["PORT", "API_URL"]
     },
     "build": {
-      "env": ["TIPTAP_PRIVATE_REGISTRY_KEY", "NODE_ENV", "PORT"]
+      "env": ["TIPTAP_PRIVATE_REGISTRY_KEY", "NODE_ENV", "PORT", "API_URL"]
     }
   }
 }

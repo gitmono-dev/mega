@@ -47,6 +47,8 @@ export function useGetNotesPermissions({ notes, enabled = true }: UseGetNotesPer
 
       // Batch query permissions for all notes
       const permissionsPromises = notes.map(async (note) => {
+        const isAuthor = !!note.viewer_is_author
+
         try {
           let response
 
@@ -63,8 +65,9 @@ export function useGetNotesPermissions({ notes, enabled = true }: UseGetNotesPer
           if (response?.data) {
             return {
               noteId: note.id,
-              hasRead: response.data.has_read,
-              hasWrite: response.data.has_write,
+              // Authors always retain access even when group ACL has no grant.
+              hasRead: response.data.has_read || isAuthor,
+              hasWrite: response.data.has_write || isAuthor,
               isAdmin: response.data.is_admin
             }
           }
@@ -75,8 +78,8 @@ export function useGetNotesPermissions({ notes, enabled = true }: UseGetNotesPer
 
         return {
           noteId: note.id,
-          hasRead: false,
-          hasWrite: false,
+          hasRead: isAuthor,
+          hasWrite: isAuthor,
           isAdmin: false
         }
       })
