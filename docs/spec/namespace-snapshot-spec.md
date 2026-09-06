@@ -1,6 +1,6 @@
 # Mega Namespace Snapshot：服务端实施 Spec
 
-状态：Draft v0.3，2026-09-06。基线 `c4c79bc195541a13ac1505b94728c81a8ff3d603`。本文是目标设计，不是当前服务端能力清单。已实现的基础包括 import 固定 commit 解析、source identity 契约及 source/scope 证明的 additive schema 与存储；未部署或开放 snapshot capability。D1（完整 native + import 原子组合视图）与 D4（安全启用门槛）已获用户确认；D2/D3 尚待确认。
+状态：Draft v0.4，2026-09-06。基线 `c4c79bc195541a13ac1505b94728c81a8ff3d603`。本文是目标设计，不是当前服务端能力清单。已实现的基础包括 import 固定 commit 解析、source identity/scope 证明、持久化 bounded radix 索引以及两仓共享的 [namespace manifest 编码](namespace-manifest-v1.md)；未部署或开放 snapshot capability。D1（完整 native + import 原子组合视图）、D2（显式 release 目录发布后不可变）与 D4（安全启用门槛）已获用户确认；D3 尚待确认。
 
 跨仓跟踪：[ScorpioFS #55](https://github.com/gitmono-dev/scorpiofs/issues/55)，关联 [#42 Snapshot](https://github.com/gitmono-dev/scorpiofs/issues/42)。配套客户端规范为 ScorpioFS 仓库的 `docs/spec/monorepo-versioning.md`；本文细化 Mega 的写入、存储、API 与迁移责任。基础实现持续审阅入口为 [Mega Draft PR #2181](https://github.com/gitmono-dev/mega/pull/2181) 与 [ScorpioFS Draft PR #56](https://github.com/gitmono-dev/scorpiofs/pull/56)；基础契约及测试入口见 [source-snapshot-v1.md](source-snapshot-v1.md)。完整 namespace 发布事务、所有写入者接入、GC/lease、HTTP/FUSE 联调及受控更新仍是未完成的交付门槛，不能由基础单测或 Draft PR 创建替代。
 
@@ -256,7 +256,7 @@ G02 可以与 ScorpioFS fake backend/CAS 类型工作并行，G03/G04 不等“�
 | MG08 | 新 repo 登记后 unpack 失败、并发父子仓登记、取消挂接/改路径；失败新 repo 不出现在发布目录，旧 view 路由不漂 |
 | MG09 | objects prepare、ref write、view write、head CAS、commit、response、outbox 各处 crash；已提交结果可查、未提交不出现 |
 | MG10 | 网页编辑/native merge/管理入口的绕过测试；全部可见 mutation 都能查到对应 publication 或明确 no-op |
-| MG11 | 版本目录 D2 两种政策分别测：不可变拒绝所有写入口的第二次内容发布；可变策略保留旧绑定/对象 |
+| MG11 | D2 已确认：显式 release 目录拒绝所有写入口的第二次内容变更，不能通过降级 policy 绕过；普通 mutable 开发目录更新时保留旧绑定/对象 |
 | MG12 | 百万 binding 单点更新、小前缀 mount、跨多页目录：节点与内存有界，不扫描整个 registry，cursor 不串 view |
 | MG13 | 猜测另一个 repo 的 OID、已撤权 lease、私有 binding、跨域 CAS 命中；均不能绕过授权 |
 | MG14 | pin 创建/续期与 GC 竞争、pack/base 保留、repo tombstone、lease 过期；不删有效保留对象 |
@@ -271,7 +271,7 @@ G02 可以与 ScorpioFS fake backend/CAS 类型工作并行，G03/G04 不等“�
 产品决策仍沿用客户端 spec 编号，避免两仓各自解释：
 
 - **D1 已确认（2026-09-06）**：Mega 原子发布 native root + 固定 import bindings 的完整 namespace view，ScorpioFS 固定该 view 读取。单 source 是中间工作包，不将全库原子一致性从本次目标延期。
-- **D2 推荐**：明确标记为发布版本的目录首次发布后不可改，通用 import 默认 branch 仍可演进；不能仅从数字路径名自动判断政策。另一方案允许原地更新，但每次新绑定且保留历史。
+- **D2 已确认（2026-09-06）**：明确标记为 release 的目录首次发布后不可改，通用 import 开发 branch 仍可演进；不能仅从数字路径名自动判断政策。新 release 内容使用新版本路径，所有写入口都必须执行约束，不能通过改 policy 绕过。
 - **D3 推荐**：运行 build 固定旧 view，新 build 用新 view；现有工作区受控切换。透明 live-refresh 不属于本服务端 PR 的承诺。
 
 实施闸门：G01 冻结 canonical 编码/字段；G04 审计全部写入口；G05 明确实际 PostgreSQL/SQLite、对象后端、导入拓扑、维护窗口及保留期。基础设施验证可继续，不把这些未确认事项写成“用户已同意”。

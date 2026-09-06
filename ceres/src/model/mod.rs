@@ -13,6 +13,7 @@ pub mod group;
 pub mod issue;
 pub mod label;
 pub mod merge_queue;
+pub mod namespace;
 pub mod note;
 pub mod notification;
 pub mod orion_runner;
