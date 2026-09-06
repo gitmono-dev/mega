@@ -12,7 +12,7 @@ use common::{
 use futures::Stream;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseTransaction, DbErr, EntityTrait,
-    IntoActiveModel, PaginatorTrait, QueryFilter, QueryOrder, Set, TransactionTrait,
+    IntoActiveModel, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect, Set, TransactionTrait,
     sea_query::{CaseStatement, Expr, ExprTrait, OnConflict},
 };
 
@@ -31,6 +31,16 @@ impl Deref for GitDbStorage {
 }
 
 impl GitDbStorage {
+    /// Stable backend lookup, independent of the current namespace path.
+    pub async fn find_git_repo_by_id(
+        &self,
+        repo_id: i64,
+    ) -> Result<Option<git_repo::Model>, MegaError> {
+        Ok(git_repo::Entity::find_by_id(repo_id)
+            .one(self.get_connection())
+            .await?)
+    }
+
     pub async fn create_repo_and_save_ref(
         &self,
         repo_path: &str,
@@ -114,6 +124,39 @@ impl GitDbStorage {
             .all(self.get_connection())
             .await?;
         Ok(result)
+    }
+
+    /// Resolve one fully qualified ref without listing every ref in the repository.
+    pub async fn get_ref_by_name(
+        &self,
+        repo_id: i64,
+        ref_name: &str,
+    ) -> Result<Option<import_refs::Model>, MegaError> {
+        Ok(import_refs::Entity::find()
+            .filter(import_refs::Column::RepoId.eq(repo_id))
+            .filter(import_refs::Column::RefName.eq(ref_name))
+            .one(self.get_connection())
+            .await?)
+    }
+
+    /// Snapshot resolution must not arbitrarily select from ambiguous default refs.
+    /// Bound the query even when legacy metadata contains many default flags.
+    pub async fn get_unique_default_ref(
+        &self,
+        repo_id: i64,
+    ) -> Result<Option<import_refs::Model>, MegaError> {
+        let mut refs = import_refs::Entity::find()
+            .filter(import_refs::Column::RepoId.eq(repo_id))
+            .filter(import_refs::Column::DefaultBranch.eq(true))
+            .limit(2)
+            .all(self.get_connection())
+            .await?;
+        if refs.len() > 1 {
+            return Err(MegaError::Conflict(
+                "multiple default refs in import repository".into(),
+            ));
+        }
+        Ok(refs.pop())
     }
 
     pub async fn update_ref(
@@ -201,6 +244,30 @@ impl GitDbStorage {
         active.updated_at = Set(chrono::Utc::now().naive_utc());
         active.update(txn).await?;
         Ok(())
+    }
+
+    /// Conditional ref mutation for a caller-owned publication transaction.
+    /// Does not retry/rebase or silently replace a newer advertised-old value.
+    pub async fn update_ref_if_unchanged<C: ConnectionTrait>(
+        &self,
+        repo_id: i64,
+        ref_name: &str,
+        expected_git_id: &str,
+        new_git_id: &str,
+        conn: &C,
+    ) -> Result<bool, MegaError> {
+        let result = import_refs::Entity::update_many()
+            .col_expr(import_refs::Column::RefGitId, Expr::value(new_git_id))
+            .col_expr(
+                import_refs::Column::UpdatedAt,
+                Expr::value(chrono::Utc::now().naive_utc()),
+            )
+            .filter(import_refs::Column::RepoId.eq(repo_id))
+            .filter(import_refs::Column::RefName.eq(ref_name))
+            .filter(import_refs::Column::RefGitId.eq(expected_git_id))
+            .exec(conn)
+            .await?;
+        Ok(result.rows_affected == 1)
     }
 
     pub async fn get_default_ref(

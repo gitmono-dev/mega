@@ -112,32 +112,26 @@ impl ApiHandler for ImportApiService {
 
     async fn get_root_commit(&self) -> Result<Commit, MegaError> {
         let storage = self.storage.git_db_storage();
-        let refs = storage.get_default_ref(self.repo.repo_id).await?.unwrap();
-        self.get_commit_by_hash(&refs.ref_git_id).await
+        let source = crate::application::snapshot::source::resolve_import_commit(
+            &storage,
+            self.repo.repo_id,
+            None,
+        )
+        .await?;
+        self.get_commit_by_hash(&source.commit_oid).await
     }
 
-    /// Note: The `refs` parameter is intentionally ignored for import repositories,
-    /// as they do not support selecting refs. The default ref is always used.
-    async fn get_root_tree(&self, _: Option<&str>) -> Result<Tree, MegaError> {
+    /// Resolve once, then read that immutable root. An explicit revision must
+    /// never silently fall back to the repository's current default branch.
+    async fn get_root_tree(&self, refs: Option<&str>) -> Result<Tree, MegaError> {
         let storage = self.storage.git_db_storage();
-        let refs = storage
-            .get_default_ref(self.repo.repo_id)
-            .await
-            .unwrap()
-            .unwrap();
-
-        let root_commit = storage
-            .get_commit_by_hash(self.repo.repo_id, &refs.ref_git_id)
-            .await
-            .unwrap()
-            .unwrap();
-        Ok(Tree::from_git_model(
-            storage
-                .get_tree_by_hash(self.repo.repo_id, &root_commit.tree)
-                .await
-                .unwrap()
-                .unwrap(),
-        ))
+        let source = crate::application::snapshot::source::resolve_import_commit(
+            &storage,
+            self.repo.repo_id,
+            refs,
+        )
+        .await?;
+        crate::application::snapshot::source::read_import_root(&storage, &source).await
     }
 
     async fn get_tree_by_hash(&self, hash: &str) -> Result<Tree, MegaError> {
@@ -146,7 +140,7 @@ impl ApiHandler for ImportApiService {
             .git_db_storage()
             .get_tree_by_hash(self.repo.repo_id, hash)
             .await?
-            .unwrap();
+            .ok_or_else(|| MegaError::NotFound(format!("import tree not found: {hash}")))?;
         Ok(Tree::from_git_model(model))
     }
 
@@ -155,7 +149,7 @@ impl ApiHandler for ImportApiService {
         let commit = storage
             .get_commit_by_hash(self.repo.repo_id, hash)
             .await?
-            .unwrap();
+            .ok_or_else(|| MegaError::NotFound(format!("import commit not found: {hash}")))?;
         Ok(Commit::from_git_model(commit))
     }
 
