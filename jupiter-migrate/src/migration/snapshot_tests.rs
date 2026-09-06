@@ -6,6 +6,18 @@ use sea_orm::{
 
 use super::*;
 
+const SNAPSHOT_TABLES: &[&str] = &[
+    "snapshot_instance",
+    "snapshot_source",
+    "source_commit_scope",
+    "namespace_node",
+    "namespace_view",
+    "namespace_head",
+    "namespace_publication",
+    "snapshot_operation",
+    "namespace_outbox",
+];
+
 #[tokio::test]
 async fn snapshot_migration_roundtrip_preserves_legacy_tables() {
     let db = Database::connect(
@@ -27,17 +39,12 @@ async fn snapshot_migration_roundtrip_preserves_legacy_tables() {
     .exec(&db)
     .await
     .unwrap();
-    for name in [
-        "snapshot_instance",
-        "snapshot_source",
-        "source_commit_scope",
-        "namespace_node",
-    ] {
+    for &name in SNAPSHOT_TABLES {
         assert!(has_table(&db, name).await);
     }
     // Explicit destructive DDL rollback is exercised only on this private test
     // database. Production application rollback must retain issued identities.
-    Migrator::down(&db, Some(3)).await.unwrap();
+    Migrator::down(&db, Some(4)).await.unwrap();
     assert!(
         git_repo::Entity::find_by_id(99)
             .one(&db)
@@ -45,12 +52,7 @@ async fn snapshot_migration_roundtrip_preserves_legacy_tables() {
             .unwrap()
             .is_some()
     );
-    for name in [
-        "snapshot_instance",
-        "snapshot_source",
-        "source_commit_scope",
-        "namespace_node",
-    ] {
+    for &name in SNAPSHOT_TABLES {
         assert!(!has_table(&db, name).await);
     }
     Migrator::up(&db, None).await.unwrap();
@@ -62,12 +64,7 @@ async fn snapshot_migration_roundtrip_preserves_legacy_tables() {
             .unwrap()
             .is_some()
     );
-    for name in [
-        "snapshot_instance",
-        "snapshot_source",
-        "source_commit_scope",
-        "namespace_node",
-    ] {
+    for &name in SNAPSHOT_TABLES {
         assert!(has_table(&db, name).await);
     }
 }
@@ -123,14 +120,16 @@ async fn snapshot_postgres_timestamp_forward_migration_preserves_existing_utc_va
     )
     .await
     .unwrap();
-    Migrator::up(&db, Some(Migrator::migrations().len() as u32 - 1))
-        .await
+    let utc_index = Migrator::migrations()
+        .iter()
+        .position(|m| m.name() == "m20260906_145000_snapshot_utc_timestamps")
         .unwrap();
+    Migrator::up(&db, Some(utc_index as u32)).await.unwrap();
     db.execute_unprepared("INSERT INTO snapshot_instance (singleton, instance_id, created_at) VALUES ('utc-fixture', '11111111-1111-4111-8111-111111111111', TIMESTAMP '2024-01-02 03:04:05')").await.unwrap();
     db.execute_unprepared("SET TIME ZONE 'America/Los_Angeles'")
         .await
         .unwrap();
-    Migrator::up(&db, None).await.unwrap();
+    Migrator::up(&db, Some(1)).await.unwrap();
     let model = callisto::snapshot_instance::Entity::find_by_id("utc-fixture".to_owned())
         .one(&db)
         .await

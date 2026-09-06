@@ -91,7 +91,7 @@ pub fn node_digest(bytes: &[u8]) -> String {
     format!("sha256:{}", hex::encode(Sha256::digest(bytes)))
 }
 
-fn validate_digest(digest: &str) -> Result<(), MegaError> {
+pub(super) fn validate_digest(digest: &str) -> Result<(), MegaError> {
     if !digest.strip_prefix("sha256:").is_some_and(|s| {
         s.len() == 64
             && s.bytes()

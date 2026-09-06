@@ -107,6 +107,7 @@ mod m20260811_100000_create_campsite_member_identity;
 mod m20260906_120000_snapshot_source_identity;
 mod m20260906_140000_namespace_nodes;
 mod m20260906_145000_snapshot_utc_timestamps;
+mod m20260906_160000_namespace_publication;
 mod runner;
 #[cfg(test)]
 mod snapshot_tests;
@@ -203,6 +204,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260906_120000_snapshot_source_identity::Migration),
             Box::new(m20260906_140000_namespace_nodes::Migration),
             Box::new(m20260906_145000_snapshot_utc_timestamps::Migration),
+            Box::new(m20260906_160000_namespace_publication::Migration),
         ]
     }
 }

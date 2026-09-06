@@ -246,6 +246,30 @@ impl GitDbStorage {
         Ok(())
     }
 
+    /// Conditional ref mutation for a caller-owned publication transaction.
+    /// Does not retry/rebase or silently replace a newer advertised-old value.
+    pub async fn update_ref_if_unchanged<C: ConnectionTrait>(
+        &self,
+        repo_id: i64,
+        ref_name: &str,
+        expected_git_id: &str,
+        new_git_id: &str,
+        conn: &C,
+    ) -> Result<bool, MegaError> {
+        let result = import_refs::Entity::update_many()
+            .col_expr(import_refs::Column::RefGitId, Expr::value(new_git_id))
+            .col_expr(
+                import_refs::Column::UpdatedAt,
+                Expr::value(chrono::Utc::now().naive_utc()),
+            )
+            .filter(import_refs::Column::RepoId.eq(repo_id))
+            .filter(import_refs::Column::RefName.eq(ref_name))
+            .filter(import_refs::Column::RefGitId.eq(expected_git_id))
+            .exec(conn)
+            .await?;
+        Ok(result.rows_affected == 1)
+    }
+
     pub async fn get_default_ref(
         &self,
         repo_id: i64,

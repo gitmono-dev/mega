@@ -22,9 +22,10 @@ async fn postgres_snapshot_nodes_scope_proofs_and_radix_transactions() {
         parsed.host_str(),
         Some("localhost" | "127.0.0.1" | "[::1]")
     ));
-    assert!(
-        parsed.path().trim_start_matches('/').ends_with("_test"),
-        "test database name must end in _test"
+    assert_eq!(
+        parsed.path(),
+        "/snapshot_test",
+        "use the explicit disposable test database"
     );
     let schema = format!("snapshot_test_{}", uuid::Uuid::new_v4().simple());
     let control = Database::connect(

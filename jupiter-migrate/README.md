@@ -107,6 +107,31 @@ under an America/Los_Angeles session. The focused CI job also runs the ignored
 million-binding index test. These gates do not validate publication, leases, GC,
 writer fencing or the entire workspace; those remain separate acceptance work.
 
+## Publication metadata generation and tests
+
+The additive `m20260906_160000_namespace_publication` migration creates five more
+tables without initializing a head or enabling an API. Generate only its models
+from a new disposable schema (again use a fresh `<temp>` absolute directory):
+
+```bash
+cargo run -p jupiter-migrate --example snapshot_schema -- <temp>/publication.db
+sea-orm-cli generate entity -u sqlite://<temp>/publication.db -o <temp>/entities --tables namespace_view,namespace_head,namespace_publication,snapshot_operation,namespace_outbox --with-serde both --entity-format dense
+```
+
+Copy the five generated models, merge registries and preserve `entity_ext` as
+above. All counters use BIGINT and timestamps are timezone-aware. The snapshot
+migration roundtrip test now checks all nine snapshot tables. The UTC upgrade
+regression locates the UTC migration by name rather than assuming it is last.
+
+`cargo test -p jupiter --lib publication_storage --locked -- --include-ignored
+--nocapture` explicitly runs both SQLite and disposable PostgreSQL tests using
+the same guarded URL. They cover the real `import_refs` table participating in
+the publication transaction, operation replay, CAS, rollback after head update,
+concurrent duplicate/expected-old requests and reconnect receipt lookup. See
+[publication core](../docs/spec/namespace-publication-core.md) for the precise
+evidence boundary: all production writers, composition, pins, authorization and
+outbox delivery remain separate requirements.
+
 ## Library API reference
 
 ```rust

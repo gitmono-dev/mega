@@ -57,7 +57,7 @@ Mega 提供两个可独立验收的能力：
 
 ### 3.2 Scope 证明
 
-拟新增 `source_commit_scope`，唯一键 `(source_id, scope_path, algorithm, commit_oid)`，保存 root_tree_oid、证明类型和可审计来源（产生该对象的 ref mutation/父 scope 映射/已发布 root）。
+已添加 `source_commit_scope`，逻辑唯一键 `(source_id, scope_path, algorithm, commit_oid)`，保存 root_tree_oid、证明类型和可审计来源（产生该对象的 ref mutation/父 scope 映射/已发布 root）。实际数据库索引使用 scope 的 SHA-256 key 并核对完整路径，避免 PostgreSQL 长路径 btree 限制；所有生产创建/merge 入口的证明写入仍需接入。
 
 证明在原生 root/子 scope commit 创建、scope clone 派生、CL 接收、merge 生成路径 commits 时一起记录。已知 root commit 可沿已验证 root 历史建立 root-scope 关系；不能把任意存在于 `mega_commit` 的对象默认视为 `/`。
 
@@ -77,7 +77,7 @@ tag 解析返回 ref OID、必要的 annotated-tag peeling 链与最终 commit�
 
 路径以组件匹配；`/rust` 不匹配 `/rust_v1`。v1 采用有效 UTF-8 路径组件，不做大小写折叠/Unicode 归一化；拒绝 NUL、`.`、`..`、重复分隔等非规范输入，非 UTF-8 名称明确返回 unsupported，不静默改名。Git 路径语义不套用 Windows 路径规则。路径编码规则进入 schema 版本。
 
-建议实现持久化压缩 byte-radix/Merkle trie：组件间使用禁止出现在名称中的 NUL 作为内部边界，内部节点最多 256 个分支，value 保存独立 binding digest。节点大小、最长路径、递归深度有硬上限；压缩长 label 必须仍受节点上限约束。
+已实现的 [索引基础](namespace-index-v1.md) 是持久化压缩 byte-radix/Merkle trie：组件间使用禁止出现在名称中的 NUL 作为内部边界，内部节点最多 256 个分支，value 保存独立 binding digest。节点大小、最长路径有硬上限，遍历不依赖递归；压缩长 label 仍受节点上限约束。公开分页 cursor、组合策略和保留遍历尚未由这层实现。
 
 仅说“重写祖先节点”还不够：根节点若内嵌百万 children，单次更新仍是 O(R)。首个索引 PR 必须证明节点 fanout/大小受限，更新 b 个 binding 的成本受变动 key 长度和受限节点数控制；持久化旧节点继续被旧 view 引用。
 
@@ -85,7 +85,9 @@ tag 解析返回 ref OID、必要的 annotated-tag peeling 链与最终 commit�
 
 百万 binding 测试记录 node reads/writes、bytes、峰值内存和分页工作量，不只报告平均耗时。初始全量建索引允许 O(R)，在线单点发布和小工作集 mount 不允许。
 
-## 5. 元数据模型（拟新增，不是现有数据库表）
+## 5. 元数据模型（目标模型，部分已落地）
+
+当前 additive schema 已包含 source/scope、namespace_node、view/head/publication、operation 与 outbox；binding_head、pin 及完整业务发布策略尚未落地。表存在不代表已部署或启用完整 namespace capability。
 
 | 表/存储 | 关键字段与约束 | 用途 |
 | --- | --- | --- |
@@ -107,6 +109,8 @@ tag 解析返回 ref OID、必要的 annotated-tag peeling 链与最终 commit�
 字段编码、digest 域分离、nil/空索引、排序及未知字段处理必须在 G01 给出共享 golden vectors 后冻结。当前 JSON/Rust 草图不是任意序列化即可互通的实现标准；canonical bytes 未冻结前不发布 v1 capability。
 
 ## 6. 发布事务与并发约束
+
+已实现的 [publication storage core](namespace-publication-core.md) 包含操作预留/回执、head CAS、同事务 ref 条件写、view/publication/outbox 持久化与两个数据库的故障/并发测试。当前所有生产 writer 尚未接入，组合策略、prepare pin、对象保留与 HTTP 能力仍未完成；下面是完整应用协议，不把存储核心测试等同于全链路交付。
 
 统一应用服务接收 `PublishPlan {operation_id, expected_head, ref_read_set, binding_read_set, prepared_objects, native_change?, binding_changes}`，返回 `PublicationReceipt {seq, view_id, outcome}`。HTTP endpoint 名称不决定领域模型；Git 与网页编辑调用同一服务。
 

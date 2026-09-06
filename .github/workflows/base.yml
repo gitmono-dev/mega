@@ -312,3 +312,5 @@ jobs:
           cargo test -p jupiter --lib namespace_storage --locked -j 2
       - name: Snapshot contracts, PostgreSQL transactions and million-binding gate
         run: cargo test -p ceres --lib snapshot --locked -j 2 -- --include-ignored --nocapture
+      - name: Publication receipts, ref CAS, rollback and concurrency on both databases
+        run: cargo test -p jupiter --lib publication_storage --locked -j 2 -- --include-ignored --nocapture
