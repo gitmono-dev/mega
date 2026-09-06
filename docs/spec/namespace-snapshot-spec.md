@@ -1,5 +1,7 @@
 # Mega Namespace Snapshot：服务端实施 Spec
 
+> 第一次阅读请从 [Mega 的 monorepo 版本发布设计](../monorepo-versioning-design.md) 开始；本文保留实现级契约和验收细节。
+
 状态：Draft v0.4，2026-09-06。基线 `c4c79bc195541a13ac1505b94728c81a8ff3d603`。本文是目标设计，不是当前服务端能力清单。已实现的基础包括 import 固定 commit 解析、source identity/scope 证明、持久化 bounded radix 索引以及两仓共享的 [namespace manifest 编码](namespace-manifest-v1.md)；未部署或开放 snapshot capability。D1（完整 native + import 原子组合视图）、D2（显式 release 目录发布后不可变）与 D4（安全启用门槛）已获用户确认；D3 尚待确认。
 
 跨仓跟踪：[ScorpioFS #55](https://github.com/gitmono-dev/scorpiofs/issues/55)，关联 [#42 Snapshot](https://github.com/gitmono-dev/scorpiofs/issues/42)。配套客户端规范为 ScorpioFS 仓库的 `docs/spec/monorepo-versioning.md`；本文细化 Mega 的写入、存储、API 与迁移责任。基础实现持续审阅入口为 [Mega Draft PR #2181](https://github.com/gitmono-dev/mega/pull/2181) 与 [ScorpioFS Draft PR #56](https://github.com/gitmono-dev/scorpiofs/pull/56)；基础契约及测试入口见 [source-snapshot-v1.md](source-snapshot-v1.md)。完整 namespace 发布事务、所有写入者接入、GC/lease、HTTP/FUSE 联调及受控更新仍是未完成的交付门槛，不能由基础单测或 Draft PR 创建替代。
