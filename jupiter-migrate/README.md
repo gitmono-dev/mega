@@ -51,7 +51,30 @@ Review generated diffs in `jupiter/callisto/src/` before committing.
 
 Join call sites that need those relations use `callisto::entity_ext::<table>::Relation`, not the generated entity `Relation`.
 
-## Library API
+## Snapshot source entity generation
+
+The snapshot source identity migration is additive; it does not create a published
+namespace or guess historical scope mappings. To reproduce only its entities,
+first create a new temporary directory, then run the following with its absolute
+path substituted for `<temp>`:
+
+```bash
+cargo run -p jupiter-migrate --example snapshot_schema -- <temp>/schema.db
+sea-orm-cli generate entity -u sqlite://<temp>/schema.db -o <temp>/entities --tables snapshot_instance,snapshot_source,source_commit_scope --with-serde both --entity-format dense
+```
+
+The example rejects existing database files. Review and copy only those three
+generated entity files into Callisto; merge their module/prelude registrations
+without replacing the existing registries or `entity_ext`. The initial generation
+uses sea-orm-cli 2.0.2. SQLite generation verifies the actual migration schema;
+PostgreSQL runtime/transaction tests are still a separate release gate.
+
+`source_commit_scope` indexes a SHA-256 scope key and retains the full UTF-8 path
+as data. This avoids placing multi-kilobyte paths in a PostgreSQL btree key. The
+storage facade checks the full path on reads and rejects conflicting immutable
+attestations. There is no cascading FK from mutable refs or repo paths to proof records.
+
+## Library API reference
 
 ```rust
 use jupiter_migrate::{apply_migrations, Migrator};

@@ -1,8 +1,8 @@
 # Mega Namespace Snapshot：服务端实施 Spec
 
-状态：Draft v0.2，2026-09-06。基线 `c4c79bc195541a13ac1505b94728c81a8ff3d603`。本文是拟议设计，不是当前服务端能力清单；未修改 Rust、数据库或部署。D1/D2/D3 尚待用户确认，clone 授权不代表产品决策已确认。
+状态：Draft v0.3，2026-09-06。基线 `c4c79bc195541a13ac1505b94728c81a8ff3d603`。本文是目标设计，不是当前服务端能力清单。已实现的基础包括 import 固定 commit 解析、source identity 契约及 source/scope 证明的 additive schema 与存储；未部署或开放 snapshot capability。D1/D2/D3 尚待用户确认，clone 授权不代表产品决策已确认。
 
-跨仓跟踪：[ScorpioFS #55](https://github.com/gitmono-dev/scorpiofs/issues/55)，关联 [#42 Snapshot](https://github.com/gitmono-dev/scorpiofs/issues/42)。配套客户端规范为 ScorpioFS 仓库的 `docs/spec/monorepo-versioning.md`；本文细化 Mega 的写入、存储、API 与迁移责任。两个文档尚未提交，不能把其未来 GitHub 地址当成已发布内容。
+跨仓跟踪：[ScorpioFS #55](https://github.com/gitmono-dev/scorpiofs/issues/55)，关联 [#42 Snapshot](https://github.com/gitmono-dev/scorpiofs/issues/42)。配套客户端规范为 ScorpioFS 仓库的 `docs/spec/monorepo-versioning.md`；本文细化 Mega 的写入、存储、API 与迁移责任。两仓 spec 已提交到工作分支；基础契约及测试入口见 [source-snapshot-v1.md](source-snapshot-v1.md)。完整 namespace 发布事务、所有写入者接入、GC/lease、HTTP/FUSE 联调及受控更新仍是未完成的交付门槛，不能由基础单测替代。
 
 ## 1. 交付目标与非目标
 
@@ -40,6 +40,8 @@ Mega 提供两个可独立验收的能力：
 ### 3.1 不可变身份
 
 `SourceSnapshot = {source_id, scope_path, commit_oid, root_tree_oid, object_format}`。
+
+单 source 身份的已实现编码、校验器与两仓共享向量见 [source-snapshot-v1.md](source-snapshot-v1.md)。它不替代后续 namespace view/index 编码、发布或保留闸门。
 
 - `source_id` 是实例内永久身份，映射 backend kind 与现有 repo_id；删除/改路径不能重用该身份。建议持久 UUID，现有整数 repo_id 只作内部关联。
 - 原生主仓只有一个 source，但可有多个 scope；import 各自独立 source。路径既不是 source ID，也不能供客户端指定任意后端 URL。

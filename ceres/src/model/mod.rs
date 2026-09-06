@@ -17,6 +17,7 @@ pub mod note;
 pub mod notification;
 pub mod orion_runner;
 pub mod serde_snowflake;
+pub mod snapshot;
 pub mod tag;
 pub mod third_party;
 pub mod user;

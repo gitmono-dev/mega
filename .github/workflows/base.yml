@@ -261,6 +261,7 @@ jobs:
           sccache --start-server || true
           cargo test --manifest-path common/Cargo.toml --all-features --no-fail-fast -- --nocapture
           cargo test --manifest-path jupiter/Cargo.toml --all-features --no-fail-fast -- --nocapture
+          cargo test --manifest-path jupiter-migrate/Cargo.toml --all-features --no-fail-fast -- --nocapture
           cargo test --manifest-path ceres/Cargo.toml --all-features --no-fail-fast -- --nocapture
           cargo test --manifest-path vault/Cargo.toml --all-features --no-fail-fast -- --nocapture
           cargo test --manifest-path saturn/Cargo.toml --all-features --no-fail-fast -- --nocapture
