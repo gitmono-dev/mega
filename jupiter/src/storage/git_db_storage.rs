@@ -12,7 +12,7 @@ use common::{
 use futures::Stream;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseTransaction, DbErr, EntityTrait,
-    IntoActiveModel, PaginatorTrait, QueryFilter, QueryOrder, Set, TransactionTrait,
+    IntoActiveModel, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect, Set, TransactionTrait,
     sea_query::{CaseStatement, Expr, ExprTrait, OnConflict},
 };
 
@@ -114,6 +114,39 @@ impl GitDbStorage {
             .all(self.get_connection())
             .await?;
         Ok(result)
+    }
+
+    /// Resolve one fully qualified ref without listing every ref in the repository.
+    pub async fn get_ref_by_name(
+        &self,
+        repo_id: i64,
+        ref_name: &str,
+    ) -> Result<Option<import_refs::Model>, MegaError> {
+        Ok(import_refs::Entity::find()
+            .filter(import_refs::Column::RepoId.eq(repo_id))
+            .filter(import_refs::Column::RefName.eq(ref_name))
+            .one(self.get_connection())
+            .await?)
+    }
+
+    /// Snapshot resolution must not arbitrarily select from ambiguous default refs.
+    /// Bound the query even when legacy metadata contains many default flags.
+    pub async fn get_unique_default_ref(
+        &self,
+        repo_id: i64,
+    ) -> Result<Option<import_refs::Model>, MegaError> {
+        let mut refs = import_refs::Entity::find()
+            .filter(import_refs::Column::RepoId.eq(repo_id))
+            .filter(import_refs::Column::DefaultBranch.eq(true))
+            .limit(2)
+            .all(self.get_connection())
+            .await?;
+        if refs.len() > 1 {
+            return Err(MegaError::Conflict(
+                "multiple default refs in import repository".into(),
+            ));
+        }
+        Ok(refs.pop())
     }
 
     pub async fn update_ref(
