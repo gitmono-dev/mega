@@ -1,8 +1,8 @@
 # Mega Namespace Snapshot：服务端实施 Spec
 
-状态：Draft v0.3，2026-09-06。基线 `c4c79bc195541a13ac1505b94728c81a8ff3d603`。本文是目标设计，不是当前服务端能力清单。已实现的基础包括 import 固定 commit 解析、source identity 契约及 source/scope 证明的 additive schema 与存储；未部署或开放 snapshot capability。D1/D2/D3 尚待用户确认，clone 授权不代表产品决策已确认。
+状态：Draft v0.3，2026-09-06。基线 `c4c79bc195541a13ac1505b94728c81a8ff3d603`。本文是目标设计，不是当前服务端能力清单。已实现的基础包括 import 固定 commit 解析、source identity 契约及 source/scope 证明的 additive schema 与存储；未部署或开放 snapshot capability。D1（完整 native + import 原子组合视图）与 D4（安全启用门槛）已获用户确认；D2/D3 尚待确认。
 
-跨仓跟踪：[ScorpioFS #55](https://github.com/gitmono-dev/scorpiofs/issues/55)，关联 [#42 Snapshot](https://github.com/gitmono-dev/scorpiofs/issues/42)。配套客户端规范为 ScorpioFS 仓库的 `docs/spec/monorepo-versioning.md`；本文细化 Mega 的写入、存储、API 与迁移责任。两仓 spec 已提交到工作分支；基础契约及测试入口见 [source-snapshot-v1.md](source-snapshot-v1.md)。完整 namespace 发布事务、所有写入者接入、GC/lease、HTTP/FUSE 联调及受控更新仍是未完成的交付门槛，不能由基础单测替代。
+跨仓跟踪：[ScorpioFS #55](https://github.com/gitmono-dev/scorpiofs/issues/55)，关联 [#42 Snapshot](https://github.com/gitmono-dev/scorpiofs/issues/42)。配套客户端规范为 ScorpioFS 仓库的 `docs/spec/monorepo-versioning.md`；本文细化 Mega 的写入、存储、API 与迁移责任。基础实现持续审阅入口为 [Mega Draft PR #2181](https://github.com/gitmono-dev/mega/pull/2181) 与 [ScorpioFS Draft PR #56](https://github.com/gitmono-dev/scorpiofs/pull/56)；基础契约及测试入口见 [source-snapshot-v1.md](source-snapshot-v1.md)。完整 namespace 发布事务、所有写入者接入、GC/lease、HTTP/FUSE 联调及受控更新仍是未完成的交付门槛，不能由基础单测或 Draft PR 创建替代。
 
 ## 1. 交付目标与非目标
 
@@ -45,7 +45,7 @@ Mega 提供两个可独立验收的能力：
 
 - `source_id` 是实例内永久身份，映射 backend kind 与现有 repo_id；删除/改路径不能重用该身份。建议持久 UUID，现有整数 repo_id 只作内部关联。
 - 原生主仓只有一个 source，但可有多个 scope；import 各自独立 source。路径既不是 source ID，也不能供客户端指定任意后端 URL。
-- `root_tree_oid` 必须等于验证后的 commit.tree。scope `/project/a` 的 root 已在 a 内，读取 `src/lib.rs` 不能再拼接 `project/a`。
+- 直接 root/scope commit 的 `root_tree_oid` 等于验证后的 commit.tree；从一个已证明的 native source 派生子目录时，保留 base commit provenance，root_tree_oid 则是沿固定 base tree 到目标 scope 验证得到的 subtree。这两种证明必须区分，不能无证明替换根树。scope `/project/a` 的 root 已在 a 内，读取 `src/lib.rs` 不能再拼接 `project/a`。
 - 同一 commit 字节可出现在多个有效 scope；证明表是多对多关系，不设 `commit_oid → 唯一 scope` 假设。
 - M1 对象格式只宣布已实现的 SHA-1；类型预留其他算法，未知算法显式拒绝。
 
@@ -186,6 +186,8 @@ API 路径是候选设计，实际 OpenAPI 由 Rust/utoipa 生成；不维护一
 
 ## 9. 授权、保留与故障语义
 
+**D4 已于 2026-09-06 获用户确认**：snapshot 读 API 默认关闭，只有显式配置 source/scope 读授权和对象保留策略后才允许启用。当前基线通用 Cedar guard 主要覆盖 CL，并有开发期 permit-all 策略；不能把接入该 guard 当成满足本门槛。配置缺失/无效、授权或保留实现未就绪时拒绝开启 capability；当前基础实现尚未暴露 snapshot HTTP 路由。具体 ACL/lease 配置与实现仍需在后续 API PR 中验证。
+
 全局 object store 命中不是访问授权。snapshot lease 只保留数据，不赋予永久读权；鉴权仍用当前访问政策，撤权可返回 403，但不得换成 latest 的内容。descriptor/binding 分页也可能泄露私有路径，不能只保护 blob。
 
 读请求携带由固定 tree walk 产生的 object ticket 或等价可验证上下文，限定 source、scope/root、类型与 OID；初始 root ticket 由 resolver 生成。客户端随意填一个存在的 OID 不证明其可达性。优先采用可惰性展开的路径/父 tree 证明，不为每个 mount 扫描整个可达闭包；ticket 防伪、过期与续期机制必须与 lease 配套，不能当作绕过当前 ACL 的能力令牌。
@@ -268,7 +270,7 @@ G02 可以与 ScorpioFS fake backend/CAS 类型工作并行，G03/G04 不等“�
 
 产品决策仍沿用客户端 spec 编号，避免两仓各自解释：
 
-- **D1 推荐**：Mega 发布完整 namespace view；替代方案是首期仅 source snapshot，完整全库一致性延期。
+- **D1 已确认（2026-09-06）**：Mega 原子发布 native root + 固定 import bindings 的完整 namespace view，ScorpioFS 固定该 view 读取。单 source 是中间工作包，不将全库原子一致性从本次目标延期。
 - **D2 推荐**：明确标记为发布版本的目录首次发布后不可改，通用 import 默认 branch 仍可演进；不能仅从数字路径名自动判断政策。另一方案允许原地更新，但每次新绑定且保留历史。
 - **D3 推荐**：运行 build 固定旧 view，新 build 用新 view；现有工作区受控切换。透明 live-refresh 不属于本服务端 PR 的承诺。
 

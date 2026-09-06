@@ -61,6 +61,16 @@ Explicit native commits without a proof for the requested scope return SCOPE_UNK
 
 The catalog checks descriptor attestation and walks root-relative paths to bind object kind/OID to source membership. It strictly decodes UTF-8 trees and checks SHA-1 independent of git-internal's thread-local algorithm. It is an internal metadata service, not an authorization or retention grant. Public HTTP reads must add those checks, and no snapshot endpoint or capability is enabled by the catalog alone. Observing individual sources is not an atomic multi-source namespace publication. Existing commit metadata is trusted ingestion state; this foundation does not claim raw commit/tag payload re-verification or complete proof capture by every writer.
 
+## Source object HTTP binding (client adapter implemented)
+
+GET api/v1/sources/{source_id}/trees/{oid} or blobs/{oid}, relative to the configured server base URL, carries exactly five percent-encoded query fields: object_format, scope_path, commit_oid, root_tree_oid and source_path. The path supplies source_id and the expected object kind/OID; together these reconstruct the attested descriptor and fixed-root membership request. There is no ref/latest query.
+
+Authorization: Bearer carries a current Mono access token; X-Mega-Snapshot-Lease carries the retention lease identifier. Neither is a query parameter or Debug field. The server must validate both and must not let the lease substitute for source/scope authorization. HTTP access logging should redact these headers and avoid logging private query paths.
+
+A successful full object response is HTTP 200, Content-Type application/octet-stream, with raw bytes. The client does not follow redirects, accept partial/204 responses as full objects, or treat JSON/HTML login/error pages as objects. SourceReader verifies the returned Git hash. The adapter checks Content-Length and also bounds collection of streamed chunks when length is absent. 401/403 become Forbidden, 410 becomes Expired; other failures, including object/source 404, remain Unavailable rather than being misreported as an absent directory entry. A missing entry discovered in a verified tree is a separate PathNotFound result.
+
+The adapter requires HTTPS except for loopback HTTP test/development servers, rejects base URLs containing userinfo/query/fragment, sets connect/request deadlines, and retains no reqwest URL-bearing error text. It does not acquire or renew leases, negotiate capabilities, authorize requests on behalf of Mega, or connect existing mounts automatically. Local Axum transport tests are not a deployed Mega end-to-end test. The server routes remain an implementation gate under the confirmed default-off policy.
+
 ## Verification
 
 Run the relevant repository command:
