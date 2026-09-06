@@ -31,6 +31,16 @@ impl Deref for GitDbStorage {
 }
 
 impl GitDbStorage {
+    /// Stable backend lookup, independent of the current namespace path.
+    pub async fn find_git_repo_by_id(
+        &self,
+        repo_id: i64,
+    ) -> Result<Option<git_repo::Model>, MegaError> {
+        Ok(git_repo::Entity::find_by_id(repo_id)
+            .one(self.get_connection())
+            .await?)
+    }
+
     pub async fn create_repo_and_save_ref(
         &self,
         repo_path: &str,

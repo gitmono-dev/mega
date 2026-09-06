@@ -37,6 +37,7 @@ impl SourceKind {
 pub enum ScopeProofKind {
     ImportCommit,
     NativeRoot,
+    NativeRefObserved,
     NativeScopeProjection,
     NativeReceivePack,
     NativeMerge,
@@ -47,6 +48,7 @@ impl ScopeProofKind {
         match self {
             Self::ImportCommit => "import_commit",
             Self::NativeRoot => "native_root",
+            Self::NativeRefObserved => "native_ref_observed",
             Self::NativeScopeProjection => "native_scope_projection",
             Self::NativeReceivePack => "native_receive_pack",
             Self::NativeMerge => "native_merge",

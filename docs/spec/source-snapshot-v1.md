@@ -53,6 +53,14 @@ Tree traversal is relative to the source root. Prefix neighbors such as /project
 
 The initial reader is a bounded whole-object implementation: default limits are 16 MiB/tree and 64 MiB/blob. It returns an explicit size-limit error, never empty bytes, on oversized objects. This is not the final streaming/CAS/FUSE adapter or a claim that stat is metadata-only. Namespace routing, chunked large-object reads and controlled workspace generation changes are not completed by these tests.
 
+## Mega source observations and scope proofs
+
+SourceCatalog registers stable backend IDs and resolves typed selectors. A new import observation uses its registered root and a repo-scoped commit/tag resolution. A new native observation requires an exact scoped ref whose stored root agrees with commit.tree; it records native_ref_observed, not a claim that an older writer emitted a creation proof. Native projection derives a child by walking an already attested fixed root and preserves the base commit provenance.
+
+Explicit native commits without a proof for the requested scope return SCOPE_UNKNOWN. A recorded descriptor can be resolved after refs or registry entries are removed; a reused path assigned to a different repo ID receives a different source ID. No current registry lookup is used to read an already attested source.
+
+The catalog checks descriptor attestation and walks root-relative paths to bind object kind/OID to source membership. It strictly decodes UTF-8 trees and checks SHA-1 independent of git-internal's thread-local algorithm. It is an internal metadata service, not an authorization or retention grant. Public HTTP reads must add those checks, and no snapshot endpoint or capability is enabled by the catalog alone. Observing individual sources is not an atomic multi-source namespace publication. Existing commit metadata is trusted ingestion state; this foundation does not claim raw commit/tag payload re-verification or complete proof capture by every writer.
+
 ## Verification
 
 Run the relevant repository command:
