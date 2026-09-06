@@ -5,4 +5,5 @@
 
 pub mod catalog;
 pub mod object;
+pub mod radix;
 pub(crate) mod source;

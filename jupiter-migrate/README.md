@@ -51,7 +51,7 @@ Review generated diffs in `jupiter/callisto/src/` before committing.
 
 Join call sites that need those relations use `callisto::entity_ext::<table>::Relation`, not the generated entity `Relation`.
 
-## Snapshot source entity generation
+## Snapshot entity generation and database gates
 
 The snapshot source identity migration is additive; it does not create a published
 namespace or guess historical scope mappings. To reproduce only its entities,
@@ -60,19 +60,52 @@ path substituted for `<temp>`:
 
 ```bash
 cargo run -p jupiter-migrate --example snapshot_schema -- <temp>/schema.db
-sea-orm-cli generate entity -u sqlite://<temp>/schema.db -o <temp>/entities --tables snapshot_instance,snapshot_source,source_commit_scope --with-serde both --entity-format dense
+sea-orm-cli generate entity -u sqlite://<temp>/schema.db -o <temp>/entities --tables snapshot_instance,snapshot_source,source_commit_scope,namespace_node --with-serde both --entity-format dense
 ```
 
-The example rejects existing database files. Review and copy only those three
+The example rejects existing database files. Review and copy only those four
 generated entity files into Callisto; merge their module/prelude registrations
 without replacing the existing registries or `entity_ext`. The initial generation
 uses sea-orm-cli 2.0.2. SQLite generation verifies the actual migration schema;
-PostgreSQL runtime/transaction tests are still a separate release gate.
+PostgreSQL runtime/transaction tests separately check backend compatibility. The
+namespace node entity uses `i64`/SQL BIGINT and a timezone-aware timestamp on both
+backends. Its payload has a 16 KiB database check as well as storage-layer checks.
 
 `source_commit_scope` indexes a SHA-256 scope key and retains the full UTF-8 path
 as data. This avoids placing multi-kilobyte paths in a PostgreSQL btree key. The
 storage facade checks the full path on reads and rejects conflicting immutable
 attestations. There is no cascading FK from mutable refs or repo paths to proof records.
+
+The forward migration `m20260906_145000_snapshot_utc_timestamps` converts the three
+earlier source tables' PostgreSQL `created_at` columns from TIMESTAMP to
+TIMESTAMPTZ, matching their generated `DateTimeUtc` models. It explicitly treats
+legacy values as UTC and is a no-op on SQLite. This is a compatibility repair,
+not a namespace backfill. **Before applying to an already-used draft database,
+verify that those legacy values were written in UTC.** A legacy deployment using
+a non-UTC connection timezone may have stored local wall times; audit/repair
+those values before this migration. Do not infer that the migration can discover
+their original timezone. Production application rollback must retain these
+historical tables; `down` is exercised only on disposable test schemas.
+
+To run the PostgreSQL gates, point `MEGA_SNAPSHOT_TEST_DATABASE_URL` at an explicit
+loopback-only disposable database named `snapshot_test`, never a production DB:
+
+```bash
+cargo test -p jupiter-migrate --lib snapshot --locked -- --include-ignored --nocapture
+cargo test -p jupiter --lib snapshot_storage --locked
+cargo test -p jupiter --lib namespace_storage --locked
+cargo test -p ceres --lib snapshot --locked -- --include-ignored --nocapture
+```
+
+The ignored PostgreSQL tests fail without the URL, require loopback and the exact
+test database name, and create independent schemas rather than refreshing public
+tables. They retain those schemas for diagnosis. Verified locally on PostgreSQL
+16.15: fresh migrations, concurrent source/node insertion, long scope paths,
+transaction rollback, reconnect/readback and immutable radix roots. A separate
+upgrade test verifies known UTC legacy values through forward/down/up migration
+under an America/Los_Angeles session. The focused CI job also runs the ignored
+million-binding index test. These gates do not validate publication, leases, GC,
+writer fencing or the entire workspace; those remain separate acceptance work.
 
 ## Library API reference
 

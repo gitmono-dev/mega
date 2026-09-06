@@ -242,7 +242,7 @@ G02 可以与 ScorpioFS fake backend/CAS 类型工作并行，G03/G04 不等“�
 
 ## 12. 验收与故障注入
 
-所有 MG 测试是拟新增，尚未运行。fixture 的期望内容由独立 Git object 物化与显式 binding composition 得到，不用被测 resolver 生成期望值。
+以下 MG 是完整交付的验收定义，不能将基础单元测试等同于整项通过。已验证的索引/数据库子集见 [namespace-index-v1](namespace-index-v1.md)：包含百万 binding 的内存索引门槛和 PostgreSQL/SQLite 持久化、回滚及 UTC 升级测试；MG12/MG15 仍只有部分覆盖。完整 native/import composition、publisher 与 FUSE 验收尚未运行。fixture 的期望内容由独立 Git object 物化与显式 binding composition 得到，不用被测 resolver 生成期望值。
 
 | ID | 场景及断言 |
 | --- | --- |

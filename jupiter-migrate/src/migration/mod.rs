@@ -105,6 +105,8 @@ mod m20260804_120000_actor_to_campsite_user_id;
 mod m20260804_130000_data_backfill_ledger;
 mod m20260811_100000_create_campsite_member_identity;
 mod m20260906_120000_snapshot_source_identity;
+mod m20260906_140000_namespace_nodes;
+mod m20260906_145000_snapshot_utc_timestamps;
 mod runner;
 #[cfg(test)]
 mod snapshot_tests;
@@ -199,6 +201,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20260804_130000_data_backfill_ledger::Migration),
             Box::new(m20260811_100000_create_campsite_member_identity::Migration),
             Box::new(m20260906_120000_snapshot_source_identity::Migration),
+            Box::new(m20260906_140000_namespace_nodes::Migration),
+            Box::new(m20260906_145000_snapshot_utc_timestamps::Migration),
         ]
     }
 }

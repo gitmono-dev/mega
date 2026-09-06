@@ -25,6 +25,7 @@ pub mod mono_storage;
 pub mod notification_storage;
 pub mod user_approval_storage;
 pub use notification_storage::NotificationStorage;
+pub mod namespace_storage;
 pub mod note_storage;
 pub mod snapshot_storage;
 pub mod stg_common;
@@ -326,6 +327,12 @@ impl Storage {
 
     pub fn snapshot_storage(&self) -> snapshot_storage::SnapshotStorage {
         snapshot_storage::SnapshotStorage {
+            base: self.app_service.mono_storage.base.clone(),
+        }
+    }
+
+    pub fn namespace_storage(&self) -> namespace_storage::NamespaceStorage {
+        namespace_storage::NamespaceStorage {
             base: self.app_service.mono_storage.base.clone(),
         }
     }
