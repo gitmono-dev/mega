@@ -177,6 +177,8 @@ Git report-status 维持现有支持的原子/非原子语义，不额外宣称 
 
 API 路径是候选设计，实际 OpenAPI 由 Rust/utoipa 生成；不维护一份与代码竞争的手写 OpenAPI 文件。
 
+面向大量源码小文件的目录分页、按需 tar + zstd 小包、热点包复用、大文件分块及客户端调度细化见 [文件传输协议 v1](scorpiofs-transfer-v1.md)。这是尚未实现的传输扩展，不修改 NamespaceView 身份或现有单 source 完整对象契约。
+
 | 拟议 API | 必须保证 |
 | --- | --- |
 | `GET /api/v1/snapshots/capabilities` | instance、schema、算法、路径编码、source/namespace readiness 与 retention 限制 |
