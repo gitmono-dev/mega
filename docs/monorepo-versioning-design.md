@@ -60,6 +60,149 @@ ScorpioFS 固定读取这个版本
 
 即使依赖仓后来更新到 L21，读取 V100 仍然只能看到 L20。需要使用新依赖时，Mega 再发布 V101，而不是修改 V100。
 
+## 一个完整例子：依赖仓从 L20 升级到 L21
+
+如果只想快速理解设计，可以只看这一节。
+
+### 1. 发布 V100
+
+假设对外目录是：
+
+~~~text
+/
+├── project/app/             来自主仓 M10
+└── third-party/lib/         来自依赖仓 L20 的 src/ 目录
+~~~
+
+为了方便阅读，可以先把 V100 想成下面这份展开后的数据。M10、L20、MT10、LT20 是简写，分别表示 commit 和 tree：
+
+~~~json
+{
+  "version": "V100",
+  "native": {
+    "commit": "M10",
+    "tree": "MT10"
+  },
+  "mounts": [
+    {
+      "path": "/third-party/lib",
+      "source": {
+        "commit": "L20",
+        "tree": "LT20"
+      },
+      "source_subpath": "src",
+      "policy": "mutable"
+    }
+  ]
+}
+~~~
+
+这份数据表达了两件事：
+
+- /project/app/main.rs 必须从主仓 M10 的 MT10 中读取；
+- /third-party/lib/parser.rs 必须从依赖仓 L20 的 LT20/src/parser.rs 中读取。
+
+ScorpioFS 创建 workspace 时固定 V100。此后即使依赖仓的 main 分支移动，它也不会重新解析 main。
+
+### 2. 依赖仓更新
+
+现在开发者把依赖仓被选中的 main 分支从 L20 push 到 L21。Mega 在一次发布操作中同时完成：
+
+~~~text
+依赖仓 main：L20 → L21
+monorepo latest：V100 → V101
+~~~
+
+V101 展开后是：
+
+~~~json
+{
+  "version": "V101",
+  "native": {
+    "commit": "M10",
+    "tree": "MT10"
+  },
+  "mounts": [
+    {
+      "path": "/third-party/lib",
+      "source": {
+        "commit": "L21",
+        "tree": "LT21"
+      },
+      "source_subpath": "src",
+      "policy": "mutable"
+    }
+  ]
+}
+~~~
+
+两份版本的结果非常直接：
+
+| workspace 固定的版本 | /project/app | /third-party/lib |
+| --- | --- | --- |
+| V100 | M10 | L20 |
+| V101 | M10 | L21 |
+
+V101 没有复制主仓文件，只是继续引用 M10。V100 也没有被改写，所以两个 workspace 可以同时工作。
+
+### 3. 实现中实际保存的数据结构
+
+上面的 mounts 数组是方便人阅读的展开形式。实际实现使用以下三个核心结构：
+
+~~~text
+SourceSnapshot {
+    source_id,       // 稳定的仓库身份
+    scope_path,      // 这份快照对应仓库中的哪个范围
+    object_format,   // 当前为 sha1
+    commit_oid,      // 固定 commit
+    root_tree_oid    // 固定 tree
+}
+
+NamespaceBinding {
+    mount_path,      // 在 Mega 中出现的位置
+    source_snapshot, // 指向哪个仓库的哪个固定 commit/tree
+    source_subpath,  // 从该仓库的哪个子目录开始挂载
+    policy           // mutable 或 immutable_release
+}
+
+NamespaceView {
+    schema_version,
+    instance_id,
+    native,                 // 主仓的 SourceSnapshot
+    bindings_root,          // 全部 NamespaceBinding 的索引根
+    overrides_root,
+    materialization_policy
+}
+~~~
+
+V100 对应的数据关系是：
+
+~~~text
+NamespaceView V100
+├── native → SourceSnapshot(main, M10, MT10)
+└── bindings_root
+    └── /third-party/lib
+        └── NamespaceBinding(lib, L20, LT20, source_subpath=src)
+~~~
+
+更新到 L21 时，只会创建新的依赖仓 SourceSnapshot、Binding 和 bindings_root，再由它们计算出 V101。M10 对应的数据继续复用。
+
+V100、V101 是便于讨论的名字。协议中的真实版本 ID 是 NamespaceView 规范化内容的 SHA-256，例如 sha256:abcd...。只要主仓、任一挂载仓库、挂载路径或政策不同，计算出的版本 ID 就不同。
+
+### 4. 一次文件读取
+
+当 V100 workspace 读取 /third-party/lib/parser.rs 时：
+
+~~~text
+V100
+  → 在 bindings_root 中找到最长匹配 /third-party/lib
+  → 取出固定的依赖仓快照 L20 / LT20
+  → 拼接 source_subpath=src 与剩余路径 parser.rs
+  → 读取 LT20 中的 src/parser.rs
+~~~
+
+整个过程不查询依赖仓当前 main，也不查询 latest。因此，即使最新版本已经是 V101，V100 workspace 仍然稳定读取 L20。
+
 ## Mega 里的几种目录怎样更新版本
 
 Mega 中的路径来源不同，但用户不需要为每种来源学习一种版本。Mega 把它们统一放进同一个 monorepo 版本中：
