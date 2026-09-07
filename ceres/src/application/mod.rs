@@ -5,4 +5,5 @@ pub mod build_trigger;
 pub mod code_edit;
 pub mod member_identity;
 pub mod notification;
+pub mod snapshot;
 pub mod webhook;

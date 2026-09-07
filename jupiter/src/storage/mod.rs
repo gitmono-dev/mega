@@ -25,7 +25,10 @@ pub mod mono_storage;
 pub mod notification_storage;
 pub mod user_approval_storage;
 pub use notification_storage::NotificationStorage;
+pub mod namespace_storage;
 pub mod note_storage;
+pub mod publication_storage;
+pub mod snapshot_storage;
 pub mod stg_common;
 pub mod user_storage;
 pub mod vault_storage;
@@ -321,6 +324,24 @@ impl Storage {
 
     pub fn mono_storage(&self) -> MonoStorage {
         self.app_service.mono_storage.clone()
+    }
+
+    pub fn snapshot_storage(&self) -> snapshot_storage::SnapshotStorage {
+        snapshot_storage::SnapshotStorage {
+            base: self.app_service.mono_storage.base.clone(),
+        }
+    }
+
+    pub fn namespace_storage(&self) -> namespace_storage::NamespaceStorage {
+        namespace_storage::NamespaceStorage {
+            base: self.app_service.mono_storage.base.clone(),
+        }
+    }
+
+    pub fn publication_storage(&self) -> publication_storage::PublicationStorage {
+        publication_storage::PublicationStorage {
+            base: self.app_service.mono_storage.base.clone(),
+        }
     }
 
     /// Begin a database transaction on the shared app connection (monorepo + import metadata).

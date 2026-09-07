@@ -261,6 +261,7 @@ jobs:
           sccache --start-server || true
           cargo test --manifest-path common/Cargo.toml --all-features --no-fail-fast -- --nocapture
           cargo test --manifest-path jupiter/Cargo.toml --all-features --no-fail-fast -- --nocapture
+          cargo test --manifest-path jupiter-migrate/Cargo.toml --all-features --no-fail-fast -- --nocapture
           cargo test --manifest-path ceres/Cargo.toml --all-features --no-fail-fast -- --nocapture
           cargo test --manifest-path vault/Cargo.toml --all-features --no-fail-fast -- --nocapture
           cargo test --manifest-path saturn/Cargo.toml --all-features --no-fail-fast -- --nocapture
@@ -269,3 +270,47 @@ jobs:
 
   # Note: The fuse/scorpio job has been removed as scorpio has been moved
   # to its own repository: https://github.com/gitmono-dev/scorpiofs
+
+  snapshot-contract:
+    name: Snapshot PostgreSQL and index gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: snapshot_fixture
+          POSTGRES_PASSWORD: fixture-local-only
+          POSTGRES_DB: snapshot_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U snapshot_fixture -d snapshot_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      CARGO_TERM_COLOR: always
+      RUSTUP_TOOLCHAIN: stable
+      MEGA_SNAPSHOT_TEST_DATABASE_URL: postgres://snapshot_fixture:fixture-local-only@127.0.0.1:5432/snapshot_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install focused Rust build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential pkg-config libssl-dev nettle-dev protobuf-compiler
+          rustup toolchain install stable --profile minimal
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: base-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          cache-on-failure: true
+      - name: Snapshot migration and UTC upgrade tests
+        run: cargo test -p jupiter-migrate --lib snapshot --locked -j 2 -- --include-ignored --nocapture
+      - name: Source identity and immutable node storage tests
+        run: |
+          cargo test -p jupiter --lib snapshot_storage --locked -j 2
+          cargo test -p jupiter --lib namespace_storage --locked -j 2
+      - name: Snapshot contracts, PostgreSQL transactions and million-binding gate
+        run: cargo test -p ceres --lib snapshot --locked -j 2 -- --include-ignored --nocapture
+      - name: Publication receipts, ref CAS, rollback and concurrency on both databases
+        run: cargo test -p jupiter --lib publication_storage --locked -j 2 -- --include-ignored --nocapture

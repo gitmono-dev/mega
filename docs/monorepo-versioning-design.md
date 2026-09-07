@@ -1,0 +1,393 @@
+# Mega 如何给整个 monorepo 定版本
+
+## 30 秒说明
+
+Mega 展示出来的目录并不只属于一个 Git 仓库。它既有主仓自己的目录，也会把其他仓库挂载到某些路径下。
+
+因此，只记录主仓的 commit 不能代表整个 monorepo 的状态。构建进行到一半时，如果某个挂载仓库更新了，同一次构建就可能读到新旧混合的文件。
+
+本设计只引入一个对用户可见的新东西：**monorepo 版本**。
+
+一个 monorepo 版本会同时锁定：
+
+- 主仓使用哪个 commit；
+- 每个挂载仓库使用哪个 commit；
+- 这些仓库分别挂载到哪个目录。
+
+Mega 负责生成和保存这个版本，ScorpioFS 只负责按指定版本把目录挂载出来。
+
+~~~text
+开发者 push / merge
+        ↓
+Mega 发布一个完整的 monorepo 版本
+        ↓
+ScorpioFS 固定读取这个版本
+        ↓
+同一个版本始终看到同一批文件
+~~~
+
+## 现在会出什么问题
+
+假设 Mega 中有以下目录：
+
+~~~text
+/project/app       主仓中的代码
+/third-party/lib   从另一个 Git 仓库挂载进来的依赖
+~~~
+
+构建开始时：
+
+- 主仓是 M10；
+- 依赖仓是 L20。
+
+构建先读取了 /project/app。几分钟后，依赖仓的默认分支更新为 L21，构建这时才读取 /third-party/lib。
+
+最终，这次构建实际使用的是：
+
+~~~text
+主仓 M10 + 依赖仓 L21
+~~~
+
+但这个组合可能从来没有被测试或发布过。只固定主仓 M10 解决不了问题，因为 L20 和 L21 都不属于主仓。
+
+我们希望构建拿到的是一个完整版本，例如：
+
+~~~text
+版本 V100
+├── /project/app       → 主仓 M10
+└── /third-party/lib   → 依赖仓 L20
+~~~
+
+即使依赖仓后来更新到 L21，读取 V100 仍然只能看到 L20。需要使用新依赖时，Mega 再发布 V101，而不是修改 V100。
+
+## 一个完整例子：依赖仓从 L20 升级到 L21
+
+如果只想快速理解设计，可以只看这一节。
+
+### 1. 发布 V100
+
+假设对外目录是：
+
+~~~text
+/
+├── project/app/             来自主仓 M10
+└── third-party/lib/         来自依赖仓 L20 的 src/ 目录
+~~~
+
+为了方便阅读，可以先把 V100 想成下面这份展开后的数据。M10、L20、MT10、LT20 是简写，分别表示 commit 和 tree：
+
+~~~json
+{
+  "version": "V100",
+  "native": {
+    "commit": "M10",
+    "tree": "MT10"
+  },
+  "mounts": [
+    {
+      "path": "/third-party/lib",
+      "source": {
+        "commit": "L20",
+        "tree": "LT20"
+      },
+      "source_subpath": "src",
+      "policy": "mutable"
+    }
+  ]
+}
+~~~
+
+这份数据表达了两件事：
+
+- /project/app/main.rs 必须从主仓 M10 的 MT10 中读取；
+- /third-party/lib/parser.rs 必须从依赖仓 L20 的 LT20/src/parser.rs 中读取。
+
+ScorpioFS 创建 workspace 时固定 V100。此后即使依赖仓的 main 分支移动，它也不会重新解析 main。
+
+### 2. 依赖仓更新
+
+现在开发者把依赖仓被选中的 main 分支从 L20 push 到 L21。Mega 在一次发布操作中同时完成：
+
+~~~text
+依赖仓 main：L20 → L21
+monorepo latest：V100 → V101
+~~~
+
+V101 展开后是：
+
+~~~json
+{
+  "version": "V101",
+  "native": {
+    "commit": "M10",
+    "tree": "MT10"
+  },
+  "mounts": [
+    {
+      "path": "/third-party/lib",
+      "source": {
+        "commit": "L21",
+        "tree": "LT21"
+      },
+      "source_subpath": "src",
+      "policy": "mutable"
+    }
+  ]
+}
+~~~
+
+两份版本的结果非常直接：
+
+| workspace 固定的版本 | /project/app | /third-party/lib |
+| --- | --- | --- |
+| V100 | M10 | L20 |
+| V101 | M10 | L21 |
+
+V101 没有复制主仓文件，只是继续引用 M10。V100 也没有被改写，所以两个 workspace 可以同时工作。
+
+### 3. 实现中实际保存的数据结构
+
+上面的 mounts 数组是方便人阅读的展开形式。实际实现使用以下三个核心结构：
+
+~~~text
+SourceSnapshot {
+    source_id,       // 稳定的仓库身份
+    scope_path,      // 这份快照对应仓库中的哪个范围
+    object_format,   // 当前为 sha1
+    commit_oid,      // 固定 commit
+    root_tree_oid    // 固定 tree
+}
+
+NamespaceBinding {
+    mount_path,      // 在 Mega 中出现的位置
+    source_snapshot, // 指向哪个仓库的哪个固定 commit/tree
+    source_subpath,  // 从该仓库的哪个子目录开始挂载
+    policy           // mutable 或 immutable_release
+}
+
+NamespaceView {
+    schema_version,
+    instance_id,
+    native,                 // 主仓的 SourceSnapshot
+    bindings_root,          // 全部 NamespaceBinding 的索引根
+    overrides_root,
+    materialization_policy
+}
+~~~
+
+V100 对应的数据关系是：
+
+~~~text
+NamespaceView V100
+├── native → SourceSnapshot(main, M10, MT10)
+└── bindings_root
+    └── /third-party/lib
+        └── NamespaceBinding(lib, L20, LT20, source_subpath=src)
+~~~
+
+更新到 L21 时，只会创建新的依赖仓 SourceSnapshot、Binding 和 bindings_root，再由它们计算出 V101。M10 对应的数据继续复用。
+
+V100、V101 是便于讨论的名字。协议中的真实版本 ID 是 NamespaceView 规范化内容的 SHA-256，例如 sha256:abcd...。只要主仓、任一挂载仓库、挂载路径或政策不同，计算出的版本 ID 就不同。
+
+### 4. 一次文件读取
+
+当 V100 workspace 读取 /third-party/lib/parser.rs 时：
+
+~~~text
+V100
+  → 在 bindings_root 中找到最长匹配 /third-party/lib
+  → 取出固定的依赖仓快照 L20 / LT20
+  → 拼接 source_subpath=src 与剩余路径 parser.rs
+  → 读取 LT20 中的 src/parser.rs
+~~~
+
+整个过程不查询依赖仓当前 main，也不查询 latest。因此，即使最新版本已经是 V101，V100 workspace 仍然稳定读取 L20。
+
+## 这些文件怎样高效传给 ScorpioFS
+
+版本确定后，源码小文件按需组成 tar + zstd 小包；ScorpioFS 按文件哈希复用缓存，更新时只请求缺少的文件。大文件单独按块读取。
+
+完整示例见 [文件传输设计](scorpiofs-transfer-design.md)：它解释 1,000 个源码文件如何分包、只改 10 个文件时怎样复用，以及 Mega 和 ScorpioFS 各自需要增加什么。
+
+## Mega 里的几种目录怎样更新版本
+
+Mega 中的路径来源不同，但用户不需要为每种来源学习一种版本。Mega 把它们统一放进同一个 monorepo 版本中：
+
+| 目录情况 | 例子 | 什么变化会产生新版本 |
+| --- | --- | --- |
+| 主仓自己的目录 | /project/app | 已合并的主仓内容发生变化 |
+| 主仓中可被单独 checkout 的子目录 | /project/team-a | 子目录的变更真正合入对外可见的主仓；仅创建开发候选版本不会推进全库版本 |
+| 挂载进来的独立仓库 | /third-party/lib | 该仓库被选为对外可见的分支更新；其他开发分支更新不推进全库版本 |
+| 同时包含主仓文件和挂载目录的父目录 | /project | 任一可见子项变化，或者挂载关系变化 |
+
+这里的关键不是给每种目录单独发一个“全库版本”，而是任何对外可见的变化发生后，Mega 都重新发布一份完整清单。没有变化的部分继续指向原来的 commit，因此不需要复制文件。
+
+## 为什么必须由 Mega 发布
+
+Mega 是唯一同时知道以下信息的一方：
+
+- 哪些目录来自主仓；
+- 哪些目录来自其他仓库；
+- 外部仓库挂载到了什么路径；
+- 哪个分支或 commit 当前应当对用户可见；
+- 一次 push、merge 或目录调整何时真正成功。
+
+ScorpioFS 只看最终目录，无法可靠推断过去某一时刻的挂载关系。如果 Mega 当时没有记录“主仓 M10 应该搭配依赖仓 L20”，客户端事后无法补出这个答案。
+
+所以职责划分是：
+
+| 组件 | 负责什么 |
+| --- | --- |
+| Mega | 在写入成功时发布整个 monorepo 的版本 |
+| ScorpioFS | 固定一个版本并按需读取其中的文件 |
+| Libra | 负责开发者侧的 commit、fetch 和 push；不定义整个 monorepo 的版本 |
+
+## 一个版本里保存什么
+
+对外可以把它理解成一张很小的版本清单：
+
+~~~text
+版本 V100
+├── 主仓：M10
+├── /third-party/lib：L20
+└── /toolchains/rust：R7
+~~~
+
+清单保存的是已经确定的 commit，而不是“以后读取时再看 main 分支”。这样，同一个版本不会随分支移动而改变。
+
+版本号由清单内容决定。以下任一内容变化，都会得到一个新版本：
+
+- 主仓 commit 变化；
+- 某个可见挂载仓库的 commit 变化；
+- 挂载路径增加、删除或移动；
+- 哪个分支负责提供可见内容的规则变化；
+- 目录从普通开发目录变为不可修改的 release 目录。
+
+Mega 可以提供 latest，表示最近一次成功发布的版本。latest 会指向新版本，但 V100 这样的具体版本永远不变。生产构建应先把 latest 解析成具体版本，再固定使用该版本完成整个任务。
+
+## 什么时候发布新版本
+
+任何会改变用户所见目录的操作，都必须经过同一个发布入口。例如：
+
+- 主仓合并了一个变更；
+- 挂载仓库的选定分支收到 push 或网页编辑；
+- 新增、删除或移动挂载目录；
+- 修改了哪个分支对外可见；
+- 修改目录的 release 政策。
+
+如果某个仓库的非选定分支发生变化，而它没有影响当前目录，则不需要发布新的 monorepo 版本。
+
+## 如何避免只更新一半
+
+发布时最危险的情况是：Git 分支已经更新，但 monorepo 版本没有更新；或者版本已经发布，分支更新却失败。两种情况都会让用户看到无法解释的状态。
+
+因此，Mega 必须把它们作为一次操作提交：
+
+~~~text
+检查写入基于哪个旧版本
+        ↓
+准备新的 Git 对象和完整版本清单
+        ↓
+同时更新分支与 monorepo 版本
+        ↓
+全部成功才对调用方返回成功
+~~~
+
+如果两个写入同时从同一个旧版本开始，最多只能有一个成功。失败的一方需要基于最新版本重新计算，不能悄悄覆盖先完成的写入。
+
+如果服务端已经提交成功，但响应在网络中丢失，客户端重试时应拿到第一次操作的结果，而不是再次发布一个版本。
+
+## release 目录如何处理
+
+release 目录采用已经确认的规则：**首次发布后不可修改**。
+
+目录是否为 release 由 Mega 的显式配置决定，不能仅根据目录名猜测。例如，名字包含 1.2.3 的目录不会自动变成 release。
+
+- 普通开发目录可以继续更新；每次更新产生新版本，旧版本不变。
+- release 目录首次发布后，push、网页编辑和管理接口都必须拒绝修改。
+- 需要发布新内容时，创建新的 release 目录。
+- 已发布的 release 目录不能通过改回普通目录来绕过限制。
+
+## ScorpioFS 如何读取
+
+ScorpioFS 启动一个 workspace 时指定具体的 monorepo 版本。之后每次读取都带着这个版本向 Mega 请求文件。
+
+Mega 根据该版本保存的清单判断路径属于主仓还是哪个挂载仓库，并从清单指定的 commit 中读取文件。读取过程中不能再查询当前默认分支，也不能用今天的挂载关系解释旧版本。
+
+如果旧版本需要的对象已经丢失，Mega 必须明确报错，不能自动回退到 latest。静默回退会让构建成功，却失去可重现性。
+
+同一时间可以有多个 workspace 分别使用 V100、V101。新版本发布不会改变已经固定在 V100 上的 workspace。
+
+## 默认关闭与历史保留
+
+按已确认的安全策略，按版本读取的新接口默认关闭。只有完成以下配置后才能启用：
+
+- 哪些用户或任务可以读取哪些仓库和路径；
+- 历史版本和 Git 对象保留多久；
+- 正在使用的 workspace 如何声明“这个版本暂时不能回收”；
+- Git 压缩对象依赖的基础对象如何一并保留。
+
+知道某个 Git 对象 ID 不等于拥有读取权限。即使对象在存储中存在，Mega 仍需确认它属于请求中的版本，并检查调用方当前是否有权读取。
+
+## 使用者最终看到什么
+
+理想情况下，普通开发者不需要理解内部的数据表和索引结构，只需要处理两个动作：
+
+1. Mega 在写入成功后返回新的 monorepo 版本。
+2. ScorpioFS 使用这个具体版本创建或更新 workspace。
+
+可以用一句话判断实现是否正确：
+
+> 给定同一个 monorepo 版本，无论何时、在哪台机器读取，都应得到同一套主仓与挂载仓库文件；拿不到时明确失败，绝不拼出一套“差不多”的目录。
+
+## 常见问题
+
+### 为什么不能只用主仓 commit
+
+因为挂载仓库有自己的 commit，它们不包含在主仓 commit 中。主仓 commit 只能固定主仓文件，不能固定整个目录。
+
+### 为什么不让 ScorpioFS 自己记录版本
+
+ScorpioFS 不负责 Mega 的写入，也不知道一次主仓、挂载仓库或挂载规则更新何时原子完成。由客户端分别记录容易再次产生新旧混合状态。
+
+### latest 可以直接用于整个构建吗
+
+不应在每次读取时重新查询 latest。构建开始时可以查询一次，然后把得到的具体版本固定到 workspace；否则 latest 在构建中途移动，问题会重现。
+
+### 发布新版本会复制整个 monorepo 吗
+
+不会。版本清单只记录 Git commit 和挂载关系，文件内容仍由 Git 对象存储复用。实现需要高效处理大型挂载表，但不会为每个版本复制一份完整目录。
+
+### 旧版本可以被修改吗
+
+不可以。新写入只会产生新版本。latest 可以前进，具体版本不会被覆盖。
+
+## 实施状态
+
+目前已经完成并有测试覆盖的基础能力包括：
+
+- 按固定仓库版本读取，而不是读取当前分支；
+- 识别仓库和目录归属，防止跨仓库误读对象；
+- Mega 与 ScorpioFS 共用同一种版本清单格式；
+- 大型挂载表的持久化与局部更新；
+- 并发写入检查、原子更新、请求重试恢复和可靠通知的事务核心。
+
+以下部分尚未接入完整生产链路，因此 PR 继续保持 Draft：
+
+- 真正组合主仓与所有挂载仓库的发布服务；
+- 所有 push、merge、网页编辑和管理入口的统一接入；
+- release 不可修改规则在所有写入口上的执行；
+- 历史对象租约、回收和权限控制；
+- 对外 HTTP API；
+- Mega 与真实 ScorpioFS/FUSE 的双版本端到端验证。
+
+## 实现细节在哪里
+
+上文只解释产品行为。需要实现或评审底层协议时，再阅读以下文档：
+
+- [服务端实施细节](spec/namespace-snapshot-spec.md)
+- [版本清单编码](spec/namespace-manifest-v1.md)
+- [挂载索引](spec/namespace-index-v1.md)
+- [发布事务核心](spec/namespace-publication-core.md)
+
+这些文档中的 source ID、scope proof、radix index、receipt、outbox 等术语都是实现手段，不是要求普通使用者学习的新概念。
