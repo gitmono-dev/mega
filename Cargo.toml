@@ -63,8 +63,8 @@ futures = "0.3.34"
 futures-util = "0.3.34"
 axum = { version = "0.8.9", features = ["macros", "json"] }
 axum-extra = "0.12.6"
-russh = "0.63.1"
-tower-http = "0.7.0"
+russh = "0.63.2"
+tower-http = "0.7.1"
 tower = "0.5.3"
 tower-sessions = { version = "0.15", features = ["memory-store"] }
 time = { version = "0.3.55", features = ["serde"] }

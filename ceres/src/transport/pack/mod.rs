@@ -38,6 +38,44 @@ pub mod monorepo;
 
 pub use crate::infra::pack_stream::{PackByteStream, PackStreamError, into_pack_byte_stream};
 
+/// Claim `tree` for packing or counting. Returns the child tree hashes still to
+/// visit and the blob hashes newly claimed.
+///
+/// `None` means this tree was already packed, already counted, or is reachable
+/// from a `have` commit (`skip`). Child *trees* are not inserted into `seen`
+/// here so a recursive visit can still emit them; child blobs are claimed now
+/// so two trees sharing a blob only send it once.
+///
+/// Git `index-pack --strict` rejects a pack that records the same object twice.
+/// Empty merges (same tree as the parent) used to hit that: clone walks both
+/// commits and encoded the shared root tree twice.
+fn claim_tree_children(
+    tree: &Tree,
+    skip: Option<&HashSet<String>>,
+    seen: &mut HashSet<String>,
+) -> Option<(Vec<String>, Vec<String>)> {
+    let tree_hash = tree.id.to_string();
+    if skip.is_some_and(|s| s.contains(&tree_hash)) || !seen.insert(tree_hash) {
+        return None;
+    }
+
+    let mut tree_ids = Vec::new();
+    let mut blob_ids = Vec::new();
+    for item in &tree.tree_items {
+        let hash = item.id.to_string();
+        if skip.is_some_and(|s| s.contains(&hash)) || seen.contains(&hash) {
+            continue;
+        }
+        if item.mode == TreeItemMode::Tree {
+            tree_ids.push(hash);
+        } else {
+            seen.insert(hash.clone());
+            blob_ids.push(hash);
+        }
+    }
+    Some((tree_ids, blob_ids))
+}
+
 #[async_trait]
 pub trait RepoHandler: Send + Sync + 'static {
     fn is_monorepo(&self) -> bool;
@@ -295,18 +333,11 @@ pub trait RepoHandler: Send + Sync + 'static {
         counted_obj: &mut HashSet<String>,
         obj_num: &AtomicUsize,
     ) {
-        let mut search_tree_ids = vec![];
-        let mut search_blob_ids = vec![];
-        for item in &tree.tree_items {
-            let hash = item.id.to_string();
-            if !exist_objs.contains(&hash) && counted_obj.insert(hash.clone()) {
-                if item.mode == TreeItemMode::Tree {
-                    search_tree_ids.push(hash.clone())
-                } else {
-                    search_blob_ids.push(hash.clone());
-                }
-            }
-        }
+        let Some((search_tree_ids, search_blob_ids)) =
+            claim_tree_children(&tree, Some(exist_objs), counted_obj)
+        else {
+            return;
+        };
         obj_num.fetch_add(search_blob_ids.len(), Ordering::SeqCst);
         let trees = self.get_trees_by_hashes(search_tree_ids).await.unwrap();
         for t in trees {
@@ -320,8 +351,8 @@ pub trait RepoHandler: Send + Sync + 'static {
     ///
     /// This function traverses a given tree, keeps track of processed objects, and optionally sends
     /// traversal data to a provided sender. The function will:
-    /// 1. Traverse the tree and calculate the quantities of tree and blob items.
-    /// 2. If a sender is provided, send blob and tree data via the sender.
+    /// 1. Skip the tree entirely if its hash was already packed (shared commit trees).
+    /// 2. Traverse remaining children and send blob and tree data when a sender is provided.
     ///
     /// # Parameters
     /// - `tree`: The tree structure to traverse.
@@ -340,19 +371,10 @@ pub trait RepoHandler: Send + Sync + 'static {
         exist_objs: &mut HashSet<String>,
         sender: Option<&tokio::sync::mpsc::Sender<MetaAttached<Entry, EntryMeta>>>,
     ) -> Result<(), MegaError> {
-        let mut search_tree_ids = vec![];
-        let mut search_blob_ids = vec![];
-
-        for item in &tree.tree_items {
-            let hash = item.id.to_string();
-            if exist_objs.insert(hash.clone()) {
-                if item.mode == TreeItemMode::Tree {
-                    search_tree_ids.push(hash);
-                } else {
-                    search_blob_ids.push(hash);
-                }
-            }
-        }
+        let Some((search_tree_ids, search_blob_ids)) = claim_tree_children(&tree, None, exist_objs)
+        else {
+            return Ok(());
+        };
 
         if let Some(sender) = sender {
             let blobs = self.get_blobs_by_hashes(search_blob_ids.clone()).await?;
@@ -404,4 +426,75 @@ pub trait RepoHandler: Send + Sync + 'static {
     }
 
     async fn traverses_tree_and_update_filepath(&self) -> Result<(), MegaError>;
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashSet;
+
+    use git_internal::internal::object::{
+        blob::Blob,
+        tree::{Tree, TreeItem, TreeItemMode},
+    };
+
+    use super::claim_tree_children;
+
+    fn blob_item(name: &str, content: &str) -> (Blob, TreeItem) {
+        let blob = Blob::from_content(content);
+        let item = TreeItem {
+            mode: TreeItemMode::Blob,
+            id: blob.id,
+            name: name.into(),
+        };
+        (blob, item)
+    }
+
+    #[test]
+    fn shared_commit_tree_is_claimed_once() {
+        let (_blob, item) = blob_item("README", "hello\n");
+        let tree = Tree::from_tree_items(vec![item]).unwrap();
+        let mut seen = HashSet::new();
+
+        let first = claim_tree_children(&tree, None, &mut seen);
+        let second = claim_tree_children(&tree, None, &mut seen);
+
+        assert!(
+            first.is_some(),
+            "first visit must pack the shared root tree"
+        );
+        assert!(
+            second.is_none(),
+            "empty-merge parent and child must not encode the same tree twice"
+        );
+    }
+
+    #[test]
+    fn shared_blob_is_claimed_by_first_tree_only() {
+        let (blob, item_a) = blob_item("a.txt", "same\n");
+        let item_b = TreeItem {
+            mode: TreeItemMode::Blob,
+            id: blob.id,
+            name: "b.txt".into(),
+        };
+        let tree_a = Tree::from_tree_items(vec![item_a]).unwrap();
+        let tree_b = Tree::from_tree_items(vec![item_b]).unwrap();
+        let mut seen = HashSet::new();
+
+        let (_, blobs_a) = claim_tree_children(&tree_a, None, &mut seen).unwrap();
+        let (_, blobs_b) = claim_tree_children(&tree_b, None, &mut seen).unwrap();
+
+        assert_eq!(blobs_a, vec![blob.id.to_string()]);
+        assert!(blobs_b.is_empty());
+    }
+
+    #[test]
+    fn have_tree_is_skipped_even_if_unseen() {
+        let (_blob, item) = blob_item("README", "hello\n");
+        let tree = Tree::from_tree_items(vec![item]).unwrap();
+        let skip = HashSet::from([tree.id.to_string()]);
+        let mut seen = HashSet::new();
+
+        assert!(claim_tree_children(&tree, Some(&skip), &mut seen).is_none());
+        assert!(seen.is_empty());
+    }
 }
