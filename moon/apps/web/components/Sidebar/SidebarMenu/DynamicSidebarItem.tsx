@@ -42,7 +42,8 @@ export function DynamicSidebarItem({ config }: DynamicSidebarItemProps) {
   }
 
   const href = `/${scope}${config.href}`
-  const isActive = router.pathname === `/[org]${config.href}`
+  const routePath = `/[org]${config.href}`
+  const isActive = router.pathname === routePath || router.pathname.startsWith(`${routePath}/`)
 
   const Component = componentMap[config.public_id as keyof typeof componentMap]
 

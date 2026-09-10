@@ -16,7 +16,7 @@ use crate::{
         cla_service::ClaService, code_review_service::CodeReviewService, git_service::GitService,
         import_service::ImportService, issue_service::IssueService, lfs_service::LfsService,
         merge_queue_service::MergeQueueService, mono_service::MonoService,
-        webhook_service::WebhookService,
+        orion_vm_image_service::OrionVmImageService, webhook_service::WebhookService,
     },
     storage::{
         AppService, Storage,
@@ -117,6 +117,10 @@ pub async fn test_storage(temp_dir: impl AsRef<Path>) -> Storage {
         cl_service: CLService::mock(),
         merge_queue_service: MergeQueueService::mock(),
         artifact_service: ArtifactService::new(base.clone(), MegaObjectStorageWrapper::mock()),
+        orion_vm_image_service: OrionVmImageService::new(
+            base.clone(),
+            MegaObjectStorageWrapper::mock(),
+        ),
         buck_service: BuckService::mock(),
         config: Arc::downgrade(&config),
         git_service: GitService::mock(),

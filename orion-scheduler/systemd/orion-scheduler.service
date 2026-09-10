@@ -35,6 +35,10 @@ AmbientCapabilities=CAP_NET_ADMIN
 Restart=on-failure
 RestartSec=5s
 
+# stop/restart tears down ALL keep-alive VMs (SIGTERM → shutdown_all_vms).
+# Do not casually restart this unit; use webhook replace / POST /shutdown for
+# VM lifecycle. Package hooks must not auto-restart it — install.sh drops
+# /etc/needrestart/conf.d/orion-scheduler.conf (override_rc => 0).
 # Give qlean a chance to power off running VMs gracefully before SIGKILL.
 TimeoutStopSec=60s
 KillMode=mixed

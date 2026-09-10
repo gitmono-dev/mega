@@ -14,6 +14,10 @@ pub struct StartRunnerRequest {
     pub image_url: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub image_digest: Option<String>,
+    /// Catalog image id from `GET /api/v1/orion/images`. Mutually exclusive with
+    /// `image_path` / `image_url`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub image_disk_gb: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

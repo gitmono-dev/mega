@@ -41,6 +41,9 @@ pub enum UploadStrategy {
 pub struct ObjectStoreAdapter {
     /// The concrete backend store used for all object operations.
     pub store: BackendStore,
+    /// Optional S3 client used only for `signed_url` (public/presign endpoint).
+    /// When `None`, signing uses [`Self::store`].
+    pub presign_store: Option<Arc<AmazonS3>>,
     /// The upload strategy used when writing new objects.
     pub upload_strategy: UploadStrategy,
 }
@@ -164,6 +167,16 @@ impl MegaObjectStorage for ObjectStoreAdapter {
         expires_in: Duration,
     ) -> Result<Option<String>, MegaError> {
         let path = key.to_object_store_path();
+
+        if let Some(presign) = &self.presign_store {
+            return Ok(Some(
+                presign
+                    .signed_url(method, &path, expires_in)
+                    .await
+                    .map_err(IoOrbitError::from)?
+                    .to_string(),
+            ));
+        }
 
         let url = match &self.store {
             BackendStore::S3(s3) => Some(
@@ -1171,6 +1184,7 @@ mod tests {
         let local = Arc::new(LocalFileSystem::new_with_prefix(dir.path()).unwrap());
         let adapter = ObjectStoreAdapter {
             store: BackendStore::Local(Arc::clone(&local)),
+            presign_store: None,
             upload_strategy: UploadStrategy::SinglePut,
         };
         let key = ObjectKey {

@@ -183,14 +183,14 @@ Webhook 端点健康检查。
 | `target` | string | 否 | 仅作日志 / 展示标签（已废弃查表） |
 | `sync` | bool | 否 | `true` 同步阻塞至部署完成（默认 `false` → 202） |
 | `replace` | bool | 否 | 同 domain 已 Running 时强制重建（默认幂等 200） |
-| `image_path` | string | 否 | 本地 qcow2 镜像路径，与 `image_url` 互斥；未指定时使用 `default_image` |
-| `image_url` | string | 否 | 远程 HTTPS 镜像 URL，与 `image_path` 互斥 |
+| `image_path` | string | 条件* | 本地 qcow2 镜像路径，与 `image_url` 互斥（ops only；无静默 default） |
+| `image_url` | string | 条件* | 远程 HTTPS 镜像 URL，与 `image_path` 互斥 |
 | `image_digest` | string | 否* | SHA256/SHA512 hash。`image_path` 或 `image_url` 存在时必填 |
 | `image_disk_gb` | u32 | 否 | VM 磁盘大小（GB），未指定时使用 `default_image` |
 | `image_cpus` | u32 | 否 | vCPU 数，未指定时使用 `default_image` |
 | `image_memory_mb` | u32 | 否 | 内存 MB，未指定时使用 `default_image` |
 
-> **约束**：`image_path` 和 `image_url` 互斥。提供了两者之一时 `image_digest` 必须提供。未传任何 `image_*` 时用 `default_image`（字段级 merge）。达 `max_vms` 且新 domain 时 **503**。
+> **约束**：必须提供 `image_url` 或 `image_path` 之一（否则 400）；二者互斥。提供了两者之一时 `image_digest` 必须提供。`default_image` 仅 merge disk/cpu/memory。达 `max_vms` 且新 domain 时 **503**。
 
 **同 domain 响应**：
 
@@ -305,7 +305,7 @@ flowchart TD
     REG --> OLD{"同 domain 有旧 machine？"}
     OLD -->|是| SD["shutdown 旧实例<br/>（Failed / replace）"]
     OLD -->|否| IMG
-    SD --> IMG["merge image_* + default_image<br/>KeepAliveMachine::new"]
+    SD --> IMG["require image_url or image_path; merge sizing defaults<br/>KeepAliveMachine::new"]
     IMG --> DEP["SFTP 部署 orion + runner-config"]
     DEP --> ENV["sed 写入 SERVER_WS / scorpio URLs"]
     ENV --> START["systemctl start orion-runner"]
@@ -363,8 +363,6 @@ flowchart TD
   "ssh_public_key_path": "~/.ssh/orion_vm_access.pub",
   "max_vms": 8,
   "default_image": {
-    "image_path": "~/.local/share/qlean/images/debian-13-buck2/debian-13-buck2.qcow2",
-    "image_digest": "sha256:753c28888c9d30fe4baef55c1d1dfa9a39431595eca940b7ad85d78d84f3d7a5",
     "image_disk_gb": 50,
     "image_cpus": 8,
     "image_memory_mb": 16000
@@ -381,13 +379,12 @@ flowchart TD
 | `orion_binary_path`             | string  | 无默认值（必填）                | Orion 二进制文件路径                               |
 | `ssh_public_key_path`           | string  | 无默认值（必填）                | SSH 公钥路径                                    |
 | `max_vms`                       | u32     | 无（不限制）                  | 同时跟踪的 VM 上限（按 domain）；新域超出 → 503            |
-| `default_image`                 | object  | 见模板                         | 默认 VM 镜像五参数；webhook 未传 `image_*` 时使用        |
-| `default_image.image_path`      | string  | —                           | 本地 qcow2 路径                                  |
-| `default_image.image_digest`    | string  | —                           | SHA256 校验和                                   |
-| `default_image.image_disk_gb`   | u32     | 50                          | 磁盘 GB（长生命周期 VM 建议 ≥50；已部署的 `/etc/.../target_config.json` 需人工改） |
-
+| `default_image`                 | object  | 见模板                         | 默认 VM **规格**（disk/cpu/memory）；无静默本地镜像路径 |
+| `default_image.image_disk_gb`   | u32     | 50                          | 磁盘 GB |
 | `default_image.image_cpus`      | u32     | 8                           | vCPU 数                                      |
 | `default_image.image_memory_mb` | u32     | 16000                       | 内存 MB                                       |
+
+> 旧配置中的 `image_path` / `image_digest` 会被忽略。
 
 #### Mega UI URL 推导
 
@@ -456,10 +453,10 @@ sudo ./orion-scheduler/scripts/build-custom-image.sh
 ```
 
 **约束**：
-- `image_path` 和 `image_url` 互斥，不能同时设置
+- 必须提供 `image_url` 或 `image_path` 之一（否则 400）；二者互斥
 - 提供了 `image_path` 或 `image_url` 时必须同时提供 `image_digest`（格式 `sha256:...` 或 `sha512:...`）
-- 资源参数（`image_disk_gb`、`image_cpus`、`image_memory_mb`）可选，不提供时使用 `default_image` 默认值
-- 不提供任何镜像参数时，使用 `default_image` 配置块
+- 资源参数（`image_disk_gb`、`image_cpus`、`image_memory_mb`）可选，不提供时使用 `default_image` 规格默认值
+- 无静默本地 default 镜像；product 路径由 mono catalog（最新或 `image_id`）签发 RustFS URL
 
 #### 实现方式
 

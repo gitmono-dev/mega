@@ -4314,6 +4314,53 @@ export type CommonResultMergeBoxRes = {
   req_result: boolean
 }
 
+export type CommonResultOrionVmImageListResponse = {
+  data?: {
+    /** @min 0 */
+    count: number
+    images: OrionVmImageResponse[]
+  }
+  err_message: string
+  req_result: boolean
+}
+
+export type CommonResultOrionVmImageResponse = {
+  data?: {
+    buck2?: string | null
+    built_at?: string | null
+    created_at: string
+    digest: string
+    id: string
+    image_name?: string | null
+    info_object_key?: string | null
+    kernel?: string | null
+    label?: string | null
+    object_key: string
+    python?: string | null
+    rust?: string | null
+    /** @format int64 */
+    size_bytes?: number | null
+  }
+  err_message: string
+  req_result: boolean
+}
+
+export type CommonResultPresignOrionVmImageResponse = {
+  data?: {
+    /**
+     * @format int64
+     * @min 0
+     */
+    expires_in_secs: number
+    info_object_key?: string | null
+    info_put_url?: string | null
+    object_key: string
+    qcow2_put_url: string
+  }
+  err_message: string
+  req_result: boolean
+}
+
 export type CommonResultQueueListResponse = {
   /** Queue list response */
   data?: {
@@ -5516,6 +5563,29 @@ export type ObjectError = {
   message: string
 }
 
+export type OrionVmImageListResponse = {
+  /** @min 0 */
+  count: number
+  images: OrionVmImageResponse[]
+}
+
+export type OrionVmImageResponse = {
+  buck2?: string | null
+  built_at?: string | null
+  created_at: string
+  digest: string
+  id: string
+  image_name?: string | null
+  info_object_key?: string | null
+  kernel?: string | null
+  label?: string | null
+  object_key: string
+  python?: string | null
+  rust?: string | null
+  /** @format int64 */
+  size_bytes?: number | null
+}
+
 export type PageParamsCommitHistoryParams = {
   additional: {
     /** author: author name filter */
@@ -5604,6 +5674,27 @@ export type PositionResponse = {
   position_status: PositionStatus
 }
 
+export type PresignOrionVmImageRequest = {
+  /** Content digest, e.g. `sha256:<hex>`. */
+  digest: string
+  /** Base name used in the object key (default `debian-13-buck2`). */
+  image_name?: string | null
+  /** When true, also return a PUT URL for `{hex}/image-info.json`. */
+  with_info?: boolean
+}
+
+export type PresignOrionVmImageResponse = {
+  /**
+   * @format int64
+   * @min 0
+   */
+  expires_in_secs: number
+  info_object_key?: string | null
+  info_put_url?: string | null
+  object_key: string
+  qcow2_put_url: string
+}
+
 /** Error details for API */
 export type QueueError = {
   /** Failure type for API */
@@ -5680,6 +5771,23 @@ export type ReactionRequest = {
 /** Git reference information */
 export type Ref = {
   name: string
+}
+
+export type RegisterOrionVmImageRequest = {
+  buck2?: string | null
+  built_at?: string | null
+  /** Content digest, e.g. `sha256:<hex>`. */
+  digest: string
+  image_name?: string | null
+  info_object_key?: string | null
+  kernel?: string | null
+  label?: string | null
+  /** Key under the `orion-images/` namespace, e.g. `{hex}/debian-13-buck2.qcow2`. */
+  object_key: string
+  python?: string | null
+  rust?: string | null
+  /** @format int64 */
+  size_bytes?: number | null
 }
 
 export type RemoveGpgRequest = {
@@ -5851,6 +5959,11 @@ export type StartRunnerRequest = {
    * @min 0
    */
   image_disk_gb?: number | null
+  /**
+   * Catalog image id from `GET /api/v1/orion/images`. Mutually exclusive with
+   * `image_path` / `image_url`.
+   */
+  image_id?: string | null
   /**
    * @format int32
    * @min 0
@@ -9253,6 +9366,19 @@ export type PatchApiOrganizationsNotesSyncStateParams = {
 }
 
 export type PatchApiOrganizationsNotesSyncStateData = any
+
+export type GetApiOrionImagesData = CommonResultOrionVmImageListResponse
+
+export type PostApiOrionImagesData = CommonResultOrionVmImageResponse
+
+export type PostApiOrionImagesPresignData = CommonResultPresignOrionVmImageResponse
+
+export type DeleteApiOrionImagesByIdParams = {
+  /** Catalog image id */
+  id: string
+}
+
+export type DeleteApiOrionImagesByIdData = CommonResultOrionVmImageResponse
 
 export type GetApiOrionRunnersData = CommonResultRunnerListResponse
 
@@ -21066,6 +21192,106 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
             method: 'PATCH',
             body: data,
             type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name GetApiOrionImages
+     * @summary List registered Orion VM images (toolchain metadata for the UI catalog).
+     * @request GET:/api/v1/orion/images
+     */
+    getApiOrionImages: () => {
+      const base = 'GET:/api/v1/orion/images' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<GetApiOrionImagesData>([base]),
+        requestKey: () => dataTaggedQueryKey<GetApiOrionImagesData>([base]),
+        request: (params: RequestParams = {}) =>
+          this.request<GetApiOrionImagesData>({
+            path: `/api/v1/orion/images`,
+            method: 'GET',
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name PostApiOrionImages
+     * @summary Register (upsert) an image after build-script upload to RustFS.
+     * @request POST:/api/v1/orion/images
+     */
+    postApiOrionImages: () => {
+      const base = 'POST:/api/v1/orion/images' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiOrionImagesData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiOrionImagesData>([base]),
+        request: (data: RegisterOrionVmImageRequest, params: RequestParams = {}) =>
+          this.request<PostApiOrionImagesData>({
+            path: `/api/v1/orion/images`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name PostApiOrionImagesPresign
+     * @summary Issue presigned PUT URLs for browser upload of a qcow2 (+ optional image-info.json).
+     * @request POST:/api/v1/orion/images/presign
+     */
+    postApiOrionImagesPresign: () => {
+      const base = 'POST:/api/v1/orion/images/presign' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<PostApiOrionImagesPresignData>([base]),
+        requestKey: () => dataTaggedQueryKey<PostApiOrionImagesPresignData>([base]),
+        request: (data: PresignOrionVmImageRequest, params: RequestParams = {}) =>
+          this.request<PostApiOrionImagesPresignData>({
+            path: `/api/v1/orion/images/presign`,
+            method: 'POST',
+            body: data,
+            type: ContentType.Json,
+            format: 'json',
+            ...params
+          })
+      }
+    },
+
+    /**
+     * No description
+     *
+     * @tags Automation & Integrations
+     * @name DeleteApiOrionImagesById
+     * @summary Delete a catalog entry and its RustFS objects.
+     * @request DELETE:/api/v1/orion/images/{id}
+     */
+    deleteApiOrionImagesById: () => {
+      const base = 'DELETE:/api/v1/orion/images/{id}' as const
+
+      return {
+        baseKey: dataTaggedQueryKey<DeleteApiOrionImagesByIdData>([base]),
+        requestKey: (id: string) => dataTaggedQueryKey<DeleteApiOrionImagesByIdData>([base, id]),
+        request: (id: string, params: RequestParams = {}) =>
+          this.request<DeleteApiOrionImagesByIdData>({
+            path: `/api/v1/orion/images/${id}`,
+            method: 'DELETE',
             format: 'json',
             ...params
           })

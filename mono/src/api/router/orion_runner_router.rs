@@ -245,18 +245,112 @@ async fn start_runner(
     let build = &state.services().storage().config().build;
     let env = derive_runner_env(build)?;
 
+    // Host-local paths are not accepted on this API; use catalog `image_id`
+    // (or omit for latest) / explicit `image_url`+digest.
+    if req
+        .image_path
+        .as_deref()
+        .map(str::trim)
+        .is_some_and(|s| !s.is_empty())
+    {
+        return Err(ApiError::bad_request(anyhow!(
+            "image_path is not supported; use image_id or omit for latest catalog image"
+        )));
+    }
+
+    let mut image_url = req.image_url;
+    let mut image_digest = req.image_digest;
+    let mut image_name: Option<String> = None;
+    let mut image_built_at: Option<String> = None;
+    let mut toolchain_rust: Option<String> = None;
+    let mut toolchain_buck2: Option<String> = None;
+    let mut toolchain_python: Option<String> = None;
+    let mut kernel: Option<String> = None;
+
+    let image_svc = &state.services().storage().orion_vm_image_service;
+
+    let catalog_model = if let Some(image_id) = req
+        .image_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        if image_url.is_some() {
+            return Err(ApiError::bad_request(anyhow!(
+                "image_id cannot be combined with image_url"
+            )));
+        }
+        Some(
+            image_svc
+                .get(image_id)
+                .await
+                .map_err(ApiError::from)?
+                .ok_or_else(|| {
+                    ApiError::with_status(StatusCode::NOT_FOUND, anyhow!("image_id not found"))
+                })?,
+        )
+    } else if image_url.is_none() {
+        // No explicit URL → newest catalog image (by created_at).
+        Some(
+            image_svc
+                .latest()
+                .await
+                .map_err(ApiError::from)?
+                .ok_or_else(|| {
+                    ApiError::bad_request(anyhow!("no catalog images; register an image first"))
+                })?,
+        )
+    } else {
+        None
+    };
+
+    if let Some(model) = catalog_model {
+        let url = image_svc.signed_get_url(&model).await.map_err(|e| {
+            ApiError::with_status(
+                StatusCode::SERVICE_UNAVAILABLE,
+                anyhow!("failed to sign image URL: {e}"),
+            )
+        })?;
+        image_url = Some(url);
+        image_digest = Some(model.digest);
+        image_name = model.image_name;
+        image_built_at = model.built_at;
+        toolchain_rust = model.rust;
+        toolchain_buck2 = model.buck2;
+        toolchain_python = model.python;
+        kernel = model.kernel;
+    }
+
+    if image_url.is_some()
+        && image_digest
+            .as_deref()
+            .map(str::trim)
+            .unwrap_or("")
+            .is_empty()
+    {
+        return Err(ApiError::bad_request(anyhow!(
+            "image_digest is required when image_url is provided"
+        )));
+    }
+
     let payload = StartRunnerPayload {
         target: req.target,
         replace: req.replace,
         server_ws: env.server_ws,
         scorpio_base_url: env.scorpio_base_url,
         scorpio_lfs_url: env.scorpio_lfs_url,
-        image_path: req.image_path,
-        image_url: req.image_url,
-        image_digest: req.image_digest,
+        image_path: None,
+        image_url,
+        image_digest,
         image_disk_gb: req.image_disk_gb,
         image_cpus: req.image_cpus,
         image_memory_mb: req.image_memory_mb,
+        image_name,
+        image_built_at,
+        toolchain_rust,
+        toolchain_buck2,
+        toolchain_python,
+        kernel,
         retain_antares_mounts: req.retain_antares_mounts,
     };
 
@@ -274,6 +368,18 @@ async fn start_runner(
                 "Runner already provisioning for domain {:?}: {}",
                 sched_resp.domain,
                 sched_resp.error.unwrap_or_else(|| "conflict".to_string())
+            ),
+        ));
+    }
+
+    if sched_resp.status == "busy" {
+        return Err(ApiError::with_status(
+            StatusCode::SERVICE_UNAVAILABLE,
+            anyhow!(
+                "{}",
+                sched_resp
+                    .error
+                    .unwrap_or_else(|| "scheduler is busy; retry shortly".to_string())
             ),
         ));
     }

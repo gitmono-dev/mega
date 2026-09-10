@@ -59,16 +59,24 @@ impl OrionSchedulerHttpClient {
             "Starting runner via scheduler: server_ws={}",
             payload.server_ws
         );
+        // Conflict checks must not block behind a multi-minute image download;
+        // scheduler returns 503 quickly when the update lock is busy. Keep a
+        // modest client budget for network + signing + lock try.
         let req = self
             .client
             .post(&url)
-            .timeout(Duration::from_secs(10))
+            .timeout(Duration::from_secs(30))
             .json(&payload);
         let res = self.auth_headers(req).send().await?;
         let status = res.status();
         let body: StartRunnerSchedulerResponse = res.json().await?;
-        // 200 OK (idempotent), 202 Accepted (provisioning), 409 Conflict
-        if status.is_success() || status.as_u16() == 202 || status.as_u16() == 409 {
+        // 200 OK (idempotent), 202 Accepted (provisioning), 409 Conflict,
+        // 503 Busy (another provision holds the update lock).
+        if status.is_success()
+            || status.as_u16() == 202
+            || status.as_u16() == 409
+            || status.as_u16() == 503
+        {
             Ok(body)
         } else {
             Err(anyhow::anyhow!(

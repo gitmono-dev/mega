@@ -113,8 +113,10 @@ async fn main() -> anyhow::Result<()> {
     let config = config::Config::load(&config_path).await?;
     let config = Arc::new(tokio::sync::RwLock::new(config));
     tracing::info!(
-        "[startup] Config loaded, default_image path: {}, max_vms: {:?}",
-        config.read().await.default_image().image_path,
+        "[startup] Config loaded, default VM sizing: {}GB disk / {} cpus / {}MB mem, max_vms: {:?}",
+        config.read().await.default_image().image_disk_gb,
+        config.read().await.default_image().image_cpus,
+        config.read().await.default_image().image_memory_mb,
         config.read().await.max_vms()
     );
 

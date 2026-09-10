@@ -82,8 +82,8 @@ async fn is_admin_me(
 ) -> Result<Json<CommonResult<IsAdminResponse>>, ApiError> {
     let admin = state.services().admin();
     let cedar_id = user.cedar_user_id();
-    // On config/load failure (e.g. missing `.mega_cedar.json`), treat as non-admin
-    // so AccountApprovalGuard can still honor an approved user_approval_status.
+    // Cedar load failure is handled inside check_is_admin (config admins still apply).
+    // Remaining unexpected errors still treat as non-admin so AccountApprovalGuard can proceed.
     let is_admin = match admin.check_is_admin(cedar_id).await {
         Ok(v) => v,
         Err(e) => {

@@ -317,6 +317,41 @@ impl BotsStorage {
         Ok((bot, token_plain))
     }
 
+    /// Ensure the fixed orion-image-publisher bot exists and return a fresh register token.
+    ///
+    /// Creates bot `orion-image-publisher` if missing, revokes any existing
+    /// `orion-image-register` tokens, then issues a new token (plaintext returned once).
+    /// No org installation — catalog register only checks bot name via BotAuth.
+    pub async fn ensure_orion_image_publisher_bot_token(
+        &self,
+    ) -> Result<(bots::Model, String), MegaError> {
+        const PUBLISHER_BOT_NAME: &str = "orion-image-publisher";
+        const PUBLISHER_TOKEN_NAME: &str = "orion-image-register";
+
+        let bot = match self.find_bot_by_name(PUBLISHER_BOT_NAME).await? {
+            Some(existing) => existing,
+            None => {
+                let (bot, _private_pem) = self
+                    .register_bot(PUBLISHER_BOT_NAME, None, 0, PermissionScopeEnum::Write)
+                    .await?;
+                bot
+            }
+        };
+
+        if bot.status != BotStatusEnum::Enabled {
+            return Err(MegaError::Other(format!(
+                "publisher bot '{PUBLISHER_BOT_NAME}' exists but is disabled"
+            )));
+        }
+
+        self.revoke_bot_tokens_by_name(bot.id, PUBLISHER_TOKEN_NAME)
+            .await?;
+        let (_model, token_plain) = self
+            .generate_bot_token(bot.id, PUBLISHER_TOKEN_NAME, None)
+            .await?;
+        Ok((bot, token_plain))
+    }
+
     /// Ensure an Enabled Organization installation for a system bot (target_id 0).
     pub async fn ensure_system_org_installation(&self, bot_id: i64) -> Result<(), MegaError> {
         let existing = bot_installations::Entity::find()

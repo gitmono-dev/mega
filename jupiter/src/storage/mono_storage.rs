@@ -906,6 +906,14 @@ impl MonoStorage {
     }
 }
 
+fn last_wins_mega_filepaths(pairs: Vec<(String, String)>) -> Vec<(String, String)> {
+    let mut map = HashMap::with_capacity(pairs.len());
+    for (blob_id, file_path) in pairs {
+        map.insert(blob_id, file_path);
+    }
+    map.into_iter().collect()
+}
+
 #[cfg(test)]
 mod tests {
     use callisto::mega_blob;
@@ -1116,12 +1124,4 @@ mod tests {
             .await
             .expect("missing blob is not an error");
     }
-}
-
-fn last_wins_mega_filepaths(pairs: Vec<(String, String)>) -> Vec<(String, String)> {
-    let mut map = HashMap::with_capacity(pairs.len());
-    for (blob_id, file_path) in pairs {
-        map.insert(blob_id, file_path);
-    }
-    map.into_iter().collect()
 }

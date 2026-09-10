@@ -4,6 +4,7 @@
 # Layout expected in the same directory as this script:
 #   bin/orion-scheduler
 #   etc/target_config.json.template
+#   etc/needrestart-orion-scheduler.conf
 #   systemd/orion-scheduler.service
 #
 # Env vars (all optional):
@@ -38,6 +39,7 @@ fi
 
 for f in "$SCRIPT_DIR/bin/orion-scheduler" \
          "$SCRIPT_DIR/etc/target_config.json.template" \
+         "$SCRIPT_DIR/etc/needrestart-orion-scheduler.conf" \
          "$SCRIPT_DIR/systemd/orion-scheduler.service"; do
   if [[ ! -f "$f" ]]; then
     echo "[install] missing bundle file: $f" >&2
@@ -97,6 +99,18 @@ install -o root -g root -m 0644 \
   "$SCRIPT_DIR/systemd/orion-scheduler.service" \
   /etc/systemd/system/orion-scheduler.service
 systemctl daemon-reload
+
+# Prevent needrestart (unattended-upgrade) from restarting this unit and
+# thereby SIGTERM-killing every tracked QEMU VM. Non-fatal if needrestart
+# is not installed on the host.
+if [[ -d /etc/needrestart/conf.d ]]; then
+  echo "[install] installing needrestart override"
+  install -o root -g root -m 0644 \
+    "$SCRIPT_DIR/etc/needrestart-orion-scheduler.conf" \
+    /etc/needrestart/conf.d/orion-scheduler.conf
+else
+  echo "[install] needrestart conf.d absent; skipping override (install needrestart to protect VMs from apt upgrades)"
+fi
 
 if [[ "$SKIP_ENABLE" == "1" ]]; then
   echo "[install] SKIP_ENABLE=1, leaving unit disabled"

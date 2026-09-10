@@ -18,6 +18,7 @@ import { AppLayout } from '@/components/Layout/AppLayout'
 import {
   domainFromClientHostname,
   OrionClient,
+  OrionClientPageWrapper,
   OrionClientStatus,
   RunnersTable,
   VmTerminal
@@ -25,6 +26,7 @@ import {
 import AuthAppProviders from '@/components/Providers/AuthAppProviders'
 import { useAdminCheck } from '@/hooks/admin/useAdminCheck'
 import { usePostOrionClientsInfo } from '@/hooks/OrionClient/OrionClientsInfo'
+import { useGetOrionImages } from '@/hooks/OrionClient/useGetOrionImages'
 import { useGetRunnerList } from '@/hooks/OrionClient/useGetRunnerList'
 import { useGetRunnerStatus } from '@/hooks/OrionClient/useGetRunnerStatus'
 import { usePostStartRunner } from '@/hooks/OrionClient/usePostStartRunner'
@@ -83,6 +85,8 @@ const OrionClientPage: PageWithLayout<any> = () => {
   const [terminalClientId, setTerminalClientId] = React.useState<string | null>(null)
   const [terminalDomain, setTerminalDomain] = React.useState<string | null>(null)
   const [copyFeedback, setCopyFeedback] = React.useState(false)
+  const [selectedImageId, setSelectedImageId] = React.useState<string>('')
+  const didAutoSelectImageRef = React.useRef(false)
   const logPanelRef = React.useRef<HTMLDivElement>(null)
   const terminalPanelRef = React.useRef<HTMLDivElement>(null)
   const logsScrollRef = React.useRef<HTMLDivElement>(null)
@@ -105,11 +109,24 @@ const OrionClientPage: PageWithLayout<any> = () => {
     error: runnerListError,
     refetch: refetchRunners
   } = useGetRunnerList(isAdmin)
+  const { data: orionImages = [], isLoading: isLoadingImages } = useGetOrionImages(isAdmin)
   const runnerStatusVmId = logSource === 'runner' ? activeLogKey : null
   const { data: runnerStatus } = useGetRunnerStatus(runnerStatusVmId, activePhase)
   const { logs: runnerLogs, status: runnerLogsStatus, error: runnerLogsError } = useRunnerLogsSSE(activeLogKey)
 
   runnerLogsRef.current = runnerLogs
+
+  // On first catalog load, pin the select to the newest image so the UI matches
+  // what will start. Operators can still choose "Latest (catalog)" (empty) so
+  // mono re-resolves newest on each Start.
+  React.useEffect(() => {
+    if (didAutoSelectImageRef.current) return
+    if (isLoadingImages || orionImages.length === 0) return
+    didAutoSelectImageRef.current = true
+    if (!selectedImageId) {
+      setSelectedImageId(orionImages[0].id)
+    }
+  }, [isLoadingImages, orionImages, selectedImageId])
 
   const { mutate, isPending, error } = usePostOrionClientsInfo()
   const [clientsPage, setClientsPage] = React.useState<PostOrionClientsInfoData | null>(null)
@@ -259,7 +276,10 @@ const OrionClientPage: PageWithLayout<any> = () => {
   const handleStartRunner = React.useCallback(
     (replace = false) => {
       startRunner(
-        { replace },
+        {
+          replace,
+          ...(selectedImageId ? { image_id: selectedImageId } : {})
+        },
         {
           onSuccess: (data) => {
             openLogPanel(data.vm_id, 'runner', {
@@ -270,7 +290,7 @@ const OrionClientPage: PageWithLayout<any> = () => {
         }
       )
     },
-    [openLogPanel, startRunner]
+    [openLogPanel, selectedImageId, startRunner]
   )
 
   const handleViewClientLogs = React.useCallback(
@@ -403,315 +423,352 @@ const OrionClientPage: PageWithLayout<any> = () => {
       <Head>
         <title>Orion Client</title>
       </Head>
-      {/* AppLayout main is overflow-hidden; this page must own scrolling when the list is visible. */}
-      <div
-        className={`flex h-full min-h-0 flex-col gap-4 p-4 ${showingOverlay ? 'overflow-hidden' : 'overflow-y-auto'}`}
-      >
-        <div className='flex min-w-0 flex-col gap-2'>
-          <div className='flex flex-wrap items-center justify-between gap-3'>
-            <div>
-              <h1 className='text-xl font-semibold'>Orion</h1>
-            </div>
-            <div className='flex flex-wrap items-center gap-2'>
-              {isAdmin ? (
-                <Button
-                  variant='primary'
-                  onClick={() => handleStartRunner(true)}
-                  disabled={isStartingRunner || activePhase === 'provisioning'}
-                >
-                  {isStartingRunner ? 'Starting…' : 'Start Runner'}
-                </Button>
-              ) : null}
-              {!showingOverlay ? (
-                <Button
-                  variant='plain'
-                  iconOnly={<RefreshIcon />}
-                  accessibilityLabel='Refresh'
-                  onClick={handleRefresh}
-                  disabled={isPending || (isAdmin && isLoadingRunners)}
-                  tooltip='Refresh'
-                />
-              ) : null}
-            </div>
-          </div>
-
-          {showingTerminal && activeTerminalKey ? (
-            <div
-              ref={terminalPanelRef}
-              className='min-w-0 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900'
-            >
-              <div className='flex items-start justify-between gap-2'>
-                <div className='min-w-0'>
-                  <UIText weight='font-semibold' size='text-sm'>
-                    {terminalSource === 'client' && terminalClientId
-                      ? `Client ${terminalClientId}`
-                      : `Runner ${activeTerminalKey}`}
-                  </UIText>
-                  <UIText size='text-xs' color='text-muted' className='mt-0.5 block'>
-                    Terminal for {terminalDomain ?? activeTerminalKey}
-                  </UIText>
-                </div>
-                <Button variant='plain' size='sm' onClick={handleCloseTerminal}>
-                  Close
-                </Button>
+      <OrionClientPageWrapper>
+        {/* AppLayout main is overflow-hidden; this page must own scrolling when the list is visible. */}
+        <div
+          className={`flex h-full min-h-0 flex-col gap-4 p-4 ${showingOverlay ? 'overflow-hidden' : 'overflow-y-auto'}`}
+        >
+          <div className='flex min-w-0 flex-col gap-2'>
+            <div className='flex flex-wrap items-center justify-between gap-3'>
+              <div>
+                <h1 className='text-xl font-semibold'>Orion</h1>
               </div>
-              <div className='mt-3 min-w-0'>
-                <VmTerminal key={activeTerminalKey} streamKey={activeTerminalKey} height={420} />
-              </div>
-            </div>
-          ) : null}
-
-          {showingLogs ? (
-            <div
-              ref={logPanelRef}
-              className='min-w-0 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900'
-            >
-              <div className='flex items-start justify-between gap-2'>
-                <div className='min-w-0'>
-                  <UIText weight='font-semibold' size='text-sm'>
-                    {logSource === 'client' && logClientId ? `Client ${logClientId}` : `Runner ${activeLogKey}`}
-                  </UIText>
-                  {logSource === 'client' ? (
-                    <UIText size='text-xs' color='text-muted' className='mt-0.5 block'>
-                      Streaming scheduler logs for domain {activeDomain ?? activeLogKey}
-                    </UIText>
-                  ) : null}
-                </div>
-                <div className='flex items-center gap-2'>
-                  {isAdmin && activeLogKey ? (
+              <div className='flex flex-wrap items-center gap-2'>
+                {isAdmin ? (
+                  <>
+                    <label className='flex items-center gap-2 text-sm'>
+                      <span className='text-muted whitespace-nowrap'>Image</span>
+                      <select
+                        className='max-w-xs rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900'
+                        value={selectedImageId}
+                        onChange={(e) => setSelectedImageId(e.target.value)}
+                        disabled={isStartingRunner || isLoadingImages || orionImages.length === 0}
+                      >
+                        <option value=''>Latest (catalog)</option>
+                        {orionImages.map((img) => (
+                          <option key={img.id} value={img.id}>
+                            {[
+                              img.built_at?.slice(0, 10) || 'unknown',
+                              img.rust ? `rust ${img.rust}` : null,
+                              img.python ? `py ${img.python}` : null,
+                              img.buck2 ? `buck2 ${img.buck2}` : null,
+                              img.digest?.replace(/^sha256:/, '').slice(0, 8)
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                     <Button
-                      variant='plain'
-                      size='sm'
-                      onClick={() =>
-                        openTerminalPanel(activeLogKey, logSource === 'client' ? 'client' : 'runner', {
-                          domain: activeDomain,
-                          clientId: logClientId
-                        })
+                      variant='primary'
+                      onClick={() => handleStartRunner(true)}
+                      disabled={
+                        isStartingRunner ||
+                        activePhase === 'provisioning' ||
+                        isLoadingImages ||
+                        orionImages.length === 0
                       }
                     >
-                      Open terminal
+                      {isStartingRunner ? 'Starting…' : 'Start Runner'}
                     </Button>
-                  ) : null}
-                  <Button variant='plain' size='sm' onClick={handleCloseLogs}>
+                  </>
+                ) : null}
+                {!showingOverlay ? (
+                  <Button
+                    variant='plain'
+                    iconOnly={<RefreshIcon />}
+                    accessibilityLabel='Refresh'
+                    onClick={handleRefresh}
+                    disabled={isPending || (isAdmin && isLoadingRunners)}
+                    tooltip='Refresh'
+                  />
+                ) : null}
+              </div>
+            </div>
+
+            {showingTerminal && activeTerminalKey ? (
+              <div
+                ref={terminalPanelRef}
+                className='min-w-0 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900'
+              >
+                <div className='flex items-start justify-between gap-2'>
+                  <div className='min-w-0'>
+                    <UIText weight='font-semibold' size='text-sm'>
+                      {terminalSource === 'client' && terminalClientId
+                        ? `Client ${terminalClientId}`
+                        : `Runner ${activeTerminalKey}`}
+                    </UIText>
+                    <UIText size='text-xs' color='text-muted' className='mt-0.5 block'>
+                      Terminal for {terminalDomain ?? activeTerminalKey}
+                    </UIText>
+                  </div>
+                  <Button variant='plain' size='sm' onClick={handleCloseTerminal}>
                     Close
                   </Button>
                 </div>
+                <div className='mt-3 min-w-0'>
+                  <VmTerminal key={activeTerminalKey} streamKey={activeTerminalKey} height={420} />
+                </div>
               </div>
-              <div className='mt-1 flex flex-col gap-1'>
-                {(runnerStatus?.domain ?? activeDomain) ? (
-                  <UIText size='text-sm' color='text-muted'>
-                    Domain: {runnerStatus?.domain ?? activeDomain}
-                  </UIText>
-                ) : null}
-                {logSource === 'runner' ? (
-                  <UIText size='text-sm'>
-                    Phase:{' '}
-                    <span className='font-medium capitalize'>{runnerStatus?.phase ?? activePhase ?? 'unknown'}</span>
-                  </UIText>
-                ) : null}
-                {runnerStatus?.vm_ip ? (
-                  <UIText size='text-sm' color='text-muted'>
-                    VM IP: {runnerStatus.vm_ip}
-                  </UIText>
-                ) : null}
-                {runnerStatus?.image_name || runnerStatus?.image_digest ? (
-                  <UIText size='text-sm' color='text-muted'>
-                    Image: {runnerStatus.image_name ?? 'unknown'}
-                    {runnerStatus.image_digest
-                      ? ` (${runnerStatus.image_digest.replace(/^sha256:/, '').slice(0, 12)})`
-                      : ''}
-                  </UIText>
-                ) : null}
-                {runnerStatus?.image_built_at ? (
-                  <UIText size='text-sm' color='text-muted'>
-                    Built: {runnerStatus.image_built_at}
-                  </UIText>
-                ) : null}
-                {runnerStatus?.image_cpus != null ||
-                runnerStatus?.image_memory_mb != null ||
-                runnerStatus?.image_disk_gb != null ? (
-                  <UIText size='text-sm' color='text-muted'>
-                    Resources:{' '}
-                    {[
-                      runnerStatus.image_cpus != null ? `${runnerStatus.image_cpus} vCPU` : null,
-                      runnerStatus.image_memory_mb != null
-                        ? `${Math.round(runnerStatus.image_memory_mb / 1024)} GiB RAM`
-                        : null,
-                      runnerStatus.image_disk_gb != null ? `${runnerStatus.image_disk_gb} GiB disk` : null
-                    ]
-                      .filter(Boolean)
-                      .join(' / ')}
-                  </UIText>
-                ) : null}
-                {runnerStatus?.toolchain_rust || runnerStatus?.toolchain_buck2 || runnerStatus?.toolchain_python ? (
-                  <UIText size='text-sm' color='text-muted'>
-                    Toolchains:{' '}
-                    {[
-                      runnerStatus.toolchain_rust ? `rust ${runnerStatus.toolchain_rust}` : null,
-                      runnerStatus.toolchain_buck2 ? `buck2 ${runnerStatus.toolchain_buck2}` : null,
-                      runnerStatus.toolchain_python ? `python ${runnerStatus.toolchain_python}` : null
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </UIText>
-                ) : null}
-                {runnerStatus?.kernel ? (
-                  <UIText size='text-sm' color='text-muted'>
-                    Kernel: {runnerStatus.kernel}
-                  </UIText>
-                ) : null}
-                {runnerStatus?.uptime_secs != null ? (
-                  <UIText size='text-sm' color='text-muted'>
-                    Uptime: {formatUptime(runnerStatus.uptime_secs)}
-                  </UIText>
-                ) : null}
-                {runnerStatus?.log_file ? (
-                  <UIText size='text-sm' color='text-muted'>
-                    Log file: {runnerStatus.log_file}
-                  </UIText>
-                ) : null}
-                {runnerStatus?.error ? (
-                  <UIText size='text-sm' className='text-red-600'>
-                    {runnerStatus.error}
-                  </UIText>
-                ) : null}
-                {logSource === 'runner' && runnerStatus?.phase === 'failed' ? (
-                  <Button variant='primary' size='sm' className='mt-1 w-fit' onClick={() => handleStartRunner(true)}>
-                    Retry
-                  </Button>
-                ) : null}
-              </div>
+            ) : null}
 
-              <div className='mt-3 min-w-0'>
-                <div className='mb-1 flex items-center justify-between gap-2'>
-                  <UIText weight='font-semibold' size='text-sm'>
-                    {logSource === 'client' ? 'Runner logs' : 'Startup logs'}
-                  </UIText>
-                  <div className='flex items-center gap-2'>
-                    {runnerLogsStatus === 'connecting' || /Waiting for VM\b/i.test(runnerLogs) ? (
-                      <span className='text-tertiary inline-flex items-center gap-1.5 text-xs'>
-                        <span
-                          className='border-tertiary inline-block size-3 animate-spin rounded-full border-2 border-t-transparent'
-                          aria-hidden
-                        />
-                        Waiting…
-                      </span>
-                    ) : (
-                      <UIText size='text-xs' color='text-muted'>
-                        {runnerLogsStatus === 'streaming'
-                          ? 'Live'
-                          : runnerLogsStatus === 'error'
-                            ? 'Disconnected'
-                            : 'Idle'}
+            {showingLogs ? (
+              <div
+                ref={logPanelRef}
+                className='min-w-0 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900'
+              >
+                <div className='flex items-start justify-between gap-2'>
+                  <div className='min-w-0'>
+                    <UIText weight='font-semibold' size='text-sm'>
+                      {logSource === 'client' && logClientId ? `Client ${logClientId}` : `Runner ${activeLogKey}`}
+                    </UIText>
+                    {logSource === 'client' ? (
+                      <UIText size='text-xs' color='text-muted' className='mt-0.5 block'>
+                        Streaming scheduler logs for domain {activeDomain ?? activeLogKey}
                       </UIText>
-                    )}
-                    {runnerLogs ? (
+                    ) : null}
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    {isAdmin && activeLogKey ? (
                       <Button
                         variant='plain'
                         size='sm'
-                        onClick={() => {
-                          void copyLogsToClipboard(runnerLogs)
-                        }}
+                        onClick={() =>
+                          openTerminalPanel(activeLogKey, logSource === 'client' ? 'client' : 'runner', {
+                            domain: activeDomain,
+                            clientId: logClientId
+                          })
+                        }
                       >
-                        {copyFeedback ? 'Copied' : 'Copy'}
+                        Open terminal
                       </Button>
                     ) : null}
+                    <Button variant='plain' size='sm' onClick={handleCloseLogs}>
+                      Close
+                    </Button>
                   </div>
                 </div>
-                {runnerLogsError ? (
-                  <UIText size='text-sm' className='mb-1 text-red-600'>
-                    {runnerLogsError}
-                  </UIText>
-                ) : null}
-                <div
-                  ref={logsScrollRef}
-                  tabIndex={0}
-                  role='log'
-                  aria-label='Orion runner logs'
-                  onKeyDown={handleLogsKeyDown}
-                  onWheel={(e) => {
-                    // Stop auto-follow as soon as the user scrolls up.
-                    if (e.deltaY < 0) {
-                      logsFollowRef.current = false
-                    }
-                  }}
-                  onScroll={(e) => {
-                    const el = e.currentTarget
-                    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
-
-                    logsFollowRef.current = distanceFromBottom < 40
-                  }}
-                  style={{ height: 320, maxHeight: 320, overflowY: 'auto', overflowX: 'auto' }}
-                  className='w-full cursor-text rounded border border-gray-200 bg-black/90 outline-hidden select-text focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700'
-                >
-                  {isVmWaitingLog(runnerLogs) ? (
-                    <div className='flex h-full min-h-[280px] flex-col items-center justify-center gap-3 p-6 text-green-100'>
-                      <span
-                        className='inline-block size-8 animate-spin rounded-full border-2 border-green-400/30 border-t-green-300'
-                        aria-hidden
-                      />
-                      <p className='flex items-center gap-0 font-mono text-xs tracking-wide'>
-                        <span>{vmWaitingLabel(runnerLogs)}</span>
-                        <span className='inline-flex w-4 justify-start' aria-hidden>
-                          <span className='animate-pulse'>…</span>
-                        </span>
-                      </p>
-                    </div>
-                  ) : (
-                    <pre
-                      ref={logsPreRef}
-                      className='m-0 block w-full min-w-0 p-3 font-mono text-xs leading-5 break-words whitespace-pre-wrap text-green-100 select-text'
-                    >
-                      {runnerLogs ||
-                        (runnerLogsStatus === 'connecting'
-                          ? 'Waiting for log stream…'
-                          : 'No log lines yet. Logs appear while the runner is running.')}
-                    </pre>
-                  )}
+                <div className='mt-1 flex flex-col gap-1'>
+                  {(runnerStatus?.domain ?? activeDomain) ? (
+                    <UIText size='text-sm' color='text-muted'>
+                      Domain: {runnerStatus?.domain ?? activeDomain}
+                    </UIText>
+                  ) : null}
+                  {logSource === 'runner' ? (
+                    <UIText size='text-sm'>
+                      Phase:{' '}
+                      <span className='font-medium capitalize'>{runnerStatus?.phase ?? activePhase ?? 'unknown'}</span>
+                    </UIText>
+                  ) : null}
+                  {runnerStatus?.vm_ip ? (
+                    <UIText size='text-sm' color='text-muted'>
+                      VM IP: {runnerStatus.vm_ip}
+                    </UIText>
+                  ) : null}
+                  {runnerStatus?.image_name || runnerStatus?.image_digest ? (
+                    <UIText size='text-sm' color='text-muted'>
+                      Image:{' '}
+                      {runnerStatus.image_name ||
+                        (runnerStatus.image_digest
+                          ? `sha256:${runnerStatus.image_digest.replace(/^sha256:/, '').slice(0, 12)}…`
+                          : 'unknown')}
+                      {runnerStatus.image_name && runnerStatus.image_digest
+                        ? ` (${runnerStatus.image_digest.replace(/^sha256:/, '').slice(0, 12)})`
+                        : ''}
+                    </UIText>
+                  ) : null}
+                  {runnerStatus?.image_built_at ? (
+                    <UIText size='text-sm' color='text-muted'>
+                      Built: {runnerStatus.image_built_at}
+                    </UIText>
+                  ) : null}
+                  {runnerStatus?.image_cpus != null ||
+                  runnerStatus?.image_memory_mb != null ||
+                  runnerStatus?.image_disk_gb != null ? (
+                    <UIText size='text-sm' color='text-muted'>
+                      Resources:{' '}
+                      {[
+                        runnerStatus.image_cpus != null ? `${runnerStatus.image_cpus} vCPU` : null,
+                        runnerStatus.image_memory_mb != null
+                          ? `${Math.round(runnerStatus.image_memory_mb / 1024)} GiB RAM`
+                          : null,
+                        runnerStatus.image_disk_gb != null ? `${runnerStatus.image_disk_gb} GiB disk` : null
+                      ]
+                        .filter(Boolean)
+                        .join(' / ')}
+                    </UIText>
+                  ) : null}
+                  {runnerStatus?.toolchain_rust || runnerStatus?.toolchain_buck2 || runnerStatus?.toolchain_python ? (
+                    <UIText size='text-sm' color='text-muted'>
+                      Toolchains:{' '}
+                      {[
+                        runnerStatus.toolchain_rust ? `rust ${runnerStatus.toolchain_rust}` : null,
+                        runnerStatus.toolchain_buck2 ? `buck2 ${runnerStatus.toolchain_buck2}` : null,
+                        runnerStatus.toolchain_python ? `python ${runnerStatus.toolchain_python}` : null
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </UIText>
+                  ) : null}
+                  {runnerStatus?.kernel ? (
+                    <UIText size='text-sm' color='text-muted'>
+                      Kernel: {runnerStatus.kernel}
+                    </UIText>
+                  ) : null}
+                  {runnerStatus?.uptime_secs != null ? (
+                    <UIText size='text-sm' color='text-muted'>
+                      Uptime: {formatUptime(runnerStatus.uptime_secs)}
+                    </UIText>
+                  ) : null}
+                  {runnerStatus?.log_file ? (
+                    <UIText size='text-sm' color='text-muted'>
+                      Log file: {runnerStatus.log_file}
+                    </UIText>
+                  ) : null}
+                  {runnerStatus?.error ? (
+                    <UIText size='text-sm' className='text-red-600'>
+                      {runnerStatus.error}
+                    </UIText>
+                  ) : null}
+                  {logSource === 'runner' && runnerStatus?.phase === 'failed' ? (
+                    <Button variant='primary' size='sm' className='mt-1 w-fit' onClick={() => handleStartRunner(true)}>
+                      Retry
+                    </Button>
+                  ) : null}
                 </div>
-                <UIText size='text-xs' color='text-muted' className='mt-1 block'>
-                  Scroll inside the box to browse. ⌘/Ctrl+A select all, ⌘/Ctrl+C copy. Scroll to bottom to resume live
-                  follow.
-                </UIText>
-              </div>
-            </div>
-          ) : null}
 
-          {!showingOverlay ? <div className='border-b' /> : null}
-        </div>
+                <div className='mt-3 min-w-0'>
+                  <div className='mb-1 flex items-center justify-between gap-2'>
+                    <UIText weight='font-semibold' size='text-sm'>
+                      {logSource === 'client' ? 'Runner logs' : 'Startup logs'}
+                    </UIText>
+                    <div className='flex items-center gap-2'>
+                      {runnerLogsStatus === 'connecting' || /Waiting for VM\b/i.test(runnerLogs) ? (
+                        <span className='text-tertiary inline-flex items-center gap-1.5 text-xs'>
+                          <span
+                            className='border-tertiary inline-block size-3 animate-spin rounded-full border-2 border-t-transparent'
+                            aria-hidden
+                          />
+                          Waiting…
+                        </span>
+                      ) : (
+                        <UIText size='text-xs' color='text-muted'>
+                          {runnerLogsStatus === 'streaming'
+                            ? 'Live'
+                            : runnerLogsStatus === 'error'
+                              ? 'Disconnected'
+                              : 'Idle'}
+                        </UIText>
+                      )}
+                      {runnerLogs ? (
+                        <Button
+                          variant='plain'
+                          size='sm'
+                          onClick={() => {
+                            void copyLogsToClipboard(runnerLogs)
+                          }}
+                        >
+                          {copyFeedback ? 'Copied' : 'Copy'}
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                  {runnerLogsError ? (
+                    <UIText size='text-sm' className='mb-1 text-red-600'>
+                      {runnerLogsError}
+                    </UIText>
+                  ) : null}
+                  <div
+                    ref={logsScrollRef}
+                    tabIndex={0}
+                    role='log'
+                    aria-label='Orion runner logs'
+                    onKeyDown={handleLogsKeyDown}
+                    onWheel={(e) => {
+                      // Stop auto-follow as soon as the user scrolls up.
+                      if (e.deltaY < 0) {
+                        logsFollowRef.current = false
+                      }
+                    }}
+                    onScroll={(e) => {
+                      const el = e.currentTarget
+                      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
 
-        {!showingOverlay ? (
-          <>
-            <RunnersTable
-              runners={isAdmin ? (runnerList?.runners ?? []) : []}
-              clients={clients}
-              isLoading={isPending || (isAdmin && isLoadingRunners)}
-              errorMessage={[runnerListError?.message, error?.message].filter(Boolean).join(' · ') || null}
-              statusFilter={statusFilter}
-              onStatusChange={(value: OrionClientStatus | 'all') => setStatusFilter(value)}
-              statusOptions={statusOptions}
-              canManage={isAdmin}
-              onViewRunnerLogs={handleViewRunnerLogs}
-              onConnectRunnerTerminal={handleConnectRunnerTerminal}
-              onViewClientLogs={handleViewClientLogs}
-              onConnectClientTerminal={handleConnectTerminal}
-            />
-
-            {pageCount > 1 ? (
-              <div className='flex w-full justify-center pt-2'>
-                <PrimerThemeProvider colorMode={resolvedTheme === 'dark' ? 'dark' : 'light'}>
-                  <Pagination
-                    pageCount={pageCount}
-                    currentPage={currentPage}
-                    showPages={{ narrow: false }}
-                    onPageChange={(_e: any, page: number) => setCurrentPage(page)}
-                  />
-                </PrimerThemeProvider>
+                      logsFollowRef.current = distanceFromBottom < 40
+                    }}
+                    style={{ height: 320, maxHeight: 320, overflowY: 'auto', overflowX: 'auto' }}
+                    className='w-full cursor-text rounded border border-gray-200 bg-black/90 outline-hidden select-text focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700'
+                  >
+                    {isVmWaitingLog(runnerLogs) ? (
+                      <div className='flex h-full min-h-[280px] flex-col items-center justify-center gap-3 p-6 text-green-100'>
+                        <span
+                          className='inline-block size-8 animate-spin rounded-full border-2 border-green-400/30 border-t-green-300'
+                          aria-hidden
+                        />
+                        <p className='flex items-center gap-0 font-mono text-xs tracking-wide'>
+                          <span>{vmWaitingLabel(runnerLogs)}</span>
+                          <span className='inline-flex w-4 justify-start' aria-hidden>
+                            <span className='animate-pulse'>…</span>
+                          </span>
+                        </p>
+                      </div>
+                    ) : (
+                      <pre
+                        ref={logsPreRef}
+                        className='m-0 block w-full min-w-0 p-3 font-mono text-xs leading-5 break-words whitespace-pre-wrap text-green-100 select-text'
+                      >
+                        {runnerLogs ||
+                          (runnerLogsStatus === 'connecting'
+                            ? 'Waiting for log stream…'
+                            : 'No log lines yet. Logs appear while the runner is running.')}
+                      </pre>
+                    )}
+                  </div>
+                  <UIText size='text-xs' color='text-muted' className='mt-1 block'>
+                    Scroll inside the box to browse. ⌘/Ctrl+A select all, ⌘/Ctrl+C copy. Scroll to bottom to resume live
+                    follow.
+                  </UIText>
+                </div>
               </div>
             ) : null}
-          </>
-        ) : null}
-      </div>
+
+            {!showingOverlay ? <div className='border-b' /> : null}
+          </div>
+
+          {!showingOverlay ? (
+            <>
+              <RunnersTable
+                runners={isAdmin ? (runnerList?.runners ?? []) : []}
+                clients={clients}
+                isLoading={isPending || (isAdmin && isLoadingRunners)}
+                errorMessage={[runnerListError?.message, error?.message].filter(Boolean).join(' · ') || null}
+                statusFilter={statusFilter}
+                onStatusChange={(value: OrionClientStatus | 'all') => setStatusFilter(value)}
+                statusOptions={statusOptions}
+                canManage={isAdmin}
+                onViewRunnerLogs={handleViewRunnerLogs}
+                onConnectRunnerTerminal={handleConnectRunnerTerminal}
+                onViewClientLogs={handleViewClientLogs}
+                onConnectClientTerminal={handleConnectTerminal}
+              />
+
+              {pageCount > 1 ? (
+                <div className='flex w-full justify-center pt-2'>
+                  <PrimerThemeProvider colorMode={resolvedTheme === 'dark' ? 'dark' : 'light'}>
+                    <Pagination
+                      pageCount={pageCount}
+                      currentPage={currentPage}
+                      showPages={{ narrow: false }}
+                      onPageChange={(_e: any, page: number) => setCurrentPage(page)}
+                    />
+                  </PrimerThemeProvider>
+                </div>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+      </OrionClientPageWrapper>
     </>
   )
 }

@@ -19,11 +19,19 @@ pub struct TargetConfig {
     pub retain_antares_mounts: Option<bool>,
 }
 
-/// Default VM image parameters used when webhook omits image_* fields.
+/// Default VM sizing used when webhook omits disk/cpu/memory.
+/// Image source must be supplied explicitly (`image_url` or `image_path`);
+/// there is no silent host-local default qcow2.
 #[derive(Debug, Clone, Deserialize)]
 pub struct DefaultImageConfig {
-    pub image_path: String,
-    pub image_digest: String,
+    /// Ignored if present in older configs (local default path removed).
+    #[serde(default)]
+    #[allow(dead_code)]
+    pub image_path: Option<String>,
+    /// Ignored if present in older configs.
+    #[serde(default)]
+    #[allow(dead_code)]
+    pub image_digest: Option<String>,
     pub image_disk_gb: u32,
     pub image_cpus: u32,
     pub image_memory_mb: u32,
@@ -32,10 +40,8 @@ pub struct DefaultImageConfig {
 impl Default for DefaultImageConfig {
     fn default() -> Self {
         Self {
-            image_path: "~/.local/share/qlean/images/debian-13-buck2/debian-13-buck2.qcow2"
-                .to_string(),
-            image_digest: "sha256:753c28888c9d30fe4baef55c1d1dfa9a39431595eca940b7ad85d78d84f3d7a5"
-                .to_string(),
+            image_path: None,
+            image_digest: None,
             image_disk_gb: 50,
             image_cpus: 8,
             image_memory_mb: 16000,
@@ -251,6 +257,7 @@ mod tests {
         assert_eq!(d.image_disk_gb, 50);
         assert_eq!(d.image_cpus, 8);
         assert_eq!(d.image_memory_mb, 16000);
-        assert!(d.image_digest.starts_with("sha256:"));
+        assert!(d.image_path.is_none());
+        assert!(d.image_digest.is_none());
     }
 }

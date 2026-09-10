@@ -152,6 +152,15 @@ secret_access_key = ""
 # set this to the service endpoint.
 endpoint_url = "http://localhost:9000"
 
+# Optional: endpoint used only for presigned GET/PUT URLs.
+# Use when mono talks to RustFS over an in-cluster URL but external clients
+# (orion-scheduler on the host) need a public hostname. Signature includes
+# Host, so this must match the URL clients will open. Empty = use endpoint_url.
+# Example:
+#   endpoint_url = "http://rustfs.mega-dev.svc.cluster.local:9000"
+#   presign_endpoint_url = "https://rustfs.xuanwu.openatom.cn"
+presign_endpoint_url = ""
+
 
 [object_storage.gcs]
 # Name of the GCS bucket

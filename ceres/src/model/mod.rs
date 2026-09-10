@@ -15,6 +15,7 @@ pub mod label;
 pub mod merge_queue;
 pub mod note;
 pub mod notification;
+pub mod orion_image;
 pub mod orion_runner;
 pub mod serde_snowflake;
 pub mod tag;

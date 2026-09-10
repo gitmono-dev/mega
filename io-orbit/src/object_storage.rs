@@ -19,6 +19,11 @@ pub struct ObjectKey {
 
 impl ObjectKey {
     pub fn default_sharding(&self) -> String {
+        // Orion VM images keep an explicit catalog layout:
+        // `orion-images/{sha256_hex}/debian-13-buck2.qcow2` (and sidecar).
+        if self.namespace == ObjectNamespace::OrionImage {
+            return format!("{}/{}", self.namespace, self.key.trim_start_matches('/'));
+        }
         let id = &self.key;
         if id.len() < 6 {
             // For short keys, don't shard or use a different strategy
@@ -48,6 +53,8 @@ pub enum ObjectNamespace {
     Log,
     /// Artifact protocol objects (`docs/artifacts-protocol.md`), keyed by UUID string.
     Artifact,
+    /// Orion scheduler VM images: flat `orion-images/{digest_hex}/…` (no hash sharding).
+    OrionImage,
 }
 
 impl ObjectNamespace {
@@ -58,6 +65,7 @@ impl ObjectNamespace {
             ObjectNamespace::Media => "media",
             ObjectNamespace::Log => "log",
             ObjectNamespace::Artifact => "artifact",
+            ObjectNamespace::OrionImage => "orion-images",
         }
     }
 }
@@ -374,5 +382,17 @@ mod tests {
         let path = key.to_object_store_path();
 
         assert_eq!(path.as_ref(), "git/ab/cd/ef/1234567890");
+    }
+
+    #[test]
+    fn test_orion_image_namespace_is_unsharded() {
+        let key = ObjectKey {
+            namespace: ObjectNamespace::OrionImage,
+            key: "abc123/debian-13-buck2.qcow2".to_string(),
+        };
+        assert_eq!(
+            key.default_sharding(),
+            "orion-images/abc123/debian-13-buck2.qcow2"
+        );
     }
 }

@@ -126,6 +126,7 @@ impl From<InstallationTargetType> for InstallationTargetTypeEnum {
 #[derive(Debug, Clone)]
 pub struct BotIdentity {
     pub bot_id: i64,
+    pub bot_name: String,
     pub token_id: i64,
 }
 
@@ -133,6 +134,7 @@ impl BotIdentity {
     pub fn from_models(bot: callisto::bots::Model, token: callisto::bot_tokens::Model) -> Self {
         Self {
             bot_id: bot.id,
+            bot_name: bot.name,
             token_id: token.id,
         }
     }
@@ -160,10 +162,11 @@ pub struct CreateBotTokenResponse {
     pub token_plain: String,
 }
 
-/// Response for mega-init bot bootstrap (`POST /bots/bootstrap-init`).
+/// Response for secret-gated bot bootstrap (`POST /bots/bootstrap-init` or
+/// `POST /bots/bootstrap-orion-image`).
 ///
 /// Requires header `X-Mega-Init-Secret` matching `MEGA_INIT_BOOTSTRAP_SECRET`.
-/// `token` is a `bot_` push token returned once; use as Bearer (or Basic password).
+/// `token` is a `bot_` token returned once; use as Bearer (or Basic password).
 #[derive(Serialize, ToSchema)]
 pub struct BootstrapInitBotResponse {
     #[serde(serialize_with = "serialize_i64_as_string")]

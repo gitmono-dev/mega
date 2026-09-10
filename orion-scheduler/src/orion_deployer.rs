@@ -86,6 +86,8 @@ fn vm_info_from_params(
         .as_deref()
         .map(load_image_info_sidecar)
         .unwrap_or_default();
+    // Prefer catalog/webhook metadata (URL starts have no local sidecar), then
+    // fall back to `*.image-info.json` beside a local qcow2 path.
     VmInfo {
         id: id.to_string(),
         domain: domain.to_string(),
@@ -100,12 +102,12 @@ fn vm_info_from_params(
         image_cpus: image_params.cpus,
         image_memory_mb: image_params.memory_mb,
         image_disk_gb: image_params.disk_gb,
-        image_name: sidecar.image_name,
-        image_built_at: sidecar.built_at,
-        toolchain_rust: sidecar.rust,
-        toolchain_buck2: sidecar.buck2,
-        toolchain_python: sidecar.python,
-        kernel: sidecar.kernel,
+        image_name: image_params.image_name.clone().or(sidecar.image_name),
+        image_built_at: image_params.image_built_at.clone().or(sidecar.built_at),
+        toolchain_rust: image_params.toolchain_rust.clone().or(sidecar.rust),
+        toolchain_buck2: image_params.toolchain_buck2.clone().or(sidecar.buck2),
+        toolchain_python: image_params.toolchain_python.clone().or(sidecar.python),
+        kernel: image_params.kernel.clone().or(sidecar.kernel),
     }
 }
 
@@ -620,6 +622,12 @@ mod tests {
             disk_gb: Some(30),
             cpus: Some(8),
             memory_mb: Some(16000),
+            image_name: None,
+            image_built_at: None,
+            toolchain_rust: None,
+            toolchain_buck2: None,
+            toolchain_python: None,
+            kernel: None,
         };
         let (spec, disk, cpus, mem) = build_image_spec(&params).unwrap();
         assert!(spec.is_some());

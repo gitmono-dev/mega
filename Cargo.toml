@@ -38,7 +38,7 @@ orion = { path = "orion" }
 orion-client = { path = "clients/orion-client" }
 orion-scheduler-client = { path = "clients/orion-scheduler-client" }
 
-git-internal = "0.8.7"
+git-internal = "0.9.0"
 libvault = "0.3.0"
 
 #====
@@ -63,7 +63,7 @@ futures = "0.3.34"
 futures-util = "0.3.34"
 axum = { version = "0.8.9", features = ["macros", "json"] }
 axum-extra = "0.12.6"
-russh = "0.63.2"
+russh = "0.63.3"
 tower-http = "0.7.1"
 tower = "0.5.3"
 tower-sessions = { version = "0.15", features = ["memory-store"] }
@@ -93,7 +93,7 @@ hmac = "0.13"
 
 idgenerator = "2.0.0"
 config = "0.15.25"
-reqwest = "0.13.4"
+reqwest = "0.13.5"
 uuid = "1.24.1"
 regex = "1.13.1"
 ctrlc = "3.5.2"

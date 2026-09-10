@@ -101,6 +101,7 @@ pub fn routers() -> OpenApiRouter<MonoApiServiceState> {
         "/bots",
         OpenApiRouter::new()
             .routes(routes!(bootstrap_init_bot))
+            .routes(routes!(bootstrap_orion_image_bot))
             .routes(routes!(install_bot))
             .routes(routes!(list_installed_bot))
             .routes(routes!(change_installation_status))
@@ -136,6 +137,36 @@ async fn bootstrap_init_bot(
 ) -> Result<Json<CommonResult<BootstrapInitBotResponse>>, ApiError> {
     ensure_init_bootstrap_secret(&headers)?;
     let resp = state.services().admin().ensure_init_bot_token().await?;
+    Ok(Json(CommonResult::success(Some(resp))))
+}
+
+/// Bootstrap orion-image-publisher bot + catalog-register token.
+///
+/// Gated by the same shared secret `MEGA_INIT_BOOTSTRAP_SECRET` via header
+/// `X-Mega-Init-Secret`. Creates the `orion-image-publisher` bot if needed and
+/// returns a fresh `bot_` token for `POST /api/v1/orion/images`.
+#[utoipa::path(
+    post,
+    path = "/bootstrap-orion-image",
+    params(
+        ("X-Mega-Init-Secret" = String, Header, description = "Must match MEGA_INIT_BOOTSTRAP_SECRET on mono-engine")
+    ),
+    responses(
+        (status = 200, body = CommonResult<BootstrapInitBotResponse>, content_type = "application/json"),
+        (status = 401, description = "Missing/invalid X-Mega-Init-Secret or secret not configured"),
+    ),
+    tag = BOT_TAG
+)]
+async fn bootstrap_orion_image_bot(
+    State(state): State<MonoApiServiceState>,
+    headers: HeaderMap,
+) -> Result<Json<CommonResult<BootstrapInitBotResponse>>, ApiError> {
+    ensure_init_bootstrap_secret(&headers)?;
+    let resp = state
+        .services()
+        .admin()
+        .ensure_orion_image_publisher_bot_token()
+        .await?;
     Ok(Json(CommonResult::success(Some(resp))))
 }
 

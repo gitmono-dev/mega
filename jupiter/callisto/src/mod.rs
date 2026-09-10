@@ -65,6 +65,7 @@ pub mod note_views;
 pub mod notes;
 pub mod notification_event_types;
 pub mod orion_tasks;
+pub mod orion_vm_image;
 pub mod path_check_configs;
 pub mod reactions;
 pub mod sea_orm_active_enums;

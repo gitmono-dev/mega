@@ -26,6 +26,7 @@ pub mod notification_storage;
 pub mod user_approval_storage;
 pub use notification_storage::NotificationStorage;
 pub mod note_storage;
+pub mod orion_vm_image_storage;
 pub mod stg_common;
 pub mod user_storage;
 pub mod vault_storage;
@@ -43,7 +44,7 @@ use crate::{
         cla_service::ClaService, code_review_service::CodeReviewService, git_service::GitService,
         import_service::ImportService, issue_service::IssueService, lfs_service::LfsService,
         merge_queue_service::MergeQueueService, mono_service::MonoService,
-        webhook_service::WebhookService,
+        orion_vm_image_service::OrionVmImageService, webhook_service::WebhookService,
     },
     storage::{
         audit_storage::AuditStorage,
@@ -155,6 +156,7 @@ pub struct Storage {
     pub cl_service: CLService,
     pub merge_queue_service: MergeQueueService,
     pub artifact_service: ArtifactService,
+    pub orion_vm_image_service: OrionVmImageService,
     pub buck_service: BuckService,
     pub mono_service: MonoService,
     pub import_service: ImportService,
@@ -292,6 +294,7 @@ impl Storage {
             cl_service: CLService::new(base.clone()),
             merge_queue_service,
             artifact_service,
+            orion_vm_image_service: OrionVmImageService::new(base.clone(), object_store.clone()),
             buck_service,
             git_service,
             mono_service,
@@ -509,6 +512,7 @@ impl Storage {
             cl_service: CLService::mock(),
             merge_queue_service: MergeQueueService::mock(),
             artifact_service: ArtifactService::mock(),
+            orion_vm_image_service: OrionVmImageService::mock(),
             buck_service: BuckService::mock(),
             config: Arc::downgrade(&*CONFIG),
             git_service: GitService::mock(),

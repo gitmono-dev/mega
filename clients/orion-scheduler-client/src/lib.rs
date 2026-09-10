@@ -28,6 +28,19 @@ pub struct StartRunnerPayload {
     pub image_cpus: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image_memory_mb: Option<u32>,
+    /// Catalog metadata (from mono when starting via `image_id`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image_built_at: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub toolchain_rust: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub toolchain_buck2: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub toolchain_python: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kernel: Option<String>,
     /// When set, write `ORION_RETAIN_ANTARES_MOUNTS` into the guest `.env`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub retain_antares_mounts: Option<bool>,

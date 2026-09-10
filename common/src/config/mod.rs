@@ -614,6 +614,13 @@ pub struct S3Config {
     pub access_key_id: String,
     pub secret_access_key: String,
     pub endpoint_url: String,
+    /// Optional endpoint used only when generating presigned URLs.
+    ///
+    /// Keep `endpoint_url` as the in-cluster address for mono PUT/GET, and set
+    /// this to a host that out-of-cluster clients (e.g. orion-scheduler) can
+    /// reach. Empty = sign with `endpoint_url` (unchanged behavior).
+    #[serde(default)]
+    pub presign_endpoint_url: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]

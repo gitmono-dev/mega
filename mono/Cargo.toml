@@ -73,6 +73,7 @@ utoipa-axum = { workspace = true }
 utoipa-swagger-ui = { workspace = true, features = ["axum"] }
 once_cell = { workspace = true }
 base64 = { workspace = true }
+io-orbit = { workspace = true }
 
 [features]
 fastcdc = ["ceres/fastcdc"]
@@ -85,7 +86,6 @@ jemallocator = { workspace = true }
 mimalloc = { workspace = true }
 
 [dev-dependencies]
-io-orbit = { workspace = true }
 sea-orm = { workspace = true }
 tempfile = { workspace = true }
 jupiter-migrate = { workspace = true }

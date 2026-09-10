@@ -29,10 +29,16 @@ const ADMIN_CACHE_KEY_SUFFIX: &str = "admin:list";
 
 impl AdminApplicationService {
     /// Check if a user is an admin (config `monorepo.admin` or Cedar).
+    ///
+    /// Config admins are resolved without loading Cedar, so they remain valid
+    /// when `.mega_cedar.json` is missing or its blob cannot be fetched.
     pub async fn check_is_admin(&self, username: &str) -> Result<bool, MegaError> {
         let username = username.trim();
         if username.is_empty() {
             return Ok(false);
+        }
+        if self.config_admins().iter().any(|a| a == username) {
+            return Ok(true);
         }
         let admins = self.get_effective_admins().await?;
         Ok(admins.iter().any(|a| a == username))
@@ -69,7 +75,7 @@ impl AdminApplicationService {
     ///
     /// Config admins are always merged after cache/file load so a stale Redis
     /// Cedar list cannot drop configured admins. If `.mega_cedar.json` is
-    /// missing, config admins alone still apply.
+    /// missing or cannot be fetched/parsed, config admins alone still apply.
     async fn get_effective_admins(&self) -> Result<Vec<String>, MegaError> {
         let cedar_admins = self.get_cedar_admins().await?;
         Ok(self.merge_with_config_admins(cedar_admins))
@@ -199,8 +205,57 @@ impl AdminApplicationService {
 }
 
 fn is_admin_config_unavailable(err: &MegaError) -> bool {
-    let msg = err.to_string();
-    msg.contains(".mega_cedar.json not found")
-        || msg.contains("Root ref not found")
-        || msg.contains("Root tree not found")
+    match err {
+        MegaError::ObjStorageNotFound(_)
+        | MegaError::ObjStorageInconsistent(_)
+        | MegaError::ObjStorage(_)
+        | MegaError::SerdeJson(_) => true,
+        MegaError::Other(msg) => {
+            msg.contains(".mega_cedar.json not found")
+                || msg.contains("Root ref not found")
+                || msg.contains("Root tree not found")
+                || msg.contains("UTF-8 decode failed")
+                || msg.contains("JSON parse failed")
+        }
+        _ => false,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn obj_storage_inconsistent_is_unavailable() {
+        let err = MegaError::ObjStorageInconsistent(
+            "[obj_missing_in_s3_but_has_meta] Object missing".into(),
+        );
+        assert!(is_admin_config_unavailable(&err));
+    }
+
+    #[test]
+    fn obj_storage_not_found_is_unavailable() {
+        let err = MegaError::ObjStorageNotFound("blob missing".into());
+        assert!(is_admin_config_unavailable(&err));
+    }
+
+    #[test]
+    fn missing_cedar_file_is_unavailable() {
+        let err = MegaError::Other(".mega_cedar.json not found in root directory".into());
+        assert!(is_admin_config_unavailable(&err));
+    }
+
+    #[test]
+    fn utf8_and_json_parse_failures_are_unavailable() {
+        let utf8 = MegaError::Other("UTF-8 decode failed: invalid utf-8".into());
+        let json = MegaError::Other("JSON parse failed: expected value".into());
+        assert!(is_admin_config_unavailable(&utf8));
+        assert!(is_admin_config_unavailable(&json));
+    }
+
+    #[test]
+    fn unrelated_bad_request_is_not_unavailable() {
+        let err = MegaError::BadRequest("admins must not be empty".into());
+        assert!(!is_admin_config_unavailable(&err));
+    }
 }

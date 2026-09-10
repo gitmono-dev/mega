@@ -34,6 +34,13 @@ pub struct ImageParams {
     pub disk_gb: Option<u32>,
     pub cpus: Option<u32>,
     pub memory_mb: Option<u32>,
+    /// Catalog / caller-provided metadata (preferred over local sidecar).
+    pub image_name: Option<String>,
+    pub image_built_at: Option<String>,
+    pub toolchain_rust: Option<String>,
+    pub toolchain_buck2: Option<String>,
+    pub toolchain_python: Option<String>,
+    pub kernel: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -83,33 +90,35 @@ pub struct GithubWebhookPayload {
     /// VM memory in MB.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub image_memory_mb: Option<u32>,
+    /// Optional catalog metadata (filled by mono when starting via `image_id`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image_built_at: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toolchain_rust: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toolchain_buck2: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toolchain_python: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kernel: Option<String>,
     /// When set, write `ORION_RETAIN_ANTARES_MOUNTS` into the guest `.env`
     /// (`true`→`1`, `false`→`0`). Omitted → leave `.env.prod` value unchanged.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub retain_antares_mounts: Option<bool>,
 }
 
-/// Merge webhook image overrides with scheduler `default_image` config.
+/// Merge webhook image overrides with scheduler sizing defaults.
+/// Does not invent a host-local image path/digest; caller must supply
+/// `image_url` or `image_path` (+ digest).
 pub fn merge_image_params(
     payload: &GithubWebhookPayload,
     default: &DefaultImageConfig,
 ) -> ImageParams {
     let url = payload.image_url.clone();
-    let path = if url.is_some() {
-        payload.image_path.clone()
-    } else {
-        payload
-            .image_path
-            .clone()
-            .or_else(|| Some(default.image_path.clone()))
-    };
-    let digest = payload.image_digest.clone().or_else(|| {
-        if path.is_some() || url.is_some() {
-            Some(default.image_digest.clone())
-        } else {
-            None
-        }
-    });
+    let path = payload.image_path.clone();
+    let digest = payload.image_digest.clone();
 
     ImageParams {
         path,
@@ -118,6 +127,12 @@ pub fn merge_image_params(
         disk_gb: payload.image_disk_gb.or(Some(default.image_disk_gb)),
         cpus: payload.image_cpus.or(Some(default.image_cpus)),
         memory_mb: payload.image_memory_mb.or(Some(default.image_memory_mb)),
+        image_name: payload.image_name.clone(),
+        image_built_at: payload.image_built_at.clone(),
+        toolchain_rust: payload.toolchain_rust.clone(),
+        toolchain_buck2: payload.toolchain_buck2.clone(),
+        toolchain_python: payload.toolchain_python.clone(),
+        kernel: payload.kernel.clone(),
     }
 }
 
@@ -127,7 +142,7 @@ mod merge_tests {
     use crate::config::DefaultImageConfig;
 
     #[test]
-    fn merge_uses_defaults_when_payload_omits_image_fields() {
+    fn merge_uses_sizing_defaults_when_payload_omits_image_fields() {
         let default = DefaultImageConfig::default();
         let payload = GithubWebhookPayload {
             action: None,
@@ -143,15 +158,21 @@ mod merge_tests {
             image_disk_gb: None,
             image_cpus: None,
             image_memory_mb: None,
+            image_name: None,
+            image_built_at: None,
+            toolchain_rust: None,
+            toolchain_buck2: None,
+            toolchain_python: None,
+            kernel: None,
             retain_antares_mounts: None,
         };
         let merged = merge_image_params(&payload, &default);
-        assert_eq!(merged.path.as_deref(), Some(default.image_path.as_str()));
-        assert_eq!(
-            merged.digest.as_deref(),
-            Some(default.image_digest.as_str())
-        );
+        assert!(merged.path.is_none());
+        assert!(merged.url.is_none());
+        assert!(merged.digest.is_none());
         assert_eq!(merged.disk_gb, Some(default.image_disk_gb));
+        assert_eq!(merged.cpus, Some(default.image_cpus));
+        assert_eq!(merged.memory_mb, Some(default.image_memory_mb));
     }
 
     #[test]
@@ -171,11 +192,52 @@ mod merge_tests {
             image_disk_gb: Some(64),
             image_cpus: None,
             image_memory_mb: None,
+            image_name: None,
+            image_built_at: None,
+            toolchain_rust: None,
+            toolchain_buck2: None,
+            toolchain_python: None,
+            kernel: None,
             retain_antares_mounts: None,
         };
         let merged = merge_image_params(&payload, &default);
         assert_eq!(merged.disk_gb, Some(64));
         assert_eq!(merged.cpus, Some(default.image_cpus));
+    }
+
+    #[test]
+    fn merge_keeps_explicit_url_without_config_digest() {
+        let default = DefaultImageConfig::default();
+        let payload = GithubWebhookPayload {
+            action: None,
+            target: None,
+            sync: false,
+            replace: false,
+            server_ws: "ws://orion.test/ws".into(),
+            scorpio_base_url: "http://git.test".into(),
+            scorpio_lfs_url: "http://git.test".into(),
+            image_path: None,
+            image_url: Some("https://rustfs.example/img.qcow2".into()),
+            image_digest: Some("sha256:abc".into()),
+            image_disk_gb: None,
+            image_cpus: None,
+            image_memory_mb: None,
+            image_name: Some("debian-13-buck2".into()),
+            image_built_at: None,
+            toolchain_rust: None,
+            toolchain_buck2: None,
+            toolchain_python: None,
+            kernel: None,
+            retain_antares_mounts: None,
+        };
+        let merged = merge_image_params(&payload, &default);
+        assert!(merged.path.is_none());
+        assert_eq!(
+            merged.url.as_deref(),
+            Some("https://rustfs.example/img.qcow2")
+        );
+        assert_eq!(merged.digest.as_deref(), Some("sha256:abc"));
+        assert_eq!(merged.image_name.as_deref(), Some("debian-13-buck2"));
     }
 }
 
@@ -274,9 +336,69 @@ pub async fn webhook_post_handler(
         }
     };
 
-    // Conflict / idempotency checks (hold update lock briefly).
+    // Fast conflict / idempotency checks without waiting on the update lock.
+    // `handle_update` holds that lock for the whole create (including multi-GB
+    // image downloads); blocking here made mono's start_runner client time out.
+    if let Some(existing) = state.get_vm_by_domain(&domain).await {
+        match existing.phase {
+            VmPhase::Provisioning => {
+                return (
+                    StatusCode::CONFLICT,
+                    Json(WebhookResponse {
+                        status: "conflict".to_string(),
+                        vm_id: Some(existing.id.clone()),
+                        domain: Some(domain),
+                        phase: Some(existing.phase.as_str().to_string()),
+                        error: Some("VM already provisioning for this domain".to_string()),
+                        orion_log_file: existing.log_file.clone(),
+                    }),
+                )
+                    .into_response();
+            }
+            VmPhase::Running if !payload.replace => {
+                return (
+                    StatusCode::OK,
+                    Json(WebhookResponse {
+                        status: "ok".to_string(),
+                        vm_id: Some(existing.id.clone()),
+                        domain: Some(domain),
+                        phase: Some(existing.phase.as_str().to_string()),
+                        error: None,
+                        orion_log_file: existing.log_file.clone(),
+                    }),
+                )
+                    .into_response();
+            }
+            VmPhase::Running | VmPhase::Failed => {
+                // replace=true or Failed: allow recreate (handle_update will shut down).
+            }
+        }
+    }
+
+    // Brief try-lock so a concurrent download/provision returns quickly instead
+    // of holding the HTTP request open until mono's client timeout.
     {
-        let _guard = state.lock_update().await;
+        let Some(_guard) = state
+            .try_lock_update(std::time::Duration::from_secs(2))
+            .await
+        else {
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(WebhookResponse {
+                    status: "busy".to_string(),
+                    vm_id: None,
+                    domain: Some(domain),
+                    phase: None,
+                    error: Some(
+                        "scheduler is busy provisioning another VM; retry shortly".to_string(),
+                    ),
+                    orion_log_file: None,
+                }),
+            )
+                .into_response();
+        };
+
+        // Re-check under the lock for races with a just-started provision.
         if let Some(existing) = state.get_vm_by_domain(&domain).await {
             match existing.phase {
                 VmPhase::Provisioning => {
@@ -307,9 +429,7 @@ pub async fn webhook_post_handler(
                     )
                         .into_response();
                 }
-                VmPhase::Running | VmPhase::Failed => {
-                    // replace=true or Failed: allow recreate (handle_update will shut down).
-                }
+                VmPhase::Running | VmPhase::Failed => {}
             }
         } else if let Some(max) = state.config.read().await.max_vms() {
             let count = state.vm_count().await;
@@ -335,6 +455,22 @@ pub async fn webhook_post_handler(
     let config_retain = cfg.retain_antares_mounts();
     drop(cfg);
     let image_params = merge_image_params(&payload, &default_image);
+    if image_params.url.is_none() && image_params.path.is_none() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(WebhookResponse {
+                status: "error".to_string(),
+                vm_id: None,
+                domain: Some(domain),
+                phase: None,
+                error: Some(
+                    "image_url or image_path is required (no local default image)".to_string(),
+                ),
+                orion_log_file: None,
+            }),
+        )
+            .into_response();
+    }
 
     let target_config = TargetConfig {
         server_ws: payload.server_ws.clone(),
@@ -856,8 +992,8 @@ fn hash_line(line: &str) -> u64 {
 /// Multi-VM: pass `?domain=` or `?vm_id=` to select which runner's logs to stream.
 ///
 /// While the selected VM is still provisioning (no machine handle yet), the
-/// stream emits a single waiting line instead of repeating "No running VM"
-/// errors every tick.
+/// stream emits provisioning / image-download progress instead of repeating
+/// "No running VM" errors every tick.
 pub async fn logs_stream_handler(
     State(state): State<Arc<AppState>>,
     Query(q): Query<VmSelectQuery>,
@@ -867,7 +1003,7 @@ pub async fn logs_stream_handler(
         let mut ticker = interval(std::time::Duration::from_secs(1));
         let mut journal_cursor = LogCursor::default();
         let mut orion_log_offset: u64 = 0;
-        let mut waiting_announced = false;
+        let mut last_provision_line: Option<String> = None;
         let mut failure_announced = false;
 
         loop {
@@ -881,7 +1017,7 @@ pub async fn logs_stream_handler(
             .await
             {
                 Ok(snapshot) => {
-                    waiting_announced = false;
+                    last_provision_line = None;
                     failure_announced = false;
                     snapshot
                 }
@@ -890,12 +1026,10 @@ pub async fn logs_stream_handler(
                     if is_vm_not_ready_error(&msg) {
                         match orion_deployer::get_status_by_key(&state, key.as_deref()).await {
                             Some(vm) if vm.phase == VmPhase::Provisioning => {
-                                if !waiting_announced {
-                                    waiting_announced = true;
-                                    yield Ok(Event::default().data(format!(
-                                        "Waiting for VM {} to finish provisioning…",
-                                        vm.id
-                                    )));
+                                let line = provisioning_status_line(&vm);
+                                if last_provision_line.as_deref() != Some(line.as_str()) {
+                                    last_provision_line = Some(line.clone());
+                                    yield Ok(Event::default().data(line));
                                 }
                             }
                             Some(vm) if vm.phase == VmPhase::Failed => {
@@ -911,11 +1045,10 @@ pub async fn logs_stream_handler(
                                 }
                             }
                             Some(_) | None => {
-                                if !waiting_announced {
-                                    waiting_announced = true;
-                                    yield Ok(Event::default().data(
-                                        "Waiting for VM to become available…",
-                                    ));
+                                let line = "Waiting for VM to become available…".to_string();
+                                if last_provision_line.as_deref() != Some(line.as_str()) {
+                                    last_provision_line = Some(line.clone());
+                                    yield Ok(Event::default().data(line));
                                 }
                             }
                         }
@@ -955,6 +1088,78 @@ fn is_vm_not_ready_error(msg: &str) -> bool {
     msg.contains("No running VM for key")
         || msg.contains("No VM is currently running")
         || msg.contains("No VM machine handle available")
+}
+
+/// Human-readable provisioning status, including qcow2 download progress when
+/// qlean is writing `~/.local/share/qlean/images/sha256-<digest>.part`.
+fn provisioning_status_line(vm: &crate::state::VmInfo) -> String {
+    match image_download_progress(vm.image_digest.as_deref()) {
+        Some((done, Some(total))) if total > 0 => {
+            let pct = (100.0 * done as f64 / total as f64).clamp(0.0, 100.0);
+            format!(
+                "Downloading image for {}: {} / {} ({:.0}%)",
+                vm.id,
+                format_bytes(done),
+                format_bytes(total),
+                pct
+            )
+        }
+        Some((done, _)) if done > 0 => {
+            format!("Downloading image for {}: {} …", vm.id, format_bytes(done))
+        }
+        _ => format!("Waiting for VM {} to finish provisioning…", vm.id),
+    }
+}
+
+fn format_bytes(n: u64) -> String {
+    const KIB: f64 = 1024.0;
+    const MIB: f64 = 1024.0 * 1024.0;
+    const GIB: f64 = 1024.0 * 1024.0 * 1024.0;
+    let n = n as f64;
+    if n >= GIB {
+        format!("{:.2} GiB", n / GIB)
+    } else if n >= MIB {
+        format!("{:.1} MiB", n / MIB)
+    } else if n >= KIB {
+        format!("{:.0} KiB", n / KIB)
+    } else {
+        format!("{n:.0} B")
+    }
+}
+
+/// Read in-progress qlean image download from the digest-keyed `.part` file
+/// (and optional `.part.len` sidecar written by qlean when Content-Length is known).
+fn image_download_progress(digest: Option<&str>) -> Option<(u64, Option<u64>)> {
+    let digest = digest?;
+    let hex = digest
+        .strip_prefix("sha256:")
+        .or_else(|| digest.strip_prefix("sha512:"))
+        .unwrap_or(digest);
+    if hex.is_empty() || !hex.chars().all(|c| c.is_ascii_hexdigit()) {
+        return None;
+    }
+    let algo = if digest.starts_with("sha512:") {
+        "sha512"
+    } else {
+        "sha256"
+    };
+    let images_dir = qlean_images_dir()?;
+    let part = images_dir.join(format!("{algo}-{hex}.part"));
+    let meta = std::fs::metadata(&part).ok()?;
+    if !meta.is_file() {
+        return None;
+    }
+    let done = meta.len();
+    let total = std::fs::read_to_string(format!("{}.len", part.display()))
+        .ok()
+        .and_then(|s| s.trim().parse::<u64>().ok())
+        .filter(|&t| t > 0);
+    Some((done, total))
+}
+
+fn qlean_images_dir() -> Option<std::path::PathBuf> {
+    let home = std::env::var_os("HOME")?;
+    Some(std::path::PathBuf::from(home).join(".local/share/qlean/images"))
 }
 
 /// Append a log section with a title header and colored log lines to `output`.
