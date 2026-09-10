@@ -132,7 +132,7 @@ catalog:
   eslint: ^10.8.0
   '@eslint/eslintrc': ^3.3.6
   '@eslint/js': ^10.0.1
-  eslint-config-next: 16.2.12 # pinned with next
+  eslint-config-next: 16.3.3 # pinned with next
   eslint-config-turbo: ^2.10.6
   eslint-plugin-turbo: ^2.10.6
   eslint-plugin-react: ^7.37.5
@@ -168,7 +168,7 @@ catalog:
   metascraper-url: ^5.51.1
   metascraper-video: ^5.51.1
   metascraper-youtube: ^5.51.1
-  next: 16.2.12 # pinned upgrade target (latest 16.x)
+  next: 16.3.3 # pinned upgrade target (latest 16.x)
   next-seo: ^7.0.0
   next-themes: ^0.4.6
   nextjs-cors: ^2.2.1 # latest; peer next<=14 (allowed)
