@@ -519,6 +519,7 @@ mod tests {
             to_hash: to_hash.to_string(),
             created_at: chrono::Utc::now().naive_utc(),
             updated_at: chrono::Utc::now().naive_utc(),
+            closed_at: None,
             campsite_user_id: "tester".to_string(),
             base_branch: "main".to_string(),
         }

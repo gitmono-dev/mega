@@ -145,6 +145,7 @@ mod tests {
             to_hash: Set("b".to_string()),
             created_at: Set(now),
             updated_at: Set(now),
+            closed_at: Set(None),
             campsite_user_id: Set("alice".to_string()),
             base_branch: Set("main".to_string()),
         }
@@ -224,6 +225,7 @@ mod tests {
             to_hash: Set("b".to_string()),
             created_at: Set(now),
             updated_at: Set(now),
+            closed_at: Set(None),
             campsite_user_id: Set("alice".to_string()),
             base_branch: Set("main".to_string()),
         }

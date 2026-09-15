@@ -219,87 +219,58 @@ export default function CLView() {
       return format(date, 'MMM d, yyyy, h:mm a') + ` GMT${offset >= 0 ? '+' : ''}${offset}`
     }
 
+    const openAt = (
+      <Tooltip label={formatFullTime(item.open_timestamp)}>
+        <span className='cursor-default'>
+          {formatDistance(fromUnixTime(item.open_timestamp), new Date(), { addSuffix: true })}
+        </span>
+      </Tooltip>
+    )
+
+    const closeTimestamp = item.closed_at ?? item.updated_at
+    const closeAt = (
+      <Tooltip label={formatFullTime(closeTimestamp)}>
+        <span className='cursor-default'>
+          {formatDistance(fromUnixTime(closeTimestamp), new Date(), { addSuffix: true })}
+        </span>
+      </Tooltip>
+    )
+
+    const authorNode = (
+      <>
+        <MemberHovercard
+          username={
+            members.find(
+              (m) =>
+                m.user.id === item.author || m.user.username === item.author || m.user.github_login === item.author
+            )?.user.username || item.author
+          }
+        >
+          <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
+        </MemberHovercard>
+        {item.author_is_bot ? (
+          <>
+            {' '}
+            <BotBadge size='sm' />
+          </>
+        ) : null}
+      </>
+    )
+
     switch (normalizedStatus) {
       case 'open':
-        return (
-          <>
-            opened{' '}
-            <Tooltip label={formatFullTime(item.open_timestamp)}>
-              <span className='cursor-default'>
-                {formatDistance(fromUnixTime(item.open_timestamp), new Date(), { addSuffix: true })}
-              </span>
-            </Tooltip>{' '}
-            by{' '}
-            <MemberHovercard
-              username={
-                members.find(
-                  (m) =>
-                    m.user.id === item.author || m.user.username === item.author || m.user.github_login === item.author
-                )?.user.username || item.author
-              }
-            >
-              <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
-            </MemberHovercard>
-            {item.author_is_bot ? (
-              <>
-                {' '}
-                <BotBadge size='sm' />
-              </>
-            ) : null}
-          </>
-        )
       case 'draft':
         return (
           <>
-            opened{' '}
-            <Tooltip label={formatFullTime(item.open_timestamp)}>
-              <span className='cursor-default'>
-                {formatDistance(fromUnixTime(item.open_timestamp), new Date(), { addSuffix: true })}
-              </span>
-            </Tooltip>{' '}
-            by{' '}
-            <MemberHovercard
-              username={
-                members.find(
-                  (m) =>
-                    m.user.id === item.author || m.user.username === item.author || m.user.github_login === item.author
-                )?.user.username || item.author
-              }
-            >
-              <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
-            </MemberHovercard>
-            {item.author_is_bot ? (
-              <>
-                {' '}
-                <BotBadge size='sm' />
-              </>
-            ) : null}
+            opened {openAt} by {authorNode}
           </>
         )
       case 'merged':
         if (item.merge_timestamp !== null) {
           return (
             <>
-              by{' '}
-              <MemberHovercard
-                username={
-                  members.find(
-                    (m) =>
-                      m.user.id === item.author ||
-                      m.user.username === item.author ||
-                      m.user.github_login === item.author
-                  )?.user.username || item.author
-                }
-              >
-                <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
-              </MemberHovercard>
-              {item.author_is_bot ? (
-                <>
-                  {' '}
-                  <BotBadge size='sm' />
-                </>
-              ) : null}
-              {' was merged '}
+              opened {openAt} by {authorNode}
+              {' · merged '}
               <Tooltip label={formatFullTime(item.merge_timestamp ?? 0)}>
                 <span className='cursor-default'>
                   {formatDistance(fromUnixTime(item.merge_timestamp ?? 0), new Date(), { addSuffix: true })}
@@ -307,35 +278,18 @@ export default function CLView() {
               </Tooltip>
             </>
           )
-        } else {
-          return ''
         }
+        return (
+          <>
+            opened {openAt} by {authorNode}
+          </>
+        )
       case 'closed':
         return (
           <>
-            by{' '}
-            <MemberHovercard
-              username={
-                members.find(
-                  (m) =>
-                    m.user.id === item.author || m.user.username === item.author || m.user.github_login === item.author
-                )?.user.username || item.author
-              }
-            >
-              <span className='cursor-pointer hover:text-blue-600 hover:underline'>{authorHandle(item.author)}</span>
-            </MemberHovercard>
-            {item.author_is_bot ? (
-              <>
-                {' '}
-                <BotBadge size='sm' />
-              </>
-            ) : null}
-            {' was closed '}
-            <Tooltip label={formatFullTime(item.updated_at)}>
-              <span className='cursor-default'>
-                {formatDistance(fromUnixTime(item.updated_at), new Date(), { addSuffix: true })}
-              </span>
-            </Tooltip>
+            opened {openAt} by {authorNode}
+            {' · closed '}
+            {closeAt}
           </>
         )
       default:

@@ -69,7 +69,7 @@ impl From<ItemDetails> for ItemRes {
                 author_is_bot: false,
                 open_timestamp: model.created_at.and_utc().timestamp(),
                 merge_timestamp: model.merge_date.map(|dt| dt.and_utc().timestamp()),
-                closed_at: None,
+                closed_at: model.closed_at.map(|dt| dt.and_utc().timestamp()),
                 updated_at: model.updated_at.and_utc().timestamp(),
                 labels: value.labels.into_iter().map(|m| m.into()).collect(),
                 assignees: value.assignees,

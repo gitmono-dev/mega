@@ -178,6 +178,7 @@ mod tests {
             to_hash: "2".repeat(40),
             created_at: now,
             updated_at: now,
+            closed_at: None,
             campsite_user_id: "tester".to_string(),
             base_branch: "main".to_string(),
         }

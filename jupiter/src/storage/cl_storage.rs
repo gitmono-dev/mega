@@ -309,17 +309,21 @@ impl ClStorage {
     }
 
     pub async fn close_cl(&self, model: mega_cl::Model) -> Result<(), MegaError> {
+        let now = chrono::Utc::now().naive_utc();
         let mut a_model = model.into_active_model();
         a_model.status = Set(MergeStatusEnum::Closed);
-        a_model.updated_at = Set(chrono::Utc::now().naive_utc());
+        a_model.closed_at = Set(Some(now));
+        a_model.updated_at = Set(now);
         a_model.update(self.get_connection()).await.unwrap();
         Ok(())
     }
 
     pub async fn reopen_cl(&self, model: mega_cl::Model) -> Result<(), MegaError> {
+        let now = chrono::Utc::now().naive_utc();
         let mut a_model = model.into_active_model();
         a_model.status = Set(MergeStatusEnum::Open);
-        a_model.updated_at = Set(chrono::Utc::now().naive_utc());
+        a_model.closed_at = Set(None);
+        a_model.updated_at = Set(now);
         a_model.update(self.get_connection()).await.unwrap();
         Ok(())
     }
@@ -329,17 +333,26 @@ impl ClStorage {
         model: mega_cl::Model,
         status: MergeStatusEnum,
     ) -> Result<(), MegaError> {
+        let now = chrono::Utc::now().naive_utc();
         let mut a_model = model.into_active_model();
-        a_model.status = Set(status);
-        a_model.updated_at = Set(chrono::Utc::now().naive_utc());
+        a_model.status = Set(status.clone());
+        if status == MergeStatusEnum::Open || status == MergeStatusEnum::Draft {
+            a_model.closed_at = Set(None);
+        } else if matches!(status, MergeStatusEnum::Closed | MergeStatusEnum::Merged) {
+            a_model.closed_at = Set(Some(now));
+        }
+        a_model.updated_at = Set(now);
         a_model.update(self.get_connection()).await?;
         Ok(())
     }
 
     pub async fn merge_cl(&self, model: mega_cl::Model) -> Result<(), MegaError> {
+        let now = chrono::Utc::now().naive_utc();
         let mut a_model = model.into_active_model();
         a_model.status = Set(MergeStatusEnum::Merged);
-        a_model.updated_at = Set(chrono::Utc::now().naive_utc());
+        a_model.merge_date = Set(Some(now));
+        a_model.closed_at = Set(Some(now));
+        a_model.updated_at = Set(now);
         a_model.update(self.get_connection()).await.unwrap();
         Ok(())
     }

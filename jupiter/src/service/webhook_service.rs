@@ -629,6 +629,7 @@ mod tests {
             to_hash: "def".to_string(),
             created_at: DateTime::from_timestamp(0, 0).unwrap().naive_utc(),
             updated_at: DateTime::from_timestamp(0, 0).unwrap().naive_utc(),
+            closed_at: None,
             campsite_user_id: "alice".to_string(),
         };
 
