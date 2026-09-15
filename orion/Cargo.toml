@@ -20,7 +20,6 @@ dotenvy = { workspace = true }
 tokio-tungstenite = { workspace = true, features = ["native-tls"] }
 tungstenite = { workspace = true }
 serde_json = { workspace = true }
-reqwest = { workspace = true, features = ["json"] }
 url = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
 anyhow = { workspace = true }

@@ -28,6 +28,7 @@ import EditItem from './EditItem'
 import ForcePushItem from './item/ForcePushItem'
 import MergedItem from './MergedItem'
 import ReopenItem from './ReopenItem'
+import ReviewerEventItem, { parseReviewerEventComment } from './ReviewerEventItem'
 
 interface TimelineItemProps {
   badge?: React.ReactNode
@@ -100,8 +101,13 @@ const TimelineItems = React.memo<{
 
         switch (conv.conv_type) {
           case 'Comment':
-            icon = <CommentIcon />
-            children = <CLComment conv={conv} id={id} whoamI={type} editorRef={editorRef} />
+            if (parseReviewerEventComment(conv.comment)) {
+              icon = <PersonIcon size={24} className='text-tertiary' />
+              children = <ReviewerEventItem conv={conv} />
+            } else {
+              icon = <CommentIcon />
+              children = <CLComment conv={conv} id={id} whoamI={type} editorRef={editorRef} />
+            }
             break
           case 'Review':
             if (!isCurrentReviewer) {

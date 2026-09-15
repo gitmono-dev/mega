@@ -14,13 +14,13 @@ common = { workspace = true }
 async-trait = { workspace = true }
 hex = { workspace = true }
 pgp = { workspace = true }
-rand = "0.8.7"
+rand = "0.8.8"
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tracing = { workspace = true }
 openssl = { version = "0.10.81" }
 bs58 = { workspace = true }
-secp256k1 = { workspace = true, features = ["serde", "rand", "hashes"] }
+secp256k1 = { workspace = true, features = ["serde", "rand"] }
 tokio = { workspace = true, features = ["full"] }
 smallvec = { workspace = true }
 libvault = { workspace = true }

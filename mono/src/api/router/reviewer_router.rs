@@ -3,12 +3,15 @@ use axum::{
     Json,
     extract::{Path, State},
 };
-use ceres::model::{
-    change_list::{
-        ChangeReviewStatePayload, ChangeReviewerStatePayload, MergeStatus, ReviewerPayload,
-        ReviewersResponse,
+use ceres::{
+    application::member_identity::display_labels_for_actors,
+    model::{
+        change_list::{
+            ChangeReviewStatePayload, ChangeReviewerStatePayload, MergeStatus, ReviewerPayload,
+            ReviewersResponse,
+        },
+        conversation::ConvType,
     },
-    conversation::ConvType,
 };
 use common::errors::MegaError;
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -73,14 +76,29 @@ async fn add_reviewers(
         actor
     );
 
-    for reviewer in payload.reviewer_usernames {
+    let mut actors = vec![actor.to_string()];
+    actors.extend(payload.reviewer_usernames.iter().cloned());
+    let labels = display_labels_for_actors(state.services().storage(), &actors).await;
+    let actor_display = labels
+        .get(actor)
+        .cloned()
+        .unwrap_or_else(|| actor.to_string());
+
+    for reviewer in &payload.reviewer_usernames {
+        let reviewer_display = labels
+            .get(reviewer.as_str())
+            .cloned()
+            .unwrap_or_else(|| reviewer.clone());
         state
             .services()
             .conversation()
             .add_conversation(
                 &link,
                 actor,
-                Some(format!("{} assigned a new reviewer {}", actor, reviewer)),
+                Some(format!(
+                    "{} assigned a new reviewer {}",
+                    actor_display, reviewer_display
+                )),
                 ConvType::Comment,
             )
             .await?;
@@ -122,14 +140,29 @@ async fn remove_reviewers(
         actor
     );
 
+    let mut actors = vec![actor.to_string()];
+    actors.extend(payload.reviewer_usernames.iter().cloned());
+    let labels = display_labels_for_actors(state.services().storage(), &actors).await;
+    let actor_display = labels
+        .get(actor)
+        .cloned()
+        .unwrap_or_else(|| actor.to_string());
+
     for reviewer in &payload.reviewer_usernames {
+        let reviewer_display = labels
+            .get(reviewer.as_str())
+            .cloned()
+            .unwrap_or_else(|| reviewer.clone());
         state
             .services()
             .conversation()
             .add_conversation(
                 &link,
                 actor,
-                Some(format!("{} removed reviewer {}", actor, reviewer)),
+                Some(format!(
+                    "{} removed reviewer {}",
+                    actor_display, reviewer_display
+                )),
                 ConvType::Comment,
             )
             .await?;
@@ -257,13 +290,17 @@ async fn review_resolve(
         .change_review_state(&link, &payload.conversation_id, payload.resolved)
         .await?;
 
+    let display = display_labels_for_actors(state.services().storage(), &[actor.to_string()])
+        .await
+        .remove(actor)
+        .unwrap_or_else(|| actor.to_string());
     state
         .services()
         .conversation()
         .add_conversation(
             &link,
             actor,
-            Some(format!("{} resolved a review", actor)),
+            Some(format!("{} resolved a review", display)),
             ConvType::Comment,
         )
         .await?;

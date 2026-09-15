@@ -22,7 +22,7 @@ allowBuilds:
   re2: true
   sharp: true
   unrs-resolver: true
-# pnpm 11 default release-age gate blocks brand-new publishes during install
+# pnpm 12 default release-age gate blocks brand-new publishes during install
 minimumReleaseAge: 0
 # - next / eslint-config-next / @next/bundle-analyzer: pinned 16.2.12 (latest 16.x)
 # - @tiptap/*: ^3 (Details via OSS @tiptap/extension-details; collaboration-caret; list/extensions kits)

@@ -45,13 +45,13 @@
 //!
 //! ```bash
 //! # Basic (explicit config path)
-//! cargo run -p io-orbit --bin migrate_local_to_s3 -- --config ./config.toml
+//! cargo run -p io-orbit --bin migrate-local-to-s3 -- --config ./config.toml
 //!
 //! # Or via env var
-//! MEGA_CONFIG=./config.toml cargo run -p io-orbit --bin migrate_local_to_s3
+//! MEGA_CONFIG=./config.toml cargo run -p io-orbit --bin migrate-local-to-s3
 //!
 //! # Tune concurrency (default: 16)
-//! MIGRATE_CONCURRENCY=32 MEGA_CONFIG=./config.toml cargo run -p io-orbit --bin migrate_local_to_s3
+//! MIGRATE_CONCURRENCY=32 MEGA_CONFIG=./config.toml cargo run -p io-orbit --bin migrate-local-to-s3
 //! ```
 //!
 //! ## Verification tips
@@ -125,7 +125,7 @@ async fn run() -> Result<(), MegaError> {
             .map_err(|e| MegaError::Other(format!("failed to init S3-compatible client: {e}")))?,
         other => {
             return Err(MegaError::Other(format!(
-                "migrate_local_to_s3 only supports S3/S3Compatible targets, got {:?}",
+                "migrate-local-to-s3 only supports S3/S3Compatible targets, got {:?}",
                 other
             )));
         }

@@ -4,7 +4,6 @@ version = "0.1.0"
 authors = ["Quanyi Ma <genedna@gmail.com>"]
 keywords = ["git", "monorepo", "decentralized"]
 license = "MIT OR Apache-2.0"
-readme = "README.md"
 edition.workspace = true
 
 [lib]
