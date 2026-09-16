@@ -241,8 +241,7 @@ export default function CLView() {
         <MemberHovercard
           username={
             members.find(
-              (m) =>
-                m.user.id === item.author || m.user.username === item.author || m.user.github_login === item.author
+              (m) => m.user.id === item.author || m.user.username === item.author || m.user.github_login === item.author
             )?.user.username || item.author
           }
         >

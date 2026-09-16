@@ -100,7 +100,7 @@
     "nextjs-cors": "catalog:",
     "node-fetch": "catalog:",
     "pluralize": "catalog:",
-    "prosemirror-view": "^1.40.0",
+    "prosemirror-view": "catalog:",
     "pusher-js": "catalog:",
     "react": "catalog:",
     "react-aria": "catalog:",
