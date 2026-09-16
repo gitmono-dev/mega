@@ -24,16 +24,19 @@ export function parseReviewerEventComment(comment?: string | null): ReviewerEven
   const text = comment.trim()
 
   let match = text.match(/^(\S+)\s+assigned a new reviewer\s+(\S+)$/)
+
   if (match) {
     return { kind: 'assigned', actor: match[1], reviewer: match[2] }
   }
 
   match = text.match(/^(\S+)\s+removed reviewer\s+(\S+)$/)
+
   if (match) {
     return { kind: 'removed', actor: match[1], reviewer: match[2] }
   }
 
   match = text.match(/^(\S+)\s+resolved a review$/)
+
   if (match) {
     return { kind: 'resolved', actor: match[1] }
   }

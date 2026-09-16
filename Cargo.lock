@@ -5481,6 +5481,7 @@ dependencies = [
  "itertools 0.15.0",
  "once_cell",
  "parse-display 0.11.0",
+ "reqwest 0.13.5",
  "scorpiofs",
  "serde",
  "serde_json",
